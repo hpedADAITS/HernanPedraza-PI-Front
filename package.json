@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@fontsource/inter": "^5.2.8",
     "@playwright/test": "^1.59.1",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -45,6 +46,7 @@
     "react-dom": "^19.2.5",
     "react-hook-form": "^7.72.1",
     "react-resizable-panels": "^4.10.0",
+    "react-router-dom": "^7.15.1",
     "recharts": "^3.8.1",
     "socket.io-client": "^4.8.3",
     "sonner": "^2.0.7",
@@ -71,11 +73,12 @@
   },
   "scripts": {
     "dev": "vite",
-    "dev:debug": "vite --define __DEBUG_MODE__=true",
+    "dev:debug": "VITE_DEBUG_MODE=true vite",
     "host": "vite --host",
     "build": "vite build",
     "test": "vitest",
     "test:ui": "vitest --ui",
+    "trigger:song-card": "node scripts/trigger-song-card-demo.mjs",
     "format": "prettier --write .",
     "test:coverage": "vitest --coverage"
   }
