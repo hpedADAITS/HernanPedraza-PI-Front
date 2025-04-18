@@ -4,6 +4,14 @@ import {
   validateEmail,
   isStrongPassword,
   validatePassword,
+  isValidNickname,
+  validateNickname,
+  isValidAccessCode,
+  validateAccessCode,
+  isNonEmptyString,
+  isPositiveNumber,
+  isRequired,
+  minLength,
 } from '@/utils/validation';
 
 describe('Validation Utilities', () => {
@@ -129,6 +137,83 @@ describe('Validation Utilities', () => {
       const result = validatePassword(longPassword);
       expect(result.valid).toBe(false);
       expect(result.message).toContain('128');
+    });
+  });
+
+  describe('nickname validation', () => {
+    it('should accept valid nicknames used when joining events', () => {
+      expect(isValidNickname('Ada')).toBe(true);
+      expect(isValidNickname('Ada_123')).toBe(true);
+      expect(validateNickname('Ada_123')).toEqual({ valid: true });
+    });
+
+    it('should reject nicknames that the backend will reject', () => {
+      expect(validateNickname('A')).toEqual({
+        valid: false,
+        message: 'Nickname must be at least 2 characters',
+      });
+      expect(validateNickname('Ada Lovelace')).toEqual({
+        valid: false,
+        message: 'Nickname can only contain letters, numbers, and underscores',
+      });
+      expect(validateNickname('a'.repeat(31))).toEqual({
+        valid: false,
+        message: 'Nickname must not exceed 30 characters',
+      });
+    });
+  });
+
+  describe('event access code validation', () => {
+    it('should accept exactly six alphanumeric characters', () => {
+      expect(isValidAccessCode('ABC123')).toBe(true);
+      expect(validateAccessCode('abc123')).toEqual({ valid: true });
+    });
+
+    it('should reject missing, short, long, or symbolic access codes', () => {
+      expect(validateAccessCode('')).toEqual({
+        valid: false,
+        message: 'Access code is required',
+      });
+      expect(validateAccessCode('ABC12')).toEqual({
+        valid: false,
+        message: 'Access code must be 6 alphanumeric characters',
+      });
+      expect(validateAccessCode('ABC1234')).toEqual({
+        valid: false,
+        message: 'Access code must be 6 alphanumeric characters',
+      });
+      expect(validateAccessCode('ABC-12')).toEqual({
+        valid: false,
+        message: 'Access code must be 6 alphanumeric characters',
+      });
+    });
+  });
+
+  describe('generic field validation', () => {
+    it('should validate non-empty strings after trimming whitespace', () => {
+      expect(isNonEmptyString(' request ')).toBe(true);
+      expect(isNonEmptyString('   ')).toBe(false);
+      expect(isNonEmptyString(null)).toBe(false);
+    });
+
+    it('should validate positive numeric input', () => {
+      expect(isPositiveNumber(1)).toBe(true);
+      expect(isPositiveNumber('2')).toBe(true);
+      expect(isPositiveNumber(0)).toBe(false);
+      expect(isPositiveNumber('not-a-number')).toBe(false);
+    });
+
+    it('should validate required values and minimum lengths', () => {
+      expect(isRequired('value')).toEqual({ valid: true });
+      expect(isRequired('')).toEqual({
+        valid: false,
+        message: 'This field is required',
+      });
+      expect(minLength('abc', 3)).toEqual({ valid: true });
+      expect(minLength('ab', 3)).toEqual({
+        valid: false,
+        message: 'Minimum length is 3 characters',
+      });
     });
   });
 });
