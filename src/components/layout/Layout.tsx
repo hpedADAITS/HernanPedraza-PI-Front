@@ -53,14 +53,9 @@ export function Layout({
         transition: 'background 0.3s ease',
       }}
     >
-      {/* Background Pattern / Noise for texture (only on colored backgrounds) */}
-      {!isWhite && !isDarkMode && (
-        <div className="absolute inset-0 opacity-10 pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay" />
-      )}
-
       {/* Top Bar */}
       {showNav && (
-        <header className="relative z-50 px-6 md:px-10 pt-5 md:pt-6 flex items-center justify-between">
+        <header className="relative z-50 px-6 md:px-10 pt-4 flex items-center justify-between">
           <div></div>
 
           <button
@@ -97,7 +92,7 @@ export function Layout({
 
       {/* Footer */}
       {showNav && (
-        <footer className="relative px-6 pb-6 pt-2 flex justify-center items-end z-50">
+        <footer className="relative px-6 pb-3 pt-1 flex justify-center items-end z-50">
           <div
             className={clsx(
               'text-center text-[11.5px] font-medium pointer-events-none',
