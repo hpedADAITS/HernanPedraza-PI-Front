@@ -1,9 +1,10 @@
 import { cacheManager } from '../cache/cacheManager';
+import { removeStoredItem } from '../../utils/storage';
 
 // @ts-ignore
 const VITE_API_URL = import.meta.env?.VITE_API_URL as string | undefined;
 export const API_BASE: string = VITE_API_URL
-  ? `${VITE_API_URL}`
+  ? `${VITE_API_URL}/api/v1`
   : 'http://localhost:5000/api/v1';
 
 let authToken: string | null = null;
@@ -28,7 +29,11 @@ export function clearToken() {
   authToken = null;
   if (typeof window !== 'undefined') {
     localStorage.removeItem('authToken');
+    removeStoredItem('user');
+    removeStoredItem('currentEvent');
+    removeStoredItem('currentParticipant');
   }
+  clearAllCaches();
 }
 
 /* Helper to make API calls */

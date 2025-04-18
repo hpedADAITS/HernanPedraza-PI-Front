@@ -1,10 +1,19 @@
 import { apiCall } from './client';
 
 export const participantsAPI = {
-  joinEvent: async (eventId: string, nickname: string, profilePicture?: string | null) => {
+  joinEvent: async (
+    eventId: string,
+    nickname: string,
+    profilePicture?: string | null,
+    password?: string,
+  ) => {
     const data = await apiCall(`/participants/${eventId}/join`, {
       method: 'POST',
-      body: JSON.stringify({ nickname, profilePicture: profilePicture || null }),
+      body: JSON.stringify({
+        nickname,
+        profilePicture: profilePicture || null,
+        ...(password ? { password } : {}),
+      }),
     });
     return data.data.participant;
   },
@@ -12,6 +21,14 @@ export const participantsAPI = {
   leaveEvent: async (participantId: string) => {
     const data = await apiCall(`/participants/${participantId}/leave`, {
       method: 'POST',
+    });
+    return data.data.participant;
+  },
+
+  setPassword: async (participantId: string, password: string) => {
+    const data = await apiCall(`/participants/${participantId}/password`, {
+      method: 'POST',
+      body: JSON.stringify({ password }),
     });
     return data.data.participant;
   },

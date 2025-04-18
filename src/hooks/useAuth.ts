@@ -60,7 +60,9 @@ export function useAuth() {
   }, []);
 
   const logout = useCallback(() => {
-    clearToken();
+    void authAPI.logout().catch(() => {
+      clearToken();
+    });
     setUser(null);
   }, []);
 

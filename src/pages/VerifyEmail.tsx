@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'motion/react';
+import { LazyMotion, domAnimation, m } from 'motion/react';
 import { CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import { authAPI } from '@/services/api';
 import { toast } from 'sonner';
+import { writeStoredJson } from '@/utils/storage';
+import type { NavigateToView } from '@/types';
 
 interface Props {
-  onNavigate?: (view: string) => void;
+  onNavigate?: NavigateToView;
 }
 
 export function VerifyEmail({ onNavigate }: Props) {
@@ -32,9 +34,7 @@ export function VerifyEmail({ onNavigate }: Props) {
 
         if (response.data?.user && response.data.user.emailRegistered) {
           setStatus('success');
-          setMessage(
-            'Email verified! Returning to registration...',
-          );
+          setMessage('Email verified! Returning to registration…');
 
           /* Update localStorage with verified status */
           const userData = {
@@ -43,7 +43,7 @@ export function VerifyEmail({ onNavigate }: Props) {
             role: response.data.user.role,
             emailRegistered: true,
           };
-          localStorage.setItem('user', JSON.stringify(userData));
+          writeStoredJson('user', userData);
         }
       } catch (error) {
         setStatus('error');
@@ -67,34 +67,35 @@ export function VerifyEmail({ onNavigate }: Props) {
           'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(255,255,255,0.10) 0%, transparent 60%), linear-gradient(180deg, #1e3a8a 0%, #0c1e4a 100%)',
       }}
     >
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-        className="w-full max-w-md text-center"
-      >
+      <LazyMotion features={domAnimation}>
+        <m.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+          className="w-full max-w-md text-center"
+        >
         {status === 'loading' && (
           <>
-            <motion.div
+            <m.div
               animate={{ rotate: 360 }}
               transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
               className="flex justify-center mb-6"
             >
               <Loader size={48} className="text-blue-400" strokeWidth={2} />
-            </motion.div>
+            </m.div>
             <h1 className="text-2xl font-semibold mb-3">Verifying Email</h1>
             <p className="text-slate-300">
-              Please wait while we verify your email...
+              Please wait while we verify your email…
             </p>
           </>
         )}
 
         {status === 'success' && (
           <>
-            <motion.div
-              initial={{ scale: 0 }}
+            <m.div
+              initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 260, damping: 32 }}
               className="flex justify-center mb-6"
             >
               <CheckCircle
@@ -102,7 +103,7 @@ export function VerifyEmail({ onNavigate }: Props) {
                 className="text-green-400"
                 strokeWidth={1.5}
               />
-            </motion.div>
+            </m.div>
             <h1 className="text-2xl font-semibold mb-3 text-green-400">
               Email Verified!
             </h1>
@@ -112,10 +113,10 @@ export function VerifyEmail({ onNavigate }: Props) {
 
         {status === 'error' && (
           <>
-            <motion.div
-              initial={{ scale: 0 }}
+            <m.div
+              initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 260, damping: 32 }}
               className="flex justify-center mb-6"
             >
               <AlertCircle
@@ -123,12 +124,12 @@ export function VerifyEmail({ onNavigate }: Props) {
                 className="text-red-400"
                 strokeWidth={1.5}
               />
-            </motion.div>
+            </m.div>
             <h1 className="text-2xl font-semibold mb-3 text-red-400">
               Verification Failed
             </h1>
             <p className="text-slate-300 mb-6">{message}</p>
-            <motion.button
+            <m.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => {
@@ -141,10 +142,11 @@ export function VerifyEmail({ onNavigate }: Props) {
               className="inline-block px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
             >
               Back to Registration
-            </motion.button>
+            </m.button>
           </>
         )}
-      </motion.div>
+        </m.div>
+      </LazyMotion>
     </div>
   );
 }

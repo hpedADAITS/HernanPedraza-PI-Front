@@ -1,4 +1,4 @@
-import { apiCall, saveToken } from './client';
+import { apiCall, clearToken, saveToken } from './client';
 
 export const authAPI = {
   register: async (
@@ -28,15 +28,15 @@ export const authAPI = {
     return data.data;
   },
 
-  refreshToken: async (token: string) => {
-    const data = await apiCall('/auth/refresh', {
-      method: 'POST',
-      body: JSON.stringify({ token }),
-    });
-    if (data.data.token) {
-      saveToken(data.data.token);
+  logout: async () => {
+    try {
+      const data = await apiCall('/auth/logout', {
+        method: 'POST',
+      });
+      return data.data;
+    } finally {
+      clearToken();
     }
-    return data.data;
   },
 
   getCurrentUser: async () => {

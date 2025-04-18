@@ -1,57 +1,70 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Layout } from '@/components/layout/Layout';
-import { Logo } from '@/components/common';
 import { motion, AnimatePresence } from 'motion/react';
 import { User, Headphones } from 'lucide-react';
 import { useDarkMode } from '@/hooks/useDarkMode';
 import logoNormal from '@/assets/logo_normal.png';
 import logoWhite from '@/assets/logo_white.png';
+import type { NavigateToView } from '@/types';
 
 interface Props {
-  onNavigate: (view: any) => void;
+  onNavigate: NavigateToView;
   logoWhite: boolean;
   onLogoChange: (white: boolean) => void;
 }
+
+const ROLE_TRANSITION_DURATION_MS = 650;
+const ROLE_TRANSITION_SCALE = 60;
+const ROLE_BACKGROUNDS = {
+  attendee:
+    'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(255,255,255,0.10) 0%, transparent 60%), linear-gradient(180deg, #065f46 0%, #052e22 100%)',
+  dj: 'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(255,255,255,0.10) 0%, transparent 60%), linear-gradient(180deg, #1e3a8a 0%, #0c1e4a 100%)',
+} as const;
 
 export function RoleSelection({ onNavigate, logoWhite: isLogoWhite, onLogoChange }: Props) {
   const [isDarkMode] = useDarkMode();
   const [expandingCircle, setExpandingCircle] = useState<{
     x: number;
     y: number;
-    color: string;
+    background: string;
   } | null>(null);
 
   const handleRoleClick = (
     role: 'attendee' | 'dj',
     event: React.MouseEvent<HTMLButtonElement>,
   ) => {
+    if (expandingCircle) return;
+
     const rect = event.currentTarget.getBoundingClientRect();
     const x = rect.left + rect.width / 2;
     const y = rect.top + rect.height / 2;
-    const color =
-      role === 'attendee'
-        ? 'linear-gradient(135deg, #77c76e 0%, #38997a 100%)'
-        : 'linear-gradient(135deg, #4ca0f1 0%, #61c8fa 100%)';
+    const background = ROLE_BACKGROUNDS[role];
 
-    setExpandingCircle({ x, y, color });
+    setExpandingCircle({ x, y, background });
 
     setTimeout(() => {
       onLogoChange(true);
       onNavigate(role === 'attendee' ? 'attendee-login' : 'dj-login');
       setExpandingCircle(null);
-    }, 400);
+    }, ROLE_TRANSITION_DURATION_MS);
   };
 
   return (
     <Layout theme="white" className="items-center justify-center min-h-screen">
-      <div className="flex flex-col items-center gap-16 md:gap-24 -mt-12 scale-90 md:scale-100">
+      <div className="flex flex-col items-center gap-12 md:gap-18 -mt-8 scale-90 md:scale-100">
         {/* Logo */}
         <motion.div
           initial={{ y: -12, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+          className="drop-shadow-xl"
         >
-          <img src={isDarkMode ? logoWhite : logoNormal} alt="SyncRequst" className="h-20 w-auto" />
+          <img
+            src={isDarkMode ? logoWhite : logoNormal}
+            alt="SyncRequest"
+            className="h-32 w-auto max-w-[86vw] object-contain sm:h-36 md:h-44 lg:h-48"
+          />
         </motion.div>
 
         {/* Cards Container */}
@@ -66,12 +79,13 @@ export function RoleSelection({ onNavigate, logoWhite: isLogoWhite, onLogoChange
               ease: [0.25, 0.1, 0.25, 1],
             }}
             whileHover={{
-              scale: 1.03,
-              y: -5,
-              transition: { duration: 0.15, ease: 'easeOut' },
+              scale: 1.01,
+              y: -1,
+              transition: { duration: 0.12, ease: 'easeOut' },
             }}
-            whileTap={{ scale: 0.97, transition: { duration: 0.1 } }}
+            whileTap={{ scale: 0.99, transition: { duration: 0.08 } }}
             onClick={(e) => handleRoleClick('attendee', e)}
+            disabled={Boolean(expandingCircle)}
             className="group relative w-72 h-80 rounded-xl overflow-hidden shadow-xl shadow-emerald-900/10 hover:shadow-2xl hover:shadow-emerald-900/20 transition-shadow duration-200"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-[#77c76e] to-[#38997a]" />
@@ -100,12 +114,13 @@ export function RoleSelection({ onNavigate, logoWhite: isLogoWhite, onLogoChange
               ease: [0.25, 0.1, 0.25, 1],
             }}
             whileHover={{
-              scale: 1.03,
-              y: -5,
-              transition: { duration: 0.15, ease: 'easeOut' },
+              scale: 1.01,
+              y: -1,
+              transition: { duration: 0.12, ease: 'easeOut' },
             }}
-            whileTap={{ scale: 0.97, transition: { duration: 0.1 } }}
+            whileTap={{ scale: 0.99, transition: { duration: 0.08 } }}
             onClick={(e) => handleRoleClick('dj', e)}
+            disabled={Boolean(expandingCircle)}
             className="group relative w-72 h-80 rounded-xl overflow-hidden shadow-xl shadow-blue-900/10 hover:shadow-2xl hover:shadow-blue-900/20 transition-shadow duration-200"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-[#4ca0f1] to-[#61c8fa]" />
@@ -125,28 +140,34 @@ export function RoleSelection({ onNavigate, logoWhite: isLogoWhite, onLogoChange
         </div>
       </div>
 
-      {/* Expanding Circle Transition */}
-      <AnimatePresence>
-        {expandingCircle && (
-          <motion.div
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 50 }}
-            transition={{ duration: 0.8, ease: 'easeInOut' }}
-            style={{
-              position: 'fixed',
-              left: expandingCircle.x,
-              top: expandingCircle.y,
-              width: 200,
-              height: 200,
-              borderRadius: '50%',
-              background: expandingCircle.color,
-              transform: 'translate(-50%, -50%)',
-              pointerEvents: 'none',
-              zIndex: 9999,
-            }}
-          />
-        )}
-      </AnimatePresence>
+      {createPortal(
+        <AnimatePresence>
+          {expandingCircle && (
+            <motion.div
+              initial={{ scale: 0.35, opacity: 0.9 }}
+              animate={{ scale: ROLE_TRANSITION_SCALE, opacity: 1 }}
+              transition={{
+                duration: ROLE_TRANSITION_DURATION_MS / 1000,
+                ease: [0.76, 0, 0.24, 1],
+              }}
+              style={{
+                position: 'fixed',
+                left: expandingCircle.x,
+                top: expandingCircle.y,
+                width: 200,
+                height: 200,
+                borderRadius: '50%',
+                background: expandingCircle.background,
+                transform: 'translate(-50%, -50%)',
+                pointerEvents: 'none',
+                zIndex: 9999,
+                willChange: 'transform',
+              }}
+            />
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
     </Layout>
   );
 }
