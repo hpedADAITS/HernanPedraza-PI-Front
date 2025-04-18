@@ -27,4 +27,5 @@ export {
   onSocketError,
   onAccessCodeUpdated,
   onEventEnded,
+  onAttendeePasswordPromptRequested,
 } from './listeners';

@@ -91,3 +91,7 @@ export function onAccessCodeUpdated(callback: (data: any) => void) {
 export function onEventEnded(callback: (data: any) => void) {
   on('event_ended', callback);
 }
+
+export function onAttendeePasswordPromptRequested(callback: (data: any) => void) {
+  on('attendee_password_prompt_requested', callback);
+}

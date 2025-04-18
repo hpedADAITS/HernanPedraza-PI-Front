@@ -6,10 +6,11 @@ export function joinEvent(
   eventId: string,
   participantId: string,
   nickname: string,
+  profilePicture?: string | null,
 ) {
   const socket = getSocketInstance();
   if (!socket) throw new Error('Socket not initialized');
-  socket.emit('join_event', { eventId, participantId, nickname });
+  socket.emit('join_event', { eventId, participantId, nickname, profilePicture });
 }
 
 export function leaveEvent(eventId: string, participantId: string) {
@@ -71,12 +72,17 @@ export function approveSong(eventId: string, songId: string) {
   socket.emit('song_approved', { eventId, songId });
 }
 
-export function sendNowSong(eventId: string, songId: string) {
+export function sendNowSong(
+  eventId: string,
+  songId: string,
+  title?: string,
+  artist?: string,
+) {
   const socket = getSocketInstance();
   if (!socket) {
     throw new Error('Socket not initialized');
   }
-  socket.emit('song_now_playing', { eventId, songId });
+  socket.emit('song_now_playing', { eventId, songId, title, artist });
 }
 
 export function rejectSong(eventId: string, songId: string, reason: string) {

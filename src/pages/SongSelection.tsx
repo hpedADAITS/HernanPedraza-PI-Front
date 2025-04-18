@@ -1,11 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { motion } from 'motion/react';
-import { Search, ChevronRight, ArrowLeft, Check, X } from 'lucide-react';
+import {
+  Search,
+  ChevronRight,
+  ArrowLeft,
+  Check,
+  X,
+  Music2,
+  Mic2,
+  UserRound,
+} from 'lucide-react';
 import { clsx } from 'clsx';
 import { toast } from 'sonner';
+import { UserAvatar } from '@/components/common';
+import { useDarkMode } from '@/hooks/useDarkMode';
 import { songsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
+import { readStoredJson } from '@/utils/storage';
+import type { NavigateToView } from '@/types';
 
 interface Song {
   _id: string;
@@ -19,22 +32,21 @@ interface Song {
 
 interface Props {
   mode: 'attendee' | 'dj';
-  onNavigate: (view: any) => void;
+  onNavigate: NavigateToView;
 }
 
 function getLocalStorageIds() {
-  const eventData = localStorage.getItem('currentEvent');
-  const participantData = localStorage.getItem('currentParticipant');
-  const eventId = eventData ? JSON.parse(eventData).eventId : null;
-  const participantId = participantData
-    ? JSON.parse(participantData)._id
-    : null;
+  const eventData = readStoredJson<{ eventId?: string }>('currentEvent');
+  const participantData = readStoredJson<{ _id?: string }>('currentParticipant');
+  const eventId = eventData?.eventId || null;
+  const participantId = participantData?._id || null;
   return { eventId, participantId };
 }
 
 export function SongSelection({ mode, onNavigate }: Props) {
   const isDj = mode === 'dj';
   const theme = isDj ? 'blue' : 'green';
+  const [isDarkMode] = useDarkMode();
 
   const { eventId, participantId } = getLocalStorageIds();
 
@@ -50,13 +62,8 @@ export function SongSelection({ mode, onNavigate }: Props) {
   const [submitting, setSubmitting] = useState(false);
 
   const getLocalNickname = () => {
-    const data = localStorage.getItem('currentParticipant');
-    if (!data) return 'User';
-    try {
-      return JSON.parse(data).nickname || 'User';
-    } catch {
-      return 'User';
-    }
+    const data = readStoredJson<{ nickname?: string }>('currentParticipant');
+    return data?.nickname || 'User';
   };
 
   const fetchPendingSongs = useCallback(async () => {
@@ -138,46 +145,115 @@ export function SongSelection({ mode, onNavigate }: Props) {
     }
   };
 
+  const requestCardClassName = clsx(
+    'relative mx-auto w-full max-w-2xl overflow-hidden rounded-2xl border p-5 md:p-7',
+    isDarkMode
+      ? 'border-white/10 bg-[radial-gradient(circle_at_72%_18%,rgba(70,156,255,0.16),transparent_24%),linear-gradient(180deg,#182235_0%,#111827_100%)] text-white shadow-[0_18px_42px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.08)]'
+      : 'border-slate-900/10 bg-[radial-gradient(circle_at_72%_18%,rgba(16,185,129,0.10),transparent_24%),linear-gradient(180deg,#ffffff_0%,#fbfffd_100%)] text-slate-900 shadow-[0_18px_42px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.95)]',
+  );
+
+  const requestTitleClassName = clsx(
+    'text-[22px] font-black leading-tight tracking-normal',
+    isDarkMode ? 'text-white' : 'text-[#101c3a]',
+  );
+
+  const requestHelperClassName = clsx(
+    'mt-1.5 text-[13px] font-bold leading-snug tracking-normal',
+    isDarkMode ? 'text-slate-300' : 'text-[#73829d]',
+  );
+
+  const requestFieldClassName = clsx(
+    'group flex h-[52px] min-w-0 cursor-text items-center gap-3.5 rounded-xl border px-[18px]',
+    isDarkMode
+      ? 'border-white/10 bg-white/10 shadow-[0_10px_20px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.10)] backdrop-blur-md'
+      : 'border-slate-900/10 bg-white shadow-[0_10px_20px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.95)]',
+  );
+
+  const requestIconClassName = clsx(
+    'h-5 w-5 flex-shrink-0 transition-colors group-focus-within:text-emerald-500',
+    isDarkMode ? 'text-slate-300' : 'text-[#526990]',
+  );
+
+  const requestInputClassName = clsx(
+    'h-full min-w-0 flex-1 border-0 bg-transparent text-sm font-semibold tracking-normal outline-none placeholder:font-normal placeholder:tracking-normal',
+    isDarkMode
+      ? 'text-white placeholder:text-slate-400'
+      : 'text-[#14213f] placeholder:text-[#8b9ab4]',
+  );
+
+  const requestButtonClassName = clsx(
+    'mt-1 h-[52px] w-full rounded-xl text-sm font-extrabold text-white shadow-[0_10px_20px_rgba(16,185,129,0.24)] transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-100',
+    submitting || !title.trim() || !artist.trim()
+      ? isDarkMode
+        ? 'cursor-not-allowed bg-slate-500/70 opacity-80 shadow-[0_10px_20px_rgba(0,0,0,0.18)]'
+        : 'cursor-not-allowed bg-slate-400 opacity-80 shadow-[0_10px_20px_rgba(15,23,42,0.08)]'
+      : isDarkMode
+        ? 'cursor-pointer bg-emerald-500 hover:bg-emerald-600 shadow-[0_10px_20px_rgba(16,185,129,0.20)] focus-visible:ring-emerald-200'
+        : 'cursor-pointer bg-emerald-500 hover:bg-emerald-600',
+  );
+
   return (
-    <Layout theme={theme} className="p-6 md:p-12" showNav={true}>
-      <div className="max-w-5xl mx-auto w-full flex flex-col items-center mt-8">
-        <motion.h1
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="text-3xl md:text-5xl font-light text-white text-center mb-8"
-        >
-          {isDj ? 'Pending Song Requests' : 'Suggest a Song'}
-        </motion.h1>
+    <Layout
+      theme={theme}
+      className="px-5 py-6 md:px-10 md:py-8"
+      showNav={true}
+    >
+      <div className="relative mx-auto flex w-full max-w-4xl flex-1 flex-col">
+        <div className="absolute left-0 top-0 z-20">
+          <motion.button
+            initial={{ opacity: 0, x: -12 }}
+            animate={{ opacity: 1, x: 0 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() =>
+              onNavigate(isDj ? 'dj-dashboard' : 'attendee-dashboard')
+            }
+            className="flex h-11 items-center gap-2 rounded-full border border-white/55 bg-white/16 px-4 text-sm font-semibold text-white shadow-lg shadow-slate-950/10 backdrop-blur-md transition-colors hover:bg-white/24"
+          >
+            <ArrowLeft size={18} />
+            Back
+          </motion.button>
+        </div>
+
+        <div className="mb-8 flex min-h-11 items-center justify-center px-24 md:mb-10">
+          <motion.h1
+            initial={{ y: -12, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="text-center text-2xl font-semibold tracking-normal text-white drop-shadow-sm md:text-4xl"
+          >
+            {isDj ? 'Pending Requests' : 'Suggest a Song'}
+          </motion.h1>
+        </div>
 
         {isDj ? (
           <>
             {/* Search Bar */}
             <motion.div
               layoutId="search-bar"
-              className="w-full max-w-3xl relative mb-12"
+              whileHover={{ y: -2 }}
+              className="group mx-auto mb-6 mt-2 flex h-[52px] w-full max-w-2xl cursor-text items-center gap-3.5 rounded-xl border border-slate-900/10 bg-white px-[18px] shadow-[0_10px_20px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.95)] md:mb-8 md:mt-4"
             >
-              <div className="absolute left-6 top-1/2 -translate-y-1/2 z-10">
-                <div className="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center">
-                  <Search size={24} className="text-slate-800" />
-                </div>
-              </div>
+              <Search className="h-5 w-5 flex-shrink-0 text-[#526990] transition-colors group-hover:text-[#2878ff]" />
               <input
-                type="text"
+                type="search"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search pending songs..."
-                className="w-full h-20 pl-20 pr-6 rounded-2xl shadow-xl bg-white text-slate-800 border-none outline-none text-xl placeholder:text-slate-400 focus:ring-4 focus:ring-slate-300 transition-all"
+                className="h-full min-w-0 flex-1 border-0 bg-transparent text-sm font-semibold tracking-normal text-[#14213f] outline-none placeholder:text-[#8b9ab4]"
               />
             </motion.div>
 
             {/* Song List */}
             {loading ? (
-              <p className="text-white/60 text-lg">Loading...</p>
+              <p className="self-center rounded-full bg-white/14 px-4 py-2 text-sm font-medium text-white/80 backdrop-blur-md">
+                Loading…
+              </p>
             ) : filteredSongs.length === 0 ? (
-              <p className="text-white/60 text-lg">No pending songs</p>
+              <p className="self-center rounded-full bg-white/14 px-4 py-2 text-sm font-medium text-white/80 backdrop-blur-md">
+                No pending songs
+              </p>
             ) : (
               <motion.div
-                className="w-full flex flex-col gap-4 pb-24"
+                className="flex w-full flex-col gap-3 pb-6"
                 initial="hidden"
                 animate="show"
                 variants={{
@@ -200,53 +276,60 @@ export function SongSelection({ mode, onNavigate }: Props) {
                         activeSongId === song._id ? null : song._id,
                       )
                     }
-                    className="bg-slate-200 hover:bg-white hover:scale-[1.01] hover:shadow-lg transition-all duration-300 rounded-2xl p-4 md:p-6 cursor-pointer relative group overflow-hidden"
+                    className="group relative cursor-pointer overflow-hidden rounded-xl border border-white/65 bg-white p-3 shadow-lg shadow-slate-900/10 transition-colors duration-200 hover:bg-slate-50 md:p-4"
                   >
-                    <div className="flex items-center gap-4 md:gap-6 relative z-10">
+                    <div className="relative z-10 flex items-center gap-3 md:gap-4">
                       {/* Requester Avatar */}
-                      <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl bg-gradient-to-br from-slate-400 to-slate-500 shadow-sm flex items-center justify-center overflow-hidden border-2 border-white flex-shrink-0">
-                        <span className="text-lg md:text-xl font-bold text-white">
-                          {(song.requestedBy?.nickname || '?')
-                            .charAt(0)
-                            .toUpperCase()}
-                        </span>
-                      </div>
+                      <UserAvatar
+                        name={song.requestedBy?.nickname || '?'}
+                        imageAlt={`${song.requestedBy?.nickname || 'Unknown'} profile`}
+                        className="h-11 w-11 flex-shrink-0 rounded-lg border border-slate-200 bg-slate-800 shadow-sm md:h-12 md:w-12"
+                        fallbackClassName="flex items-center justify-center text-base font-semibold text-white"
+                      />
 
                       {/* Song Info */}
                       <div className="flex-1 min-w-0 flex flex-col">
-                        <h3 className="text-xl md:text-2xl font-light text-slate-800 truncate">
+                        <h3 className="truncate text-base font-semibold text-slate-900 md:text-lg">
                           {song.title}
                         </h3>
-                        <p className="text-sm font-light text-slate-500 truncate">
+                        <p className="truncate text-sm font-medium text-slate-500">
                           {song.artist}
+                        </p>
+                        <p className="mt-1 flex items-center gap-1.5 truncate text-xs font-medium text-slate-400">
+                          <UserRound size={13} />
+                          {song.requestedBy?.nickname || 'Unknown'}
                         </p>
                       </div>
 
                       {/* Approve / Reject or Chevron */}
                       {activeSongId === song._id ? (
-                        <div className="flex gap-2 flex-shrink-0">
+                        <div className="flex flex-shrink-0 gap-2">
                           <button
+                            type="button"
+                            aria-label={`Approve ${song.title}`}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleApprove(song._id);
                             }}
-                            className="bg-emerald-500 hover:bg-emerald-600 text-white w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center transition-colors shadow-md"
+                            className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500 text-white shadow-sm transition-colors hover:bg-emerald-600 focus:outline-none focus:ring-4 focus:ring-emerald-200 md:h-11 md:w-11"
                           >
-                            <Check size={24} />
+                            <Check size={21} />
                           </button>
                           <button
+                            type="button"
+                            aria-label={`Reject ${song.title}`}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleReject(song._id);
                             }}
-                            className="bg-red-500 hover:bg-red-600 text-white w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center transition-colors shadow-md"
+                            className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-500 text-white shadow-sm transition-colors hover:bg-red-600 focus:outline-none focus:ring-4 focus:ring-red-200 md:h-11 md:w-11"
                           >
-                            <X size={24} />
+                            <X size={21} />
                           </button>
                         </div>
                       ) : (
-                        <div className="bg-slate-600 group-hover:bg-slate-800 text-white w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center transition-colors shadow-md flex-shrink-0">
-                          <ChevronRight size={24} className="md:w-7 md:h-7" />
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-slate-700 text-white shadow-sm transition-colors group-hover:bg-slate-900 md:h-11 md:w-11">
+                          <ChevronRight size={22} />
                         </div>
                       )}
                     </div>
@@ -261,68 +344,99 @@ export function SongSelection({ mode, onNavigate }: Props) {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             onSubmit={handleSuggest}
-            className="w-full max-w-3xl flex flex-col gap-6"
+            className={requestCardClassName}
           >
-            {/* Title Field */}
-            <div className="relative">
-              <div className="absolute left-6 top-1/2 -translate-y-1/2 z-10">
-                <div className="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center">
-                  <Search size={24} className="text-slate-800" />
-                </div>
-              </div>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Song title"
-                required
-                className="w-full h-20 pl-20 pr-6 rounded-2xl shadow-xl bg-white text-slate-800 border-none outline-none text-xl placeholder:text-slate-400 focus:ring-4 focus:ring-slate-300 transition-all"
-              />
+            <div
+              className="pointer-events-none absolute left-[58%] top-7 hidden h-[50px] w-[190px] opacity-45 md:block"
+              aria-hidden="true"
+            >
+              <svg viewBox="0 0 190 50" className="h-full w-full">
+                <g className="fill-[#34d399] opacity-35">
+                  <circle cx="4" cy="24" r="1.4" />
+                  <circle cx="10" cy="22" r="1.4" />
+                  <circle cx="16" cy="20" r="1.4" />
+                  <circle cx="22" cy="18" r="1.4" />
+                  <circle cx="28" cy="16" r="1.4" />
+                  <circle cx="34" cy="20" r="1.4" />
+                  <circle cx="40" cy="24" r="1.4" />
+                  <circle cx="46" cy="28" r="1.4" />
+                  <circle cx="52" cy="32" r="1.4" />
+                </g>
+                <g className="fill-[#10b981] opacity-45">
+                  <circle cx="64" cy="21" r="1.5" />
+                  <circle cx="70" cy="15" r="1.5" />
+                  <circle cx="76" cy="10" r="1.5" />
+                  <circle cx="82" cy="12" r="1.5" />
+                  <circle cx="88" cy="20" r="1.5" />
+                  <circle cx="94" cy="27" r="1.5" />
+                  <circle cx="100" cy="34" r="1.5" />
+                </g>
+                <g className="fill-[#6ee7b7] opacity-40">
+                  <circle cx="112" cy="31" r="1.5" />
+                  <circle cx="118" cy="26" r="1.5" />
+                  <circle cx="124" cy="21" r="1.5" />
+                  <circle cx="130" cy="18" r="1.5" />
+                  <circle cx="136" cy="20" r="1.5" />
+                  <circle cx="142" cy="25" r="1.5" />
+                  <circle cx="148" cy="30" r="1.5" />
+                </g>
+              </svg>
             </div>
 
-            {/* Artist Field */}
-            <input
-              type="text"
-              value={artist}
-              onChange={(e) => setArtist(e.target.value)}
-              placeholder="Artist"
-              required
-              className="w-full h-20 px-8 rounded-2xl shadow-xl bg-white text-slate-800 border-none outline-none text-xl placeholder:text-slate-400 focus:ring-4 focus:ring-slate-300 transition-all"
-            />
+            <div className="relative z-10 mb-5">
+              <h2 className={requestTitleClassName}>
+                Request a track
+              </h2>
+              <p className={requestHelperClassName}>
+                Add a song suggestion to the DJ queue.
+              </p>
+            </div>
 
-            <motion.button
-              type="submit"
-              disabled={submitting || !title.trim() || !artist.trim()}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className={clsx(
-                'w-full h-20 rounded-2xl shadow-xl text-xl font-light text-white transition-all',
-                submitting || !title.trim() || !artist.trim()
-                  ? 'bg-slate-400 cursor-not-allowed'
-                  : 'bg-emerald-500 hover:bg-emerald-600 cursor-pointer',
-              )}
-            >
-              {submitting ? 'Submitting...' : 'Suggest Song'}
-            </motion.button>
+            <div className="relative z-10 flex flex-col gap-4">
+              <label className={requestFieldClassName}>
+                <Music2 className={requestIconClassName} />
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Song title"
+                  required
+                  className={requestInputClassName}
+                />
+              </label>
+
+              <label className={requestFieldClassName}>
+                <Mic2 className={requestIconClassName} />
+                <input
+                  type="text"
+                  value={artist}
+                  onChange={(e) => setArtist(e.target.value)}
+                  placeholder="Artist"
+                  required
+                  className={requestInputClassName}
+                />
+              </label>
+
+              <motion.button
+                type="submit"
+                disabled={submitting || !title.trim() || !artist.trim()}
+                whileHover={
+                  submitting || !title.trim() || !artist.trim()
+                    ? undefined
+                    : { y: -1 }
+                }
+                whileTap={
+                  submitting || !title.trim() || !artist.trim()
+                    ? undefined
+                    : { scale: 0.98 }
+                }
+                className={requestButtonClassName}
+              >
+                {submitting ? 'Submitting…' : 'Suggest Song'}
+              </motion.button>
+            </div>
           </motion.form>
         )}
-
-        {/* Back Button */}
-        <div className="fixed bottom-16 right-8" style={{ zIndex: 999999 }}>
-          <motion.button
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() =>
-              onNavigate(isDj ? 'dj-dashboard' : 'attendee-dashboard')
-            }
-            className="bg-white px-8 py-4 rounded-full shadow-xl shadow-black/10 text-xl font-light text-slate-800 flex items-center gap-2 border border-slate-100 select-none pointer-events-auto cursor-pointer"
-          >
-            <ArrowLeft size={20} />
-            Back
-          </motion.button>
-        </div>
       </div>
     </Layout>
   );
