@@ -1,9 +1,9 @@
-export { ProfileCard } from './ProfileCard';
+export { DJProfileCard } from './DJProfileCard';
+export { AttendeeProfileCard } from './AttendeeProfileCard';
 export { QueueList } from './QueueList';
 export { SearchBar } from './SearchBar';
 export { ActionButtons } from './ActionButtons';
 export { NowPlayingSection } from './NowPlayingSection';
 export { QRCodeModal } from './QRCodeModal';
-export { ParticipantsList } from './ParticipantsList';
 export { ConnectedUsers } from './ConnectedUsers';
 export { MicrophoneControl } from './MicrophoneControl';

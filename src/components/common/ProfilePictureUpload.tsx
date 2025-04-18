@@ -1,8 +1,9 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useTransition } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { authAPI } from '@/services/api';
+import { readStoredJson, writeStoredJson } from '@/utils/storage';
 
 interface ProfilePictureUploadProps {
   currentPicture?: string | null;
@@ -17,9 +18,11 @@ export function ProfilePictureUpload({
 }: ProfilePictureUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [previewPicture, setPreviewPicture] = useState<string | null>(
     currentPicture || null,
   );
+  const isBusy = isLoading || isPending;
 
   const sizeClasses = {
     sm: 'w-16 h-16',
@@ -50,7 +53,9 @@ export function ProfilePictureUpload({
       const reader = new FileReader();
       reader.onload = async (e) => {
         const base64String = e.target?.result as string;
-        setPreviewPicture(base64String);
+        startTransition(() => {
+          setPreviewPicture(base64String);
+        });
 
         /* Send to backend */
         try {
@@ -59,17 +64,20 @@ export function ProfilePictureUpload({
           });
 
           /* Update localStorage */
-          const user = localStorage.getItem('user');
+          const user = readStoredJson<{ profilePicture?: string | null }>('user');
           if (user) {
-            const parsed = JSON.parse(user);
-            parsed.profilePicture = base64String;
-            localStorage.setItem('user', JSON.stringify(parsed));
+            writeStoredJson('user', {
+              ...user,
+              profilePicture: base64String,
+            });
           }
 
           toast.success('Profile picture updated');
           onPictureUpdated?.(base64String);
         } catch (error) {
-          setPreviewPicture(currentPicture || null);
+          startTransition(() => {
+            setPreviewPicture(currentPicture || null);
+          });
           toast.error(
             error instanceof Error
               ? error.message
@@ -86,7 +94,7 @@ export function ProfilePictureUpload({
     }
   };
 
-  const handleClick = () => {
+  const handleOpenFilePicker = () => {
     if (!isLoading) {
       fileInputRef.current?.click();
     }
@@ -100,14 +108,14 @@ export function ProfilePictureUpload({
         accept="image/*"
         onChange={handleFileSelect}
         className="hidden"
-        disabled={isLoading}
+        disabled={isBusy}
       />
 
       <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={handleClick}
-        disabled={isLoading}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={handleOpenFilePicker}
+        disabled={isBusy}
         className={`relative ${sizeClasses[size]} rounded-full overflow-hidden border-2 border-dashed border-slate-300 hover:border-slate-400 flex items-center justify-center bg-slate-50 transition-all disabled:opacity-50`}
       >
         {previewPicture ? (
@@ -134,7 +142,7 @@ export function ProfilePictureUpload({
           </div>
         )}
 
-        {isLoading && (
+        {isBusy && (
           <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
           </div>

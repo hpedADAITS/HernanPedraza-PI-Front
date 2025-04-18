@@ -1,36 +1,223 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Search } from 'lucide-react';
+import { AlertCircle, Mic, MicOff, Search } from 'lucide-react';
 import { SLIDE_UP } from '@/constants/animations';
+import { useMicrophone } from '@/hooks/useMicrophone';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import type { View } from '@/types';
 
 interface SearchBarProps {
   onNavigate: (view: View) => void;
   isDj: boolean;
+  isDarkMode?: boolean;
 }
 
-export function SearchBar({ onNavigate, isDj }: SearchBarProps) {
+export function SearchBar({
+  onNavigate,
+  isDj,
+  isDarkMode = false,
+}: SearchBarProps) {
+  const {
+    isListening,
+    isAccessDenied,
+    isNoSuitableMicFound,
+    requestMicrophoneAccess,
+    stopMicrophone,
+    dismissMicrophoneIssue,
+    error,
+  } = useMicrophone(isDj);
+
   const handleClick = () => {
     const view = isDj ? 'dj-song-select' : 'attendee-song-select';
     onNavigate(view);
   };
 
+  const handleMicrophoneClick = async (
+    event: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    event.stopPropagation();
+
+    if (isListening) {
+      stopMicrophone();
+      return;
+    }
+
+    await requestMicrophoneAccess();
+  };
+
   return (
-    <motion.div
-      layoutId="search-bar"
-      {...SLIDE_UP}
-      transition={{ ...SLIDE_UP.transition, delay: 0.2 }}
-      whileHover={{ y: -2 }}
-      onClick={handleClick}
-      className="bg-white rounded-2xl shadow-xl h-16 flex items-center px-6 gap-4 cursor-text group"
-    >
-      <Search
-        className="text-slate-400 group-hover:text-slate-600 transition-colors flex-shrink-0"
-        size={24}
-      />
-      <span className="text-slate-400 font-medium text-lg">
-        Search for a song...
-      </span>
-    </motion.div>
+    <>
+      <section
+        className={`relative w-full overflow-hidden rounded-2xl border px-6 py-5 shadow-[0_12px_28px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.95)] sm:px-9 sm:py-6 lg:px-5 lg:py-4 ${
+          isDarkMode
+            ? 'border-white/10 bg-[radial-gradient(circle_at_60%_35%,rgba(70,156,255,0.16),transparent_22%),linear-gradient(180deg,#182235_0%,#111827_100%)] shadow-[0_16px_34px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.08)]'
+            : 'border-slate-900/10 bg-[radial-gradient(circle_at_60%_35%,rgba(70,156,255,0.07),transparent_20%),linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)]'
+        }`}
+        aria-label="Search or request a song"
+      >
+        <svg
+          className="pointer-events-none absolute left-[52%] top-7 hidden h-[50px] w-[190px] opacity-55 md:block"
+          viewBox="0 0 190 50"
+          aria-hidden="true"
+        >
+          <g className="fill-[#45b8ff] opacity-25">
+            <circle cx="4" cy="24" r="1.4" />
+            <circle cx="10" cy="22" r="1.4" />
+            <circle cx="16" cy="20" r="1.4" />
+            <circle cx="22" cy="18" r="1.4" />
+            <circle cx="28" cy="16" r="1.4" />
+            <circle cx="34" cy="20" r="1.4" />
+            <circle cx="40" cy="24" r="1.4" />
+            <circle cx="46" cy="28" r="1.4" />
+            <circle cx="52" cy="32" r="1.4" />
+          </g>
+          <g className="fill-[#45b8ff] opacity-45">
+            <circle cx="60" cy="21" r="1.5" />
+            <circle cx="66" cy="16" r="1.5" />
+            <circle cx="72" cy="10" r="1.5" />
+            <circle cx="78" cy="7" r="1.5" />
+            <circle cx="84" cy="12" r="1.5" />
+            <circle cx="90" cy="20" r="1.5" />
+            <circle cx="96" cy="27" r="1.5" />
+            <circle cx="102" cy="34" r="1.5" />
+            <circle cx="108" cy="39" r="1.5" />
+          </g>
+          <g className="fill-[#7de0ea] opacity-40">
+            <circle cx="116" cy="31" r="1.5" />
+            <circle cx="122" cy="26" r="1.5" />
+            <circle cx="128" cy="21" r="1.5" />
+            <circle cx="134" cy="18" r="1.5" />
+            <circle cx="140" cy="20" r="1.5" />
+            <circle cx="146" cy="25" r="1.5" />
+            <circle cx="152" cy="30" r="1.5" />
+          </g>
+          <g className="fill-[#45b8ff] opacity-35">
+            <circle cx="160" cy="29" r="1.4" />
+            <circle cx="166" cy="25" r="1.4" />
+            <circle cx="172" cy="22" r="1.4" />
+            <circle cx="178" cy="24" r="1.4" />
+            <circle cx="184" cy="28" r="1.4" />
+          </g>
+        </svg>
+
+        <h2
+          className={`m-0 text-[22px] font-black leading-tight tracking-normal lg:text-[18px] ${
+            isDarkMode ? 'text-white' : 'text-[#101c3a]'
+          }`}
+        >
+          Search or request a song
+        </h2>
+        <p
+          className={`mb-[18px] mt-1.5 text-[13px] font-bold leading-snug tracking-normal lg:mb-3 lg:text-[12px] ${
+            isDarkMode ? 'text-slate-300' : 'text-[#73829d]'
+          }`}
+        >
+          Find a track and add it to the queue for the DJ.
+        </p>
+
+        <div className="flex items-center gap-3 sm:gap-5">
+          <motion.label
+            layoutId="search-bar"
+            {...SLIDE_UP}
+            transition={{ ...SLIDE_UP.transition, delay: 0.2 }}
+            whileHover={{ y: -1 }}
+            className={`group flex h-[52px] min-w-0 flex-1 cursor-text items-center gap-3.5 rounded-xl border px-[18px] ${
+              isDarkMode
+                ? 'border-white/10 bg-white/10 shadow-[0_10px_20px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.10)] backdrop-blur-md'
+                : 'border-slate-900/10 bg-white shadow-[0_10px_20px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.95)]'
+            }`}
+          >
+            <Search
+              className={`h-5 w-5 flex-shrink-0 transition-colors group-hover:text-[#2878ff] ${
+                isDarkMode ? 'text-slate-300' : 'text-[#526990]'
+              }`}
+            />
+            <input
+              type="search"
+              readOnly
+              onClick={handleClick}
+              onFocus={handleClick}
+              placeholder="Search for artists, songs, albums..."
+              className={`h-full min-w-0 flex-1 cursor-text border-0 bg-transparent text-sm font-semibold tracking-normal outline-none ${
+                isDarkMode
+                  ? 'text-white placeholder:text-slate-400'
+                  : 'text-[#14213f] placeholder:text-[#8b9ab4]'
+              }`}
+            />
+          </motion.label>
+
+          {isDj && (
+            <button
+              type="button"
+              onClick={handleMicrophoneClick}
+              disabled={isAccessDenied && !isListening && !isNoSuitableMicFound}
+              aria-label={isListening ? 'Stop recording' : 'Use microphone'}
+              title={
+                isAccessDenied && !isListening
+                  ? isNoSuitableMicFound
+                    ? 'No suitable microphone found'
+                    : 'Microphone access denied'
+                  : undefined
+              }
+              className={`grid h-[52px] w-[61px] flex-shrink-0 place-items-center rounded-xl border outline-none transition-all duration-150 hover:-translate-y-0.5 focus-visible:ring-4 focus-visible:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0 ${
+                isDarkMode
+                  ? 'border-white/10 bg-white/10 shadow-[0_10px_20px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.10)] hover:shadow-[0_14px_24px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.12)]'
+                  : 'border-slate-900/10 bg-white shadow-[0_10px_20px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.95)] hover:shadow-[0_14px_24px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.95)]'
+              } ${
+                isListening ? 'text-red-500' : 'text-[#2878ff]'
+              }`}
+            >
+              {isListening ? (
+                <MicOff className="h-6 w-6" />
+              ) : (
+                <Mic className="h-6 w-6" />
+              )}
+            </button>
+          )}
+        </div>
+      </section>
+
+      <AlertDialog
+        open={isNoSuitableMicFound}
+        onOpenChange={(open) => {
+          if (!open) dismissMicrophoneIssue();
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100 text-yellow-700">
+              <AlertCircle className="h-5 w-5" />
+            </div>
+            <AlertDialogTitle>No microphone found</AlertDialogTitle>
+            <AlertDialogDescription>
+              {error ||
+                'Connect or enable a microphone, then try starting recording again.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={dismissMicrophoneIssue}>
+              Close
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault();
+                void requestMicrophoneAccess();
+              }}
+            >
+              Try Again
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

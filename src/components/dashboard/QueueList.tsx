@@ -13,7 +13,12 @@ import { THEME_CONFIG } from '@/constants/dashboard';
 import { SLIDE_UP, ANIMATION_DURATION } from '@/constants/animations';
 import { songsAPI, eventsAPI, participantsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
+import { DEBUG_EVENT_NAME } from '@/components/debug/SongCardDebugModal';
+import { isDebugModeEnabled } from '@/utils/debugMode';
+import { readStoredJson } from '@/utils/storage';
 import type { Song } from '@/types/songs';
+
+type RemovalReason = 'rejected' | 'skipped' | 'played';
 
 function formatWait(totalSeconds: number): string {
   const safe = Math.max(0, Math.floor(totalSeconds));
@@ -50,6 +55,9 @@ export function QueueList({
     duration: number;
     startedAt: number;
   } | null>(null);
+  const [fallingCards, setFallingCards] = useState<
+    Array<{ id: string; song: Song; reason: RemovalReason }>
+  >([]);
   const [tick, setTick] = useState(0);
 
   /* Tick every second to refresh per-attendee wait times */
@@ -59,25 +67,37 @@ export function QueueList({
     return () => clearInterval(id);
   }, [mode, nowPlaying?.songId]);
 
-  const removeSong = useCallback((songId: string) => {
-    setSongs((prev) => prev.filter((s) => s._id !== songId));
-    setSelectedSongId((prev) => (prev === songId ? null : prev));
-  }, []);
+  const removeSong = useCallback(
+    (songId: string, reason: RemovalReason = 'played') => {
+      setSongs((prev) => {
+        const removed = prev.find((s) => s._id === songId);
+        if (removed && (reason === 'rejected' || reason === 'skipped')) {
+          const id = `${songId}-${reason}-${Date.now()}`;
+          setFallingCards((cards) => [...cards, { id, song: removed, reason }]);
+          window.setTimeout(() => {
+            setFallingCards((cards) => cards.filter((card) => card.id !== id));
+          }, 1300);
+        }
+        return prev.filter((s) => s._id !== songId);
+      });
+      setSelectedSongId((prev) => (prev === songId ? null : prev));
+    },
+    [],
+  );
 
   useEffect(() => {
     const fetchQueue = async () => {
       try {
-        const eventData = localStorage.getItem('currentEvent');
-        const participantData = localStorage.getItem('currentParticipant');
+        const eventData = readStoredJson<{ eventId?: string; eventCode?: string }>('currentEvent');
+        const participantData = readStoredJson<{ _id?: string }>('currentParticipant');
 
         if (!eventData) {
           setLoading(false);
           return;
         }
 
-        const parsed = JSON.parse(eventData);
-        let resolvedEventId = propEventId || parsed.eventId;
-        const eventCode = parsed.eventCode;
+        let resolvedEventId = propEventId || eventData.eventId;
+        const eventCode = eventData.eventCode;
 
         if (!resolvedEventId) {
           const event = await eventsAPI.getEventByAccessCode(eventCode);
@@ -91,8 +111,7 @@ export function QueueList({
         setEventId(resolvedEventId);
 
         if (participantData) {
-          const participantParsed = JSON.parse(participantData);
-          setParticipantId(propParticipantId || participantParsed._id);
+          setParticipantId(propParticipantId || participantData._id || null);
         }
 
         const queue = await songsAPI.getQueue(resolvedEventId);
@@ -145,10 +164,10 @@ export function QueueList({
       });
     };
     const handleRejected = (data: any) => {
-      if (data?.songId) removeSong(data.songId);
+      if (data?.songId) removeSong(data.songId, 'rejected');
     };
     const handleSkipped = (data: any) => {
-      if (data?.songId) removeSong(data.songId);
+      if (data?.songId) removeSong(data.songId, 'skipped');
     };
     const handleVotesUpdated = (data: any) => {
       if (data?.songId && data?.voteScore != null) {
@@ -162,9 +181,7 @@ export function QueueList({
       if (Array.isArray(data?.affectedSongs)) {
         setSongs((prev) =>
           prev.map((s) => {
-            const upd = data.affectedSongs.find(
-              (a: any) => a.songId === s._id,
-            );
+            const upd = data.affectedSongs.find((a: any) => a.songId === s._id);
             return upd ? { ...s, queuePosition: upd.queuePosition } : s;
           }),
         );
@@ -198,6 +215,19 @@ export function QueueList({
       /* Socket not initialized yet — listeners will be missed, but no crash */
     }
 
+    const handleDebugSongEvent = (event: Event) => {
+      const { type, payload } = (event as CustomEvent).detail || {};
+      if (type === 'song_approved') handleQueued(payload);
+      if (type === 'song_now_playing') handleNowPlaying(payload);
+      if (type === 'song_rejected') handleRejected(payload);
+      if (type === 'song_skipped') handleSkipped(payload);
+      if (type === 'queue_updated') handleQueueUpdated(payload);
+    };
+
+    if (isDebugModeEnabled()) {
+      window.addEventListener(DEBUG_EVENT_NAME, handleDebugSongEvent);
+    }
+
     return () => {
       socket.off('song_approved', handleQueued);
       socket.off('song_now_playing', handleNowPlaying);
@@ -205,6 +235,7 @@ export function QueueList({
       socket.off('song_skipped', handleSkipped);
       socket.off('votes_updated', handleVotesUpdated);
       socket.off('queue_updated', handleQueueUpdated);
+      window.removeEventListener(DEBUG_EVENT_NAME, handleDebugSongEvent);
     };
   }, [removeSong]);
 
@@ -215,7 +246,7 @@ export function QueueList({
       QUEUED: 1,
       PENDING: 2,
     };
-    return [...songs].sort((a, b) => {
+    return songs.toSorted((a, b) => {
       const ao = order[a.status as string] ?? 99;
       const bo = order[b.status as string] ?? 99;
       if (ao !== bo) return ao - bo;
@@ -247,16 +278,30 @@ export function QueueList({
         {...SLIDE_UP}
         transition={{ ...SLIDE_UP.transition, delay: 0.15 }}
         layout
-        className={clsx('backdrop-blur-xl rounded-3xl p-6 shadow-xl flex-1')}
+        className={clsx(
+          'backdrop-blur-xl rounded-3xl p-7 lg:p-6 shadow-xl flex-1 min-h-0 flex flex-col overflow-hidden',
+        )}
         style={{
           backgroundColor: isDarkMode
             ? 'rgba(100, 116, 139, 0.8)'
             : 'rgba(255, 255, 255, 0.6)',
         }}
       >
+        <AnimatePresence>
+          {fallingCards.map((card, index) => (
+            <FallingQueueCard
+              key={card.id}
+              song={card.song}
+              reason={card.reason}
+              index={index}
+              isDarkMode={isDarkMode}
+            />
+          ))}
+        </AnimatePresence>
+
         <h3
           className={clsx(
-            'font-bold mb-4 uppercase text-xs tracking-wider',
+          'font-bold mb-5 lg:mb-4 uppercase text-xs tracking-wider',
             isDarkMode ? 'text-slate-300' : 'text-slate-500',
           )}
         >
@@ -265,8 +310,8 @@ export function QueueList({
 
         <motion.div
           layout
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="flex flex-col gap-4"
+          transition={{ type: 'spring', stiffness: 380, damping: 42 }}
+          className="flex min-h-0 flex-1 flex-col gap-5 lg:gap-3 overflow-y-auto pr-1"
         >
           <AnimatePresence mode="wait">
             {loading ? (
@@ -277,7 +322,7 @@ export function QueueList({
               <motion.div
                 key="queue-list"
                 layout
-                className="flex flex-col gap-4"
+                className="flex flex-col gap-5 lg:gap-3"
               >
                 <AnimatePresence>
                   {sortedSongs.map((song, i) => {
@@ -331,7 +376,7 @@ interface QueueItemProps {
   isDj: boolean;
   isSelected: boolean;
   onSelect: (id: string) => void;
-  onSongRemoved: (songId: string) => void;
+  onSongRemoved: (songId: string, reason?: RemovalReason) => void;
   eventId?: string;
   isDarkMode?: boolean;
   waitSeconds?: number;
@@ -372,6 +417,7 @@ function QueueItem({
           return;
         }
         await songsAPI.sendNow(eventId, songId);
+        socket.sendNowSong(eventId, songId, song.title, song.artist);
         onSongRemoved(songId);
         toast.success(`Now playing "${song.title}"`);
       } else if (action === 'Reject' && eventId) {
@@ -381,7 +427,7 @@ function QueueItem({
         }
         await songsAPI.rejectSong(eventId, songId, 'Rejected by DJ');
         socket.rejectSong(eventId, songId, 'Rejected by DJ');
-        onSongRemoved(songId);
+        onSongRemoved(songId, 'rejected');
         toast.success(`Rejected "${song.title}"`);
       } else if (action === 'Cooldown' && eventId) {
         if (song.requestedBy?._id) {
@@ -407,7 +453,7 @@ function QueueItem({
         }
         await songsAPI.skipSong(eventId, songId, 'Skipped by DJ');
         socket.skipSong(eventId, songId, 'Skipped by DJ');
-        onSongRemoved(songId);
+        onSongRemoved(songId, 'skipped');
         toast.success(`Skipped "${song.title}"`);
       } else {
         console.error(
@@ -428,21 +474,21 @@ function QueueItem({
       exit={{
         opacity: 0,
         x: 20,
-        scale: 0.95,
-        transition: { duration: 0.3 },
+        scale: 0.98,
+        transition: { duration: 0.2 },
       }}
       whileHover={{ backgroundColor: 'rgba(248, 250, 252, 0.7)' }}
       transition={{ duration: ANIMATION_DURATION.fast }}
       onClick={() => isDj && onSelect(song._id)}
       className={clsx(
-        'flex items-center gap-4 group cursor-pointer p-3 rounded-xl transition-all',
+        'flex items-center gap-4 lg:gap-3 group cursor-pointer p-3 lg:p-2 rounded-xl transition-all',
         isDj ? 'cursor-pointer hover:bg-slate-50' : '',
       )}
     >
       {/* Position Badge */}
       <div
         className={clsx(
-          'w-12 h-12 rounded-xl shadow-md flex items-center justify-center text-white font-bold text-lg flex-shrink-0',
+          'w-12 h-12 lg:w-10 lg:h-10 rounded-xl shadow-md flex items-center justify-center text-white font-bold text-lg lg:text-base flex-shrink-0',
           isFirst ? primaryColor : 'bg-slate-400',
         )}
       >
@@ -463,8 +509,8 @@ function QueueItem({
             <Tooltip>
               <TooltipTrigger asChild>
                 <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={(e) => handleAdminAction('Approve', e)}
                   className={clsx(
                     'p-2 rounded-lg transition-colors',
@@ -481,8 +527,8 @@ function QueueItem({
             <Tooltip>
               <TooltipTrigger asChild>
                 <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={(e) => handleAdminAction('Send Now', e)}
                   className={clsx(
                     'p-2 rounded-lg transition-colors',
@@ -499,8 +545,8 @@ function QueueItem({
             <Tooltip>
               <TooltipTrigger asChild>
                 <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={(e) => handleAdminAction('Reject', e)}
                   className={clsx(
                     'p-2 rounded-lg transition-colors',
@@ -517,8 +563,8 @@ function QueueItem({
             <Tooltip>
               <TooltipTrigger asChild>
                 <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={(e) => handleAdminAction('Cooldown', e)}
                   className={clsx(
                     'p-2 rounded-lg transition-colors',
@@ -535,8 +581,8 @@ function QueueItem({
             <Tooltip>
               <TooltipTrigger asChild>
                 <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={(e) => handleAdminAction('Skip', e)}
                   className={clsx(
                     'p-2 rounded-lg transition-colors',
@@ -553,8 +599,8 @@ function QueueItem({
             <Tooltip>
               <TooltipTrigger asChild>
                 <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={(e) => handleAdminAction('Kick', e)}
                   className={clsx(
                     'p-2 rounded-lg transition-colors',
@@ -647,6 +693,71 @@ function QueueItem({
           </motion.div>
         )}
       </AnimatePresence>
+    </motion.div>
+  );
+}
+
+interface FallingQueueCardProps {
+  song: Song;
+  reason: RemovalReason;
+  index: number;
+  isDarkMode: boolean;
+}
+
+function FallingQueueCard({
+  song,
+  reason,
+  index,
+  isDarkMode,
+}: FallingQueueCardProps) {
+  const isRejected = reason === 'rejected';
+
+  return (
+    <motion.div
+      className={clsx(
+        'pointer-events-none fixed left-1/2 top-28 z-50 w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 rounded-xl border p-4 shadow-2xl backdrop-blur-xl',
+        isDarkMode
+          ? 'border-white/10 bg-slate-900/90 text-slate-100'
+          : 'border-slate-200 bg-white/95 text-slate-800',
+      )}
+      initial={{
+        opacity: 0,
+        y: -10,
+        rotate: index % 2 === 0 ? -2 : 2,
+        scale: 0.98,
+      }}
+      animate={{
+        opacity: [0, 1, 1, 0],
+        y: [-10, 18, 260],
+        x: [0, index % 2 === 0 ? -12 : 12, index % 2 === 0 ? -36 : 36],
+        rotate: index % 2 === 0 ? [-2, 3, -7] : [2, -3, 7],
+        scale: [0.98, 1, 0.94],
+      }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.8, ease: 'easeIn' }}
+      aria-hidden="true"
+    >
+      <div className="flex items-center gap-3">
+        <div
+          className={clsx(
+            'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg text-white',
+            isRejected ? 'bg-rose-500' : 'bg-slate-500',
+          )}
+        >
+          {isRejected ? <X size={18} /> : <SkipForward size={18} />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold">{song.title}</p>
+          <p
+            className={clsx(
+              'truncate text-xs',
+              isDarkMode ? 'text-slate-400' : 'text-slate-500',
+            )}
+          >
+            {isRejected ? 'Rejected by votes' : 'Skipped from the queue'}
+          </p>
+        </div>
+      </div>
     </motion.div>
   );
 }

@@ -1,7 +1,7 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useEffectEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { QRCodeSVG as QRCode } from 'qrcode.react';
-import { X, Copy, Download, RefreshCw } from 'lucide-react';
+import { Copy, Download, RefreshCw, X } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Tooltip,
@@ -42,6 +42,9 @@ export function QRCodeModal({
   const [error, setError] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  const handleClose = useEffectEvent(() => {
+    onClose();
+  });
 
   const handleRegenerate = async () => {
     if (!eventId) {
@@ -72,7 +75,7 @@ export function QRCodeModal({
   useEffect(() => {
     const handleEscKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
-        onClose();
+        handleClose();
       }
     };
 
@@ -83,7 +86,7 @@ export function QRCodeModal({
     return () => {
       document.removeEventListener('keydown', handleEscKey);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(accessCode);
@@ -91,15 +94,21 @@ export function QRCodeModal({
   };
 
   const handleDownloadQR = () => {
-    const canvas = document.querySelector('canvas');
-    if (canvas) {
-      const url = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `event-qr-${accessCode}.png`;
-      link.click();
-      toast.success('QR code downloaded!');
+    const svg = qrRef.current?.querySelector('svg');
+    if (!svg) {
+      toast.error('QR code is not ready');
+      return;
     }
+
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `event-qr-${accessCode}.svg`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success('QR code downloaded!');
   };
 
   return (
@@ -111,118 +120,113 @@ export function QRCodeModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            style={{ zIndex: 99999 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center"
+            style={{ zIndex: 50 }}
+            className="fixed inset-0 flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm"
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              initial={{ scale: 0.98, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              exit={{ scale: 0.98, opacity: 0, y: 10 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-3xl shadow-2xl w-80 h-auto overflow-hidden flex flex-col"
+              className="grid aspect-square w-[min(calc(100vw-2rem),calc(100vh-2rem),30rem)] grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-2xl border border-slate-900/10 bg-[radial-gradient(circle_at_72%_20%,rgba(70,156,255,0.08),transparent_24%),linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)] shadow-[0_24px_60px_rgba(15,23,42,0.22),inset_0_1px_0_rgba(255,255,255,0.95)]"
             >
-              {/* Header */}
-              <div className="sticky top-0 bg-white flex items-center justify-between p-4 border-b border-slate-200">
-                <h2 className="text-lg font-bold text-slate-800">
-                  Event QR Code
-                </h2>
+              <div className="flex items-center justify-between px-4 pb-2.5 pt-4 sm:px-5 sm:pb-3 sm:pt-5">
+                <div>
+                  <h2 className="text-[19px] font-black leading-tight tracking-normal text-[#101c3a] sm:text-[22px]">
+                    Event QR Code
+                  </h2>
+                  <p className="mt-1 text-xs font-bold leading-snug text-[#73829d]">
+                    Scan to join this event.
+                  </p>
+                </div>
                 <motion.button
-                  whileTap={{ scale: 0.95 }}
+                  whileTap={{ scale: 0.99 }}
                   onClick={onClose}
-                  className="p-2 hover:bg-slate-100 rounded-xl transition-colors flex-shrink-0"
+                  className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl border border-slate-900/10 bg-white text-slate-600 shadow-[0_8px_18px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.95)] transition-colors hover:text-slate-950 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100 sm:h-10 sm:w-10"
+                  aria-label="Close QR code modal"
                 >
-                  <X size={24} className="text-slate-600" />
+                  <X size={20} />
                 </motion.button>
               </div>
 
-              {/* Content */}
-              <div className="p-4 flex flex-col gap-3">
-                 {error ? (
-                   <div className="flex justify-center items-center p-4 bg-red-50 rounded-2xl">
-                     <p className="text-sm text-red-700">{error}</p>
-                   </div>
-                 ) : (
-                   <>
-                     {/* QR Code */}
-                     <motion.div
-                       initial={{ scale: 0.9, opacity: 0 }}
-                       animate={{ scale: 1, opacity: 1 }}
-                       className="flex justify-center items-center p-2 bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl"
-                       ref={qrRef}
-                     >
-                       <QRCode
-                         value={accessCode}
-                         size={128}
-                         level="H"
-                         includeMargin={true}
-                         className="rounded-lg"
-                       />
-                     </motion.div>
-                   </>
-                 )}
+              <div className="flex min-h-0 flex-col gap-2.5 px-4 sm:gap-3 sm:px-5">
+                {error ? (
+                  <div className="grid flex-1 place-items-center rounded-2xl border border-red-100 bg-red-50 px-4 text-center">
+                    <p className="text-sm font-semibold text-red-700">{error}</p>
+                  </div>
+                ) : (
+                  <motion.div
+                    initial={{ scale: 0.98, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="mx-auto grid aspect-square w-[min(48vw,10rem)] place-items-center rounded-[18px] border border-slate-900/10 bg-white p-2.5 shadow-[0_14px_28px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.95)] sm:w-48 sm:p-3"
+                    ref={qrRef}
+                  >
+                    <QRCode
+                      value={accessCode}
+                      size={160}
+                      level="H"
+                      includeMargin={true}
+                      className="h-full w-full rounded-lg"
+                    />
+                  </motion.div>
+                )}
 
-                {/* Access Code Display */}
-                <div className="w-full">
-                  <p className="text-xs text-slate-600 text-center mb-2 font-medium uppercase">
+                <div className="rounded-xl border border-slate-900/10 bg-white px-3 py-2 shadow-[0_10px_20px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.95)] sm:py-2.5">
+                  <p className="mb-1 text-[10px] font-extrabold uppercase tracking-normal text-[#73829d]">
                     Access Code
                   </p>
-                  <div className="bg-slate-100 rounded-xl p-3 flex items-center justify-between gap-2">
-                    <code className="text-base font-bold text-slate-800 tracking-wider flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <code className="min-w-0 flex-1 truncate text-base font-black tracking-[0.16em] text-[#101c3a] sm:text-lg">
                       {accessCode}
                     </code>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.95 }}
+                          whileTap={{ scale: 0.98 }}
                           onClick={handleCopyCode}
-                          className="p-2 hover:bg-slate-200 rounded-lg transition-colors flex-shrink-0"
+                          className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-lg text-[#2878ff] transition-colors hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100 sm:h-9 sm:w-9"
+                          aria-label="Copy access code"
                         >
-                          <Copy size={18} className="text-slate-600" />
+                          <Copy size={18} />
                         </motion.button>
                       </TooltipTrigger>
                       <TooltipContent>Copy code</TooltipContent>
                     </Tooltip>
                   </div>
                 </div>
-
-                {/* Instructions */}
-                <div className="bg-blue-50 rounded-xl p-3">
-                  <p className="text-xs text-blue-900 leading-relaxed">
-                    Share this QR code or access code with attendees to join.
-                  </p>
-                </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-col gap-2 p-4 border-t border-slate-200 bg-slate-50">
+              <div className="flex flex-col gap-1.5 px-4 pb-4 pt-2 sm:gap-2 sm:px-5 sm:pb-5 sm:pt-3">
                 {isDj && (
                   <motion.button
-                    whileHover={{ y: -2 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ y: -1 }}
+                    whileTap={{ scale: 0.99 }}
                     onClick={() => setShowConfirm(true)}
                     disabled={regenerating}
-                    className="w-full bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white py-2 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors text-sm"
+                    className="flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 text-xs font-extrabold text-amber-800 transition-colors hover:bg-amber-100 disabled:opacity-50 sm:h-10 sm:text-sm"
                   >
-                    <RefreshCw size={18} />
+                    <RefreshCw
+                      size={17}
+                      className={regenerating ? 'animate-spin' : undefined}
+                    />
                     Regenerate Access Code
                   </motion.button>
                 )}
                 <div className="flex gap-2">
                   <motion.button
-                    whileHover={{ y: -2 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ y: -1 }}
+                    whileTap={{ scale: 0.99 }}
                     onClick={handleDownloadQR}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors text-sm"
+                    className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-[#2878ff] text-sm font-extrabold text-white shadow-[0_10px_20px_rgba(40,120,255,0.22)] transition-colors hover:bg-[#1f66dc] sm:h-11"
                   >
                     <Download size={18} />
                     Download
                   </motion.button>
                   <motion.button
-                    whileHover={{ y: -2 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ y: -1 }}
+                    whileTap={{ scale: 0.99 }}
                     onClick={onClose}
-                    className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-800 py-2 rounded-xl font-semibold transition-colors text-sm"
+                    className="flex h-10 flex-1 items-center justify-center rounded-xl border border-slate-900/10 bg-white text-sm font-extrabold text-[#17213a] shadow-[0_10px_20px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.95)] transition-colors hover:bg-slate-50 sm:h-11"
                   >
                     Close
                   </motion.button>
