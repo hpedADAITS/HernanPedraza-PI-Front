@@ -1,0 +1,36 @@
+import React from 'react';
+import { Layout } from '../layout/Layout';
+import { Logo } from '../ui/Logo';
+import { motion } from 'motion/react';
+
+interface Props {
+  onNavigate: (view: any) => void;
+}
+
+export function AttendeeLogin({ onNavigate }: Props) {
+  return (
+    <Layout theme="green" className="items-center justify-center min-h-screen">
+      <motion.div 
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="mb-12"
+      >
+        <Logo />
+      </motion.div>
+
+      <motion.div 
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.4, type: 'spring' }}
+        className="bg-white p-3 rounded-[24px] shadow-2xl shadow-black/10 max-w-sm w-72 md:w-80 aspect-square flex items-center justify-center relative"
+      >
+        <img 
+          src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=https://syncrequest.app/join&color=000000&bgcolor=ffffff&margin=10" 
+          alt="Scan to Join"
+          className="w-full h-full object-contain rounded-xl rendering-pixelated" 
+        />
+      </motion.div>
+    </Layout>
+  );
+}
