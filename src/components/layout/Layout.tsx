@@ -26,13 +26,10 @@ export function Layout({ children, theme = 'green', className, showNav = true }:
         "relative w-full h-full overflow-y-auto flex flex-col font-sans",
         isWhite ? "text-slate-800" : "text-white"
       )}
-      initial={{ opacity: 0 }}
       animate={{ 
-        opacity: 1,
         background: getBackground()
       }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0 }}
     >
       {/* Background Pattern / Noise for texture (only on colored backgrounds) */}
       {!isWhite && (
@@ -53,7 +50,7 @@ export function Layout({ children, theme = 'green', className, showNav = true }:
       )}
 
       {/* Main Content */}
-      <div className={clsx("relative z-10 flex-1 flex flex-col", className)}>
+      <div className={clsx("relative z-10 flex-1 flex flex-col pb-24 md:pb-28", className)}>
         {children}
       </div>
 

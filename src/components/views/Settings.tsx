@@ -15,7 +15,7 @@ export function Settings({ onNavigate }: Props) {
         animate={{ opacity: 1, y: 0 }}
         className="max-w-4xl mx-auto w-full flex flex-col items-center mt-8"
       >
-        <h1 className="text-5xl font-light text-slate-800 text-center mb-8">Settings</h1>
+        <h1 className="text-5xl font-light text-[rgb(255,255,255)] text-center mb-8">Settings</h1>
 
         {/* Search Bar */}
         <div className="w-full max-w-lg relative mb-16">
@@ -32,36 +32,30 @@ export function Settings({ onNavigate }: Props) {
         {/* Main Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
           
+          <div className="bg-white rounded-2xl h-32 md:h-24 shadow-md flex items-center justify-center text-xl font-bold text-slate-700">
+            Account Settings
+          </div>
+
+          <div className="bg-white rounded-2xl h-32 md:h-24 shadow-md flex items-center justify-center text-xl font-bold text-slate-700">
+            App Settings
+          </div>
+
           <motion.button
              whileHover={{ scale: 1.02 }}
              whileTap={{ scale: 0.98 }}
              onClick={() => onNavigate('dj-account-settings')}
-             className="bg-white rounded-2xl h-32 md:h-24 shadow-md flex items-center justify-center text-xl font-bold text-slate-700 hover:shadow-xl transition-all"
+             className="bg-white rounded-2xl aspect-square shadow-md flex items-center justify-center text-slate-200 hover:shadow-xl transition-all"
           >
-            Account Settings
+            <User size={80} />
           </motion.button>
 
           <motion.button
              whileHover={{ scale: 1.02 }}
              whileTap={{ scale: 0.98 }}
-             className="bg-white rounded-2xl h-32 md:h-24 shadow-md flex items-center justify-center text-xl font-bold text-slate-700 hover:shadow-xl transition-all"
-          >
-            App Settings
-          </motion.button>
-
-          <motion.div
-             whileHover={{ scale: 1.02 }}
-             className="bg-white rounded-2xl aspect-square shadow-md flex items-center justify-center text-slate-200"
-          >
-            <User size={80} />
-          </motion.div>
-
-          <motion.div
-             whileHover={{ scale: 1.02 }}
-             className="bg-white rounded-2xl aspect-square shadow-md flex items-center justify-center text-slate-200"
+             className="bg-white rounded-2xl aspect-square shadow-md flex items-center justify-center text-slate-200 hover:shadow-xl transition-all"
           >
             <SettingsIcon size={80} />
-          </motion.div>
+          </motion.button>
 
         </div>
 

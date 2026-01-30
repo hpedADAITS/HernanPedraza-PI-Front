@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { Search, ThumbsUp, ThumbsDown, UserPlus, LogOut, Settings, Plus, Music } from 'lucide-react';
 import { clsx } from 'clsx';
 import { toast } from 'sonner@2.0.3';
+import { NowPlaying } from '../ui/NowPlaying';
 
 interface Props {
   mode: 'attendee' | 'dj';
@@ -15,7 +16,7 @@ export function Dashboard({ mode, onNavigate }: Props) {
   const theme = isDj ? 'blue' : 'green';
 
   return (
-    <Layout theme={theme} className="p-6 md:p-12" showNav={true}>
+    <Layout theme="white" className="p-6 md:p-12" showNav={true}>
       <div className="max-w-7xl mx-auto w-full h-full flex flex-col lg:flex-row gap-8 mt-12">
         
         {/* Left Column: Profile & Queue */}
@@ -104,70 +105,85 @@ export function Dashboard({ mode, onNavigate }: Props) {
             </div>
           </motion.div>
 
-          {/* Empty Space / Visualization Area */}
-          <div className="flex-1 flex items-center justify-center min-h-[200px]">
-            {/* Could put a music visualizer here */}
-          </div>
+          {/* Now Playing Area */}
+          <motion.div 
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className={clsx(
+              "flex-1 flex min-h-[200px]",
+              isDj ? "items-start" : "items-center justify-center"
+            )}
+          >
+            <div className="w-full max-w-2xl">
+              <NowPlaying 
+                songTitle="Blinding Lights"
+                artist="The Weeknd"
+                currentTime="2:35"
+                duration="3:45"
+                progress={68}
+                status="playing"
+              />
+            </div>
+          </motion.div>
 
           {/* Bottom Actions Area */}
-          <div className="flex flex-col md:flex-row items-end justify-between gap-6">
+          <div className="flex flex-col gap-6 items-center">
             
             {/* Attendee: Voting */}
             {!isDj && (
-              <div className="flex gap-4">
+              <div className="flex gap-6 justify-center w-full">
                  <motion.button 
-                   whileHover={{ scale: 1.1 }}
-                   whileTap={{ scale: 0.9 }}
-                   className="w-24 h-24 bg-blue-600 rounded-3xl shadow-xl shadow-blue-900/20 flex items-center justify-center text-white"
+                   whileHover={{ scale: 1.05 }}
+                   whileTap={{ scale: 0.95 }}
+                   className="w-20 h-20 md:w-24 md:h-24 bg-emerald-600 hover:bg-emerald-700 rounded-2xl shadow-lg flex items-center justify-center text-white transition-colors"
                    onClick={() => toast.success("Voted Up!")}
                  >
-                   <ThumbsUp size={40} fill="currentColor" />
+                   <ThumbsUp size={36} fill="currentColor" />
                  </motion.button>
                  <motion.button 
-                   whileHover={{ scale: 1.1 }}
-                   whileTap={{ scale: 0.9 }}
-                   className="w-24 h-24 bg-red-600 rounded-3xl shadow-xl shadow-red-900/20 flex items-center justify-center text-white"
+                   whileHover={{ scale: 1.05 }}
+                   whileTap={{ scale: 0.95 }}
+                   className="w-20 h-20 md:w-24 md:h-24 bg-red-600 hover:bg-red-700 rounded-2xl shadow-lg flex items-center justify-center text-white transition-colors"
                    onClick={() => toast.success("Voted Down!")}
                  >
-                   <ThumbsDown size={40} fill="currentColor" className="mt-2" />
+                   <ThumbsDown size={36} fill="currentColor" />
                  </motion.button>
               </div>
             )}
 
-            {/* Common/DJ Actions */}
-            <div className="flex flex-col gap-4 w-full md:w-auto items-end">
-              <div className="flex flex-col gap-3 w-full md:w-[300px]">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => onNavigate(isDj ? 'dj-song-select' : 'attendee-song-select')}
-                  className="h-16 bg-slate-600 hover:bg-slate-700 text-white rounded-2xl shadow-xl flex items-center justify-center gap-3 font-bold text-xl"
-                >
-                  <Plus size={24} /> Queue Song
-                </motion.button>
-                
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => onNavigate(isDj ? 'dj-login' : 'attendee-login')}
-                  className="h-16 bg-slate-600 hover:bg-slate-700 text-white rounded-2xl shadow-xl flex items-center justify-center gap-3 font-bold text-xl"
-                >
-                  <LogOut size={24} /> Leave Party
-                </motion.button>
-              </div>
-            </div>
+            {/* Action Buttons Row */}
+            <div className="flex flex-col sm:flex-row gap-3 w-full max-w-2xl">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => onNavigate(isDj ? 'dj-song-select' : 'attendee-song-select')}
+                className="flex-1 h-14 bg-slate-600 hover:bg-slate-700 text-white rounded-xl shadow-lg flex items-center justify-center gap-3 font-semibold text-lg transition-colors"
+              >
+                <Plus size={22} /> Queue Song
+              </motion.button>
+              
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => onNavigate(isDj ? 'dj-login' : 'attendee-login')}
+                className="flex-1 h-14 bg-slate-600 hover:bg-slate-700 text-white rounded-xl shadow-lg flex items-center justify-center gap-3 font-semibold text-lg transition-colors"
+              >
+                <LogOut size={22} /> Leave Party
+              </motion.button>
 
-            {/* Settings (DJ Only) */}
-            {isDj && (
-               <motion.button
-                 whileHover={{ rotate: 90 }}
-                 whileTap={{ scale: 0.9 }}
-                 onClick={() => onNavigate('dj-settings')}
-                 className="w-24 h-24 bg-slate-600 rounded-3xl shadow-xl flex items-center justify-center text-white flex-shrink-0"
-               >
-                 <Settings size={40} />
-               </motion.button>
-            )}
+              {/* Settings (DJ Only) */}
+              {isDj && (
+                <motion.button
+                  whileHover={{ rotate: 90 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => onNavigate('dj-settings')}
+                  className="w-14 h-14 bg-slate-600 hover:bg-slate-700 rounded-xl shadow-lg flex items-center justify-center text-white flex-shrink-0 transition-colors"
+                >
+                  <Settings size={24} />
+                </motion.button>
+              )}
+            </div>
 
           </div>
 

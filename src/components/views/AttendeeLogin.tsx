@@ -2,6 +2,7 @@ import React from 'react';
 import { Layout } from '../layout/Layout';
 import { Logo } from '../ui/Logo';
 import { motion } from 'motion/react';
+import { ArrowRight } from 'lucide-react';
 
 interface Props {
   onNavigate: (view: any) => void;
@@ -31,6 +32,19 @@ export function AttendeeLogin({ onNavigate }: Props) {
           className="w-full h-full object-contain rounded-xl rendering-pixelated" 
         />
       </motion.div>
+
+      <motion.button
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.6 }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => onNavigate('attendee-dashboard')}
+        className="mt-8 bg-emerald-600 hover:bg-emerald-700 text-white px-10 py-4 rounded-2xl shadow-xl shadow-emerald-900/20 flex items-center gap-3 text-xl font-bold transition-colors"
+      >
+        Enter Event
+        <ArrowRight size={24} />
+      </motion.button>
     </Layout>
   );
 }

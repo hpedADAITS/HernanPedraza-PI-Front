@@ -51,15 +51,17 @@ export function SongSelection({ mode, onNavigate }: Props) {
           animate={{ scale: 1, opacity: 1 }}
           className="w-full max-w-3xl relative mb-12"
         >
-          <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400">
-            <Search size={28} />
+          <div className="absolute left-6 top-1/2 -translate-y-1/2 z-10">
+            <div className="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center">
+              <Search size={24} className="text-slate-800" />
+            </div>
           </div>
           <input 
             type="text" 
             placeholder="Search..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full h-20 pl-16 pr-6 rounded-2xl shadow-xl shadow-slate-200 border-none outline-none text-xl placeholder:text-slate-300 focus:ring-4 focus:ring-slate-100 transition-all"
+            className="w-full h-20 pl-20 pr-6 rounded-2xl shadow-xl bg-slate-700 text-white border-none outline-none text-xl placeholder:text-slate-400 focus:ring-4 focus:ring-slate-500 transition-all"
           />
         </motion.div>
 
@@ -88,11 +90,11 @@ export function SongSelection({ mode, onNavigate }: Props) {
               onClick={() => handleSelect(song)}
               className="bg-slate-200 hover:bg-white hover:scale-[1.01] hover:shadow-lg transition-all duration-300 rounded-2xl p-4 md:p-6 cursor-pointer relative group overflow-hidden"
             >
-              <div className="flex items-center justify-between relative z-10">
+              <div className="flex items-center gap-4 md:gap-6 relative z-10">
                 
                 {/* DJ: Requester Avatar */}
                 {isDj && (
-                  <div className="w-16 h-16 rounded-xl bg-white shadow-sm flex-shrink-0 mr-6 flex items-center justify-center overflow-hidden border-2 border-white">
+                  <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl bg-white shadow-sm flex-shrink-0 flex items-center justify-center overflow-hidden border-2 border-white">
                     <img 
                       src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${song.requester}`}
                       alt={song.requester}
@@ -101,37 +103,37 @@ export function SongSelection({ mode, onNavigate }: Props) {
                   </div>
                 )}
                 
-                {/* Song Info (Left) */}
-                <div className="flex-1 min-w-0 md:text-center md:absolute md:left-1/2 md:-translate-x-1/2 flex flex-col md:items-center">
-                   <h3 className="text-2xl font-light text-slate-800 truncate">{song.title}</h3>
-                   <p className="text-sm font-light text-slate-500">{song.artist}</p>
+                {/* Song Info */}
+                <div className="flex-1 min-w-0 flex flex-col">
+                   <h3 className="text-xl md:text-2xl font-light text-slate-800 truncate">{song.title}</h3>
+                   <p className="text-sm font-light text-slate-500 truncate">{song.artist}</p>
                 </div>
 
                 {/* Metadata Grid (Hidden on mobile, visible on desktop) */}
-                <div className="hidden md:flex gap-8 lg:gap-16 items-center text-center absolute left-[20%] right-[10%] justify-center opacity-60 group-hover:opacity-100 transition-opacity pointer-events-none">
-                   <div>
-                     <p className="text-xs uppercase tracking-wider text-slate-400">AI Eligibility</p>
-                     <p className={clsx("font-medium", song.eligibility === 'High' ? "text-emerald-500" : "text-slate-600")}>
+                <div className="hidden lg:flex gap-6 xl:gap-8 items-center opacity-60 group-hover:opacity-100 transition-opacity">
+                   <div className="text-center min-w-[80px]">
+                     <p className="text-xs uppercase tracking-wider text-slate-400">Eligibility</p>
+                     <p className={clsx("font-medium text-sm", song.eligibility === 'High' ? "text-emerald-500" : "text-slate-600")}>
                        {song.eligibility}
                      </p>
                    </div>
-                   <div>
+                   <div className="text-center min-w-[60px]">
                      <p className="text-xs uppercase tracking-wider text-slate-400">Duration</p>
-                     <p className="text-slate-800">{song.duration}</p>
+                     <p className="text-slate-800 text-sm">{song.duration}</p>
                    </div>
-                   <div>
+                   <div className="text-center min-w-[50px]">
                      <p className="text-xs uppercase tracking-wider text-slate-400">Key</p>
-                     <p className="text-slate-800">{song.key}</p>
+                     <p className="text-slate-800 text-sm">{song.key}</p>
                    </div>
-                   <div>
+                   <div className="text-center min-w-[50px]">
                      <p className="text-xs uppercase tracking-wider text-slate-400">BPM</p>
-                     <p className="text-slate-800">{song.bpm}</p>
+                     <p className="text-slate-800 text-sm">{song.bpm}</p>
                    </div>
                 </div>
 
                 {/* Arrow Button */}
-                <div className="ml-auto bg-slate-600 group-hover:bg-slate-800 text-white w-14 h-14 rounded-xl flex items-center justify-center transition-colors shadow-md">
-                   <ChevronRight size={28} />
+                <div className="bg-slate-600 group-hover:bg-slate-800 text-white w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center transition-colors shadow-md flex-shrink-0">
+                   <ChevronRight size={24} className="md:w-7 md:h-7" />
                 </div>
               </div>
             </motion.div>

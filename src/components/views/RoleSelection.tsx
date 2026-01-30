@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Layout } from '../layout/Layout';
 import { Logo } from '../ui/Logo';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { User, Headphones } from 'lucide-react';
 
 interface Props {
@@ -9,6 +9,24 @@ interface Props {
 }
 
 export function RoleSelection({ onNavigate }: Props) {
+  const [expandingCircle, setExpandingCircle] = useState<{ x: number; y: number; color: string } | null>(null);
+
+  const handleRoleClick = (role: 'attendee' | 'dj', event: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    const color = role === 'attendee' 
+      ? 'linear-gradient(135deg, #77c76e 0%, #38997a 100%)'
+      : 'linear-gradient(135deg, #4ca0f1 0%, #61c8fa 100%)';
+    
+    setExpandingCircle({ x, y, color });
+    
+    // Navigate after a short delay to allow animation to start
+    setTimeout(() => {
+      onNavigate(role === 'attendee' ? 'attendee-login' : 'dj-login');
+    }, 400);
+  };
+
   return (
     <Layout theme="white" className="items-center justify-center min-h-screen">
       
@@ -33,7 +51,7 @@ export function RoleSelection({ onNavigate }: Props) {
             transition={{ delay: 0.2 }}
             whileHover={{ scale: 1.03, y: -5 }}
             whileTap={{ scale: 0.97 }}
-            onClick={() => onNavigate('attendee-login')}
+            onClick={(e) => handleRoleClick('attendee', e)}
             className="group relative w-72 h-80 rounded-xl overflow-hidden shadow-xl shadow-emerald-900/10 transition-all hover:shadow-2xl hover:shadow-emerald-900/20"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-[#77c76e] to-[#38997a]" />
@@ -54,7 +72,7 @@ export function RoleSelection({ onNavigate }: Props) {
             transition={{ delay: 0.3 }}
             whileHover={{ scale: 1.03, y: -5 }}
             whileTap={{ scale: 0.97 }}
-            onClick={() => onNavigate('dj-login')}
+            onClick={(e) => handleRoleClick('dj', e)}
             className="group relative w-72 h-80 rounded-xl overflow-hidden shadow-xl shadow-blue-900/10 transition-all hover:shadow-2xl hover:shadow-blue-900/20"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-[#4ca0f1] to-[#61c8fa]" />
@@ -70,6 +88,29 @@ export function RoleSelection({ onNavigate }: Props) {
 
         </div>
       </div>
+
+      {/* Expanding Circle Transition */}
+      <AnimatePresence>
+        {expandingCircle && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 30 }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+            style={{
+              position: 'fixed',
+              left: expandingCircle.x,
+              top: expandingCircle.y,
+              width: 100,
+              height: 100,
+              borderRadius: '50%',
+              background: expandingCircle.color,
+              transform: 'translate(-50%, -50%)',
+              pointerEvents: 'none',
+              zIndex: 9999,
+            }}
+          />
+        )}
+      </AnimatePresence>
     </Layout>
   );
 }
