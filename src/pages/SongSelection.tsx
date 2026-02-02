@@ -4,33 +4,43 @@ import { motion } from 'motion/react';
 import { Search, ChevronRight, ArrowLeft } from 'lucide-react';
 import { clsx } from 'clsx';
 import { toast } from 'sonner@2.0.3';
+import { FrequentSongWarningModal } from '../components/modals';
+import { SONGS_DATA, FREQUENT_REQUEST_THRESHOLD } from '../constants/songs';
 
 interface Props {
   mode: 'attendee' | 'dj';
   onNavigate: (view: any) => void;
 }
 
-const SONGS = [
-  { id: 1, title: 'Midnight City', artist: 'M83', key: 'C#m', bpm: 105, duration: '4:03', eligibility: 'High', requester: 'Alice' },
-  { id: 2, title: 'Get Lucky', artist: 'Daft Punk', key: 'F#m', bpm: 116, duration: '4:08', eligibility: 'High', requester: 'Bob' },
-  { id: 3, title: 'Levels', artist: 'Avicii', key: 'C#m', bpm: 126, duration: '3:19', eligibility: 'Medium', requester: 'Charlie' },
-  { id: 4, title: 'Titanium', artist: 'David Guetta', key: 'Cm', bpm: 126, duration: '4:05', eligibility: 'High', requester: 'Dave' },
-  { id: 5, title: 'Wake Me Up', artist: 'Avicii', key: 'Bm', bpm: 124, duration: '4:07', eligibility: 'Low', requester: 'Eve' },
-];
-
 export function SongSelection({ mode, onNavigate }: Props) {
   const isDj = mode === 'dj';
   const theme = isDj ? 'blue' : 'green';
   const [searchTerm, setSearchTerm] = useState('');
+  const [pendingSong, setPendingSong] = useState<typeof SONGS_DATA[number] | null>(null);
+  const [showWarning, setShowWarning] = useState(false);
 
-  const filteredSongs = SONGS.filter(s => 
+  const filteredSongs = SONGS_DATA.filter(s => 
     s.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
     s.artist.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSelect = (song: typeof SONGS[0]) => {
+  const handleSelectSong = (song: typeof SONGS_DATA[number]) => {
+    // For attendees, check if song has been frequently requested
+    if (!isDj && song.requestCount >= FREQUENT_REQUEST_THRESHOLD) {
+      setPendingSong(song);
+      setShowWarning(true);
+      return;
+    }
+
+    // Otherwise proceed directly
+    completeSelection(song);
+  };
+
+  const completeSelection = (song: typeof SONGS_DATA[number]) => {
     toast.success(`Queued "${song.title}"`);
     onNavigate(isDj ? 'dj-dashboard' : 'attendee-dashboard');
+    setShowWarning(false);
+    setPendingSong(null);
   };
 
   return (
@@ -86,7 +96,7 @@ export function SongSelection({ mode, onNavigate }: Props) {
                 hidden: { y: 20, opacity: 0 },
                 show: { y: 0, opacity: 1 }
               }}
-              onClick={() => handleSelect(song)}
+              onClick={() => handleSelectSong(song)}
               className="bg-slate-200 hover:bg-white hover:scale-[1.01] hover:shadow-lg transition-all duration-300 rounded-2xl p-4 md:p-6 cursor-pointer relative group overflow-hidden"
             >
               <div className="flex items-center gap-4 md:gap-6 relative z-10">
@@ -153,6 +163,20 @@ export function SongSelection({ mode, onNavigate }: Props) {
         </div>
 
       </div>
+
+      {/* Frequent Song Warning Modal (Attendee Only) */}
+      {pendingSong && (
+        <FrequentSongWarningModal
+          isOpen={showWarning}
+          songTitle={pendingSong.title}
+          requestCount={pendingSong.requestCount}
+          onConfirm={() => completeSelection(pendingSong)}
+          onCancel={() => {
+            setShowWarning(false);
+            setPendingSong(null);
+          }}
+        />
+      )}
     </Layout>
   );
 }

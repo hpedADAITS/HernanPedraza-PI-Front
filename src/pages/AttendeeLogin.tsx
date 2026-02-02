@@ -26,11 +26,12 @@ export function AttendeeLogin({ onNavigate }: Props) {
         transition={{ delay: 0.4, type: 'spring' }}
         className="bg-white p-3 rounded-[24px] shadow-2xl shadow-black/10 max-w-sm w-72 md:w-80 aspect-square flex items-center justify-center relative"
       >
-        <img 
-          src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=https://syncrequest.app/join&color=000000&bgcolor=ffffff&margin=10" 
-          alt="Scan to Join"
-          className="w-full h-full object-contain rounded-xl rendering-pixelated" 
-        />
+        <div className="w-full h-full rounded-xl bg-gradient-to-br from-slate-300 to-slate-400 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-slate-600 mb-2">📱</div>
+            <p className="text-slate-600 font-medium text-sm">QR Code</p>
+          </div>
+        </div>
       </motion.div>
 
       <motion.button
