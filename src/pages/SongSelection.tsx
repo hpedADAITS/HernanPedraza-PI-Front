@@ -93,12 +93,10 @@ export function SongSelection({ mode, onNavigate }: Props) {
                 
                 {/* DJ: Requester Avatar */}
                 {isDj && (
-                  <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl bg-white shadow-sm flex-shrink-0 flex items-center justify-center overflow-hidden border-2 border-white">
-                    <img 
-                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${song.requester}`}
-                      alt={song.requester}
-                      className="w-full h-full"
-                    />
+                  <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl bg-gradient-to-br from-slate-400 to-slate-500 shadow-sm flex-shrink-0 flex items-center justify-center overflow-hidden border-2 border-white flex-shrink-0">
+                    <span className="text-lg md:text-xl font-bold text-white">
+                      {song.requester.charAt(0).toUpperCase()}
+                    </span>
                   </div>
                 )}
                 

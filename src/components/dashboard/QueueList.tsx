@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { clsx } from 'clsx';
 import { QUEUE_SONGS, THEME_CONFIG } from '../../constants/dashboard';
+import { SLIDE_UP, ANIMATION_STAGGER, ANIMATION_DURATION } from '../../constants/animations';
 
 interface QueueListProps {
   mode: 'attendee' | 'dj';
@@ -13,9 +14,8 @@ export function QueueList({ mode }: QueueListProps) {
 
   return (
     <motion.div 
-      initial={{ y: 20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ delay: 0.2 }}
+      {...SLIDE_UP}
+      transition={{ ...SLIDE_UP.transition, delay: 0.15 }}
       className="bg-white/90 backdrop-blur-xl rounded-3xl p-6 shadow-xl flex-1 min-h-[400px]"
     >
       <h3 className="text-slate-500 font-bold mb-4 uppercase text-xs tracking-wider">
@@ -46,7 +46,11 @@ interface QueueItemProps {
 
 function QueueItem({ song, position, isFirst, primaryColor }: QueueItemProps) {
   return (
-    <div className="flex items-center gap-4 group cursor-pointer hover:bg-slate-50 p-2 rounded-xl transition-colors">
+    <motion.div 
+      whileHover={{ backgroundColor: 'rgba(248, 250, 252, 0.7)' }}
+      transition={{ duration: ANIMATION_DURATION.fast }}
+      className="flex items-center gap-4 group cursor-pointer p-3 rounded-xl"
+    >
       {/* Position Badge */}
       <div className={clsx(
         "w-12 h-12 rounded-xl shadow-md flex items-center justify-center text-white font-bold text-lg flex-shrink-0",
@@ -56,15 +60,16 @@ function QueueItem({ song, position, isFirst, primaryColor }: QueueItemProps) {
       </div>
       
       {/* Song Info */}
-      <div className="flex-1 min-w-0">
-        <span className="font-semibold text-slate-800 block truncate">{song.title}</span>
+      <div className="flex-1 min-w-0 flex flex-col gap-1">
+        <span className="font-semibold text-slate-800 truncate">{song.title}</span>
         <span className="text-xs text-slate-500">{song.artist}</span>
       </div>
       
-      {/* Position Display */}
-      <div className="text-slate-300 font-bold text-xl opacity-50">
-        {position}
+      {/* Vote Count */}
+      <div className="flex flex-col items-end gap-1">
+        <span className="text-sm font-semibold text-slate-700">{song.votes}</span>
+        <span className="text-xs text-slate-400">votes</span>
       </div>
-    </div>
+    </motion.div>
   );
 }

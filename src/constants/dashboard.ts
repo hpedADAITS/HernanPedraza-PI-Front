@@ -1,11 +1,11 @@
 export const QUEUE_SONGS = [
-  { title: 'Blinding Lights', artist: 'The Weeknd' },
-  { title: 'Levitating', artist: 'Dua Lipa' },
-  { title: 'Save Your Tears', artist: 'The Weeknd' },
-  { title: 'Don\'t Start Now', artist: 'Dua Lipa' }
+  { title: 'Blinding Lights', artist: 'The Weeknd', votes: 42 },
+  { title: 'Levitating', artist: 'Dua Lipa', votes: 38 },
+  { title: 'Save Your Tears', artist: 'The Weeknd', votes: 25 },
+  { title: 'Don\'t Start Now', artist: 'Dua Lipa', votes: 19 }
 ] as const;
 
-export const PROFILE_IMAGE = "https://images.unsplash.com/photo-1678286742832-26543bb49959?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwb3J0cmFpdCUyMHVzZXIlMjBwcm9maWxlfGVufDF8fHx8MTc2OTEyMTA2OHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
+export const PROFILE_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect fill='%235a7fa6' width='256' height='256'/%3E%3Ccircle cx='128' cy='96' r='48' fill='%23a8c5e0'/%3E%3Cpath d='M80 190c0-26 21-48 48-48s48 22 48 48v20H80z' fill='%23a8c5e0'/%3E%3C/svg%3E";
 
 export const NOW_PLAYING = {
   title: 'Blinding Lights',

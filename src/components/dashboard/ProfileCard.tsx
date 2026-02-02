@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { clsx } from 'clsx';
 import { PROFILE_IMAGE, THEME_CONFIG } from '../../constants/dashboard';
+import { SLIDE_IN_LEFT } from '../../constants/animations';
 
 interface ProfileCardProps {
   mode: 'attendee' | 'dj';
@@ -14,8 +15,7 @@ export function ProfileCard({ mode }: ProfileCardProps) {
 
   return (
     <motion.div 
-      initial={{ x: -50, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
+      {...SLIDE_IN_LEFT}
       className={clsx(
         "rounded-3xl p-6 shadow-xl text-white relative overflow-hidden",
         "min-h-[200px] flex flex-col items-center justify-center text-center",
