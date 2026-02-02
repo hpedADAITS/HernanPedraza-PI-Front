@@ -1,8 +1,8 @@
 import React from 'react';
-import { Layout } from '../layout/Layout';
-import { Logo } from '../ui/Logo';
+import { Layout } from '../components/layout/Layout';
+import { Logo } from '../components/ui/Logo';
 import { motion } from 'motion/react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ArrowLeft } from 'lucide-react';
 
 interface Props {
   onNavigate: (view: any) => void;
@@ -45,6 +45,21 @@ export function AttendeeLogin({ onNavigate }: Props) {
         Enter Event
         <ArrowRight size={24} />
       </motion.button>
+
+      {/* Back Button */}
+      <div className="fixed bottom-8 right-8 z-50">
+        <motion.button
+           initial={{ opacity: 0, x: 20 }}
+           animate={{ opacity: 1, x: 0 }}
+           whileHover={{ scale: 1.05 }}
+           whileTap={{ scale: 0.95 }}
+           onClick={() => onNavigate('role-selection')}
+           className="bg-white px-8 py-4 rounded-full shadow-xl shadow-black/10 text-xl font-light text-slate-800 flex items-center gap-2 border border-slate-100"
+        >
+          <ArrowLeft size={20} />
+          Back
+        </motion.button>
+      </div>
     </Layout>
   );
 }

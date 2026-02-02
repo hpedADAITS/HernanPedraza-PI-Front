@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layout } from '../layout/Layout';
+import { Layout } from '../components/layout/Layout';
 import { motion } from 'motion/react';
 import { Search, ChevronRight, ArrowLeft } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -40,15 +40,14 @@ export function SongSelection({ mode, onNavigate }: Props) {
         <motion.h1 
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="text-3xl md:text-5xl font-light text-slate-800 text-center mb-8"
+          className="text-3xl md:text-5xl font-light text-white text-center mb-8"
         >
           {isDj ? 'Select a song your audience submitted' : 'Select a song'}
         </motion.h1>
 
         {/* Search Bar */}
         <motion.div 
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
+          layoutId="search-bar"
           className="w-full max-w-3xl relative mb-12"
         >
           <div className="absolute left-6 top-1/2 -translate-y-1/2 z-10">
@@ -140,15 +139,18 @@ export function SongSelection({ mode, onNavigate }: Props) {
           ))}
         </motion.div>
 
-        {/* Cancel/Back Button */}
+        {/* Back Button */}
         <div className="fixed bottom-8 right-8 z-50">
           <motion.button
+             initial={{ opacity: 0, x: 20 }}
+             animate={{ opacity: 1, x: 0 }}
              whileHover={{ scale: 1.05 }}
              whileTap={{ scale: 0.95 }}
              onClick={() => onNavigate(isDj ? 'dj-dashboard' : 'attendee-dashboard')}
              className="bg-white px-8 py-4 rounded-full shadow-xl shadow-black/10 text-xl font-light text-slate-800 flex items-center gap-2 border border-slate-100"
           >
-            Cancel
+            <ArrowLeft size={20} />
+            Back
           </motion.button>
         </div>
 

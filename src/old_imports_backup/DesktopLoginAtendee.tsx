@@ -1,6 +1,6 @@
 import svgPaths from "./svg-xnpfifjpab";
-import imgLogo from "figma:asset/b80a222536e5acd2e9e6b97aa41bab4feddda6b4.png";
-import imgImage3 from "figma:asset/7fd30e3b4334b9462db2adf0746adefd6b2405a7.png";
+import imgLogo from "../assets/logo_normal.png";
+import imgImage3 from "../assets/7fd30e3b4334b9462db2adf0746adefd6b2405a7.png";
 
 function AttendeeButton() {
   return (

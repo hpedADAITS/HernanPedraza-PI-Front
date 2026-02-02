@@ -8,10 +8,15 @@ interface LogoProps {
 }
 
 export function Logo({ className, variant = 'light' }: LogoProps) {
+  const isDark = variant === 'dark';
+  
   return (
     <div className={clsx("flex items-center gap-3 select-none", className)}>
       {/* Image Logo */}
-      <div className="w-20 h-20 flex items-center justify-center">
+      <div className={clsx(
+        "w-20 h-20 flex items-center justify-center rounded-lg transition-colors",
+        isDark ? "bg-slate-900" : "bg-white"
+      )}>
         <img 
           src={logoNormal} 
           alt="Sync Rekuest Logo"

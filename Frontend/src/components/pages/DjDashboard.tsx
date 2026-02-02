@@ -23,7 +23,8 @@ export function DjDashboard() {
 
   return (
     <PageTransition>
-      <div className="space-y-8">
+      <div className="flex justify-center">
+        <div className="space-y-8 w-full lg:w-2/3">
         {/* Header */}
         <div className="animate-fade-in-down">
           <h1 className="text-3xl font-bold text-slate-900">DJ Dashboard</h1>
@@ -31,8 +32,8 @@ export function DjDashboard() {
         </div>
 
         {/* Now Playing Card */}
-        <div className="animate-fade-in-up animation-delay-100 bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg p-8 text-white shadow-xl">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+        <div className="animate-fade-in-up animation-delay-100 bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg p-8 text-white shadow-xl flex justify-center">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8 w-full">
             <div className="flex-1">
               <p className="text-sm opacity-80 mb-2">NOW PLAYING</p>
               <h2 className="text-3xl font-bold mb-2">{currentSong.title}</h2>
@@ -74,8 +75,8 @@ export function DjDashboard() {
         </div>
 
         {/* Queue Section */}
-        <div className="animate-fade-in-up animation-delay-200">
-          <div className="flex items-center justify-between mb-4">
+        <div className="animate-fade-in-up animation-delay-200 flex flex-col items-center">
+          <div className="flex items-center justify-between mb-4 w-full max-w-2xl">
             <h2 className="text-xl font-semibold text-slate-900">Song Queue ({queue.length})</h2>
             <button
               onClick={() => navigate('/dj/songs')}
@@ -85,7 +86,7 @@ export function DjDashboard() {
             </button>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="bg-white rounded-lg shadow-md overflow-hidden w-full max-w-2xl">
             <div className="divide-y">
               {queue.map((song, idx) => (
                 <div
@@ -131,6 +132,7 @@ export function DjDashboard() {
             <p className="text-sm text-slate-600">Requests</p>
             <p className="text-2xl font-bold text-slate-900">156</p>
           </div>
+        </div>
         </div>
       </div>
     </PageTransition>

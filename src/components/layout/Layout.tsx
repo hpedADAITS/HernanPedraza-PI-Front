@@ -1,7 +1,8 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { clsx } from 'clsx';
-import { Sun } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
+import { Logo } from '../ui/Logo';
 
 interface LayoutProps {
   children: ReactNode;
@@ -11,25 +12,41 @@ interface LayoutProps {
 }
 
 export function Layout({ children, theme = 'green', className, showNav = true }: LayoutProps) {
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved ? JSON.parse(saved) : false;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
+  }, [isDarkMode]);
   const isWhite = theme === 'white';
   const isGreen = theme === 'green';
 
   const getBackground = () => {
-    if (isWhite) return "bg-white";
+    if (isDarkMode) return "#1a1a1a";
+    if (isWhite) return "#ffffff";
     if (isGreen) return "linear-gradient(135deg, #77c76e 0%, #38997a 100%)";
     return "linear-gradient(135deg, #4ca0f1 0%, #61c8fa 100%)";
   };
 
+  const getTextColor = () => {
+    if (isDarkMode) return "text-white";
+    if (isWhite) return "text-slate-800";
+    return "text-white";
+  };
+
   return (
     <motion.div 
+      key={`layout-${isDarkMode}`}
       className={clsx(
         "relative w-full h-full overflow-y-auto flex flex-col font-sans",
-        isWhite ? "text-slate-800" : "text-white"
+        getTextColor()
       )}
-      animate={{ 
-        background: getBackground()
+      style={{ 
+        background: getBackground(),
+        transition: 'background 0.3s ease'
       }}
-      transition={{ duration: 0 }}
     >
       {/* Background Pattern / Noise for texture (only on colored backgrounds) */}
       {!isWhite && (
@@ -42,10 +59,18 @@ export function Layout({ children, theme = 'green', className, showNav = true }:
            <div /> {/* Left Spacer */}
 
            {/* Theme Toggle */}
-           <button className="pointer-events-auto bg-white shadow-sm border border-slate-200 rounded-full px-4 py-2 flex items-center gap-2 text-slate-700 font-medium transition-transform hover:scale-105 active:scale-95">
-             <Sun size={18} className="animate-spin-slow" />
-             <span className="text-sm">Light</span>
-           </button>
+                <button 
+                  onClick={() => setIsDarkMode(!isDarkMode)}
+                  className={clsx(
+                    "pointer-events-auto shadow-sm border rounded-full px-4 py-2 flex items-center gap-2 font-medium transition-all hover:scale-105 active:scale-95",
+                    isDarkMode 
+                      ? "bg-slate-800 border-slate-600 text-white" 
+                      : "bg-white border-slate-200 text-slate-700"
+                  )}
+                >
+                  {isDarkMode ? <Moon size={18} /> : <Sun size={18} className="animate-spin-slow" />}
+                  <span className="text-sm">{isDarkMode ? 'Dark' : 'Light'}</span>
+                </button>
         </header>
       )}
 
@@ -56,18 +81,10 @@ export function Layout({ children, theme = 'green', className, showNav = true }:
 
       {/* Footer */}
       {showNav && (
-        <footer className="absolute bottom-0 left-0 right-0 p-6 md:p-8 flex justify-between items-end pointer-events-none z-50">
-           {/* Copyright - Centered Absolutely */}
-           <div className="absolute left-1/2 bottom-8 -translate-x-1/2 text-center text-xs opacity-60 font-light pointer-events-none w-full">
-             © 2025 SyncRequest
-           </div>
-
-           <div /> {/* Left Spacer */}
-
-           {/* Language Toggle */}
-           <button className="pointer-events-auto bg-white shadow-sm border border-slate-200 rounded-full h-10 px-4 flex items-center justify-center font-bold text-xs text-slate-800 transition-transform hover:scale-105 active:scale-95">
-             EN
-           </button>
+        <footer className="relative p-6 md:p-8 flex justify-center items-end z-50">
+          <div className="text-center text-xs opacity-60 font-light pointer-events-none">
+            © 2025 SyncRequest
+          </div>
         </footer>
       )}
     </motion.div>

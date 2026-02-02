@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Layout } from '../layout/Layout';
-import { Logo } from '../ui/Logo';
+import { Layout } from '../components/layout/Layout';
+import { Logo } from '../components/ui/Logo';
 import { motion, AnimatePresence } from 'motion/react';
 import { User, Headphones } from 'lucide-react';
 
@@ -51,8 +51,12 @@ export function RoleSelection({ onNavigate }: Props) {
             transition={{ delay: 0.2 }}
             whileHover={{ scale: 1.03, y: -5 }}
             whileTap={{ scale: 0.97 }}
+            variants={{
+              hover: { scale: 1.03, y: -5, transition: { duration: 0.1 } },
+              tap: { scale: 0.97, transition: { duration: 0.1 } }
+            }}
             onClick={(e) => handleRoleClick('attendee', e)}
-            className="group relative w-72 h-80 rounded-xl overflow-hidden shadow-xl shadow-emerald-900/10 transition-all hover:shadow-2xl hover:shadow-emerald-900/20"
+            className="group relative w-72 h-80 rounded-xl overflow-hidden shadow-xl shadow-emerald-900/10 hover:shadow-2xl hover:shadow-emerald-900/20"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-[#77c76e] to-[#38997a]" />
             <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors" />
@@ -72,8 +76,12 @@ export function RoleSelection({ onNavigate }: Props) {
             transition={{ delay: 0.3 }}
             whileHover={{ scale: 1.03, y: -5 }}
             whileTap={{ scale: 0.97 }}
+            variants={{
+              hover: { scale: 1.03, y: -5, transition: { duration: 0.25 } },
+              tap: { scale: 0.97, transition: { duration: 0.25 } }
+            }}
             onClick={(e) => handleRoleClick('dj', e)}
-            className="group relative w-72 h-80 rounded-xl overflow-hidden shadow-xl shadow-blue-900/10 transition-all hover:shadow-2xl hover:shadow-blue-900/20"
+            className="group relative w-72 h-80 rounded-xl overflow-hidden shadow-xl shadow-blue-900/10 hover:shadow-2xl hover:shadow-blue-900/20"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-[#4ca0f1] to-[#61c8fa]" />
             <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors" />
@@ -93,15 +101,15 @@ export function RoleSelection({ onNavigate }: Props) {
       <AnimatePresence>
         {expandingCircle && (
           <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 30 }}
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 50 }}
             transition={{ duration: 0.8, ease: "easeInOut" }}
             style={{
               position: 'fixed',
               left: expandingCircle.x,
               top: expandingCircle.y,
-              width: 100,
-              height: 100,
+              width: 200,
+              height: 200,
               borderRadius: '50%',
               background: expandingCircle.color,
               transform: 'translate(-50%, -50%)',

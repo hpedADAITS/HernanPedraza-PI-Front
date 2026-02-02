@@ -1,24 +1,14 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { AttendeeLogin } from './components/views/AttendeeLogin';
-import { DjLogin } from './components/views/DjLogin';
-import { Dashboard } from './components/views/Dashboard';
-import { SongSelection } from './components/views/SongSelection';
-import { Settings } from './components/views/Settings';
-import { SettingsList } from './components/views/SettingsList';
-import { RoleSelection } from './components/views/RoleSelection';
+import { AttendeeLogin } from './pages/AttendeeLogin';
+import { DjLogin } from './pages/DjLogin';
+import { Dashboard } from './pages/Dashboard';
+import { SongSelection } from './pages/SongSelection';
+import { Settings } from './pages/Settings';
+import { SettingsList } from './pages/SettingsList';
+import { RoleSelection } from './pages/RoleSelection';
 import { Toaster } from 'sonner@2.0.3';
-
-export type View = 
-  | 'role-selection'
-  | 'attendee-login' 
-  | 'dj-login' 
-  | 'attendee-dashboard' 
-  | 'dj-dashboard' 
-  | 'attendee-song-select' 
-  | 'dj-song-select' 
-  | 'dj-settings'
-  | 'dj-account-settings';
+import type { View } from './types';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>('role-selection');
@@ -53,14 +43,14 @@ export default function App() {
         )}
         {(currentView === 'attendee-dashboard' || currentView === 'dj-dashboard') && (
           <Dashboard 
-            key="dashboard" 
+            key={currentView} 
             mode={currentView === 'attendee-dashboard' ? 'attendee' : 'dj'} 
             onNavigate={navigate} 
           />
         )}
         {(currentView === 'attendee-song-select' || currentView === 'dj-song-select') && (
           <SongSelection 
-            key="song-select"
+            key={currentView}
             mode={currentView === 'attendee-song-select' ? 'attendee' : 'dj'}
             onNavigate={navigate}
           />
