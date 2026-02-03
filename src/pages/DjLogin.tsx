@@ -4,6 +4,7 @@ import { Logo } from '../components/ui/Logo';
 import { motion } from 'motion/react';
 import { User, Lock, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
+import { authAPI } from '../services/api';
 
 interface Props {
   onNavigate: (view: any) => void;
@@ -11,15 +12,33 @@ interface Props {
 
 export function DjLogin({ onNavigate }: Props) {
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      toast.success("Welcome back, DJ!");
+    try {
+      const result = await authAPI.login(email, password);
+      const displayName = result.user?.displayName || 'DJ';
+      
+      // Store user data in localStorage for dashboard
+      if (result.user) {
+        localStorage.setItem('user', JSON.stringify(result.user));
+        // Store event code (for demo, using default)
+        localStorage.setItem('currentEvent', JSON.stringify({
+          eventCode: 'PARTY2024',
+          ownerName: result.user.displayName
+        }));
+      }
+      
+      toast.success(`Welcome back, ${displayName}!`);
       onNavigate('dj-dashboard');
-    }, 1500);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Login failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -40,31 +59,35 @@ export function DjLogin({ onNavigate }: Props) {
         transition={{ delay: 0.3 }}
         className="w-full max-w-[400px] px-6 flex flex-col gap-5"
       >
-        {/* Username Input */}
-        <div className="relative group">
-          <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-800 pointer-events-none">
-            <User size={26} strokeWidth={2} />
-          </div>
-          <input 
-            type="text" 
-            placeholder="Username"
-            required
-            className="w-full h-16 pl-16 pr-6 rounded-2xl bg-white shadow-lg shadow-blue-900/5 border-none outline-none text-lg text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-white/50 transition-all"
-          />
-        </div>
+        {/* Email Input */}
+         <div className="relative group">
+           <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-800 pointer-events-none">
+             <User size={26} strokeWidth={2} />
+           </div>
+           <input 
+             type="email" 
+             placeholder="Email"
+             value={email}
+             onChange={(e) => setEmail(e.target.value)}
+             required
+             className="w-full h-16 pl-16 pr-6 rounded-2xl bg-white shadow-lg shadow-blue-900/5 border-none outline-none text-lg text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-white/50 transition-all"
+           />
+         </div>
 
-        {/* Password Input */}
-        <div className="relative group">
-          <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-800 pointer-events-none">
-            <Lock size={26} strokeWidth={2} />
-          </div>
-          <input 
-            type="password" 
-            placeholder="Password"
-            required
-            className="w-full h-16 pl-16 pr-6 rounded-2xl bg-white shadow-lg shadow-blue-900/5 border-none outline-none text-lg text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-white/50 transition-all"
-          />
-        </div>
+         {/* Password Input */}
+         <div className="relative group">
+           <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-800 pointer-events-none">
+             <Lock size={26} strokeWidth={2} />
+           </div>
+           <input 
+             type="password" 
+             placeholder="Password"
+             value={password}
+             onChange={(e) => setPassword(e.target.value)}
+             required
+             className="w-full h-16 pl-16 pr-6 rounded-2xl bg-white shadow-lg shadow-blue-900/5 border-none outline-none text-lg text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-white/50 transition-all"
+           />
+         </div>
 
         {/* Login Button */}
         <motion.button

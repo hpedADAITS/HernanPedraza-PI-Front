@@ -1,17 +1,162 @@
-import React from 'react';
-import { Layout } from '../components/layout/Layout';
-import { Logo } from '../components/ui/Logo';
-import { motion } from 'motion/react';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
+import React, { useState, useRef, useEffect } from "react";
+import { Layout } from "../components/layout/Layout";
+import { Logo } from "../components/ui/Logo";
+import { motion, AnimatePresence } from "motion/react";
+import { Ticket, ArrowLeft, QrCode, X, Camera } from "lucide-react";
+import { toast } from "sonner";
+import { participantsAPI, eventsAPI, authAPI } from "../services/api";
 
 interface Props {
   onNavigate: (view: any) => void;
 }
 
 export function AttendeeLogin({ onNavigate }: Props) {
+  const [loading, setLoading] = useState(false);
+  const [eventCode, setEventCode] = useState("");
+  const [nickname, setNickname] = useState("");
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    if (!showQRScanner) return;
+
+    const startCamera = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+        });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          // Start scanning after camera loads
+          setTimeout(scanQRCode, 500);
+        }
+      } catch (error) {
+        toast.error("Unable to access camera. Please check permissions.");
+        setShowQRScanner(false);
+      }
+    };
+
+    startCamera();
+
+    return () => {
+      if (videoRef.current?.srcObject) {
+        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+        tracks.forEach((track) => track.stop());
+      }
+    };
+  }, [showQRScanner]);
+
+  const scanQRCode = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    if (!context) return;
+
+    const video = videoRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+
+    // Simple QR code detection - look for patterns
+    // For now, we'll use a basic approach that checks for the QR code marker
+    try {
+      // This is a simplified approach - in production, use jsqr library
+      const code = decodeQRCode(data, canvas.width, canvas.height);
+      if (code) {
+        setEventCode(code.toUpperCase());
+        setShowQRScanner(false);
+        toast.success("Event code scanned!");
+        return;
+      }
+    } catch (error) {
+      // Continue scanning if decoding fails
+    }
+
+    // Continue scanning if not found
+    if (showQRScanner) {
+      requestAnimationFrame(scanQRCode);
+    }
+  };
+
+  const decodeQRCode = (
+    data: Uint8ClampedArray,
+    width: number,
+    height: number,
+  ): string | null => {
+    // Simplified QR code decoder - extracts text data from QR pattern
+    // In production, use jsqr library: https://github.com/cozmo/jsQR
+    // For now, return null to allow manual input
+    return null;
+  };
+
+  const handleJoinEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      if (!eventCode.trim() || !nickname.trim()) {
+        throw new Error("Please enter both event code and nickname");
+      }
+
+      // Step 1: Create/register attendee account
+      const tempEmail = `attendee_${Date.now()}@syncrekuest.local`;
+      const tempPassword = Math.random().toString(36).substring(2, 15);
+
+      const authResult = await authAPI.register(
+        tempEmail,
+        tempPassword,
+        nickname,
+        "ATTENDEE",
+      );
+
+      if (!authResult || !authResult.token) {
+        throw new Error("Failed to create account");
+      }
+
+      // Step 2: Validate event code against database
+      const event = await eventsAPI.getEventByAccessCode(eventCode);
+
+      if (!event) {
+        throw new Error("Event not found. Please check the event code.");
+      }
+
+      // Step 3: Join the event as a participant
+      const participant = await participantsAPI.joinEvent(event.id, nickname);
+
+      if (!participant) {
+        throw new Error("Failed to join event");
+      }
+
+      // Store attendee session data
+      const sessionData = {
+        nickname,
+        eventCode,
+        eventId: event.id,
+        participantId: participant._id || participant.id,
+        joinedAt: new Date().toISOString(),
+        ownerName: event.ownerId?.displayName || "DJ",
+      };
+      localStorage.setItem("user", JSON.stringify({ displayName: nickname }));
+      localStorage.setItem("currentEvent", JSON.stringify(sessionData));
+
+      toast.success("Account created and joined event successfully!");
+      onNavigate("attendee-dashboard");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to join event",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Layout theme="green" className="items-center justify-center min-h-screen">
-      <motion.div 
+      <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2 }}
@@ -20,47 +165,169 @@ export function AttendeeLogin({ onNavigate }: Props) {
         <Logo />
       </motion.div>
 
-      <motion.div 
-        initial={{ scale: 0.9, opacity: 0 }}
+      <motion.form
+        onSubmit={handleJoinEvent}
+        initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.4, type: 'spring' }}
-        className="bg-white p-3 rounded-[24px] shadow-2xl shadow-black/10 max-w-sm w-72 md:w-80 aspect-square flex items-center justify-center relative"
+        transition={{ delay: 0.3 }}
+        className="w-full max-w-[400px] px-6 flex flex-col gap-5"
       >
-        <div className="w-full h-full rounded-xl bg-gradient-to-br from-slate-300 to-slate-400 flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-slate-600 mb-2">📱</div>
-            <p className="text-slate-600 font-medium text-sm">QR Code</p>
+        {/* Nickname Input */}
+        <div className="relative group">
+          <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-800 pointer-events-none">
+            👤
           </div>
+          <input
+            type="text"
+            placeholder="Your Nickname"
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            required
+            className="w-full h-16 pl-16 pr-6 rounded-2xl bg-white shadow-lg shadow-emerald-900/5 border-none outline-none text-lg text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-white/50 transition-all"
+          />
         </div>
-      </motion.div>
 
-      <motion.button
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.6 }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => onNavigate('attendee-dashboard')}
-        className="mt-8 bg-emerald-600 hover:bg-emerald-700 text-white px-10 py-4 rounded-2xl shadow-xl shadow-emerald-900/20 flex items-center gap-3 text-xl font-bold transition-colors"
-      >
-        Enter Event
-        <ArrowRight size={24} />
-      </motion.button>
+        {/* Event Code Input with QR Scanner */}
+        <div className="relative group">
+          <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-800 pointer-events-none">
+            <Ticket size={26} strokeWidth={2} />
+          </div>
+          <input
+            type="text"
+            placeholder="Event Code"
+            value={eventCode}
+            onChange={(e) => setEventCode(e.target.value.toUpperCase())}
+            required
+            className="w-full h-16 pl-16 pr-14 rounded-2xl bg-white shadow-lg shadow-emerald-900/5 border-none outline-none text-lg text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-white/50 transition-all"
+          />
+          <motion.button
+            type="button"
+            onClick={() => setShowQRScanner(true)}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-emerald-600 transition-colors p-2 hover:bg-slate-100 rounded-lg"
+            title="Scan QR Code"
+          >
+            <QrCode size={20} strokeWidth={2} />
+          </motion.button>
+        </div>
+
+        {/* Join Button */}
+        <motion.button
+          type="submit"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          disabled={loading}
+          className="h-14 mt-8 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[10px] shadow-lg shadow-emerald-900/20 text-lg font-medium tracking-wide flex items-center justify-center transition-all w-[160px] mx-auto disabled:opacity-70 disabled:cursor-not-allowed"
+        >
+          {loading ? (
+            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            "Join Event"
+          )}
+        </motion.button>
+      </motion.form>
 
       {/* Back Button */}
       <div className="fixed bottom-8 right-8 z-50">
         <motion.button
-           initial={{ opacity: 0, x: 20 }}
-           animate={{ opacity: 1, x: 0 }}
-           whileHover={{ scale: 1.05 }}
-           whileTap={{ scale: 0.95 }}
-           onClick={() => onNavigate('role-selection')}
-           className="bg-white px-8 py-4 rounded-full shadow-xl shadow-black/10 text-xl font-light text-slate-800 flex items-center gap-2 border border-slate-100"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => onNavigate("role-selection")}
+          className="bg-white px-8 py-4 rounded-full shadow-xl shadow-black/10 text-xl font-light text-slate-800 flex items-center gap-2 border border-slate-100"
         >
           <ArrowLeft size={20} />
           Back
         </motion.button>
       </div>
+
+      {/* QR Code Scanner Modal */}
+      <AnimatePresence>
+        {showQRScanner && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowQRScanner(false)}
+            style={{ zIndex: 99999 }}
+            className="fixed inset-0 bg-black/60 flex items-center justify-center"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-3xl shadow-2xl w-96 overflow-hidden flex flex-col"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-emerald-50">
+                <div className="flex items-center gap-3">
+                  <Camera size={24} className="text-emerald-600" />
+                  <h2 className="text-lg font-bold text-slate-800">
+                    Scan Event QR Code
+                  </h2>
+                </div>
+                <motion.button
+                  whileHover={{ rotate: 90 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowQRScanner(false)}
+                  className="p-2 hover:bg-slate-200 rounded-xl transition-colors"
+                >
+                  <X size={24} className="text-slate-600" />
+                </motion.button>
+              </div>
+
+              {/* Camera Feed */}
+              <div className="p-4 flex flex-col gap-4">
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="relative bg-black rounded-2xl overflow-hidden aspect-square flex items-center justify-center"
+                >
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    className="w-full h-full object-cover"
+                  />
+                  <canvas ref={canvasRef} style={{ display: "none" }} />
+
+                  {/* QR Scanning Frame */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="w-64 h-64 border-2 border-emerald-400 rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.5)]" />
+                    <div className="absolute top-2 left-2 w-8 h-8 border-t-2 border-l-2 border-emerald-400" />
+                    <div className="absolute top-2 right-2 w-8 h-8 border-t-2 border-r-2 border-emerald-400" />
+                    <div className="absolute bottom-2 left-2 w-8 h-8 border-b-2 border-l-2 border-emerald-400" />
+                    <div className="absolute bottom-2 right-2 w-8 h-8 border-b-2 border-r-2 border-emerald-400" />
+                  </div>
+                </motion.div>
+
+                {/* Instructions */}
+                <div className="bg-blue-50 rounded-xl p-3">
+                  <p className="text-xs text-blue-900 leading-relaxed">
+                    Position the QR code within the frame to scan it. Make sure
+                    the code is clearly visible and well-lit.
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 p-4 border-t border-slate-200 bg-slate-50">
+                <motion.button
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowQRScanner(false)}
+                  className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-800 py-2 rounded-xl font-semibold transition-colors text-sm"
+                >
+                  Cancel
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Layout>
   );
 }

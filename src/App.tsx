@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Toaster, toast } from 'sonner@2.0.3';
 import { AttendeeLogin } from './pages/AttendeeLogin';
 import { DjLogin } from './pages/DjLogin';
 import { Dashboard } from './pages/Dashboard';
@@ -7,12 +8,24 @@ import { SongSelection } from './pages/SongSelection';
 import { Settings } from './pages/Settings';
 import { SettingsList } from './pages/SettingsList';
 import { RoleSelection } from './pages/RoleSelection';
-import { Toaster } from 'sonner@2.0.3';
+import { checkHealth } from './services/api';
 import type { View } from './types';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>('role-selection');
   const [direction, setDirection] = useState(1);
+
+  useEffect(() => {
+    const checkDatabaseConnection = async () => {
+      const health = await checkHealth();
+      if (health.database) {
+        toast.success('Database connected successfully');
+      } else {
+        toast.error('Database connection failed');
+      }
+    };
+    checkDatabaseConnection();
+  }, []);
 
   const navigate = (view: View) => {
     // Simple logic to determine animation direction
@@ -30,7 +43,7 @@ export default function App() {
 
   return (
     <div className="relative w-full h-screen overflow-hidden font-sans text-slate-800">
-      <Toaster position="top-center" />
+      <Toaster position="top-center" toastOptions={{ classNames: { toast: 'z-[1000]' } }} />
       <AnimatePresence mode="wait" custom={direction}>
         {currentView === 'role-selection' && (
           <RoleSelection key="role-selection" onNavigate={navigate} />
