@@ -2,6 +2,12 @@ import React, { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { clsx } from 'clsx';
 import { QrCode } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../ui/tooltip';
 import { PROFILE_IMAGE, THEME_CONFIG } from '../../constants/dashboard';
 import { SLIDE_IN_LEFT } from '../../constants/animations';
 import { QRCodeModal } from './QRCodeModal';
@@ -40,7 +46,8 @@ export function ProfileCard({ mode, userName = 'Lucas', djName = 'DJ', joinedAt 
   }, [isDj, djName, joinedAt]);
 
   return (
-    <>
+    <TooltipProvider>
+      <>
       <motion.div 
         {...SLIDE_IN_LEFT}
         className={clsx(
@@ -65,15 +72,19 @@ export function ProfileCard({ mode, userName = 'Lucas', djName = 'DJ', joinedAt 
 
             {/* QR Code Button (DJ only) - Bottom right corner of avatar */}
             {isDj && (
-              <motion.button
-                whileHover={{ scale: 1.1, rotate: 10 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowQRModal(true)}
-                className="absolute bottom-0 right-0 w-10 h-10 bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg flex items-center justify-center text-white transition-colors border-2 border-white"
-                title="Generate QR Code"
-              >
-                <QrCode size={18} />
-              </motion.button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <motion.button
+                    whileHover={{ scale: 1.1, rotate: 10 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowQRModal(true)}
+                    className="absolute bottom-0 right-0 w-10 h-10 bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg flex items-center justify-center text-white transition-colors border-2 border-white"
+                  >
+                    <QrCode size={18} />
+                  </motion.button>
+                </TooltipTrigger>
+                <TooltipContent>Generate QR Code</TooltipContent>
+              </Tooltip>
             )}
           </div>
           
@@ -91,6 +102,7 @@ export function ProfileCard({ mode, userName = 'Lucas', djName = 'DJ', joinedAt 
         accessCode={accessCode}
         onClose={() => setShowQRModal(false)}
       />
-    </>
+      </>
+    </TooltipProvider>
   );
   }

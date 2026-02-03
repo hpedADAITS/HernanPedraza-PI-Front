@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { Users, Crown, Zap } from "lucide-react";
+import { Users, Crown } from "lucide-react";
 import { participantsAPI } from "../../services/api";
 
 interface Participant {
@@ -15,8 +15,19 @@ interface ParticipantsListProps {
   mode: "attendee" | "dj";
 }
 
+function formatTimeAgo(joinedAt: string): string {
+  const now = new Date();
+  const joined = new Date(joinedAt);
+  const secondsAgo = Math.floor((now.getTime() - joined.getTime()) / 1000);
+
+  if (secondsAgo < 60) return `${secondsAgo}s ago`;
+  if (secondsAgo < 3600) return `${Math.floor(secondsAgo / 60)}m ago`;
+  return `${Math.floor(secondsAgo / 3600)}h ago`;
+}
+
 export function ParticipantsList({ mode }: ParticipantsListProps) {
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const [prevCount, setPrevCount] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const isDj = mode === "dj";
 
@@ -35,7 +46,9 @@ export function ParticipantsList({ mode }: ParticipantsListProps) {
         if (!eventId) return;
 
         const list = await participantsAPI.listEventParticipants(eventId);
-        setParticipants(Array.isArray(list) ? list : []);
+        const newList = Array.isArray(list) ? list : [];
+        setParticipants(newList);
+        setPrevCount(newList.length);
       } catch (error) {
         console.error("Error fetching participants:", error);
       } finally {
@@ -54,11 +67,14 @@ export function ParticipantsList({ mode }: ParticipantsListProps) {
 
   const premiumCount = participants.filter((p) => p.isPremium).length;
   const connectedCount = participants.filter((p) => p.socketId).length;
+  const isDecreasing = participants.length < prevCount;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      layout
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className="bg-white rounded-3xl shadow-lg p-6 flex flex-col gap-4"
     >
       <div className="flex items-center justify-between">
@@ -92,17 +108,25 @@ export function ParticipantsList({ mode }: ParticipantsListProps) {
       </div>
 
       {/* Participants List */}
-      <div className="flex flex-col gap-2 max-h-96 overflow-y-auto">
-        {loading && participants.length === 0 ? (
-          <p className="text-center text-slate-500 py-8">Loading...</p>
-        ) : participants.length === 0 ? (
-          <p className="text-center text-slate-500 py-8">No participants yet</p>
-        ) : (
-          participants.map((participant) => (
+      {participants.length === 0 ? (
+        <motion.div 
+          layout
+          className="text-center text-slate-500 py-8"
+        >
+          {loading ? "Loading..." : "No participants yet"}
+        </motion.div>
+      ) : (
+        <motion.div 
+          layout
+          className="flex flex-col gap-2 max-h-96 overflow-y-auto"
+        >
+          {[...participants].sort((a, b) => {
+            if (a.isPremium === b.isPremium) return 0;
+            return a.isPremium ? -1 : 1;
+          }).map((participant) => (
             <motion.div
               key={participant._id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
+              layout
               className="bg-slate-50 rounded-xl p-3 flex items-center justify-between hover:bg-slate-100 transition-colors"
             >
               <div className="flex items-center gap-3 flex-1">
@@ -114,11 +138,14 @@ export function ParticipantsList({ mode }: ParticipantsListProps) {
                     {participant.nickname}
                   </p>
                   <p className="text-xs text-slate-500">
-                    {new Date(participant.joinedAt).toLocaleTimeString()}
+                    {formatTimeAgo(participant.joinedAt)}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {participant.isPremium && (
+                  <Crown size={16} className="text-yellow-400 fill-yellow-400" />
+                )}
                 {participant.socketId && (
                   <div className="flex items-center gap-1">
                     <div className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -127,14 +154,11 @@ export function ParticipantsList({ mode }: ParticipantsListProps) {
                     </span>
                   </div>
                 )}
-                {participant.isPremium && (
-                  <Crown size={16} className="text-amber-500" />
-                )}
               </div>
             </motion.div>
-          ))
-        )}
-      </div>
+          ))}
+        </motion.div>
+      )}
     </motion.div>
   );
 }

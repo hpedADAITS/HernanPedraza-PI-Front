@@ -125,7 +125,7 @@ export function AttendeeLogin({ onNavigate }: Props) {
       }
 
       // Step 3: Join the event as a participant
-      const participant = await participantsAPI.joinEvent(event.id, nickname);
+      const participant = await participantsAPI.joinEvent(event._id || event.id, nickname);
 
       if (!participant) {
         throw new Error("Failed to join event");
@@ -135,7 +135,7 @@ export function AttendeeLogin({ onNavigate }: Props) {
       const sessionData = {
         nickname,
         eventCode,
-        eventId: event.id,
+        eventId: event._id || event.id,
         participantId: participant._id || participant.id,
         joinedAt: new Date().toISOString(),
         ownerName: event.ownerId?.displayName || "DJ",

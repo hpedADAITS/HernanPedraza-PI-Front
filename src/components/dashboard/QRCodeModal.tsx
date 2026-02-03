@@ -3,6 +3,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import QRCode from 'qrcode.react';
 import { X, Copy, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../ui/tooltip';
 
 interface QRCodeModalProps {
   isOpen: boolean;
@@ -31,8 +37,9 @@ export function QRCodeModal({ isOpen, accessCode, onClose }: QRCodeModalProps) {
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
+    <TooltipProvider>
+      <AnimatePresence>
+        {isOpen && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -86,15 +93,19 @@ export function QRCodeModal({ isOpen, accessCode, onClose }: QRCodeModalProps) {
                   <code className="text-base font-bold text-slate-800 tracking-wider flex-1">
                     {accessCode}
                   </code>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleCopyCode}
-                    className="p-2 hover:bg-slate-200 rounded-lg transition-colors flex-shrink-0"
-                    title="Copy code"
-                  >
-                    <Copy size={18} className="text-slate-600" />
-                  </motion.button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={handleCopyCode}
+                        className="p-2 hover:bg-slate-200 rounded-lg transition-colors flex-shrink-0"
+                      >
+                        <Copy size={18} className="text-slate-600" />
+                      </motion.button>
+                    </TooltipTrigger>
+                    <TooltipContent>Copy code</TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
 
@@ -128,7 +139,8 @@ export function QRCodeModal({ isOpen, accessCode, onClose }: QRCodeModalProps) {
             </div>
           </motion.div>
         </motion.div>
-      )}
-    </AnimatePresence>
+        )}
+      </AnimatePresence>
+    </TooltipProvider>
   );
 }

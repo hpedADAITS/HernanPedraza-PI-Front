@@ -8,7 +8,7 @@ import { SongSelection } from './pages/SongSelection';
 import { Settings } from './pages/Settings';
 import { SettingsList } from './pages/SettingsList';
 import { RoleSelection } from './pages/RoleSelection';
-import { checkHealth } from './services/api';
+import { checkHealth, loadToken } from './services/api';
 import type { View } from './types';
 
 export default function App() {
@@ -16,6 +16,9 @@ export default function App() {
   const [direction, setDirection] = useState(1);
 
   useEffect(() => {
+    // Load token from localStorage on app startup
+    loadToken();
+    
     const checkDatabaseConnection = async () => {
       const health = await checkHealth();
       if (health.database) {

@@ -2,6 +2,12 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { ThumbsUp, ThumbsDown, LogOut, Settings, Plus } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../ui/tooltip';
 import { ANIMATION_DURATION } from '../../constants/animations';
 
 interface ActionButtonsProps {
@@ -13,7 +19,8 @@ export function ActionButtons({ mode, onNavigate }: ActionButtonsProps) {
   const isDj = mode === 'dj';
 
   return (
-    <div className="flex flex-col gap-6 items-center">
+    <TooltipProvider>
+      <div className="flex flex-col gap-6 items-center">
       {/* Attendee: Voting Section */}
       {!isDj && <VotingButtons />}
 
@@ -34,18 +41,23 @@ export function ActionButtons({ mode, onNavigate }: ActionButtonsProps) {
         />
 
         {isDj && (
-          <motion.button
-            whileHover={{ rotate: 90 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => onNavigate('dj-settings')}
-            className="w-14 h-14 bg-slate-600 hover:bg-slate-700 rounded-xl shadow-lg flex items-center justify-center text-white flex-shrink-0 transition-colors"
-            title="Settings"
-          >
-            <Settings size={24} />
-          </motion.button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <motion.button
+                whileHover={{ rotate: 90 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => onNavigate('dj-settings')}
+                className="w-14 h-14 bg-slate-600 hover:bg-slate-700 rounded-xl shadow-lg flex items-center justify-center text-white flex-shrink-0 transition-colors"
+              >
+                <Settings size={24} />
+              </motion.button>
+            </TooltipTrigger>
+            <TooltipContent>Settings</TooltipContent>
+          </Tooltip>
         )}
       </div>
-    </div>
+      </div>
+    </TooltipProvider>
   );
 }
 
@@ -82,16 +94,20 @@ function VoteButton({ icon: Icon, color, label, onClick }: VoteButtonProps) {
   };
 
   return (
-    <motion.button 
-      whileHover={{ y: -3 }}
-      whileTap={{ scale: 0.97 }}
-      onClick={onClick}
-      title={label}
-      transition={{ duration: ANIMATION_DURATION.fast }}
-      className={`w-20 h-20 md:w-24 md:h-24 rounded-2xl shadow-lg flex items-center justify-center text-white transition-colors ${colors[color]}`}
-    >
-      <Icon size={36} fill="currentColor" />
-    </motion.button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <motion.button 
+          whileHover={{ y: -3 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={onClick}
+          transition={{ duration: ANIMATION_DURATION.fast }}
+          className={`w-20 h-20 md:w-24 md:h-24 rounded-2xl shadow-lg flex items-center justify-center text-white transition-colors ${colors[color]}`}
+        >
+          <Icon size={36} fill="currentColor" />
+        </motion.button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   );
 }
 

@@ -4,7 +4,7 @@ import { Logo } from '../components/ui/Logo';
 import { motion } from 'motion/react';
 import { User, Lock, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
-import { authAPI } from '../services/api';
+import { authAPI, eventsAPI } from '../services/api';
 
 interface Props {
   onNavigate: (view: any) => void;
@@ -25,9 +25,18 @@ export function DjLogin({ onNavigate }: Props) {
       // Store user data in localStorage for dashboard
       if (result.user) {
         localStorage.setItem('user', JSON.stringify(result.user));
-        // Store event code (for demo, using default)
+        
+        // Fetch event by access code to get eventId
+        const eventCode = 'PARTY2024';
+        const event = await eventsAPI.getEventByAccessCode(eventCode);
+        
+        if (!event) {
+          throw new Error('Event not found');
+        }
+        
         localStorage.setItem('currentEvent', JSON.stringify({
-          eventCode: 'PARTY2024',
+          eventCode,
+          eventId: event._id || event.id,
           ownerName: result.user.displayName
         }));
       }

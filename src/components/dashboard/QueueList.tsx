@@ -3,6 +3,12 @@ import { motion, AnimatePresence } from "motion/react";
 import { clsx } from "clsx";
 import { Play, X, Clock, UserX } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
 import { THEME_CONFIG } from "../../constants/dashboard";
 import { SLIDE_UP, ANIMATION_DURATION } from "../../constants/animations";
 import { songsAPI } from "../../services/api";
@@ -75,11 +81,12 @@ export function QueueList({ mode }: QueueListProps) {
   }, []);
 
   return (
-    <motion.div
-      {...SLIDE_UP}
-      transition={{ ...SLIDE_UP.transition, delay: 0.15 }}
-      className="bg-white/90 backdrop-blur-xl rounded-3xl p-6 shadow-xl flex-1 min-h-[400px]"
-    >
+    <TooltipProvider>
+      <motion.div
+        {...SLIDE_UP}
+        transition={{ ...SLIDE_UP.transition, delay: 0.15 }}
+        className="bg-white/90 backdrop-blur-xl rounded-3xl p-6 shadow-xl flex-1 min-h-[400px]"
+      >
       <h3 className="text-slate-500 font-bold mb-4 uppercase text-xs tracking-wider">
         Up Next
       </h3>
@@ -110,7 +117,8 @@ export function QueueList({ mode }: QueueListProps) {
           </div>
         )}
       </div>
-    </motion.div>
+      </motion.div>
+    </TooltipProvider>
   );
 }
 
@@ -178,42 +186,58 @@ function QueueItem({
             transition={{ duration: 0.2 }}
             className="flex-1 flex items-center gap-2"
           >
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={(e) => handleAdminAction("Send Now", e)}
-              title="Send Song Now"
-              className="p-2 bg-emerald-100 hover:bg-emerald-200 rounded-lg text-emerald-700 transition-colors"
-            >
-              <Play size={18} />
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={(e) => handleAdminAction("Reject", e)}
-              title="Reject Song"
-              className="p-2 bg-red-100 hover:bg-red-200 rounded-lg text-red-700 transition-colors"
-            >
-              <X size={18} />
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={(e) => handleAdminAction("Cooldown", e)}
-              title="Cooldown User"
-              className="p-2 bg-yellow-100 hover:bg-yellow-200 rounded-lg text-yellow-700 transition-colors"
-            >
-              <Clock size={18} />
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={(e) => handleAdminAction("Kick", e)}
-              title="Kick User"
-              className="p-2 bg-purple-100 hover:bg-purple-200 rounded-lg text-purple-700 transition-colors"
-            >
-              <UserX size={18} />
-            </motion.button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={(e) => handleAdminAction("Send Now", e)}
+                  className="p-2 bg-emerald-100 hover:bg-emerald-200 rounded-lg text-emerald-700 transition-colors"
+                >
+                  <Play size={18} />
+                </motion.button>
+              </TooltipTrigger>
+              <TooltipContent>Send Song Now</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={(e) => handleAdminAction("Reject", e)}
+                  className="p-2 bg-red-100 hover:bg-red-200 rounded-lg text-red-700 transition-colors"
+                >
+                  <X size={18} />
+                </motion.button>
+              </TooltipTrigger>
+              <TooltipContent>Reject Song</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={(e) => handleAdminAction("Cooldown", e)}
+                  className="p-2 bg-yellow-100 hover:bg-yellow-200 rounded-lg text-yellow-700 transition-colors"
+                >
+                  <Clock size={18} />
+                </motion.button>
+              </TooltipTrigger>
+              <TooltipContent>Cooldown User</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={(e) => handleAdminAction("Kick", e)}
+                  className="p-2 bg-purple-100 hover:bg-purple-200 rounded-lg text-purple-700 transition-colors"
+                >
+                  <UserX size={18} />
+                </motion.button>
+              </TooltipTrigger>
+              <TooltipContent>Kick User</TooltipContent>
+            </Tooltip>
           </motion.div>
         ) : (
           <motion.div
