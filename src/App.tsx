@@ -9,6 +9,7 @@ import { Settings } from './pages/Settings';
 import { SettingsList } from './pages/SettingsList';
 import { RoleSelection } from './pages/RoleSelection';
 import { checkHealth, loadToken } from './services/api';
+import { API_BASE } from './services/api';
 import type { View } from './types';
 
 export default function App() {
@@ -22,9 +23,9 @@ export default function App() {
     const checkDatabaseConnection = async () => {
       const health = await checkHealth();
       if (health.database) {
-        toast.success('Database connected successfully');
+        toast.success(`Connected to ${API_BASE}`);
       } else {
-        toast.error('Database connection failed');
+        toast.error(`Failed to connect to ${API_BASE}`);
       }
     };
     checkDatabaseConnection();

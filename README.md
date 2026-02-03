@@ -1,7 +1,7 @@
 
-  # Refine and Enhance Designs
+  # SyncRekuest
 
-  This is a code bundle for Refine and Enhance Designs. The original project is available at https://www.figma.com/design/g9QBbNHzkgGKd2qrVF5W64/Refine-and-Enhance-Designs.
+  This is a code bundle for SyncRekuest. The original project is available at https://www.figma.com/design/g9QBbNHzkgGKd2qrVF5W64/Refine-and-Enhance-Designs.
 
   ## Running the code
 

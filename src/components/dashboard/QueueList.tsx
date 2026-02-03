@@ -11,7 +11,8 @@ import {
 } from "../ui/tooltip";
 import { THEME_CONFIG } from "../../constants/dashboard";
 import { SLIDE_UP, ANIMATION_DURATION } from "../../constants/animations";
-import { songsAPI } from "../../services/api";
+import { songsAPI, eventsAPI, participantsAPI } from "../../services/api";
+import * as socket from "../../services/socket";
 
 interface Song {
   _id: string;
@@ -19,104 +20,135 @@ interface Song {
   artist: string;
   voteScore: number;
   status: string;
+  requestedBy?: any;
 }
 
 interface QueueListProps {
   mode: "attendee" | "dj";
+  eventId?: string;
+  participantId?: string;
 }
 
-export function QueueList({ mode }: QueueListProps) {
+export function QueueList({
+  mode,
+  eventId: propEventId,
+  participantId: propParticipantId,
+}: QueueListProps) {
   const isDj = mode === "dj";
   const primaryColor = THEME_CONFIG[isDj ? "dj" : "attendee"].primaryColor;
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSongId, setSelectedSongId] = useState<string | null>(null);
+  const [eventId, setEventId] = useState<string | null>(propEventId || null);
+  const [participantId, setParticipantId] = useState<string | null>(
+    propParticipantId || null,
+  );
 
   useEffect(() => {
     const fetchQueue = async () => {
       try {
-        // Get event code from localStorage
+        // Get event data from localStorage
         const eventData = localStorage.getItem("currentEvent");
+        const participantData = localStorage.getItem("currentParticipant");
+
         if (!eventData) {
           setLoading(false);
           return;
         }
 
         const parsed = JSON.parse(eventData);
+        let resolvedEventId = propEventId || parsed.eventId;
         const eventCode = parsed.eventCode;
 
-        // For now, use mock data since we need the eventId from DB
-        // TODO: Implement event lookup by access code to get eventId
-        setSongs([
-          {
-            _id: "1",
-            title: "Blinding Lights",
-            artist: "The Weeknd",
-            voteScore: 5,
-            status: "APPROVED",
-          },
-          {
-            _id: "2",
-            title: "Anti-Hero",
-            artist: "Taylor Swift",
-            voteScore: 3,
-            status: "APPROVED",
-          },
-          {
-            _id: "3",
-            title: "Flowers",
-            artist: "Miley Cyrus",
-            voteScore: 2,
-            status: "PENDING",
-          },
-        ]);
+        // Lookup event by code if no eventId
+        if (!resolvedEventId) {
+          const event = await eventsAPI.getEventByAccessCode(eventCode);
+          if (!event) {
+            setLoading(false);
+            return;
+          }
+          resolvedEventId = event._id;
+        }
+
+        setEventId(resolvedEventId);
+
+        // Get participant ID
+        if (participantData) {
+          const participantParsed = JSON.parse(participantData);
+          setParticipantId(propParticipantId || participantParsed._id);
+        }
+
+        // Fetch queue
+        const queue = await songsAPI.getQueue(resolvedEventId);
+        setSongs(queue || []);
       } catch (error) {
         console.error("Error fetching queue:", error);
+        toast.error("Failed to load queue");
       } finally {
         setLoading(false);
       }
     };
 
     fetchQueue();
-  }, []);
+  }, [propEventId, propParticipantId]);
 
   return (
     <TooltipProvider>
       <motion.div
         {...SLIDE_UP}
         transition={{ ...SLIDE_UP.transition, delay: 0.15 }}
-        className="bg-white/90 backdrop-blur-xl rounded-3xl p-6 shadow-xl flex-1 min-h-[400px]"
+        layout
+        className="bg-white/90 backdrop-blur-xl rounded-3xl p-6 shadow-xl flex-1"
       >
-      <h3 className="text-slate-500 font-bold mb-4 uppercase text-xs tracking-wider">
-        Up Next
-      </h3>
+        <h3 className="text-slate-500 font-bold mb-4 uppercase text-xs tracking-wider">
+          Up Next
+        </h3>
 
-      <div className="flex flex-col gap-4">
-        {loading ? (
-          <div className="flex items-center justify-center h-40 text-slate-500">
-            Loading queue...
-          </div>
-        ) : songs.length > 0 ? (
-          songs.map((song, i) => (
-            <QueueItem
-              key={song._id}
-              song={song}
-              position={i + 1}
-              isFirst={i === 0}
-              primaryColor={primaryColor}
-              isDj={isDj}
-              isSelected={selectedSongId === song._id}
-              onSelect={(id) =>
-                setSelectedSongId(selectedSongId === id ? null : id)
-              }
-            />
-          ))
-        ) : (
-          <div className="flex items-center justify-center h-40 text-slate-500">
-            No songs in queue
-          </div>
-        )}
-      </div>
+        <motion.div
+          layout
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="flex flex-col gap-4"
+        >
+          <AnimatePresence mode="wait">
+            {loading ? (
+              <motion.div key="loading" layout className="text-slate-500 py-4">
+                Loading queue...
+              </motion.div>
+            ) : songs.length > 0 ? (
+              <motion.div
+                key="queue-list"
+                layout
+                className="flex flex-col gap-4"
+              >
+                <AnimatePresence>
+                  {songs.map((song, i) => (
+                    <QueueItem
+                      key={song._id}
+                      song={song}
+                      position={i + 1}
+                      isFirst={i === 0}
+                      primaryColor={primaryColor}
+                      isDj={isDj}
+                      isSelected={selectedSongId === song._id}
+                      onSelect={(id) =>
+                        setSelectedSongId(selectedSongId === id ? null : id)
+                      }
+                      eventId={eventId || undefined}
+                    />
+                  ))}
+                </AnimatePresence>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="empty-state"
+                layout
+                className="text-slate-500 py-4"
+              >
+                No songs in queue
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
       </motion.div>
     </TooltipProvider>
   );
@@ -130,6 +162,7 @@ interface QueueItemProps {
   isDj: boolean;
   isSelected: boolean;
   onSelect: (id: string) => void;
+  eventId?: string;
 }
 
 function QueueItem({
@@ -140,23 +173,58 @@ function QueueItem({
   isDj,
   isSelected,
   onSelect,
+  eventId,
 }: QueueItemProps) {
-  const handleAdminAction = (action: string, e: React.MouseEvent) => {
+  const handleAdminAction = async (action: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    toast.promise(
-      new Promise((resolve) =>
-        setTimeout(() => {
-          resolve(null);
-        }, 500),
-      ),
-      {
-        success: `${action} executed for "${song.title}"`,
-      },
-    );
+
+    try {
+      if (action === "Send Now" && eventId) {
+        // Play the song
+        socket.approveSong(eventId, song._id);
+        toast.success(`Now playing "${song.title}"`);
+      } else if (action === "Reject" && eventId) {
+        // Reject the song
+        socket.rejectSong(eventId, song._id, "Rejected by DJ");
+        toast.success(`Rejected "${song.title}"`);
+      } else if (action === "Cooldown" && eventId) {
+        // Apply cooldown to requester
+        if (song.requestedBy?._id) {
+          await participantsAPI.setCooldown(
+            song.requestedBy._id,
+            300000, // 5 minutes
+            "DJ applied cooldown",
+          );
+          toast.success("User on cooldown");
+        }
+      } else if (action === "Kick" && eventId) {
+        // Kick the requester
+        if (song.requestedBy?._id) {
+          await participantsAPI.kickParticipant(
+            song.requestedBy._id,
+            "Kicked by DJ",
+          );
+          toast.success("User kicked from event");
+        }
+      } else {
+        toast.error("Invalid action");
+      }
+    } catch (error) {
+      console.error("Admin action failed:", error);
+      toast.error(`Failed to ${action.toLowerCase()}`);
+    }
   };
 
   return (
     <motion.div
+      layout
+      initial={{ opacity: 1, x: 0 }}
+      exit={{
+        opacity: 0,
+        x: 20,
+        scale: 0.95,
+        transition: { duration: 0.3 },
+      }}
       whileHover={{ backgroundColor: "rgba(248, 250, 252, 0.7)" }}
       transition={{ duration: ANIMATION_DURATION.fast }}
       onClick={() => isDj && onSelect(song._id)}

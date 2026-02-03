@@ -1,6 +1,7 @@
 import io, { Socket } from "socket.io-client";
 
-const SOCKET_URL = "http://localhost:5000";
+// @ts-ignore
+const SOCKET_URL: string = (import.meta.env?.VITE_API_URL as string | undefined) || "http://localhost:5000";
 
 let socket: Socket | null = null;
 let eventListeners: Map<string, Function[]> = new Map();

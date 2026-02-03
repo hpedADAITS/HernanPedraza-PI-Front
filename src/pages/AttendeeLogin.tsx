@@ -259,7 +259,7 @@ export function AttendeeLogin({ onNavigate }: Props) {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-3xl shadow-2xl w-96 overflow-hidden flex flex-col"
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden flex flex-col"
             >
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-emerald-50">
@@ -270,13 +270,13 @@ export function AttendeeLogin({ onNavigate }: Props) {
                   </h2>
                 </div>
                 <motion.button
-                  whileHover={{ rotate: 90 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowQRScanner(false)}
-                  className="p-2 hover:bg-slate-200 rounded-xl transition-colors"
-                >
-                  <X size={24} className="text-slate-600" />
-                </motion.button>
+                   whileHover={{ scale: 1.1, backgroundColor: "rgba(51, 65, 85, 0.1)" }}
+                   whileTap={{ scale: 0.95 }}
+                   onClick={() => setShowQRScanner(false)}
+                   className="p-2 rounded-full hover:bg-slate-100 transition-all duration-200"
+                 >
+                   <X size={24} className="text-slate-600" />
+                 </motion.button>
               </div>
 
               {/* Camera Feed */}
@@ -296,11 +296,11 @@ export function AttendeeLogin({ onNavigate }: Props) {
 
                   {/* QR Scanning Frame */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="w-64 h-64 border-2 border-emerald-400 rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.5)]" />
-                    <div className="absolute top-2 left-2 w-8 h-8 border-t-2 border-l-2 border-emerald-400" />
-                    <div className="absolute top-2 right-2 w-8 h-8 border-t-2 border-r-2 border-emerald-400" />
-                    <div className="absolute bottom-2 left-2 w-8 h-8 border-b-2 border-l-2 border-emerald-400" />
-                    <div className="absolute bottom-2 right-2 w-8 h-8 border-b-2 border-r-2 border-emerald-400" />
+                    <div className="w-48 h-48 border-2 border-emerald-400 rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.5)]" />
+                    <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-emerald-400" />
+                    <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-emerald-400" />
+                    <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-emerald-400" />
+                    <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-emerald-400" />
                   </div>
                 </motion.div>
 

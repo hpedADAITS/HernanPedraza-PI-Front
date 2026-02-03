@@ -8,6 +8,7 @@ import {
   ActionButtons,
   NowPlayingSection,
   ParticipantsList,
+  ConnectedUsers,
 } from "../components/dashboard";
 
 interface DashboardProps extends PageProps {
@@ -62,11 +63,12 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
            <QueueList mode={mode} />
          </div>
 
-        {/* Right Column: Search, Now Playing, Participants & Actions */}
+        {/* Right Column: Search, Now Playing, Participants, Connected Users & Actions */}
         <div className="w-full lg:w-2/3 flex flex-col justify-between gap-6 relative">
           <SearchBar onNavigate={onNavigate} isDj={isDj} />
           <NowPlayingSection />
           {isDj && <ParticipantsList mode={mode} />}
+          {!isDj && <ConnectedUsers mode={mode} />}
           <ActionButtons mode={mode} onNavigate={onNavigate} />
         </div>
       </div>

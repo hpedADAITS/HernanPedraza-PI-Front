@@ -1,4 +1,6 @@
-const API_BASE = "http://localhost:5000/api/v1";
+// @ts-ignore
+const VITE_API_URL = import.meta.env?.VITE_API_URL as string | undefined;
+export const API_BASE: string = VITE_API_URL ? `${VITE_API_URL}/api/v1` : "http://localhost:5000/api/v1";
 
 let authToken: string | null = null;
 
@@ -27,9 +29,8 @@ export function clearToken() {
 
 // Helper to make API calls
 async function apiCall(endpoint: string, options: RequestInit = {}) {
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...(options.headers || {}),
   };
 
   // Add auth token if available
