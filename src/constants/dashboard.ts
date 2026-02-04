@@ -5,7 +5,7 @@ export const QUEUE_SONGS = [
   { title: 'Don\'t Start Now', artist: 'Dua Lipa', votes: 19 }
 ] as const;
 
-export const PROFILE_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect fill='%235a7fa6' width='256' height='256'/%3E%3Ccircle cx='128' cy='96' r='48' fill='%23a8c5e0'/%3E%3Cpath d='M80 190c0-26 21-48 48-48s48 22 48 48v20H80z' fill='%23a8c5e0'/%3E%3C/svg%3E";
+export const PROFILE_IMAGE = new URL('../assets/ProfilePicture.png', import.meta.url).href;
 
 export const NOW_PLAYING = {
   title: 'Blinding Lights',

@@ -15,6 +15,7 @@ import type { View } from './types';
 export default function App() {
   const [currentView, setCurrentView] = useState<View>('role-selection');
   const [direction, setDirection] = useState(1);
+  const [logoWhite, setLogoWhite] = useState(false);
 
   useEffect(() => {
     // Load token from localStorage on app startup
@@ -35,6 +36,7 @@ export default function App() {
     // Simple logic to determine animation direction
     if (view === 'role-selection') {
       setDirection(-1);
+      setLogoWhite(false);
     } else if (currentView === 'role-selection') {
       setDirection(1);
     } else if (view.includes('login') && !currentView.includes('login')) {
@@ -50,13 +52,13 @@ export default function App() {
       <Toaster position="top-center" toastOptions={{ classNames: { toast: 'z-[1000]' } }} />
       <AnimatePresence mode="wait" custom={direction}>
         {currentView === 'role-selection' && (
-          <RoleSelection key="role-selection" onNavigate={navigate} />
+          <RoleSelection key="role-selection" onNavigate={navigate} logoWhite={logoWhite} onLogoChange={setLogoWhite} />
         )}
         {currentView === 'attendee-login' && (
-          <AttendeeLogin key="attendee-login" onNavigate={navigate} />
+          <AttendeeLogin key="attendee-login" onNavigate={navigate} logoWhite={logoWhite} onLogoChange={setLogoWhite} />
         )}
         {currentView === 'dj-login' && (
-          <DjLogin key="dj-login" onNavigate={navigate} />
+          <DjLogin key="dj-login" onNavigate={navigate} logoWhite={logoWhite} onLogoChange={setLogoWhite} />
         )}
         {(currentView === 'attendee-dashboard' || currentView === 'dj-dashboard') && (
           <Dashboard 

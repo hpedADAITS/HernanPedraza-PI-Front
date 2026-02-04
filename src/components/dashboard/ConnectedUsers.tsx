@@ -13,12 +13,13 @@ interface ConnectedUser {
 
 interface ConnectedUsersProps {
   mode: "attendee" | "dj";
+  isDarkMode?: boolean;
 }
 
-export function ConnectedUsers({ mode }: ConnectedUsersProps) {
-  const [users, setUsers] = useState<ConnectedUser[]>([]);
-  const [loading, setLoading] = useState(true);
-  const isAttendee = mode === "attendee";
+export function ConnectedUsers({ mode, isDarkMode = false }: ConnectedUsersProps) {
+   const [users, setUsers] = useState<ConnectedUser[]>([]);
+   const [loading, setLoading] = useState(true);
+   const isAttendee = mode === "attendee";
 
   useEffect(() => {
     if (!isAttendee) return;
@@ -94,18 +95,22 @@ export function ConnectedUsers({ mode }: ConnectedUsersProps) {
   if (!isAttendee) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      layout
-      className="bg-white rounded-3xl shadow-lg p-6 flex flex-col gap-4"
-    >
+     <motion.div
+       initial={{ opacity: 0, y: 20 }}
+       animate={{ opacity: 1, y: 0 }}
+       layout
+       className="rounded-3xl shadow-lg p-6 flex flex-col gap-4"
+       style={{
+         backgroundColor: isDarkMode ? "rgba(100, 116, 139, 0.8)" : "rgb(255, 255, 255)",
+         color: isDarkMode ? "white" : "inherit"
+       }}
+     >
       <div className="flex items-center gap-3">
-        <Users size={24} className="text-slate-700" />
-        <h3 className="text-lg font-bold text-slate-800">
+        <Users size={24} className={isDarkMode ? "text-white" : "text-slate-700"} />
+        <h3 className={`text-lg font-bold ${isDarkMode ? "text-white" : "text-slate-800"}`}>
           Connected Users
         </h3>
-        <span className="ml-auto bg-emerald-100 text-emerald-700 text-sm font-semibold px-3 py-1 rounded-full">
+        <span className={`ml-auto text-sm font-semibold px-3 py-1 rounded-full ${isDarkMode ? "bg-emerald-900/40 text-emerald-300" : "bg-emerald-100 text-emerald-700"}`}>
           {users.length}
         </span>
       </div>
@@ -131,7 +136,7 @@ export function ConnectedUsers({ mode }: ConnectedUsersProps) {
       ) : (
         <motion.div
           layout
-          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
+          className="flex flex-wrap justify-start gap-6"
         >
           <AnimatePresence>
             {users.map((user) => (
@@ -154,14 +159,14 @@ export function ConnectedUsers({ mode }: ConnectedUsersProps) {
                 </div>
 
                 {/* Name */}
-                <p className="text-sm font-semibold text-slate-800 text-center truncate w-full px-1">
+                <p className={`text-sm font-semibold text-center truncate w-full px-1 ${isDarkMode ? "text-white" : "text-slate-800"}`}>
                   {user.nickname}
                 </p>
 
                 {/* Online Indicator */}
                 <div className="flex items-center gap-1">
                   <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span className="text-xs text-emerald-600 font-medium">
+                  <span className={`text-xs font-medium ${isDarkMode ? "text-emerald-300" : "text-emerald-600"}`}>
                     Online
                   </span>
                 </div>
@@ -170,6 +175,6 @@ export function ConnectedUsers({ mode }: ConnectedUsersProps) {
           </AnimatePresence>
         </motion.div>
       )}
-    </motion.div>
-  );
-}
+      </motion.div>
+      );
+      }

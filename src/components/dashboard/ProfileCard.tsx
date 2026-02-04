@@ -62,7 +62,7 @@ export function ProfileCard({ mode, userName = 'Lucas', djName = 'DJ', joinedAt 
         <div className="relative z-10 flex flex-col items-center gap-4">
           {/* Avatar */}
           <div className="relative overflow-visible">
-            <div className="w-24 h-24 rounded-2xl bg-white/20 backdrop-blur-md shadow-inner overflow-hidden border border-white/30">
+            <div className="w-24 h-24 rounded-2xl bg-white/20 backdrop-blur-md shadow-inner overflow-hidden border border-white/30 flex items-center justify-center">
               <img 
                 src={PROFILE_IMAGE}
                 alt="Profile" 
@@ -75,10 +75,10 @@ export function ProfileCard({ mode, userName = 'Lucas', djName = 'DJ', joinedAt 
               <Tooltip>
                 <TooltipTrigger asChild>
                   <motion.button
-                    whileHover={{ scale: 1.1, rotate: 10 }}
+                    whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setShowQRModal(true)}
-                    className="absolute bottom-0 right-0 w-10 h-10 bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg flex items-center justify-center text-white transition-colors border-2 border-white"
+                    className="absolute bottom-0 right-0 w-10 h-10 bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg flex items-center justify-center text-white transition-colors border-2 border-white animate-pulse"
                   >
                     <QrCode size={18} />
                   </motion.button>

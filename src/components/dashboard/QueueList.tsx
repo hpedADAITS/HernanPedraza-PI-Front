@@ -27,12 +27,14 @@ interface QueueListProps {
   mode: "attendee" | "dj";
   eventId?: string;
   participantId?: string;
+  isDarkMode?: boolean;
 }
 
 export function QueueList({
   mode,
   eventId: propEventId,
   participantId: propParticipantId,
+  isDarkMode = false,
 }: QueueListProps) {
   const isDj = mode === "dj";
   const primaryColor = THEME_CONFIG[isDj ? "dj" : "attendee"].primaryColor;
@@ -95,12 +97,20 @@ export function QueueList({
   return (
     <TooltipProvider>
       <motion.div
-        {...SLIDE_UP}
-        transition={{ ...SLIDE_UP.transition, delay: 0.15 }}
-        layout
-        className="bg-white/90 backdrop-blur-xl rounded-3xl p-6 shadow-xl flex-1"
-      >
-        <h3 className="text-slate-500 font-bold mb-4 uppercase text-xs tracking-wider">
+         {...SLIDE_UP}
+         transition={{ ...SLIDE_UP.transition, delay: 0.15 }}
+         layout
+         className={clsx(
+           "backdrop-blur-xl rounded-3xl p-6 shadow-xl flex-1"
+         )}
+         style={{
+           backgroundColor: isDarkMode ? "rgba(100, 116, 139, 0.8)" : "rgba(255, 255, 255, 0.6)"
+         }}
+       >
+         <h3 className={clsx(
+           "font-bold mb-4 uppercase text-xs tracking-wider",
+           isDarkMode ? "text-slate-300" : "text-slate-500"
+         )}>
           Up Next
         </h3>
 
@@ -134,6 +144,7 @@ export function QueueList({
                         setSelectedSongId(selectedSongId === id ? null : id)
                       }
                       eventId={eventId || undefined}
+                      isDarkMode={isDarkMode}
                     />
                   ))}
                 </AnimatePresence>
@@ -163,6 +174,7 @@ interface QueueItemProps {
   isSelected: boolean;
   onSelect: (id: string) => void;
   eventId?: string;
+  isDarkMode?: boolean;
 }
 
 function QueueItem({
@@ -174,6 +186,7 @@ function QueueItem({
   isSelected,
   onSelect,
   eventId,
+  isDarkMode = false,
 }: QueueItemProps) {
   const handleAdminAction = async (action: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -260,8 +273,13 @@ function QueueItem({
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={(e) => handleAdminAction("Send Now", e)}
-                  className="p-2 bg-emerald-100 hover:bg-emerald-200 rounded-lg text-emerald-700 transition-colors"
-                >
+                  className={clsx(
+                    "p-2 rounded-lg transition-colors",
+                    isDarkMode 
+                      ? "bg-emerald-900/30 hover:bg-emerald-800/40 text-emerald-300"
+                      : "bg-emerald-100 hover:bg-emerald-200 text-emerald-700"
+                  )}
+                  >
                   <Play size={18} />
                 </motion.button>
               </TooltipTrigger>
@@ -273,8 +291,13 @@ function QueueItem({
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={(e) => handleAdminAction("Reject", e)}
-                  className="p-2 bg-red-100 hover:bg-red-200 rounded-lg text-red-700 transition-colors"
-                >
+                  className={clsx(
+                    "p-2 rounded-lg transition-colors",
+                    isDarkMode 
+                      ? "bg-red-900/30 hover:bg-red-800/40 text-red-300"
+                      : "bg-red-100 hover:bg-red-200 text-red-700"
+                  )}
+                  >
                   <X size={18} />
                 </motion.button>
               </TooltipTrigger>
@@ -286,8 +309,13 @@ function QueueItem({
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={(e) => handleAdminAction("Cooldown", e)}
-                  className="p-2 bg-yellow-100 hover:bg-yellow-200 rounded-lg text-yellow-700 transition-colors"
-                >
+                  className={clsx(
+                    "p-2 rounded-lg transition-colors",
+                    isDarkMode 
+                      ? "bg-yellow-900/30 hover:bg-yellow-800/40 text-yellow-300"
+                      : "bg-yellow-100 hover:bg-yellow-200 text-yellow-700"
+                  )}
+                  >
                   <Clock size={18} />
                 </motion.button>
               </TooltipTrigger>
@@ -299,8 +327,13 @@ function QueueItem({
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={(e) => handleAdminAction("Kick", e)}
-                  className="p-2 bg-purple-100 hover:bg-purple-200 rounded-lg text-purple-700 transition-colors"
-                >
+                  className={clsx(
+                    "p-2 rounded-lg transition-colors",
+                    isDarkMode 
+                      ? "bg-purple-900/30 hover:bg-purple-800/40 text-purple-300"
+                      : "bg-purple-100 hover:bg-purple-200 text-purple-700"
+                  )}
+                  >
                   <UserX size={18} />
                 </motion.button>
               </TooltipTrigger>
@@ -317,20 +350,32 @@ function QueueItem({
             className="flex-1 flex items-center gap-4"
           >
             {/* Song Info */}
-            <div className="flex-1 min-w-0 flex flex-col gap-1">
-              <span className="font-semibold text-slate-800 truncate">
-                {song.title}
-              </span>
-              <span className="text-xs text-slate-500">{song.artist}</span>
-            </div>
+             <div className="flex-1 min-w-0 flex flex-col gap-1">
+               <span className={clsx(
+                 "font-semibold truncate",
+                 isDarkMode ? "text-slate-100" : "text-slate-800"
+               )}>
+                 {song.title}
+               </span>
+               <span className={clsx(
+                 "text-xs",
+                 isDarkMode ? "text-slate-400" : "text-slate-500"
+               )}>{song.artist}</span>
+             </div>
 
-            {/* Vote Count */}
-            <div className="flex flex-col items-end gap-1">
-              <span className="text-sm font-semibold text-slate-700">
-                {song.voteScore}
-              </span>
-              <span className="text-xs text-slate-400">votes</span>
-            </div>
+             {/* Vote Count */}
+             <div className="flex flex-col items-end gap-1">
+               <span className={clsx(
+                 "text-sm font-semibold",
+                 isDarkMode ? "text-slate-100" : "text-slate-700"
+               )}>
+                 {song.voteScore}
+               </span>
+               <span className={clsx(
+                 "text-xs",
+                 isDarkMode ? "text-slate-400" : "text-slate-400"
+               )}>votes</span>
+             </div>
           </motion.div>
         )}
       </AnimatePresence>

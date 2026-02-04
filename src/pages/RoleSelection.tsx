@@ -6,9 +6,11 @@ import { User, Headphones } from 'lucide-react';
 
 interface Props {
   onNavigate: (view: any) => void;
+  logoWhite: boolean;
+  onLogoChange: (white: boolean) => void;
 }
 
-export function RoleSelection({ onNavigate }: Props) {
+export function RoleSelection({ onNavigate, logoWhite, onLogoChange }: Props) {
   const [expandingCircle, setExpandingCircle] = useState<{ x: number; y: number; color: string } | null>(null);
 
   const handleRoleClick = (role: 'attendee' | 'dj', event: React.MouseEvent<HTMLButtonElement>) => {
@@ -23,7 +25,9 @@ export function RoleSelection({ onNavigate }: Props) {
     
     // Navigate after a short delay to allow animation to start
     setTimeout(() => {
+      onLogoChange(true);
       onNavigate(role === 'attendee' ? 'attendee-login' : 'dj-login');
+      setExpandingCircle(null);
     }, 400);
   };
 
@@ -38,7 +42,7 @@ export function RoleSelection({ onNavigate }: Props) {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <Logo variant="color" />
+          <Logo variant="color" useWhite={logoWhite} />
         </motion.div>
 
         {/* Cards Container */}

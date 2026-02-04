@@ -5,12 +5,15 @@ import { motion } from 'motion/react';
 import { User, Lock, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { authAPI, eventsAPI } from '../services/api';
+import * as socket from '../services/socket';
 
 interface Props {
   onNavigate: (view: any) => void;
+  logoWhite?: boolean;
+  onLogoChange?: (white: boolean) => void;
 }
 
-export function DjLogin({ onNavigate }: Props) {
+export function DjLogin({ onNavigate, logoWhite = false, onLogoChange }: Props) {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -42,7 +45,9 @@ export function DjLogin({ onNavigate }: Props) {
       }
       
       toast.success(`Welcome back, ${displayName}!`);
-      onNavigate('dj-dashboard');
+       // Initialize socket connection
+       socket.initSocket(result.authToken);
+       onNavigate('dj-dashboard');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Login failed");
     } finally {
@@ -58,7 +63,7 @@ export function DjLogin({ onNavigate }: Props) {
         transition={{ delay: 0.2 }}
         className="mb-16 scale-90 md:scale-100"
       >
-        <Logo />
+        <Logo variant="light" useWhite={logoWhite} />
       </motion.div>
 
       <motion.form 

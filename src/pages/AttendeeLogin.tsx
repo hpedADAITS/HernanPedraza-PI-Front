@@ -5,12 +5,15 @@ import { motion, AnimatePresence } from "motion/react";
 import { Ticket, ArrowLeft, QrCode, X, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { participantsAPI, eventsAPI, authAPI } from "../services/api";
+import * as socket from "../services/socket";
 
 interface Props {
   onNavigate: (view: any) => void;
+  logoWhite?: boolean;
+  onLogoChange?: (white: boolean) => void;
 }
 
-export function AttendeeLogin({ onNavigate }: Props) {
+export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: Props) {
   const [loading, setLoading] = useState(false);
   const [eventCode, setEventCode] = useState("");
   const [nickname, setNickname] = useState("");
@@ -144,6 +147,8 @@ export function AttendeeLogin({ onNavigate }: Props) {
       localStorage.setItem("currentEvent", JSON.stringify(sessionData));
 
       toast.success("Account created and joined event successfully!");
+      // Initialize socket connection
+      socket.initSocket(authResult.authToken || authResult.token);
       onNavigate("attendee-dashboard");
     } catch (error) {
       toast.error(
@@ -162,7 +167,7 @@ export function AttendeeLogin({ onNavigate }: Props) {
         transition={{ delay: 0.2 }}
         className="mb-12"
       >
-        <Logo />
+        <Logo variant="light" useWhite={logoWhite} />
       </motion.div>
 
       <motion.form
@@ -269,14 +274,12 @@ export function AttendeeLogin({ onNavigate }: Props) {
                     Scan Event QR Code
                   </h2>
                 </div>
-                <motion.button
-                   whileHover={{ scale: 1.1, backgroundColor: "rgba(51, 65, 85, 0.1)" }}
-                   whileTap={{ scale: 0.95 }}
+                <button
                    onClick={() => setShowQRScanner(false)}
-                   className="p-2 rounded-full hover:bg-slate-100 transition-all duration-200"
+                   className="p-2 rounded-full hover:bg-slate-100 transition-all duration-200 group"
                  >
-                   <X size={24} className="text-slate-600" />
-                 </motion.button>
+                   <X size={24} className="text-slate-600 group-hover:animate-pulse group-hover:rotate-0" />
+                </button>
               </div>
 
               {/* Camera Feed */}

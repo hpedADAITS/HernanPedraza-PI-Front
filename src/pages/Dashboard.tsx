@@ -21,6 +21,10 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
   const [djName, setDjName] = useState("DJ");
   const [joinedAt, setJoinedAt] = useState(new Date());
   const [accessCode, setAccessCode] = useState("PARTY2024");
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved ? JSON.parse(saved) : false;
+  });
 
   useEffect(() => {
     // Fetch user data from auth context or API
@@ -46,6 +50,15 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
         // Fallback to default
       }
     }
+
+    // Listen for dark mode changes from localStorage
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem('darkMode');
+      setIsDarkMode(saved ? JSON.parse(saved) : false);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, [isDj]);
 
   return (
@@ -60,7 +73,7 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
             joinedAt={joinedAt}
             accessCode={accessCode}
           />
-           <QueueList mode={mode} />
+           <QueueList mode={mode} isDarkMode={isDarkMode} />
          </div>
 
         {/* Right Column: Search, Now Playing, Participants, Connected Users & Actions */}
@@ -68,7 +81,7 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
           <SearchBar onNavigate={onNavigate} isDj={isDj} />
           <NowPlayingSection />
           {isDj && <ParticipantsList mode={mode} />}
-          {!isDj && <ConnectedUsers mode={mode} />}
+          {!isDj && <ConnectedUsers mode={mode} isDarkMode={isDarkMode} />}
           <ActionButtons mode={mode} onNavigate={onNavigate} />
         </div>
       </div>

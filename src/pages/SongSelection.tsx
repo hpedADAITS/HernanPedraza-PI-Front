@@ -67,10 +67,9 @@ export function SongSelection({ mode, onNavigate }: Props) {
           </div>
           <input 
             type="text" 
-            placeholder="Search..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full h-20 pl-20 pr-6 rounded-2xl shadow-xl bg-slate-700 text-white border-none outline-none text-xl placeholder:text-slate-400 focus:ring-4 focus:ring-slate-500 transition-all"
+            className="w-full h-20 pl-20 pr-6 rounded-2xl shadow-xl bg-white text-slate-800 border-none outline-none text-xl placeholder:text-slate-400 focus:ring-4 focus:ring-slate-300 transition-all"
           />
         </motion.div>
 

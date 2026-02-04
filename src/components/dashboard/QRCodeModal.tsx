@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import QRCode from 'qrcode.react';
 import { X, Copy, Download } from 'lucide-react';
@@ -17,12 +17,28 @@ interface QRCodeModalProps {
 }
 
 export function QRCodeModal({ isOpen, accessCode, onClose }: QRCodeModalProps) {
-  const qrRef = useRef<HTMLDivElement>(null);
+   const qrRef = useRef<HTMLDivElement>(null);
 
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(accessCode);
-    toast.success('Access code copied!');
-  };
+   useEffect(() => {
+     const handleEscKey = (e: KeyboardEvent) => {
+       if (e.key === 'Escape' && isOpen) {
+         onClose();
+       }
+     };
+
+     if (isOpen) {
+       document.addEventListener('keydown', handleEscKey);
+     }
+
+     return () => {
+       document.removeEventListener('keydown', handleEscKey);
+     };
+   }, [isOpen, onClose]);
+
+   const handleCopyCode = () => {
+     navigator.clipboard.writeText(accessCode);
+     toast.success('Access code copied!');
+   };
 
   const handleDownloadQR = () => {
     const canvas = document.querySelector('canvas');
@@ -59,11 +75,10 @@ export function QRCodeModal({ isOpen, accessCode, onClose }: QRCodeModalProps) {
             <div className="sticky top-0 bg-white flex items-center justify-between p-4 border-b border-slate-200">
               <h2 className="text-lg font-bold text-slate-800">Event QR Code</h2>
               <motion.button
-                whileHover={{ rotate: 90 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={onClose}
-                className="p-2 hover:bg-slate-100 rounded-xl transition-colors flex-shrink-0"
-              >
+                 whileTap={{ scale: 0.95 }}
+                 onClick={onClose}
+                 className="p-2 hover:bg-slate-100 rounded-xl transition-colors flex-shrink-0"
+               >
                 <X size={24} className="text-slate-600" />
               </motion.button>
             </div>
