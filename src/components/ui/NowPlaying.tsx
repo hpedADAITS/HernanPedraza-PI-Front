@@ -8,7 +8,7 @@ interface NowPlayingProps {
   currentTime?: string;
   duration?: string;
   progress?: number;
-  status?: 'playing' | 'rejected' | 'queued';
+  status?: 'playing' | 'rejected' | 'queued' | 'skipped';
 }
 
 export function NowPlaying({
@@ -24,6 +24,8 @@ export function NowPlaying({
     switch (status) {
       case 'rejected':
         return 'bg-gradient-to-r from-red-500 to-red-700';
+      case 'skipped':
+        return 'bg-gradient-to-r from-gray-500 to-gray-700';
       case 'queued':
         return 'bg-gradient-to-r from-yellow-500 to-yellow-600';
       default:
@@ -35,6 +37,8 @@ export function NowPlaying({
     switch (status) {
       case 'rejected':
         return 'Song Rejected';
+      case 'skipped':
+        return 'Song Skipped';
       case 'queued':
         return 'Song in queue';
       default:
