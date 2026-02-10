@@ -10,6 +10,8 @@ import {
   ParticipantsList,
   ConnectedUsers,
 } from "../components/dashboard";
+import { initSocket, joinEvent } from "../services/socket";
+import { useDarkMode } from "../hooks/useDarkMode";
 
 interface DashboardProps extends PageProps {
   mode: "attendee" | "dj";
@@ -20,45 +22,51 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
   const [userName, setUserName] = useState("User");
   const [djName, setDjName] = useState("DJ");
   const [joinedAt, setJoinedAt] = useState(new Date());
-  const [accessCode, setAccessCode] = useState("PARTY2024");
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('darkMode');
-    return saved ? JSON.parse(saved) : false;
-  });
+  const [accessCode, setAccessCode] = useState("");
+  const [isDarkMode] = useDarkMode();
 
   useEffect(() => {
-    // Fetch user data from auth context or API
+    const eventData = localStorage.getItem("currentEvent");
+    const participantData = localStorage.getItem("currentParticipant");
+
+    if (!eventData || !participantData) {
+      onNavigate(isDj ? "dj-login" : "attendee-login");
+      return;
+    }
+
+    const token = localStorage.getItem("authToken");
+    const socket = initSocket(token);
+
     const user = localStorage.getItem("user");
     if (user) {
       try {
         const userData = JSON.parse(user);
         setUserName(userData.displayName || "User");
-      } catch {
-        // Fallback to default
-      }
+      } catch {}
     }
 
-    // Fetch event data
-    const eventData = localStorage.getItem("currentEvent");
-    if (eventData) {
+    const handleConnect = () => {
       try {
-        const parsed = JSON.parse(eventData);
-        if (parsed.ownerName) setDjName(parsed.ownerName);
-        if (parsed.joinedAt) setJoinedAt(new Date(parsed.joinedAt));
-        if (parsed.eventCode) setAccessCode(parsed.eventCode);
-      } catch {
-        // Fallback to default
-      }
-    }
+        const eventParsed = JSON.parse(eventData);
+        const participantParsed = JSON.parse(participantData);
 
-    // Listen for dark mode changes from localStorage
-    const handleStorageChange = () => {
-      const saved = localStorage.getItem('darkMode');
-      setIsDarkMode(saved ? JSON.parse(saved) : false);
+        if (eventParsed.ownerName) setDjName(eventParsed.ownerName);
+        if (eventParsed.joinedAt) setJoinedAt(new Date(eventParsed.joinedAt));
+        if (eventParsed.eventCode || eventParsed.accessCode) {
+          setAccessCode(eventParsed.eventCode || eventParsed.accessCode);
+        }
+
+        joinEvent(eventParsed.eventId, participantParsed._id, participantParsed.nickname || "User");
+      } catch (error) {
+        console.error("Error initializing dashboard:", error);
+      }
     };
 
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    if (socket?.connected) {
+      handleConnect();
+    } else {
+      socket?.once("connect", handleConnect);
+    }
   }, [isDj]);
 
   return (

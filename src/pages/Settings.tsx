@@ -1,7 +1,7 @@
 import React from 'react';
 import { Layout } from '../components/layout/Layout';
 import { motion } from 'motion/react';
-import { Search, User, Settings as SettingsIcon, LogOut } from 'lucide-react';
+import { Search, User, Settings as SettingsIcon } from 'lucide-react';
 
 interface Props {
   onNavigate: (view: any) => void;
@@ -17,7 +17,6 @@ export function Settings({ onNavigate }: Props) {
       >
         <h1 className="text-5xl font-light text-[rgb(255,255,255)] text-center mb-8">Settings</h1>
 
-        {/* Search Bar */}
         <div className="w-full max-w-lg relative mb-16">
           <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400">
             <Search size={24} />
@@ -29,16 +28,25 @@ export function Settings({ onNavigate }: Props) {
           />
         </div>
 
-        {/* Main Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
           
-          <div className="bg-white rounded-2xl h-32 md:h-24 shadow-md flex items-center justify-center text-xl font-bold text-slate-700">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => onNavigate('dj-account-settings')}
+            className="bg-white rounded-2xl h-32 md:h-24 shadow-md flex items-center justify-center text-xl font-bold text-slate-700 hover:shadow-xl transition-all"
+          >
             Account Settings
-          </div>
+          </motion.button>
 
-          <div className="bg-white rounded-2xl h-32 md:h-24 shadow-md flex items-center justify-center text-xl font-bold text-slate-700">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => onNavigate('dj-app-settings')}
+            className="bg-white rounded-2xl h-32 md:h-24 shadow-md flex items-center justify-center text-xl font-bold text-slate-700 hover:shadow-xl transition-all"
+          >
             App Settings
-          </div>
+          </motion.button>
 
           <motion.button
              whileHover={{ scale: 1.02 }}
@@ -52,6 +60,7 @@ export function Settings({ onNavigate }: Props) {
           <motion.button
              whileHover={{ scale: 1.02 }}
              whileTap={{ scale: 0.98 }}
+             onClick={() => onNavigate('dj-app-settings')}
              className="bg-white rounded-2xl aspect-square shadow-md flex items-center justify-center text-slate-200 hover:shadow-xl transition-all"
           >
             <SettingsIcon size={80} />
@@ -59,7 +68,6 @@ export function Settings({ onNavigate }: Props) {
 
         </div>
 
-        {/* Cancel Button */}
         <div className="fixed bottom-8 right-8 z-50">
           <motion.button
              whileHover={{ scale: 1.05 }}

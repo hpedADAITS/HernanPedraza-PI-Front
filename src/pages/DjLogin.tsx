@@ -3,7 +3,7 @@ import { Layout } from '../components/layout/Layout';
 import { Logo } from '../components/ui/Logo';
 import { motion } from 'motion/react';
 import { User, Lock, ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { authAPI, eventsAPI } from '../services/api';
 import * as socket from '../services/socket';
 
@@ -24,30 +24,42 @@ export function DjLogin({ onNavigate, logoWhite = false, onLogoChange }: Props) 
     try {
       const result = await authAPI.login(email, password);
       const displayName = result.user?.displayName || 'DJ';
-      
-      // Store user data in localStorage for dashboard
+
       if (result.user) {
         localStorage.setItem('user', JSON.stringify(result.user));
-        
-        // Fetch event by access code to get eventId
-        const eventCode = 'PARTY2024';
-        const event = await eventsAPI.getEventByAccessCode(eventCode);
-        
-        if (!event) {
-          throw new Error('Event not found');
+
+        let event;
+        const events = await eventsAPI.listEvents();
+
+        if (events && events.length > 0) {
+          event = events[0];
+        } else {
+          event = await eventsAPI.createEvent(
+            `${displayName}'s Party`,
+            'Auto-created event',
+            new Date().toISOString()
+          );
         }
-        
+
+        const eventId = event._id || event.id;
+        const eventCode = event.accessCode || event.access_code;
+
         localStorage.setItem('currentEvent', JSON.stringify({
           eventCode,
-          eventId: event._id || event.id,
-          ownerName: result.user.displayName
+          eventId,
+          ownerName: displayName
+        }));
+
+        localStorage.setItem('currentParticipant', JSON.stringify({
+          _id: result.user._id || result.user.id,
+          nickname: displayName,
+          eventId
         }));
       }
-      
+
       toast.success(`Welcome back, ${displayName}!`);
-       // Initialize socket connection
-       socket.initSocket(result.authToken);
-       onNavigate('dj-dashboard');
+      socket.initSocket(result.authToken);
+      onNavigate('dj-dashboard');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Login failed");
     } finally {

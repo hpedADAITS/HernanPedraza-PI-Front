@@ -31,6 +31,11 @@ export function initSocket(token?: string) {
 
   socket.on("error", (error) => {
     console.error("Socket error:", error);
+    if (error?.details) {
+      console.error("Error details:", error.details);
+      if (error.details.eventId) console.error("Missing: eventId");
+      if (error.details.songId) console.error("Missing: songId");
+    }
   });
 
   return socket;
@@ -79,8 +84,13 @@ export function suggestSong(eventId: string, songId: string, title: string, arti
 }
 
 export function approveSong(eventId: string, songId: string) {
-  if (!socket) throw new Error("Socket not initialized");
+  if (!socket) {
+    console.error("Socket not initialized!");
+    throw new Error("Socket not initialized");
+  }
+  console.log("[Socket] Emitting song_approved:", { eventId, songId });
   socket.emit("song_approved", { eventId, songId });
+  console.log("[Socket] Emit complete");
 }
 
 export function rejectSong(eventId: string, songId: string, reason: string) {
@@ -101,14 +111,15 @@ export function updateQueue(eventId: string, queue: any[]) {
 // ============ EVENT LISTENERS ============
 
 export function on(event: string, callback: (data: any) => void) {
-  if (!socket) throw new Error("Socket not initialized");
+  const s = socket || initSocket();
+  if (!s) return;
 
   if (!eventListeners.has(event)) {
     eventListeners.set(event, []);
   }
 
   eventListeners.get(event)!.push(callback);
-  socket.on(event, callback);
+  s.on(event, callback);
 }
 
 export function off(event: string, callback?: (data: any) => void) {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Toaster, toast } from 'sonner@2.0.3';
+import { Toaster, toast } from 'sonner';
 import { AttendeeLogin } from './pages/AttendeeLogin';
 import { DjLogin } from './pages/DjLogin';
 import { Dashboard } from './pages/Dashboard';

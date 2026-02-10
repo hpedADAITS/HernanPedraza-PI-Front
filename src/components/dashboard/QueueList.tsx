@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { clsx } from "clsx";
-import { Play, X, Clock, UserX } from "lucide-react";
+import { Play, X, Clock, UserX, SkipForward } from "lucide-react";
 import { toast } from "sonner";
 import {
   Tooltip,
@@ -21,6 +21,7 @@ interface Song {
   voteScore: number;
   status: string;
   requestedBy?: any;
+  eventId?: string;
 }
 
 interface QueueListProps {
@@ -46,10 +47,14 @@ export function QueueList({
     propParticipantId || null,
   );
 
+  const removeSong = useCallback((songId: string) => {
+    setSongs(prev => prev.filter(s => s._id !== songId));
+    setSelectedSongId(prev => (prev === songId ? null : prev));
+  }, []);
+
   useEffect(() => {
     const fetchQueue = async () => {
       try {
-        // Get event data from localStorage
         const eventData = localStorage.getItem("currentEvent");
         const participantData = localStorage.getItem("currentParticipant");
 
@@ -62,7 +67,6 @@ export function QueueList({
         let resolvedEventId = propEventId || parsed.eventId;
         const eventCode = parsed.eventCode;
 
-        // Lookup event by code if no eventId
         if (!resolvedEventId) {
           const event = await eventsAPI.getEventByAccessCode(eventCode);
           if (!event) {
@@ -74,13 +78,11 @@ export function QueueList({
 
         setEventId(resolvedEventId);
 
-        // Get participant ID
         if (participantData) {
           const participantParsed = JSON.parse(participantData);
           setParticipantId(propParticipantId || participantParsed._id);
         }
 
-        // Fetch queue
         const queue = await songsAPI.getQueue(resolvedEventId);
         setSongs(queue || []);
       } catch (error) {
@@ -93,6 +95,43 @@ export function QueueList({
 
     fetchQueue();
   }, [propEventId, propParticipantId]);
+
+  useEffect(() => {
+    const handleApproved = (data: any) => {
+      if (data?.songId) removeSong(data.songId);
+    };
+    const handleRejected = (data: any) => {
+      if (data?.songId) removeSong(data.songId);
+    };
+    const handleSkipped = (data: any) => {
+      if (data?.songId) removeSong(data.songId);
+    };
+    const handleVotesUpdated = (data: any) => {
+      if (data?.songId && data?.voteScore != null) {
+        setSongs(prev =>
+          prev.map(s =>
+            s._id === data.songId ? { ...s, voteScore: data.voteScore } : s,
+          ),
+        );
+      }
+    };
+
+    try {
+      socket.onSongApproved(handleApproved);
+      socket.onSongRejected(handleRejected);
+      socket.onSongSkipped(handleSkipped);
+      socket.onVotesUpdated(handleVotesUpdated);
+    } catch {
+      // Socket not initialized yet — listeners will be missed, but no crash
+    }
+
+    return () => {
+      socket.off("song_approved", handleApproved);
+      socket.off("song_rejected", handleRejected);
+      socket.off("song_skipped", handleSkipped);
+      socket.off("votes_updated", handleVotesUpdated);
+    };
+  }, [removeSong]);
 
   return (
     <TooltipProvider>
@@ -143,6 +182,7 @@ export function QueueList({
                       onSelect={(id) =>
                         setSelectedSongId(selectedSongId === id ? null : id)
                       }
+                      onSongRemoved={removeSong}
                       eventId={eventId || undefined}
                       isDarkMode={isDarkMode}
                     />
@@ -173,6 +213,7 @@ interface QueueItemProps {
   isDj: boolean;
   isSelected: boolean;
   onSelect: (id: string) => void;
+  onSongRemoved: (songId: string) => void;
   eventId?: string;
   isDarkMode?: boolean;
 }
@@ -185,33 +226,53 @@ function QueueItem({
   isDj,
   isSelected,
   onSelect,
+  onSongRemoved,
   eventId,
   isDarkMode = false,
 }: QueueItemProps) {
   const handleAdminAction = async (action: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log(`\n========== ADMIN ACTION: ${action} ==========`);
 
     try {
+      const songId = song._id;
+      console.log("Song object:", { _id: songId, title: song.title, artist: song.artist });
+      console.log("EventId:", eventId);
+      
       if (action === "Send Now" && eventId) {
-        // Play the song
-        socket.approveSong(eventId, song._id);
+        console.log("[Send Now] Calling approveSong with:", { eventId, songId });
+        if (!songId) {
+          console.error("Missing songId!");
+          toast.error("Song ID not found");
+          return;
+        }
+        await songsAPI.approveSong(eventId, songId);
+        socket.approveSong(eventId, songId);
+        onSongRemoved(songId);
+        console.log("[Send Now] approveSong called successfully");
         toast.success(`Now playing "${song.title}"`);
       } else if (action === "Reject" && eventId) {
-        // Reject the song
-        socket.rejectSong(eventId, song._id, "Rejected by DJ");
+        console.log("[Reject] Calling rejectSong with:", { eventId, songId });
+        if (!songId) {
+          console.error("Missing songId!");
+          toast.error("Song ID not found");
+          return;
+        }
+        await songsAPI.rejectSong(eventId, songId, "Rejected by DJ");
+        socket.rejectSong(eventId, songId, "Rejected by DJ");
+        onSongRemoved(songId);
+        console.log("[Reject] rejectSong called successfully");
         toast.success(`Rejected "${song.title}"`);
       } else if (action === "Cooldown" && eventId) {
-        // Apply cooldown to requester
         if (song.requestedBy?._id) {
           await participantsAPI.setCooldown(
             song.requestedBy._id,
-            300000, // 5 minutes
+            300000,
             "DJ applied cooldown",
           );
           toast.success("User on cooldown");
         }
       } else if (action === "Kick" && eventId) {
-        // Kick the requester
         if (song.requestedBy?._id) {
           await participantsAPI.kickParticipant(
             song.requestedBy._id,
@@ -219,8 +280,21 @@ function QueueItem({
           );
           toast.success("User kicked from event");
         }
+      } else if (action === "Skip" && eventId) {
+        console.log("[Skip] Calling skipSong with:", { eventId, songId });
+        if (!songId) {
+          console.error("Missing songId!");
+          toast.error("Song ID not found");
+          return;
+        }
+        await songsAPI.skipSong(eventId, songId, "Skipped by DJ");
+        socket.skipSong(eventId, songId, "Skipped by DJ");
+        onSongRemoved(songId);
+        console.log("[Skip] skipSong called successfully");
+        toast.success(`Skipped "${song.title}"`);
       } else {
-        toast.error("Invalid action");
+        console.error(`[ERROR] Action "${action}" failed - eventId: ${eventId}, songId: ${songId}`);
+        toast.error("Invalid action or missing event ID");
       }
     } catch (error) {
       console.error("Admin action failed:", error);
@@ -326,6 +400,24 @@ function QueueItem({
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
+                  onClick={(e) => handleAdminAction("Skip", e)}
+                  className={clsx(
+                    "p-2 rounded-lg transition-colors",
+                    isDarkMode 
+                      ? "bg-gray-900/30 hover:bg-gray-800/40 text-gray-300"
+                      : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                  )}
+                  >
+                  <SkipForward size={18} />
+                </motion.button>
+              </TooltipTrigger>
+              <TooltipContent>Skip Song</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={(e) => handleAdminAction("Kick", e)}
                   className={clsx(
                     "p-2 rounded-lg transition-colors",
@@ -339,7 +431,7 @@ function QueueItem({
               </TooltipTrigger>
               <TooltipContent>Kick User</TooltipContent>
             </Tooltip>
-          </motion.div>
+            </motion.div>
         ) : (
           <motion.div
             key="song-info"
@@ -349,7 +441,6 @@ function QueueItem({
             transition={{ duration: 0.08 }}
             className="flex-1 flex items-center gap-4"
           >
-            {/* Song Info */}
              <div className="flex-1 min-w-0 flex flex-col gap-1">
                <span className={clsx(
                  "font-semibold truncate",
@@ -363,7 +454,6 @@ function QueueItem({
                )}>{song.artist}</span>
              </div>
 
-             {/* Vote Count */}
              <div className="flex flex-col items-end gap-1">
                <span className={clsx(
                  "text-sm font-semibold",

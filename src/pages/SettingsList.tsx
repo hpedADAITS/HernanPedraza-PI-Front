@@ -1,21 +1,111 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Layout } from '../components/layout/Layout';
-import { motion } from 'motion/react';
-import { Search } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Search, X } from 'lucide-react';
+import { toast } from 'sonner';
+import { authAPI, clearToken } from '../services/api';
+import { disconnectSocket, getSocket } from '../services/socket';
 
 interface Props {
   onNavigate: (view: any) => void;
 }
 
-const SETTINGS_ITEMS = [
-  "Display Name Visibility",
-  "Media Quality",
-  "Social Settings",
-  "Debug / Diagnostics",
-  "Sign Out"
-];
-
 export function SettingsList({ onNavigate }: Props) {
+  const [showNameModal, setShowNameModal] = useState(false);
+  const [showDebugModal, setShowDebugModal] = useState(false);
+  const [newDisplayName, setNewDisplayName] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleDisplayName = () => {
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        const parsed = JSON.parse(user);
+        setNewDisplayName(parsed.displayName || '');
+      } catch {}
+    }
+    setShowNameModal(true);
+  };
+
+  const handleSaveDisplayName = async () => {
+    if (!newDisplayName.trim() || newDisplayName.trim().length < 2) {
+      toast.error('Display name must be at least 2 characters');
+      return;
+    }
+    setLoading(true);
+    try {
+      await authAPI.updateProfile({ displayName: newDisplayName.trim() });
+      const user = localStorage.getItem('user');
+      const parsed = user ? JSON.parse(user) : {};
+      parsed.displayName = newDisplayName.trim();
+      localStorage.setItem('user', JSON.stringify(parsed));
+      toast.success('Display name updated');
+      setShowNameModal(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to update display name');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignOut = () => {
+    clearToken();
+    disconnectSocket();
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    localStorage.removeItem('currentEvent');
+    localStorage.removeItem('currentParticipant');
+    toast.success('Signed out');
+    onNavigate('role-selection');
+  };
+
+  const getDebugInfo = () => {
+    const hasToken = !!localStorage.getItem('authToken');
+    const eventData = localStorage.getItem('currentEvent');
+    const participantData = localStorage.getItem('currentParticipant');
+    let eventId = 'None';
+    let participantId = 'None';
+    try {
+      if (eventData) eventId = JSON.parse(eventData).eventId || 'None';
+    } catch {}
+    try {
+      if (participantData) participantId = JSON.parse(participantData)._id || 'None';
+    } catch {}
+    const socketConnected = getSocket()?.connected || false;
+
+    return { hasToken, eventId, participantId, socketConnected };
+  };
+
+  const handleItemClick = (item: string) => {
+    switch (item) {
+      case 'Display Name Visibility':
+        handleDisplayName();
+        break;
+      case 'Media Quality':
+        toast.info('Coming soon');
+        break;
+      case 'Social Settings':
+        toast.info('Coming soon');
+        break;
+      case 'Debug / Diagnostics':
+        setShowDebugModal(true);
+        break;
+      case 'Sign Out':
+        handleSignOut();
+        break;
+    }
+  };
+
+  const SETTINGS_ITEMS = [
+    "Display Name Visibility",
+    "Media Quality",
+    "Social Settings",
+    "Debug / Diagnostics",
+    "Sign Out"
+  ];
+
+  const debugInfo = getDebugInfo();
+
   return (
     <Layout theme="blue" className="p-6 md:p-12 items-center" showNav={true}>
       <motion.div 
@@ -25,7 +115,6 @@ export function SettingsList({ onNavigate }: Props) {
       >
         <h1 className="text-5xl font-light text-slate-800 text-center mb-8">Account Settings</h1>
 
-        {/* Search Bar */}
         <div className="w-full max-w-lg relative mb-16">
           <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400">
             <Search size={24} />
@@ -37,7 +126,6 @@ export function SettingsList({ onNavigate }: Props) {
           />
         </div>
 
-        {/* List */}
         <div className="w-full max-w-2xl flex flex-col gap-4">
           {SETTINGS_ITEMS.map((item, index) => (
             <motion.button
@@ -47,7 +135,7 @@ export function SettingsList({ onNavigate }: Props) {
               transition={{ delay: index * 0.1 }}
               whileHover={{ scale: 1.02, backgroundColor: '#f8fafc' }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => item === "Sign Out" ? onNavigate('dj-login') : null}
+              onClick={() => handleItemClick(item)}
               className="bg-white h-20 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center text-xl font-light text-slate-700 hover:shadow-md transition-all"
             >
               {item}
@@ -55,7 +143,6 @@ export function SettingsList({ onNavigate }: Props) {
           ))}
         </div>
 
-        {/* Cancel Button */}
         <div className="fixed bottom-8 right-8 z-50">
           <motion.button
              whileHover={{ scale: 1.05 }}
@@ -66,8 +153,114 @@ export function SettingsList({ onNavigate }: Props) {
             Cancel
           </motion.button>
         </div>
-
       </motion.div>
+
+      <AnimatePresence>
+        {showNameModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowNameModal(false)}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-slate-800">Change Display Name</h2>
+                <button onClick={() => setShowNameModal(false)} className="p-1 rounded-full hover:bg-slate-100">
+                  <X size={20} className="text-slate-500" />
+                </button>
+              </div>
+              <input
+                type="text"
+                value={newDisplayName}
+                onChange={(e) => setNewDisplayName(e.target.value)}
+                placeholder="New display name"
+                className="w-full h-12 px-4 rounded-xl border border-slate-200 outline-none text-lg text-slate-700 focus:ring-2 focus:ring-blue-300 mb-4"
+              />
+              <div className="flex gap-3">
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowNameModal(false)}
+                  className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 py-3 rounded-xl font-medium transition-colors"
+                >
+                  Cancel
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleSaveDisplayName}
+                  disabled={loading}
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-medium transition-colors disabled:opacity-50"
+                >
+                  {loading ? 'Saving...' : 'Save'}
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showDebugModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowDebugModal(false)}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-slate-800">Debug Info</h2>
+                <button onClick={() => setShowDebugModal(false)} className="p-1 rounded-full hover:bg-slate-100">
+                  <X size={20} className="text-slate-500" />
+                </button>
+              </div>
+              <div className="space-y-3 text-sm font-mono">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Auth Token:</span>
+                  <span className={debugInfo.hasToken ? 'text-green-600' : 'text-red-500'}>
+                    {debugInfo.hasToken ? 'Present' : 'Missing'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Event ID:</span>
+                  <span className="text-slate-700 truncate max-w-[180px]">{debugInfo.eventId}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Participant ID:</span>
+                  <span className="text-slate-700 truncate max-w-[180px]">{debugInfo.participantId}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Socket:</span>
+                  <span className={debugInfo.socketConnected ? 'text-green-600' : 'text-red-500'}>
+                    {debugInfo.socketConnected ? 'Connected' : 'Disconnected'}
+                  </span>
+                </div>
+              </div>
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowDebugModal(false)}
+                className="w-full mt-6 bg-slate-200 hover:bg-slate-300 text-slate-700 py-3 rounded-xl font-medium transition-colors"
+              >
+                Close
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Layout>
   );
 }

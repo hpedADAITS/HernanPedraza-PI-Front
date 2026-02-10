@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import jsQR from "jsqr";
 import { Layout } from "../components/layout/Layout";
 import { Logo } from "../components/ui/Logo";
 import { motion, AnimatePresence } from "motion/react";
@@ -20,9 +21,11 @@ export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: P
   const [showQRScanner, setShowQRScanner] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const scanningRef = useRef(true);
 
   useEffect(() => {
     if (!showQRScanner) return;
+    scanningRef.current = true;
 
     const startCamera = async () => {
       try {
@@ -31,8 +34,9 @@ export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: P
         });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          // Start scanning after camera loads
-          setTimeout(scanQRCode, 500);
+          videoRef.current.onloadedmetadata = () => {
+            scanQRCode();
+          };
         }
       } catch (error) {
         toast.error("Unable to access camera. Please check permissions.");
@@ -43,6 +47,7 @@ export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: P
     startCamera();
 
     return () => {
+      scanningRef.current = false;
       if (videoRef.current?.srcObject) {
         const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
         tracks.forEach((track) => track.stop());
@@ -65,10 +70,7 @@ export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: P
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
 
-    // Simple QR code detection - look for patterns
-    // For now, we'll use a basic approach that checks for the QR code marker
     try {
-      // This is a simplified approach - in production, use jsqr library
       const code = decodeQRCode(data, canvas.width, canvas.height);
       if (code) {
         setEventCode(code.toUpperCase());
@@ -80,8 +82,7 @@ export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: P
       // Continue scanning if decoding fails
     }
 
-    // Continue scanning if not found
-    if (showQRScanner) {
+    if (scanningRef.current) {
       requestAnimationFrame(scanQRCode);
     }
   };
@@ -91,10 +92,17 @@ export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: P
     width: number,
     height: number,
   ): string | null => {
-    // Simplified QR code decoder - extracts text data from QR pattern
-    // In production, use jsqr library: https://github.com/cozmo/jsQR
-    // For now, return null to allow manual input
-    return null;
+    const result = jsQR(data, width, height);
+    if (!result) return null;
+    const raw = result.data.trim();
+    try {
+      const url = new URL(raw);
+      const code = url.searchParams.get("code");
+      if (code) return code.toUpperCase();
+    } catch {
+      // Not a URL, treat as raw code
+    }
+    return raw.length >= 4 ? raw.toUpperCase() : null;
   };
 
   const handleJoinEvent = async (e: React.FormEvent) => {
@@ -135,16 +143,23 @@ export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: P
       }
 
       // Store attendee session data
-      const sessionData = {
-        nickname,
-        eventCode,
-        eventId: event._id || event.id,
-        participantId: participant._id || participant.id,
-        joinedAt: new Date().toISOString(),
-        ownerName: event.ownerId?.displayName || "DJ",
-      };
-      localStorage.setItem("user", JSON.stringify({ displayName: nickname }));
-      localStorage.setItem("currentEvent", JSON.stringify(sessionData));
+       const sessionData = {
+         nickname,
+         eventCode,
+         eventId: event._id || event.id,
+         participantId: participant._id || participant.id,
+         joinedAt: new Date().toISOString(),
+         ownerName: event.ownerId?.displayName || "DJ",
+       };
+       localStorage.setItem("user", JSON.stringify({ displayName: nickname }));
+       localStorage.setItem("currentEvent", JSON.stringify(sessionData));
+       
+       // Store participant data
+       localStorage.setItem("currentParticipant", JSON.stringify({
+         _id: participant._id || participant.id,
+         nickname,
+         eventId: event._id || event.id
+       }));
 
       toast.success("Account created and joined event successfully!");
       // Initialize socket connection

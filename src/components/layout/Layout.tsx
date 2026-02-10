@@ -1,8 +1,9 @@
-import React, { ReactNode, useState, useEffect } from 'react';
+import React, { ReactNode } from 'react';
 import { motion } from 'motion/react';
-import { clsx } from 'clsx';
 import { Sun, Moon } from 'lucide-react';
+import { clsx } from 'clsx';
 import { Logo } from '../ui/Logo';
+import { useDarkMode } from '../../hooks/useDarkMode';
 
 interface LayoutProps {
   children: ReactNode;
@@ -12,14 +13,7 @@ interface LayoutProps {
 }
 
 export function Layout({ children, theme = 'green', className, showNav = true }: LayoutProps) {
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('darkMode');
-    return saved ? JSON.parse(saved) : false;
-  });
-
-  useEffect(() => {
-    localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
-  }, [isDarkMode]);
+  const [isDarkMode, setIsDarkMode] = useDarkMode();
   const isWhite = theme === 'white';
   const isGreen = theme === 'green';
 

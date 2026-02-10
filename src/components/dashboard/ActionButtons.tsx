@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { ThumbsUp, ThumbsDown, LogOut, Settings, Plus } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import {
   Tooltip,
   TooltipContent,
@@ -9,6 +9,9 @@ import {
   TooltipTrigger,
 } from '../ui/tooltip';
 import { ANIMATION_DURATION } from '../../constants/animations';
+import { songsAPI, votesAPI, clearToken } from '../../services/api';
+import * as socket from '../../services/socket';
+import { disconnectSocket } from '../../services/socket';
 
 interface ActionButtonsProps {
   mode: 'attendee' | 'dj';
@@ -18,13 +21,20 @@ interface ActionButtonsProps {
 export function ActionButtons({ mode, onNavigate }: ActionButtonsProps) {
   const isDj = mode === 'dj';
 
+  const handleLeaveParty = () => {
+    clearToken();
+    disconnectSocket();
+    localStorage.removeItem('currentEvent');
+    localStorage.removeItem('currentParticipant');
+    localStorage.removeItem('user');
+    onNavigate(isDj ? 'dj-login' : 'attendee-login');
+  };
+
   return (
     <TooltipProvider>
       <div className="flex flex-col gap-6 items-center">
-      {/* Attendee: Voting Section */}
       {!isDj && <VotingButtons />}
 
-      {/* Action Buttons Row */}
       <div className="flex flex-col sm:flex-row gap-3 w-full max-w-2xl">
         <ActionButton
           icon={Plus}
@@ -36,7 +46,7 @@ export function ActionButtons({ mode, onNavigate }: ActionButtonsProps) {
         <ActionButton
           icon={LogOut}
           label="Leave Party"
-          onClick={() => onNavigate(isDj ? 'dj-login' : 'attendee-login')}
+          onClick={handleLeaveParty}
           variant="primary"
         />
 
@@ -61,20 +71,118 @@ export function ActionButtons({ mode, onNavigate }: ActionButtonsProps) {
   );
 }
 
+interface CurrentSong {
+  _id: string;
+  title: string;
+  artist: string;
+}
+
 function VotingButtons() {
+  const [currentSong, setCurrentSong] = useState<CurrentSong | null>(null);
+  const [voting, setVoting] = useState(false);
+
+  useEffect(() => {
+    const eventRaw = localStorage.getItem('currentEvent');
+    if (!eventRaw) return;
+
+    let eventId: string;
+    try {
+      const parsed = JSON.parse(eventRaw);
+      eventId = parsed.eventId || parsed._id || parsed.id;
+    } catch {
+      eventId = eventRaw;
+    }
+    if (!eventId) return;
+
+    songsAPI.getQueue(eventId).then((queue) => {
+      if (queue && queue.length > 0) {
+        setCurrentSong(queue[0]);
+      }
+    }).catch(() => {
+      // queue fetch failed silently
+    });
+
+    const handleQueueUpdate = (data: any) => {
+      if (data?.queue && data.queue.length > 0) {
+        setCurrentSong(data.queue[0]);
+      } else {
+        setCurrentSong(null);
+      }
+    };
+
+    try {
+      socket.onQueueUpdated(handleQueueUpdate);
+    } catch {
+      // socket not initialized
+    }
+
+    return () => {
+      try {
+        socket.off('queue_updated', handleQueueUpdate);
+      } catch {
+        // socket already gone
+      }
+    };
+  }, []);
+
+  const handleVote = async (value: 1 | -1) => {
+    if (!currentSong) {
+      toast.info('No song playing');
+      return;
+    }
+    if (voting) return;
+
+    const eventRaw = localStorage.getItem('currentEvent');
+    const participantRaw = localStorage.getItem('currentParticipant');
+    if (!eventRaw || !participantRaw) {
+      toast.error('Session data missing');
+      return;
+    }
+
+    let eventId: string;
+    try {
+      const parsed = JSON.parse(eventRaw);
+      eventId = parsed.eventId || parsed._id || parsed.id;
+    } catch {
+      eventId = eventRaw;
+    }
+
+    let participantId: string;
+    try {
+      const parsed = JSON.parse(participantRaw);
+      participantId = parsed._id || parsed.id || parsed;
+    } catch {
+      participantId = participantRaw;
+    }
+
+    setVoting(true);
+    try {
+      await votesAPI.castVote(currentSong._id, participantId, value);
+      socket.castVote(eventId, currentSong._id, participantId, value);
+      const direction = value === 1 ? '👍' : '👎';
+      toast.success(`${direction} ${currentSong.title}`);
+    } catch (err: any) {
+      toast.error(err?.message || 'Vote failed');
+    } finally {
+      setVoting(false);
+    }
+  };
+
   return (
     <div className="flex gap-6 justify-center w-full">
       <VoteButton
         icon={ThumbsUp}
         color="emerald"
         label="Vote Up"
-        onClick={() => toast.success("Voted Up!")}
+        onClick={() => handleVote(1)}
+        disabled={!currentSong || voting}
       />
       <VoteButton
         icon={ThumbsDown}
         color="red"
         label="Vote Down"
-        onClick={() => toast.success("Voted Down!")}
+        onClick={() => handleVote(-1)}
+        disabled={!currentSong || voting}
       />
     </div>
   );
@@ -85,9 +193,10 @@ interface VoteButtonProps {
   color: 'emerald' | 'red';
   label: string;
   onClick: () => void;
+  disabled?: boolean;
 }
 
-function VoteButton({ icon: Icon, color, label, onClick }: VoteButtonProps) {
+function VoteButton({ icon: Icon, color, label, onClick, disabled }: VoteButtonProps) {
   const colors = {
     emerald: 'bg-emerald-600 hover:bg-emerald-700',
     red: 'bg-red-600 hover:bg-red-700'
@@ -100,8 +209,9 @@ function VoteButton({ icon: Icon, color, label, onClick }: VoteButtonProps) {
           whileHover={{ y: -3 }}
           whileTap={{ scale: 0.97 }}
           onClick={onClick}
+          disabled={disabled}
           transition={{ duration: ANIMATION_DURATION.fast }}
-          className={`w-20 h-20 md:w-24 md:h-24 rounded-2xl shadow-lg flex items-center justify-center text-white transition-colors ${colors[color]}`}
+          className={`w-20 h-20 md:w-24 md:h-24 rounded-2xl shadow-lg flex items-center justify-center text-white transition-colors ${colors[color]} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           <Icon size={36} fill="currentColor" />
         </motion.button>

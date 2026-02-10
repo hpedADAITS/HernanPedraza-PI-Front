@@ -104,6 +104,14 @@ export const authAPI = {
     const data = await apiCall("/auth/me");
     return data.data.user;
   },
+
+  updateProfile: async (updates: { displayName?: string }) => {
+    const data = await apiCall("/auth/me", {
+      method: "PATCH",
+      body: JSON.stringify(updates),
+    });
+    return data.data.user;
+  },
 };
 
 // ============ EVENTS ENDPOINTS ============

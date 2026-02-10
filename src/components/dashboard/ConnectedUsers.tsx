@@ -136,7 +136,7 @@ export function ConnectedUsers({ mode, isDarkMode = false }: ConnectedUsersProps
       ) : (
         <motion.div
           layout
-          className="flex flex-wrap justify-start gap-6"
+          className="flex flex-wrap justify-start gap-6 max-h-64 overflow-y-auto pr-1"
         >
           <AnimatePresence>
             {users.map((user) => (
