@@ -23,7 +23,6 @@ export function RoleSelection({ onNavigate, logoWhite, onLogoChange }: Props) {
     
     setExpandingCircle({ x, y, color });
     
-    // Navigate after a short delay to allow animation to start
     setTimeout(() => {
       onLogoChange(true);
       onNavigate(role === 'attendee' ? 'attendee-login' : 'dj-login');
@@ -38,9 +37,9 @@ export function RoleSelection({ onNavigate, logoWhite, onLogoChange }: Props) {
         
         {/* Logo */}
         <motion.div 
-          initial={{ y: -20, opacity: 0 }}
+          initial={{ y: -12, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
+          transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
         >
           <Logo variant="color" useWhite={logoWhite} />
         </motion.div>
@@ -50,20 +49,16 @@ export function RoleSelection({ onNavigate, logoWhite, onLogoChange }: Props) {
           
           {/* Attendee Card */}
           <motion.button
-            initial={{ x: -20, opacity: 0 }}
+            initial={{ x: -16, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            whileHover={{ scale: 1.03, y: -5 }}
-            whileTap={{ scale: 0.97 }}
-            variants={{
-              hover: { scale: 1.03, y: -5, transition: { duration: 0.1 } },
-              tap: { scale: 0.97, transition: { duration: 0.1 } }
-            }}
+            transition={{ delay: 0.1, duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+            whileHover={{ scale: 1.03, y: -5, transition: { duration: 0.15, ease: "easeOut" } }}
+            whileTap={{ scale: 0.97, transition: { duration: 0.1 } }}
             onClick={(e) => handleRoleClick('attendee', e)}
-            className="group relative w-72 h-80 rounded-xl overflow-hidden shadow-xl shadow-emerald-900/10 hover:shadow-2xl hover:shadow-emerald-900/20"
+            className="group relative w-72 h-80 rounded-xl overflow-hidden shadow-xl shadow-emerald-900/10 hover:shadow-2xl hover:shadow-emerald-900/20 transition-shadow duration-200"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-[#77c76e] to-[#38997a]" />
-            <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors" />
+            <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-150" />
             
             <div className="relative h-full flex flex-col items-center justify-center gap-8 p-6 text-white">
               <h2 className="text-3xl font-normal tracking-wide">Attendee</h2>
@@ -75,20 +70,16 @@ export function RoleSelection({ onNavigate, logoWhite, onLogoChange }: Props) {
 
           {/* DJ Card */}
           <motion.button
-            initial={{ x: 20, opacity: 0 }}
+            initial={{ x: 16, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            whileHover={{ scale: 1.03, y: -5 }}
-            whileTap={{ scale: 0.97 }}
-            variants={{
-              hover: { scale: 1.03, y: -5, transition: { duration: 0.25 } },
-              tap: { scale: 0.97, transition: { duration: 0.25 } }
-            }}
+            transition={{ delay: 0.15, duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+            whileHover={{ scale: 1.03, y: -5, transition: { duration: 0.15, ease: "easeOut" } }}
+            whileTap={{ scale: 0.97, transition: { duration: 0.1 } }}
             onClick={(e) => handleRoleClick('dj', e)}
-            className="group relative w-72 h-80 rounded-xl overflow-hidden shadow-xl shadow-blue-900/10 hover:shadow-2xl hover:shadow-blue-900/20"
+            className="group relative w-72 h-80 rounded-xl overflow-hidden shadow-xl shadow-blue-900/10 hover:shadow-2xl hover:shadow-blue-900/20 transition-shadow duration-200"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-[#4ca0f1] to-[#61c8fa]" />
-            <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors" />
+            <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-150" />
             
             <div className="relative h-full flex flex-col items-center justify-center gap-8 p-6 text-white">
               <h2 className="text-3xl font-normal tracking-wide">DJ</h2>

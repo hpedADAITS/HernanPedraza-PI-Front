@@ -26,3 +26,4 @@ tsconfig.tsbuildinfo
 build/
 dist/
 *.tsbuildinfo
+AGENTS.md

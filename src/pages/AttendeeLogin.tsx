@@ -177,9 +177,9 @@ export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: P
   return (
     <Layout theme="green" className="items-center justify-center min-h-screen">
       <motion.div
-        initial={{ y: -20, opacity: 0 }}
+        initial={{ y: -12, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2 }}
+        transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
         className="mb-12"
       >
         <Logo variant="light" useWhite={logoWhite} />
@@ -187,9 +187,9 @@ export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: P
 
       <motion.form
         onSubmit={handleJoinEvent}
-        initial={{ scale: 0.95, opacity: 0 }}
+        initial={{ scale: 0.97, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.3 }}
+        transition={{ delay: 0.08, duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
         className="w-full max-w-[400px] px-6 flex flex-col gap-5"
       >
         {/* Nickname Input */}
@@ -251,10 +251,11 @@ export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: P
       {/* Back Button */}
       <div className="fixed bottom-8 right-8 z-50">
         <motion.button
-          initial={{ opacity: 0, x: 20 }}
+          initial={{ opacity: 0, x: 12 }}
           animate={{ opacity: 1, x: 0 }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          transition={{ delay: 0.15, duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+          whileHover={{ scale: 1.05, transition: { duration: 0.12 } }}
+          whileTap={{ scale: 0.95, transition: { duration: 0.08 } }}
           onClick={() => onNavigate("role-selection")}
           className="bg-white px-8 py-4 rounded-full shadow-xl shadow-black/10 text-xl font-light text-slate-800 flex items-center gap-2 border border-slate-100"
         >
@@ -300,8 +301,9 @@ export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: P
               {/* Camera Feed */}
               <div className="p-4 flex flex-col gap-4">
                 <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
+                  initial={{ scale: 0.95, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
                   className="relative bg-black rounded-2xl overflow-hidden aspect-square flex items-center justify-center"
                 >
                   <video
