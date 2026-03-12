@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AlertCircle, X } from 'lucide-react';
-import { SLIDE_UP } from '../../constants/animations';
+import { SLIDE_UP } from '@/constants/animations';
 
 interface FrequentSongWarningModalProps {
   isOpen: boolean;

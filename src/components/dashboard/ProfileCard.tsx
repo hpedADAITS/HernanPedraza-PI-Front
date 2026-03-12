@@ -3,13 +3,13 @@ import { motion } from 'motion/react';
 import { clsx } from 'clsx';
 import { QrCode } from 'lucide-react';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '../ui/tooltip';
-import { PROFILE_IMAGE, THEME_CONFIG } from '../../constants/dashboard';
-import { SLIDE_IN_LEFT } from '../../constants/animations';
+   Tooltip,
+   TooltipContent,
+   TooltipProvider,
+   TooltipTrigger,
+ } from '../ui/tooltip';
+import { PROFILE_IMAGE, THEME_CONFIG } from '@/constants/dashboard';
+import { SLIDE_IN_LEFT } from '@/constants/animations';
 import { QRCodeModal } from './QRCodeModal';
 
 interface ProfileCardProps {

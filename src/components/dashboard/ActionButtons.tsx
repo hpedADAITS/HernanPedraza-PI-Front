@@ -3,15 +3,15 @@ import { motion } from 'motion/react';
 import { ThumbsUp, ThumbsDown, LogOut, Settings, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '../ui/tooltip';
-import { ANIMATION_DURATION } from '../../constants/animations';
-import { songsAPI, votesAPI, clearToken } from '../../services/api';
-import * as socket from '../../services/socket';
-import { disconnectSocket } from '../../services/socket';
+   Tooltip,
+   TooltipContent,
+   TooltipProvider,
+   TooltipTrigger,
+ } from '../ui/tooltip';
+import { ANIMATION_DURATION } from '@/constants/animations';
+import { songsAPI, votesAPI, clearToken } from '@/services/api';
+import * as socket from '@/services/socket';
+import { disconnectSocket } from '@/services/socket';
 
 interface ActionButtonsProps {
   mode: 'attendee' | 'dj';

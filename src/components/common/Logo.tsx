@@ -1,8 +1,8 @@
 import React from 'react';
 import { clsx } from 'clsx';
 import { motion } from 'motion/react';
-import logoWhite from '../../assets/logo_white.png';
-import logoNormal from '../../assets/logo_normal.png';
+import logoWhite from '@/assets/logo_white.png';
+import logoNormal from '@/assets/logo_normal.png';
 
 interface LogoProps {
   className?: string;

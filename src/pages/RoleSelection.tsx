@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Layout } from '../components/layout/Layout';
-import { Logo } from '../components/ui/Logo';
+import { Layout } from '@/components/layout/Layout';
+import { Logo } from '@/components/common';
 import { motion, AnimatePresence } from 'motion/react';
 import { User, Headphones } from 'lucide-react';
 

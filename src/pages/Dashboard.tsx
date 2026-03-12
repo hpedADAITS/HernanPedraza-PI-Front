@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import type { PageProps } from "../types";
-import { Layout } from "../components/layout/Layout";
+import type { PageProps } from "@/types";
+import { Layout } from "@/components/layout/Layout";
 import {
   ProfileCard,
   QueueList,
@@ -9,9 +9,9 @@ import {
   NowPlayingSection,
   ParticipantsList,
   ConnectedUsers,
-} from "../components/dashboard";
-import { initSocket, joinEvent } from "../services/socket";
-import { useDarkMode } from "../hooks/useDarkMode";
+} from "@/components/dashboard";
+import { initSocket, joinEvent } from "@/services/socket";
+import { useDarkMode } from "@/hooks/useDarkMode";
 
 interface DashboardProps extends PageProps {
   mode: "attendee" | "dj";

@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import jsQR from "jsqr";
-import { Layout } from "../components/layout/Layout";
-import { Logo } from "../components/ui/Logo";
+import { Layout } from "@/components/layout/Layout";
+import { Logo } from "@/components/common";
 import { motion, AnimatePresence } from "motion/react";
 import { Ticket, ArrowLeft, QrCode, X, Camera } from "lucide-react";
 import { toast } from "sonner";
-import { participantsAPI, eventsAPI, authAPI } from "../services/api";
-import * as socket from "../services/socket";
+import { participantsAPI, eventsAPI, authAPI } from "@/services/api";
+import * as socket from "@/services/socket";
 
 interface Props {
   onNavigate: (view: any) => void;

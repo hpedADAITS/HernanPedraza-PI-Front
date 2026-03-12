@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { NowPlaying } from "../ui/NowPlaying";
-import { NOW_PLAYING } from "../../constants/dashboard";
-import { SCALE_IN } from "../../constants/animations";
-import { initSocket, onSongApproved, onSongRejected, onSongSkipped, onQueueUpdated, off } from "../../services/socket";
-import { songsAPI } from "../../services/api";
+import { NowPlaying } from "@/components/common";
+import { NOW_PLAYING } from "@/constants/dashboard";
+import { SCALE_IN } from "@/constants/animations";
+import { initSocket, onSongApproved, onSongRejected, onSongSkipped, onQueueUpdated, off } from "@/services/socket";
+import { songsAPI } from "@/services/api";
 
 interface NowPlayingSong {
   id: string;

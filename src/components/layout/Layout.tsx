@@ -2,8 +2,8 @@ import React, { ReactNode } from 'react';
 import { motion } from 'motion/react';
 import { Sun, Moon } from 'lucide-react';
 import { clsx } from 'clsx';
-import { Logo } from '../ui/Logo';
-import { useDarkMode } from '../../hooks/useDarkMode';
+import { Logo } from '@/components/common';
+import { useDarkMode } from '@/hooks/useDarkMode';
 
 interface LayoutProps {
   children: ReactNode;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layout } from '../components/layout/Layout';
+import { Layout } from '@/components/layout/Layout';
 import { motion } from 'motion/react';
 import { Search, User, Settings as SettingsIcon } from 'lucide-react';
 

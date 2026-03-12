@@ -9,10 +9,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
-import { THEME_CONFIG } from "../../constants/dashboard";
-import { SLIDE_UP, ANIMATION_DURATION } from "../../constants/animations";
-import { songsAPI, eventsAPI, participantsAPI } from "../../services/api";
-import * as socket from "../../services/socket";
+import { THEME_CONFIG } from "@/constants/dashboard";
+import { SLIDE_UP, ANIMATION_DURATION } from "@/constants/animations";
+import { songsAPI, eventsAPI, participantsAPI } from "@/services/api";
+import * as socket from "@/services/socket";
 
 interface Song {
   _id: string;

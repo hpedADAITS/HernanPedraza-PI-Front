@@ -5,3 +5,4 @@ export { Dashboard } from './Dashboard';
 export { SongSelection } from './SongSelection';
 export { Settings } from './Settings';
 export { SettingsList } from './SettingsList';
+export { NotFound } from './NotFound';

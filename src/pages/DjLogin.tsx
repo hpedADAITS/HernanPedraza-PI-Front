@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Layout } from '../components/layout/Layout';
-import { Logo } from '../components/ui/Logo';
+import { Layout } from '@/components/layout/Layout';
+import { Logo } from '@/components/common';
 import { motion } from 'motion/react';
 import { User, Lock, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import { authAPI, eventsAPI } from '../services/api';
-import * as socket from '../services/socket';
+import { authAPI, eventsAPI } from '@/services/api';
+import * as socket from '@/services/socket';
 
 interface Props {
   onNavigate: (view: any) => void;

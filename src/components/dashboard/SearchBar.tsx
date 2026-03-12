@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { Search } from 'lucide-react';
-import { SLIDE_UP } from '../../constants/animations';
+import { SLIDE_UP } from '@/constants/animations';
 
 interface SearchBarProps {
   onNavigate: (view: string) => void;

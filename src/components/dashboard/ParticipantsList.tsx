@@ -3,14 +3,14 @@ import { motion, AnimatePresence } from "motion/react";
 import { Users, Crown, Zap, UserX } from "lucide-react";
 import { toast } from "sonner";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../ui/tooltip";
-import { ANIMATION_DURATION } from "../../constants/animations";
-import { participantsAPI } from "../../services/api";
-import { getSocket } from "../../services/socket";
+   Tooltip,
+   TooltipContent,
+   TooltipProvider,
+   TooltipTrigger,
+ } from "../ui/tooltip";
+import { ANIMATION_DURATION } from "@/constants/animations";
+import { participantsAPI } from "@/services/api";
+import { getSocket } from "@/services/socket";
 
 interface Participant {
   _id: string;

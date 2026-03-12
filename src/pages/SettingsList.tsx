@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Layout } from '../components/layout/Layout';
+import { Layout } from '@/components/layout/Layout';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { authAPI, clearToken } from '../services/api';
-import { disconnectSocket, getSocket } from '../services/socket';
+import { authAPI, clearToken } from '@/services/api';
+import { disconnectSocket, getSocket } from '@/services/socket';
 
 interface Props {
   onNavigate: (view: any) => void;

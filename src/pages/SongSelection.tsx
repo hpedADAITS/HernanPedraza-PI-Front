@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Layout } from '../components/layout/Layout';
+import { Layout } from '@/components/layout/Layout';
 import { motion } from 'motion/react';
 import { Search, ChevronRight, ArrowLeft, Check, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { toast } from 'sonner';
-import { songsAPI } from '../services/api';
-import * as socket from '../services/socket';
+import { songsAPI } from '@/services/api';
+import * as socket from '@/services/socket';
 
 interface Song {
   _id: string;

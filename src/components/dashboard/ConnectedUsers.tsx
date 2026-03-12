@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Users } from "lucide-react";
-import { participantsAPI } from "../../services/api";
-import { getSocket } from "../../services/socket";
+import { participantsAPI } from "@/services/api";
+import { getSocket } from "@/services/socket";
 
 interface ConnectedUser {
   _id: string;
