@@ -1,5 +1,4 @@
-
-  # SyncRekuest
+# SyncRekuest FRONTEND
 
   ## Running the code
 
