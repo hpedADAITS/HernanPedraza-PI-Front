@@ -1,8 +1,12 @@
-export { RoleSelection } from './RoleSelection';
 export { AttendeeLogin } from './AttendeeLogin';
-export { DjLogin } from './DjLogin';
 export { Dashboard } from './Dashboard';
-export { SongSelection } from './SongSelection';
+export { DjLogin } from './DjLogin';
+export { NotFound } from './NotFound';
+export { RoleSelection } from './RoleSelection';
 export { Settings } from './Settings';
 export { SettingsList } from './SettingsList';
+<<<<<<< Updated upstream
 export { NotFound } from './NotFound';
+=======
+export { SongSelection } from './SongSelection';
+>>>>>>> Stashed changes

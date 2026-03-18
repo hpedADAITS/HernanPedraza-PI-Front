@@ -3,11 +3,19 @@ import { motion } from 'motion/react';
 import { clsx } from 'clsx';
 import { QrCode } from 'lucide-react';
 import {
+<<<<<<< Updated upstream
    Tooltip,
    TooltipContent,
    TooltipProvider,
    TooltipTrigger,
  } from '../ui/tooltip';
+=======
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../ui/tooltip';
+>>>>>>> Stashed changes
 import { PROFILE_IMAGE, THEME_CONFIG } from '@/constants/dashboard';
 import { SLIDE_IN_LEFT } from '@/constants/animations';
 import { QRCodeModal } from './QRCodeModal';

@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Toaster, toast } from 'sonner';
-import { AttendeeLogin } from './pages/AttendeeLogin';
-import { DjLogin } from './pages/DjLogin';
-import { Dashboard } from './pages/Dashboard';
-import { SongSelection } from './pages/SongSelection';
-import { Settings } from './pages/Settings';
-import { SettingsList } from './pages/SettingsList';
-import { RoleSelection } from './pages/RoleSelection';
-import { checkHealth, loadToken } from './services/api';
-import { API_BASE } from './services/api';
-import type { View } from './types';
+import { AttendeeLogin } from '@/pages/AttendeeLogin';
+import { DjLogin } from '@/pages/DjLogin';
+import { Dashboard } from '@/pages/Dashboard';
+import { SongSelection } from '@/pages/SongSelection';
+import { Settings } from '@/pages/Settings';
+import { SettingsList } from '@/pages/SettingsList';
+import { RoleSelection } from '@/pages/RoleSelection';
+import { checkHealth, loadToken } from '@/services/api';
+import { API_BASE } from '@/services/api';
+import type { View } from '@/types';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>('role-selection');

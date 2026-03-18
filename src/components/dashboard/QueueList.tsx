@@ -11,8 +11,13 @@ import {
 } from "../ui/tooltip";
 import { THEME_CONFIG } from "@/constants/dashboard";
 import { SLIDE_UP, ANIMATION_DURATION } from "@/constants/animations";
+<<<<<<< Updated upstream
 import { songsAPI, eventsAPI, participantsAPI } from "@/services/api";
 import * as socket from "@/services/socket";
+=======
+import { songsAPI, eventsAPI, participantsAPI } from "../../services/api";
+import * as socket from "../../services/socket";
+>>>>>>> Stashed changes
 
 interface Song {
   _id: string;

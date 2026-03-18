@@ -1,7 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import jsQR from "jsqr";
+<<<<<<< Updated upstream
 import { Layout } from "@/components/layout/Layout";
 import { Logo } from "@/components/common";
+=======
+import { Layout } from "../components/layout/Layout";
+>>>>>>> Stashed changes
 import { motion, AnimatePresence } from "motion/react";
 import { Ticket, ArrowLeft, QrCode, X, Camera } from "lucide-react";
 import { toast } from "sonner";
@@ -177,13 +181,13 @@ export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: P
   return (
     <Layout theme="green" className="items-center justify-center min-h-screen">
       <motion.div
-        initial={{ y: -12, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-        className="mb-12"
-      >
-        <Logo variant="light" useWhite={logoWhite} />
-      </motion.div>
+         initial={{ y: -12, opacity: 0 }}
+         animate={{ y: 0, opacity: 1 }}
+         transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+         className="mb-12"
+       >
+         <h1 className="text-4xl font-bold text-white">SyncRequst</h1>
+       </motion.div>
 
       <motion.form
         onSubmit={handleJoinEvent}

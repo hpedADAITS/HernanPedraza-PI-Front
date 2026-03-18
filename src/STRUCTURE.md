@@ -4,79 +4,115 @@
 
 ```
 src/
-├── assets/                 # Static assets (images, fonts, etc.)
+├── assets/                    # Static assets (images, logos)
+│   ├── logo_normal.png
+│   ├── logo_white.png
+│   └── ProfilePicture.png
 ├── components/
-│   ├── ui/                # Reusable UI components (shadcn, custom)
+│   ├── common/                # Custom reusable components (app-specific)
 │   │   ├── Logo.tsx
-│   │   ├── NowPlaying.tsx
-│   │   └── ...other UI components
-│   ├── layout/            # Layout wrappers
+│   │   └── NowPlaying.tsx
+│   ├── dashboard/             # Dashboard feature components
+│   │   ├── ActionButtons.tsx
+│   │   ├── ConnectedUsers.tsx
+│   │   ├── NowPlayingSection.tsx
+│   │   ├── ParticipantsList.tsx
+│   │   ├── ProfileCard.tsx
+│   │   ├── QRCodeModal.tsx
+│   │   ├── QueueList.tsx
+│   │   ├── SearchBar.tsx
+│   │   └── index.ts
+│   ├── error-boundary/        # Error handling components
+│   │   ├── ErrorBoundary.tsx
+│   │   ├── ErrorFallback.tsx
+│   │   └── index.ts
+│   ├── layout/                # Layout wrappers
 │   │   └── Layout.tsx
-│   └── figma/             # Figma-exported components (archived)
-│       └── ImageWithFallback.tsx
-├── pages/                 # Full page/route components (formerly "views")
-│   ├── RoleSelection.tsx
+│   ├── modals/                # Modal components
+│   │   ├── FrequentSongWarningModal.tsx
+│   │   └── index.ts
+│   └── ui/                    # shadcn/ui primitives (auto-generated)
+│       ├── button.tsx
+│       ├── card.tsx
+│       ├── dialog.tsx
+│       └── ...
+├── constants/                 # Constants and configuration
+│   ├── animations.ts
+│   ├── dashboard.ts
+│   ├── messages.ts
+│   ├── routes.ts
+│   └── songs.ts
+├── hooks/                     # Custom React hooks
+│   ├── index.ts               # Barrel export
+│   ├── use-mobile.ts
+│   ├── useAuth.ts
+│   ├── useDarkMode.ts
+│   ├── useEvents.ts
+│   ├── useParticipants.ts
+│   ├── useSongs.ts
+│   └── useVotes.ts
+├── lib/                       # Shared utilities (shadcn convention)
+│   └── utils.ts               # cn() helper
+├── pages/                     # Page/route components
+│   ├── index.ts               # Barrel export
 │   ├── AttendeeLogin.tsx
-│   ├── DjLogin.tsx
 │   ├── Dashboard.tsx
-│   ├── SongSelection.tsx
+│   ├── DjLogin.tsx
+│   ├── NotFound.tsx
+│   ├── RoleSelection.tsx
 │   ├── Settings.tsx
 │   ├── SettingsList.tsx
-│   └── index.ts          # Barrel export
-├── hooks/                # Custom React hooks (for future use)
-├── utils/                # Utility functions (for future use)
-├── constants/            # Constants and enums (for future use)
-├── types/                # TypeScript type definitions
-│   └── index.ts         # Shared types (View, UserRole, etc.)
-├── styles/              # Global styles
-│   └── ...existing styles
-├── guidelines/          # Documentation
-├── App.tsx              # Main app component
-├── main.tsx             # Entry point
-└── index.css            # Global stylesheet
+│   └── SongSelection.tsx
+├── services/                  # API and socket communication
+│   ├── api.ts                 # REST API client
+│   └── socket.ts              # WebSocket client
+├── styles/                    # Global styles and theming
+│   └── globals.css            # shadcn CSS variables
+├── types/                     # TypeScript type definitions
+│   ├── index.ts               # Shared types (View, UserRole, PageProps)
+│   └── lucide-react.d.ts
+├── utils/                     # Application utilities
+│   ├── index.ts               # Barrel export
+│   ├── errors.ts
+│   ├── formatting.ts
+│   └── validation.ts
+├── App.tsx                    # Root component
+├── main.tsx                   # Entry point
+└── index.css                  # Tailwind base styles
 ```
 
-## Migration Notes
+## Conventions
 
-### Pages (formerly Views)
-- All view files have been moved from `components/views/` → `pages/`
-- Import paths updated from `../layout/Layout` → `../components/layout/Layout`
-- Import paths updated from `../ui/Component` → `../components/ui/Component`
+### Path Aliases
 
-### Types
-- Created centralized `types/index.ts` for shared type definitions
-- Moved `View` type from `App.tsx` to `types/index.ts`
-- Added `UserRole` and `PageProps` interface types
+All cross-directory imports use the `@/` alias (configured in `tsconfig.json` and `vite.config.ts`):
 
-### Imports Folder
-- Old Figma-exported components moved to `old_imports_backup/`
-- Can be cleaned up or integrated into `components/figma/` if needed
-
-## Best Practices
-
-### Adding New Components
-- **UI Components**: `src/components/ui/`
-- **Layout Components**: `src/components/layout/`
-- **Page-specific Components**: Consider creating `src/components/features/{featureName}/`
-
-### Adding New Pages
-- Create file in `src/pages/`
-- Export from `src/pages/index.ts`
-- Use typed imports from `src/types/`
-
-### Imports
 ```typescript
-// ✅ Good
-import type { View } from '@/types';
+// ✅ Correct
+import { Logo } from '@/components/common/Logo';
 import { Layout } from '@/components/layout/Layout';
-import { RoleSelection } from '@/pages';
+import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks';
+import type { View } from '@/types';
 
-// ❌ Avoid
-import { RoleSelection } from '../../../pages/RoleSelection';
+// ❌ Avoid relative paths across directories
+import { Logo } from '../../components/common/Logo';
 ```
 
-## Future Improvements
-- Set up path aliases (`@/*`) in `tsconfig.json` and `vite.config.ts`
-- Extract common logic into `hooks/` and `utils/`
-- Add constants file for magic strings and configuration
-- Organize components by feature if it grows
+### Component Organization
+
+| Folder | Purpose |
+|---|---|
+| `components/ui/` | shadcn/ui primitives — do not add custom components here |
+| `components/common/` | Reusable app-specific components (Logo, NowPlaying) |
+| `components/dashboard/` | Components specific to the Dashboard feature |
+| `components/layout/` | Layout wrappers |
+| `components/modals/` | Modal/dialog components |
+| `components/error-boundary/` | Error boundary components |
+
+### Adding New Features
+
+1. **New page**: Create in `pages/`, export from `pages/index.ts`
+2. **New hook**: Create in `hooks/`, export from `hooks/index.ts`
+3. **New feature components**: Create `components/{feature}/` with an `index.ts` barrel
+4. **New utility**: Add to existing file in `utils/` or create a new one, export from `utils/index.ts`

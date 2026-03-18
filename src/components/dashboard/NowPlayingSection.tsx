@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
+<<<<<<< Updated upstream
 import { NowPlaying } from "@/components/common";
 import { NOW_PLAYING } from "@/constants/dashboard";
 import { SCALE_IN } from "@/constants/animations";
 import { initSocket, onSongApproved, onSongRejected, onSongSkipped, onQueueUpdated, off } from "@/services/socket";
 import { songsAPI } from "@/services/api";
+=======
+import { NowPlaying } from "@/components/common/NowPlaying";
+import { NOW_PLAYING } from "@/constants/dashboard";
+import { SCALE_IN } from "@/constants/animations";
+import { initSocket, onSongApproved, onSongRejected, onSongSkipped, onQueueUpdated, off } from "../../services/socket";
+import { songsAPI } from "../../services/api";
+>>>>>>> Stashed changes
 
 interface NowPlayingSong {
   id: string;

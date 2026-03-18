@@ -2,7 +2,11 @@ import React, { ReactNode } from 'react';
 import { motion } from 'motion/react';
 import { Sun, Moon } from 'lucide-react';
 import { clsx } from 'clsx';
+<<<<<<< Updated upstream
 import { Logo } from '@/components/common';
+=======
+import { Logo } from '@/components/common/Logo';
+>>>>>>> Stashed changes
 import { useDarkMode } from '@/hooks/useDarkMode';
 
 interface LayoutProps {

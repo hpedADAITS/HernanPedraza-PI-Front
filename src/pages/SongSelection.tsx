@@ -268,14 +268,14 @@ export function SongSelection({ mode, onNavigate }: Props) {
         )}
 
         {/* Back Button */}
-        <div className="fixed bottom-8 right-8 z-50">
+        <div className="fixed bottom-16 right-8" style={{ zIndex: 999999 }}>
           <motion.button
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => onNavigate(isDj ? 'dj-dashboard' : 'attendee-dashboard')}
-            className="bg-white px-8 py-4 rounded-full shadow-xl shadow-black/10 text-xl font-light text-slate-800 flex items-center gap-2 border border-slate-100"
+            className="bg-white px-8 py-4 rounded-full shadow-xl shadow-black/10 text-xl font-light text-slate-800 flex items-center gap-2 border border-slate-100 select-none pointer-events-auto cursor-pointer"
           >
             <ArrowLeft size={20} />
             Back

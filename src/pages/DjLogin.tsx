@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
+<<<<<<< Updated upstream
 import { Logo } from '@/components/common';
+=======
+import { Logo } from '@/components/common/Logo';
+>>>>>>> Stashed changes
 import { motion } from 'motion/react';
 import { User, Lock, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
@@ -83,12 +87,12 @@ export function DjLogin({ onNavigate, logoWhite = false, onLogoChange }: Props) 
         initial={{ scale: 0.97, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.08, duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
-        className="w-full max-w-[400px] px-6 flex flex-col gap-5"
+        className="w-full max-w-[400px] px-6 flex flex-col gap-4"
       >
         {/* Email Input */}
          <div className="relative group">
-           <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-800 pointer-events-none">
-             <User size={26} strokeWidth={2} />
+           <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none">
+             <User size={20} strokeWidth={2} />
            </div>
            <input 
              type="email" 
@@ -96,14 +100,14 @@ export function DjLogin({ onNavigate, logoWhite = false, onLogoChange }: Props) 
              value={email}
              onChange={(e) => setEmail(e.target.value)}
              required
-             className="w-full h-16 pl-16 pr-6 rounded-2xl bg-white shadow-lg shadow-blue-900/5 border-none outline-none text-lg text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-white/50 transition-all"
+             className="w-full h-12 pl-14 pr-4 rounded-lg bg-white shadow-md shadow-blue-900/5 border border-slate-200 outline-none text-base text-slate-700 placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
            />
          </div>
 
          {/* Password Input */}
          <div className="relative group">
-           <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-800 pointer-events-none">
-             <Lock size={26} strokeWidth={2} />
+           <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none">
+             <Lock size={20} strokeWidth={2} />
            </div>
            <input 
              type="password" 
@@ -111,7 +115,7 @@ export function DjLogin({ onNavigate, logoWhite = false, onLogoChange }: Props) 
              value={password}
              onChange={(e) => setPassword(e.target.value)}
              required
-             className="w-full h-16 pl-16 pr-6 rounded-2xl bg-white shadow-lg shadow-blue-900/5 border-none outline-none text-lg text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-white/50 transition-all"
+             className="w-full h-12 pl-14 pr-4 rounded-lg bg-white shadow-md shadow-blue-900/5 border border-slate-200 outline-none text-base text-slate-700 placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
            />
          </div>
 
@@ -120,10 +124,10 @@ export function DjLogin({ onNavigate, logoWhite = false, onLogoChange }: Props) 
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           disabled={loading}
-          className="h-14 mt-8 bg-slate-500 hover:bg-slate-600 text-white rounded-[10px] shadow-lg shadow-slate-900/20 text-lg font-medium tracking-wide flex items-center justify-center transition-all w-[160px] mx-auto disabled:opacity-70 disabled:cursor-not-allowed"
+          className="h-11 mt-6 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md shadow-blue-900/20 text-base font-semibold tracking-normal flex items-center justify-center transition-all disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {loading ? (
-             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
           ) : (
             "Login"
           )}
@@ -132,17 +136,17 @@ export function DjLogin({ onNavigate, logoWhite = false, onLogoChange }: Props) 
       </motion.form>
 
       {/* Back Button */}
-      <div className="fixed bottom-8 right-8 z-50">
+      <div className="fixed bottom-8 right-6" style={{ zIndex: 999999 }}>
         <motion.button
            initial={{ opacity: 0, x: 12 }}
            animate={{ opacity: 1, x: 0 }}
            transition={{ delay: 0.15, duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
-           whileHover={{ scale: 1.05, transition: { duration: 0.12 } }}
-           whileTap={{ scale: 0.95, transition: { duration: 0.08 } }}
+           whileHover={{ scale: 1.04, transition: { duration: 0.12 } }}
+           whileTap={{ scale: 0.96, transition: { duration: 0.08 } }}
            onClick={() => onNavigate('role-selection')}
-           className="bg-white px-8 py-4 rounded-full shadow-xl shadow-black/10 text-xl font-light text-slate-800 flex items-center gap-2 border border-slate-100"
+           className="bg-white px-5 py-2.5 rounded-lg shadow-md shadow-black/10 text-sm font-medium text-slate-800 flex items-center gap-1.5 border border-slate-200 select-none pointer-events-auto cursor-pointer"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={16} />
           Back
         </motion.button>
       </div>

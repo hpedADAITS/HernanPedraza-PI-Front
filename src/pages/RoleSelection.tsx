@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
+<<<<<<< Updated upstream
 import { Layout } from '@/components/layout/Layout';
 import { Logo } from '@/components/common';
+=======
+import { Layout } from '../components/layout/Layout';
+>>>>>>> Stashed changes
 import { motion, AnimatePresence } from 'motion/react';
 import { User, Headphones } from 'lucide-react';
 
@@ -36,13 +40,13 @@ export function RoleSelection({ onNavigate, logoWhite, onLogoChange }: Props) {
       <div className="flex flex-col items-center gap-16 md:gap-24 -mt-12 scale-90 md:scale-100">
         
         {/* Logo */}
-        <motion.div 
-          initial={{ y: -12, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-        >
-          <Logo variant="color" useWhite={logoWhite} />
-        </motion.div>
+         <motion.div 
+           initial={{ y: -12, opacity: 0 }}
+           animate={{ y: 0, opacity: 1 }}
+           transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+         >
+           <h1 className="text-4xl font-bold">SyncRequst</h1>
+         </motion.div>
 
         {/* Cards Container */}
         <div className="flex flex-col md:flex-row gap-8 md:gap-12">
