@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useAuth } from '@/hooks/useAuth';
+import { authAPI } from '@/services/api';
 
 // Mock the API service
 vi.mock('@/services/api', () => ({
@@ -16,14 +17,10 @@ vi.mock('@/services/api', () => ({
   loadToken: vi.fn(),
 }));
 
-describe('useAuth Hook', () => {
-  let mockAuthAPI: any;
+const mockAuthAPI = vi.mocked(authAPI);
 
+describe('useAuth Hook', () => {
   beforeEach(() => {
-    const api = require('@/services/api');
-    mockAuthAPI = api.authAPI;
-    
-    // Reset all mocks
     vi.clearAllMocks();
   });
 

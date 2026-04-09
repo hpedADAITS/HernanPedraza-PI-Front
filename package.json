@@ -59,11 +59,11 @@
             "@types/react": "^19.2.10",
             "@types/react-dom": "^19.2.3",
             "@vitejs/plugin-react-swc": "^3.10.2",
-            "@vitest/ui": "^1.0.4",
+            "@vitest/ui": "^4.1.4",
             "jsdom": "^23.0.1",
             "typescript": "^5.3.3",
-            "vite": "6.3.5",
-            "vitest": "^1.0.4"
+            "vite": "^6.4.2",
+            "vitest": "^4.1.4"
       },
       "scripts": {
             "dev": "vite",

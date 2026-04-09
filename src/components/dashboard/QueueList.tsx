@@ -8,7 +8,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "../ui/tooltip";
+} from "@/components/ui/tooltip";
 import { THEME_CONFIG } from "@/constants/dashboard";
 import { SLIDE_UP, ANIMATION_DURATION } from "@/constants/animations";
 <<<<<<< Updated upstream

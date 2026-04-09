@@ -8,7 +8,7 @@ import {
    TooltipContent,
    TooltipProvider,
    TooltipTrigger,
- } from "../ui/tooltip";
+ } from "@/components/ui/tooltip";
 import { ANIMATION_DURATION } from "@/constants/animations";
 import { participantsAPI } from "@/services/api";
 import { getSocket } from "@/services/socket";

@@ -8,6 +8,8 @@ import {
    TooltipContent,
    TooltipProvider,
    TooltipTrigger,
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
  } from '../ui/tooltip';
 =======
   Tooltip,
@@ -15,6 +17,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../ui/tooltip';
+>>>>>>> Stashed changes
+=======
+ } from '@/components/ui/tooltip';
+>>>>>>> Stashed changes
+=======
+ } from '@/components/ui/tooltip';
 >>>>>>> Stashed changes
 import { PROFILE_IMAGE, THEME_CONFIG } from '@/constants/dashboard';
 import { SLIDE_IN_LEFT } from '@/constants/animations';

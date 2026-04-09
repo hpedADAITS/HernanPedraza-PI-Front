@@ -112,6 +112,14 @@ export const authAPI = {
     });
     return data.data.user;
   },
+
+  updateProfilePicture: async (updates: { profilePicture: string }) => {
+    const data = await apiCall("/auth/me/picture", {
+      method: "PATCH",
+      body: JSON.stringify(updates),
+    });
+    return data.data.user;
+  },
 };
 
 // ============ EVENTS ENDPOINTS ============
