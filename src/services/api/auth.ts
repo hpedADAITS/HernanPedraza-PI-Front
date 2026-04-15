@@ -1,0 +1,62 @@
+import { apiCall, saveToken } from './client';
+
+export const authAPI = {
+  register: async (
+    email: string,
+    password: string,
+    displayName: string,
+    role: string = 'ATTENDEE',
+  ) => {
+    const data = await apiCall('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, displayName, role }),
+    });
+    if (data.data.token) {
+      saveToken(data.data.token);
+    }
+    return data.data;
+  },
+
+  login: async (email: string, password: string) => {
+    const data = await apiCall('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+    if (data.data.token) {
+      saveToken(data.data.token);
+    }
+    return data.data;
+  },
+
+  refreshToken: async (token: string) => {
+    const data = await apiCall('/auth/refresh', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    });
+    if (data.data.token) {
+      saveToken(data.data.token);
+    }
+    return data.data;
+  },
+
+  getCurrentUser: async () => {
+    const data = await apiCall('/auth/me');
+    return data.data.user;
+  },
+
+  updateProfile: async (updates: { displayName?: string }) => {
+    const data = await apiCall('/auth/me', {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+    return data.data.user;
+  },
+
+  updateProfilePicture: async (updates: { profilePicture: string }) => {
+    const data = await apiCall('/auth/me/picture', {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+    return data.data.user;
+  },
+};

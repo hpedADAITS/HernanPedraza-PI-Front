@@ -105,9 +105,7 @@ export function NowPlayingSection() {
           id: firstSong._id || firstSong.id,
           title: firstSong.title,
           artist: firstSong.artist,
-          status: (firstSong.status === 'PLAYING'
-            ? 'playing'
-            : 'queued') as const,
+          status: firstSong.status === 'PLAYING' ? 'playing' : 'queued',
           progress: 0,
           currentTime: '0:00',
           duration: '3:45',

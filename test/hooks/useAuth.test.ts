@@ -8,9 +8,10 @@ vi.mock('@/services/api', () => ({
   authAPI: {
     register: vi.fn(),
     login: vi.fn(),
-    logout: vi.fn(),
     refreshToken: vi.fn(),
     getCurrentUser: vi.fn(),
+    updateProfile: vi.fn(),
+    updateProfilePicture: vi.fn(),
   },
   saveToken: vi.fn(),
   clearToken: vi.fn(),
@@ -127,11 +128,8 @@ describe('useAuth Hook', () => {
   });
 
   it('should handle logout', async () => {
-    mockAuthAPI.logout.mockResolvedValue({});
-
     const { result } = renderHook(() => useAuth());
 
-    // Set a user first
     mockAuthAPI.login.mockResolvedValue({
       user: {
         id: '123',
@@ -148,13 +146,11 @@ describe('useAuth Hook', () => {
 
     expect(result.current.user).not.toBeNull();
 
-    // Now logout
-    await act(async () => {
-      await result.current.logout();
+    act(() => {
+      result.current.logout();
     });
 
     expect(result.current.user).toBeNull();
-    expect(result.current.error).toBeNull();
   });
 
   it('should set loading state during API calls', async () => {

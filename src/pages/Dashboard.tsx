@@ -35,7 +35,7 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
     }
 
     const token = localStorage.getItem('authToken');
-    const socket = initSocket(token);
+    const socket = initSocket(token ?? undefined);
 
     const user = localStorage.getItem('user');
     if (user) {

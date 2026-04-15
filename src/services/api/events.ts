@@ -1,0 +1,61 @@
+import { apiCall } from './client';
+
+export const eventsAPI = {
+  createEvent: async (name: string, description: string, startsAt: string) => {
+    const data = await apiCall('/events', {
+      method: 'POST',
+      body: JSON.stringify({ name, description, startsAt }),
+    });
+    return data.data.event;
+  },
+
+  listEvents: async (limit = 50, skip = 0) => {
+    const data = await apiCall(`/events?limit=${limit}&skip=${skip}`);
+    return data.data.events;
+  },
+
+  getEvent: async (eventId: string) => {
+    const data = await apiCall(`/events/${eventId}`);
+    return data.data.event;
+  },
+
+  getEventByAccessCode: async (accessCode: string) => {
+    const data = await apiCall(`/events/access/${accessCode}`);
+    return data.data.event;
+  },
+
+  updateEvent: async (eventId: string, updates: Record<string, any>) => {
+    const data = await apiCall(`/events/${eventId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+    return data.data.event;
+  },
+
+  startEvent: async (eventId: string) => {
+    const data = await apiCall(`/events/${eventId}/start`, {
+      method: 'POST',
+    });
+    return data.data.event;
+  },
+
+  endEvent: async (eventId: string) => {
+    const data = await apiCall(`/events/${eventId}/end`, {
+      method: 'POST',
+    });
+    return data.data.event;
+  },
+
+  cancelEvent: async (eventId: string, reason: string) => {
+    const data = await apiCall(`/events/${eventId}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+    return data.data.event;
+  },
+
+  getParticipants: async (eventId: string) => {
+    const data = await apiCall(`/events/${eventId}/participants`);
+    return data.data.participants;
+  },
+};

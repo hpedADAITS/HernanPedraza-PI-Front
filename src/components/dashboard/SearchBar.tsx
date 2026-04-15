@@ -2,9 +2,10 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Search } from 'lucide-react';
 import { SLIDE_UP } from '@/constants/animations';
+import type { View } from '@/types';
 
 interface SearchBarProps {
-  onNavigate: (view: string) => void;
+  onNavigate: (view: View) => void;
   isDj: boolean;
 }
 

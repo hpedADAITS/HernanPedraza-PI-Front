@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import QRCode from 'qrcode.react';
+import * as QRCodeLib from 'qrcode.react';
+const QRCode = QRCodeLib.default || QRCodeLib;
 import { X, Copy, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import {

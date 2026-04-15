@@ -11,6 +11,7 @@ export const PROFILE_IMAGE = new URL(
 ).href;
 
 export const NOW_PLAYING = {
+  id: 'default',
   title: 'Blinding Lights',
   artist: 'The Weeknd',
   currentTime: '2:35',

@@ -12,10 +12,11 @@ import { ANIMATION_DURATION } from '@/constants/animations';
 import { songsAPI, votesAPI, clearToken } from '@/services/api';
 import * as socket from '@/services/socket';
 import { disconnectSocket } from '@/services/socket';
+import type { View } from '@/types';
 
 interface ActionButtonsProps {
   mode: 'attendee' | 'dj';
-  onNavigate: (view: string) => void;
+  onNavigate: (view: View) => void;
 }
 
 export function ActionButtons({ mode, onNavigate }: ActionButtonsProps) {
