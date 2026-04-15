@@ -42,7 +42,11 @@ export function SettingsList({ onNavigate }: Props) {
       toast.success('Display name updated');
       setShowNameModal(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to update display name');
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to update display name',
+      );
     } finally {
       setLoading(false);
     }
@@ -69,7 +73,8 @@ export function SettingsList({ onNavigate }: Props) {
       if (eventData) eventId = JSON.parse(eventData).eventId || 'None';
     } catch {}
     try {
-      if (participantData) participantId = JSON.parse(participantData)._id || 'None';
+      if (participantData)
+        participantId = JSON.parse(participantData)._id || 'None';
     } catch {}
     const socketConnected = getSocket()?.connected || false;
 
@@ -97,30 +102,32 @@ export function SettingsList({ onNavigate }: Props) {
   };
 
   const SETTINGS_ITEMS = [
-    "Display Name Visibility",
-    "Media Quality",
-    "Social Settings",
-    "Debug / Diagnostics",
-    "Sign Out"
+    'Display Name Visibility',
+    'Media Quality',
+    'Social Settings',
+    'Debug / Diagnostics',
+    'Sign Out',
   ];
 
   const debugInfo = getDebugInfo();
 
   return (
     <Layout theme="blue" className="p-6 md:p-12 items-center" showNav={true}>
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="max-w-4xl mx-auto w-full flex flex-col items-center mt-8"
       >
-        <h1 className="text-5xl font-light text-slate-800 text-center mb-8">Account Settings</h1>
+        <h1 className="text-5xl font-light text-slate-800 text-center mb-8">
+          Account Settings
+        </h1>
 
         <div className="w-full max-w-lg relative mb-16">
           <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400">
             <Search size={24} />
           </div>
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder=""
             className="w-full h-16 pl-16 pr-6 rounded-2xl shadow-lg bg-white border-none outline-none text-xl transition-all"
           />
@@ -145,10 +152,10 @@ export function SettingsList({ onNavigate }: Props) {
 
         <div className="fixed bottom-8 right-8 z-50">
           <motion.button
-             whileHover={{ scale: 1.05 }}
-             whileTap={{ scale: 0.95 }}
-             onClick={() => onNavigate('dj-settings')}
-             className="bg-white px-8 py-4 rounded-full shadow-xl text-xl font-light text-slate-800 flex items-center gap-2"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => onNavigate('dj-settings')}
+            className="bg-white px-8 py-4 rounded-full shadow-xl text-xl font-light text-slate-800 flex items-center gap-2"
           >
             Cancel
           </motion.button>
@@ -172,8 +179,13 @@ export function SettingsList({ onNavigate }: Props) {
               className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6"
             >
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-slate-800">Change Display Name</h2>
-                <button onClick={() => setShowNameModal(false)} className="p-1 rounded-full hover:bg-slate-100">
+                <h2 className="text-xl font-bold text-slate-800">
+                  Change Display Name
+                </h2>
+                <button
+                  onClick={() => setShowNameModal(false)}
+                  className="p-1 rounded-full hover:bg-slate-100"
+                >
                   <X size={20} className="text-slate-500" />
                 </button>
               </div>
@@ -224,28 +236,45 @@ export function SettingsList({ onNavigate }: Props) {
             >
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-slate-800">Debug Info</h2>
-                <button onClick={() => setShowDebugModal(false)} className="p-1 rounded-full hover:bg-slate-100">
+                <button
+                  onClick={() => setShowDebugModal(false)}
+                  className="p-1 rounded-full hover:bg-slate-100"
+                >
                   <X size={20} className="text-slate-500" />
                 </button>
               </div>
               <div className="space-y-3 text-sm font-mono">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Auth Token:</span>
-                  <span className={debugInfo.hasToken ? 'text-green-600' : 'text-red-500'}>
+                  <span
+                    className={
+                      debugInfo.hasToken ? 'text-green-600' : 'text-red-500'
+                    }
+                  >
                     {debugInfo.hasToken ? 'Present' : 'Missing'}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Event ID:</span>
-                  <span className="text-slate-700 truncate max-w-[180px]">{debugInfo.eventId}</span>
+                  <span className="text-slate-700 truncate max-w-[180px]">
+                    {debugInfo.eventId}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Participant ID:</span>
-                  <span className="text-slate-700 truncate max-w-[180px]">{debugInfo.participantId}</span>
+                  <span className="text-slate-700 truncate max-w-[180px]">
+                    {debugInfo.participantId}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Socket:</span>
-                  <span className={debugInfo.socketConnected ? 'text-green-600' : 'text-red-500'}>
+                  <span
+                    className={
+                      debugInfo.socketConnected
+                        ? 'text-green-600'
+                        : 'text-red-500'
+                    }
+                  >
                     {debugInfo.socketConnected ? 'Connected' : 'Disconnected'}
                   </span>
                 </div>

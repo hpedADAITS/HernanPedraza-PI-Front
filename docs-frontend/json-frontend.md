@@ -36,6 +36,7 @@
 ```
 
 ### Uso en Frontend
+
 ```javascript
 // AuthStore guarda:
 authStore.setToken(response.token);
@@ -77,20 +78,23 @@ authStore.setUser(response.user);
 ```
 
 ### Renderización en Frontend
+
 ```javascript
 // EventStore guarda:
 eventStore.setEvents(response.data);
 
 // Renderizado como:
-{events.map(event => (
-  <EventCard
-    key={event.id}
-    name={event.name}
-    dj={event.djName}
-    participants={event.participants}
-    code={event.code}
-  />
-))}
+{
+  events.map((event) => (
+    <EventCard
+      key={event.id}
+      name={event.name}
+      dj={event.djName}
+      participants={event.participants}
+      code={event.code}
+    />
+  ));
+}
 ```
 
 ---
@@ -120,6 +124,7 @@ eventStore.setEvents(response.data);
 ```
 
 ### Uso en Frontend
+
 ```javascript
 // EventStore guarda
 eventStore.setCurrentEvent(eventData);
@@ -174,23 +179,26 @@ eventStore.setCurrentEvent(eventData);
 ```
 
 ### Renderización en Frontend
+
 ```javascript
 // SongStore guarda
 songStore.setQueue(queueData);
 
 // Renderizado como:
-{queue.map((song, idx) => (
-  <SongCard
-    key={song.id}
-    position={idx + 1}
-    title={song.title}
-    artist={song.artist}
-    votes={song.votes.total}
-    userVoted={song.votes.userHasVoted}
-    status={song.status}
-    suggestedBy={song.suggestedBy}
-  />
-))}
+{
+  queue.map((song, idx) => (
+    <SongCard
+      key={song.id}
+      position={idx + 1}
+      title={song.title}
+      artist={song.artist}
+      votes={song.votes.total}
+      userVoted={song.votes.userHasVoted}
+      status={song.status}
+      suggestedBy={song.suggestedBy}
+    />
+  ));
+}
 ```
 
 ---
@@ -212,6 +220,7 @@ songStore.setQueue(queueData);
 ```
 
 ### Manejador de Socket en Frontend
+
 ```javascript
 // Hook useSocket escucha:
 socket.on('votes_updated', (data) => {
@@ -222,6 +231,7 @@ socket.on('votes_updated', (data) => {
 ```
 
 ### Actualización de UI
+
 ```
 Canción "Billie Jean" va de 15 votos → 16 votos
 Cola se ordena nuevamente si el ranking cambió
@@ -251,6 +261,7 @@ Usuario ve actualización inmediata (sin recarga de página)
 ```
 
 ### Manejador de Socket en Frontend (Panel DJ)
+
 ```javascript
 // Frontend de DJ escucha:
 socket.on('song_suggested', (data) => {
@@ -262,6 +273,7 @@ socket.on('song_suggested', (data) => {
 ```
 
 ### Actualización de UI (Panel DJ)
+
 ```
 Aparece notificación Toast:
 "Nueva canción sugerida: Billie Jean de Michael Jackson"
@@ -295,6 +307,7 @@ Canción aparece en sección "Aprobación Pendiente"
 ```
 
 ### Manejador en Frontend
+
 ```javascript
 socket.on('queue_updated', (data) => {
   songStore.setQueue(data.queue);
@@ -324,6 +337,7 @@ socket.on('queue_updated', (data) => {
 ```
 
 ### Manejador en Frontend
+
 ```javascript
 socket.on('participant_joined', (data) => {
   // Actualizar conteo de participantes
@@ -360,6 +374,7 @@ socket.on('participant_joined', (data) => {
 ```
 
 ### Manejador en Frontend
+
 ```javascript
 socket.on('event_closed', (data) => {
   // Mostrar modal de resumen
@@ -387,6 +402,7 @@ socket.on('event_closed', (data) => {
 ```
 
 ### Validación en Frontend Antes de Envío
+
 - Título no vacío
 - Artista no vacío
 - Longitud del título ≤ 255 caracteres
@@ -394,6 +410,7 @@ socket.on('event_closed', (data) => {
 - Usuario no ha excedido límite de sugerencias
 
 ### Renderización del Formulario
+
 ```javascript
 <form onSubmit={handleSuggest}>
   <input
@@ -432,6 +449,7 @@ socket.on('event_closed', (data) => {
 ```
 
 ### Procesamiento en Frontend
+
 - Deshabilitar botón inmediatamente (prevenir doble clic)
 - Mostrar indicador de carga
 - Incrementar contador de votos optimistamente
@@ -444,6 +462,7 @@ socket.on('event_closed', (data) => {
 ## Flujo de Datos Frontend
 
 ### Inicio de Sesión → Autenticación
+
 ```
 Entrada del Usuario
   ↓
@@ -463,6 +482,7 @@ Redirigir a EventListPage
 ```
 
 ### Unirse a Evento → Sincronización en Tiempo Real
+
 ```
 Usuario se une con código
   ↓
@@ -482,6 +502,7 @@ Componentes se re-renderizan automáticamente
 ```
 
 ### Votar → Actualización en Tiempo Real
+
 ```
 Usuario hace clic en voto
   ↓
@@ -503,18 +524,21 @@ Nuevo ranking visible
 ## Puntos Clave para Desarrolladores Frontend
 
 ### Fuentes de Datos
+
 - **REST API**: Datos iniciales, mutaciones
 - **Socket.IO**: Actualizaciones en tiempo real, notificaciones
 - **Estado Local**: Entradas de formularios, estado de UI
 - **Store Zustand**: Estado compartido de aplicación
 
 ### Responsabilidad de Renderización
+
 - Mostrar estados de carga mientras se obtienen datos
 - Mostrar mensajes de error a usuarios
 - Actualizar UI cuando los datos cambian
 - No forzar recarga de página
 
 ### Manejo en Tiempo Real
+
 - Escuchar eventos de socket en useEffect
 - Actualizar stores en mensajes de socket
 - Componentes se re-renderizan automáticamente

@@ -147,6 +147,9 @@ describe('useDarkMode Hook', () => {
 
     unmount();
 
-    expect(removeEventListenerSpy).toHaveBeenCalledWith('storage', expect.any(Function));
+    expect(removeEventListenerSpy).toHaveBeenCalledWith(
+      'storage',
+      expect.any(Function),
+    );
   });
 });

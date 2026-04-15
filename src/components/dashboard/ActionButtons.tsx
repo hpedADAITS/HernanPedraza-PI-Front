@@ -3,11 +3,11 @@ import { motion } from 'motion/react';
 import { ThumbsUp, ThumbsDown, LogOut, Settings, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import {
-   Tooltip,
-   TooltipContent,
-   TooltipProvider,
-   TooltipTrigger,
- } from '@/components/ui/tooltip';
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { ANIMATION_DURATION } from '@/constants/animations';
 import { songsAPI, votesAPI, clearToken } from '@/services/api';
 import * as socket from '@/services/socket';
@@ -33,39 +33,41 @@ export function ActionButtons({ mode, onNavigate }: ActionButtonsProps) {
   return (
     <TooltipProvider>
       <div className="flex flex-col gap-6 items-center">
-      {!isDj && <VotingButtons />}
+        {!isDj && <VotingButtons />}
 
-      <div className="flex flex-col sm:flex-row gap-3 w-full max-w-2xl">
-        <ActionButton
-          icon={Plus}
-          label="Queue Song"
-          onClick={() => onNavigate(isDj ? 'dj-song-select' : 'attendee-song-select')}
-          variant="primary"
-        />
-        
-        <ActionButton
-          icon={LogOut}
-          label="Leave Party"
-          onClick={handleLeaveParty}
-          variant="primary"
-        />
+        <div className="flex flex-col sm:flex-row gap-3 w-full max-w-2xl">
+          <ActionButton
+            icon={Plus}
+            label="Queue Song"
+            onClick={() =>
+              onNavigate(isDj ? 'dj-song-select' : 'attendee-song-select')
+            }
+            variant="primary"
+          />
 
-        {isDj && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <motion.button
-                whileHover={{ rotate: 90 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => onNavigate('dj-settings')}
-                className="w-14 h-14 bg-slate-600 hover:bg-slate-700 rounded-xl shadow-lg flex items-center justify-center text-white flex-shrink-0 transition-colors"
-              >
-                <Settings size={24} />
-              </motion.button>
-            </TooltipTrigger>
-            <TooltipContent>Settings</TooltipContent>
-          </Tooltip>
-        )}
-      </div>
+          <ActionButton
+            icon={LogOut}
+            label="Leave Party"
+            onClick={handleLeaveParty}
+            variant="primary"
+          />
+
+          {isDj && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <motion.button
+                  whileHover={{ rotate: 90 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => onNavigate('dj-settings')}
+                  className="w-14 h-14 bg-slate-600 hover:bg-slate-700 rounded-xl shadow-lg flex items-center justify-center text-white flex-shrink-0 transition-colors"
+                >
+                  <Settings size={24} />
+                </motion.button>
+              </TooltipTrigger>
+              <TooltipContent>Settings</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
       </div>
     </TooltipProvider>
   );
@@ -94,13 +96,16 @@ function VotingButtons() {
     }
     if (!eventId) return;
 
-    songsAPI.getQueue(eventId).then((queue) => {
-      if (queue && queue.length > 0) {
-        setCurrentSong(queue[0]);
-      }
-    }).catch(() => {
-      // queue fetch failed silently
-    });
+    songsAPI
+      .getQueue(eventId)
+      .then((queue) => {
+        if (queue && queue.length > 0) {
+          setCurrentSong(queue[0]);
+        }
+      })
+      .catch(() => {
+        // queue fetch failed silently
+      });
 
     const handleQueueUpdate = (data: any) => {
       if (data?.queue && data.queue.length > 0) {
@@ -196,16 +201,22 @@ interface VoteButtonProps {
   disabled?: boolean;
 }
 
-function VoteButton({ icon: Icon, color, label, onClick, disabled }: VoteButtonProps) {
+function VoteButton({
+  icon: Icon,
+  color,
+  label,
+  onClick,
+  disabled,
+}: VoteButtonProps) {
   const colors = {
     emerald: 'bg-emerald-600 hover:bg-emerald-700',
-    red: 'bg-red-600 hover:bg-red-700'
+    red: 'bg-red-600 hover:bg-red-700',
   };
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <motion.button 
+        <motion.button
           whileHover={{ y: -3 }}
           whileTap={{ scale: 0.97 }}
           onClick={onClick}
@@ -228,7 +239,12 @@ interface ActionButtonProps {
   variant: 'primary';
 }
 
-function ActionButton({ icon: Icon, label, onClick, variant }: ActionButtonProps) {
+function ActionButton({
+  icon: Icon,
+  label,
+  onClick,
+  variant,
+}: ActionButtonProps) {
   return (
     <motion.button
       whileHover={{ y: -2 }}

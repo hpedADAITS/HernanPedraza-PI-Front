@@ -1,7 +1,9 @@
-import io, { Socket } from "socket.io-client";
+import io, { Socket } from 'socket.io-client';
 
 // @ts-ignore
-const SOCKET_URL: string = (import.meta.env?.VITE_API_URL as string | undefined) || "http://localhost:5000";
+const SOCKET_URL: string =
+  (import.meta.env?.VITE_API_URL as string | undefined) ||
+  'http://localhost:5000';
 
 let socket: Socket | null = null;
 let eventListeners: Map<string, Function[]> = new Map();
@@ -13,7 +15,7 @@ export function initSocket(token?: string) {
 
   socket = io(SOCKET_URL, {
     auth: {
-      token: token || localStorage.getItem("authToken") || undefined,
+      token: token || localStorage.getItem('authToken') || undefined,
     },
     reconnection: true,
     reconnectionDelay: 1000,
@@ -21,21 +23,16 @@ export function initSocket(token?: string) {
     reconnectionAttempts: 5,
   });
 
-  socket.on("connect", () => {
-    console.log("Socket connected:", socket?.id);
+  socket.on('connect', () => {
+    // Socket connected
   });
 
-  socket.on("disconnect", () => {
-    console.log("Socket disconnected");
+  socket.on('disconnect', () => {
+    // Socket disconnected
   });
 
-  socket.on("error", (error) => {
-    console.error("Socket error:", error);
-    if (error?.details) {
-      console.error("Error details:", error.details);
-      if (error.details.eventId) console.error("Missing: eventId");
-      if (error.details.songId) console.error("Missing: songId");
-    }
+  socket.on('error', (error) => {
+    // Handle socket error silently
   });
 
   return socket;
@@ -54,58 +51,80 @@ export function getSocket(): Socket | null {
 
 // ============ PARTICIPATION ============
 
-export function joinEvent(eventId: string, participantId: string, nickname: string) {
-  if (!socket) throw new Error("Socket not initialized");
-  socket.emit("join_event", { eventId, participantId, nickname });
+export function joinEvent(
+  eventId: string,
+  participantId: string,
+  nickname: string,
+) {
+  if (!socket) throw new Error('Socket not initialized');
+  socket.emit('join_event', { eventId, participantId, nickname });
 }
 
 export function leaveEvent(eventId: string, participantId: string) {
-  if (!socket) throw new Error("Socket not initialized");
-  socket.emit("leave_event", { eventId, participantId });
+  if (!socket) throw new Error('Socket not initialized');
+  socket.emit('leave_event', { eventId, participantId });
 }
 
 // ============ VOTING ============
 
-export function castVote(eventId: string, songId: string, participantId: string, value: number) {
-  if (!socket) throw new Error("Socket not initialized");
-  socket.emit("vote_cast", { eventId, songId, participantId, value });
+export function castVote(
+  eventId: string,
+  songId: string,
+  participantId: string,
+  value: number,
+) {
+  if (!socket) throw new Error('Socket not initialized');
+  socket.emit('vote_cast', { eventId, songId, participantId, value });
 }
 
-export function removeVote(eventId: string, songId: string, participantId: string) {
-  if (!socket) throw new Error("Socket not initialized");
-  socket.emit("vote_removed", { eventId, songId, participantId });
+export function removeVote(
+  eventId: string,
+  songId: string,
+  participantId: string,
+) {
+  if (!socket) throw new Error('Socket not initialized');
+  socket.emit('vote_removed', { eventId, songId, participantId });
 }
 
 // ============ SONGS ============
 
-export function suggestSong(eventId: string, songId: string, title: string, artist: string, participantId: string) {
-  if (!socket) throw new Error("Socket not initialized");
-  socket.emit("song_suggested", { eventId, songId, title, artist, participantId });
+export function suggestSong(
+  eventId: string,
+  songId: string,
+  title: string,
+  artist: string,
+  participantId: string,
+) {
+  if (!socket) throw new Error('Socket not initialized');
+  socket.emit('song_suggested', {
+    eventId,
+    songId,
+    title,
+    artist,
+    participantId,
+  });
 }
 
 export function approveSong(eventId: string, songId: string) {
   if (!socket) {
-    console.error("Socket not initialized!");
-    throw new Error("Socket not initialized");
+    throw new Error('Socket not initialized');
   }
-  console.log("[Socket] Emitting song_approved:", { eventId, songId });
-  socket.emit("song_approved", { eventId, songId });
-  console.log("[Socket] Emit complete");
+  socket.emit('song_approved', { eventId, songId });
 }
 
 export function rejectSong(eventId: string, songId: string, reason: string) {
-  if (!socket) throw new Error("Socket not initialized");
-  socket.emit("song_rejected", { eventId, songId, reason });
+  if (!socket) throw new Error('Socket not initialized');
+  socket.emit('song_rejected', { eventId, songId, reason });
 }
 
 export function skipSong(eventId: string, songId: string, reason: string) {
-  if (!socket) throw new Error("Socket not initialized");
-  socket.emit("song_skipped", { eventId, songId, reason });
+  if (!socket) throw new Error('Socket not initialized');
+  socket.emit('song_skipped', { eventId, songId, reason });
 }
 
 export function updateQueue(eventId: string, queue: any[]) {
-  if (!socket) throw new Error("Socket not initialized");
-  socket.emit("queue_updated", { eventId, queue });
+  if (!socket) throw new Error('Socket not initialized');
+  socket.emit('queue_updated', { eventId, queue });
 }
 
 // ============ EVENT LISTENERS ============
@@ -143,37 +162,37 @@ export function off(event: string, callback?: (data: any) => void) {
 // ============ LISTENER HELPERS ============
 
 export function onParticipantJoined(callback: (data: any) => void) {
-  on("participant_joined", callback);
+  on('participant_joined', callback);
 }
 
 export function onParticipantLeft(callback: (data: any) => void) {
-  on("participant_left", callback);
+  on('participant_left', callback);
 }
 
 export function onVotesUpdated(callback: (data: any) => void) {
-  on("votes_updated", callback);
+  on('votes_updated', callback);
 }
 
 export function onSongSuggested(callback: (data: any) => void) {
-  on("song_suggested", callback);
+  on('song_suggested', callback);
 }
 
 export function onSongApproved(callback: (data: any) => void) {
-  on("song_approved", callback);
+  on('song_approved', callback);
 }
 
 export function onSongRejected(callback: (data: any) => void) {
-  on("song_rejected", callback);
+  on('song_rejected', callback);
 }
 
 export function onSongSkipped(callback: (data: any) => void) {
-  on("song_skipped", callback);
+  on('song_skipped', callback);
 }
 
 export function onQueueUpdated(callback: (data: any) => void) {
-  on("queue_updated", callback);
+  on('queue_updated', callback);
 }
 
 export function onSocketError(callback: (data: any) => void) {
-  on("error", callback);
+  on('error', callback);
 }

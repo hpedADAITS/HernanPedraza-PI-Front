@@ -9,10 +9,12 @@ export function useDarkMode() {
   useEffect(() => {
     localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
     // Trigger storage event for other components
-    window.dispatchEvent(new StorageEvent('storage', {
-      key: 'darkMode',
-      newValue: JSON.stringify(isDarkMode),
-    }));
+    window.dispatchEvent(
+      new StorageEvent('storage', {
+        key: 'darkMode',
+        newValue: JSON.stringify(isDarkMode),
+      }),
+    );
   }, [isDarkMode]);
 
   useEffect(() => {

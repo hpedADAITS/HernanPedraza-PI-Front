@@ -1,24 +1,23 @@
-import React, { useState, useEffect } from "react";
-import { motion } from "motion/react";
-<<<<<<< Updated upstream
-import { NowPlaying } from "@/components/common";
-import { NOW_PLAYING } from "@/constants/dashboard";
-import { SCALE_IN } from "@/constants/animations";
-import { initSocket, onSongApproved, onSongRejected, onSongSkipped, onQueueUpdated, off } from "@/services/socket";
-import { songsAPI } from "@/services/api";
-=======
-import { NowPlaying } from "@/components/common/NowPlaying";
-import { NOW_PLAYING } from "@/constants/dashboard";
-import { SCALE_IN } from "@/constants/animations";
-import { initSocket, onSongApproved, onSongRejected, onSongSkipped, onQueueUpdated, off } from "../../services/socket";
-import { songsAPI } from "../../services/api";
->>>>>>> Stashed changes
+import React, { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
+import { NowPlaying } from '@/components/common';
+import { NOW_PLAYING } from '@/constants/dashboard';
+import { SCALE_IN } from '@/constants/animations';
+import {
+  initSocket,
+  onSongApproved,
+  onSongRejected,
+  onSongSkipped,
+  onQueueUpdated,
+  off,
+} from '@/services/socket';
+import { songsAPI } from '@/services/api';
 
 interface NowPlayingSong {
   id: string;
   title: string;
   artist: string;
-  status: "playing" | "rejected" | "queued" | "skipped";
+  status: 'playing' | 'rejected' | 'queued' | 'skipped';
   progress?: number;
   currentTime?: string;
   duration?: string;
@@ -40,11 +39,11 @@ export function NowPlayingSection() {
 
   useEffect(() => {
     // Get event ID from localStorage and fetch initial queue
-    const eventData = localStorage.getItem("currentEvent");
+    const eventData = localStorage.getItem('currentEvent');
     if (eventData) {
       const parsed = JSON.parse(eventData);
       setEventId(parsed.eventId);
-      
+
       // Fetch initial queue
       const fetchQueue = async () => {
         try {
@@ -53,10 +52,10 @@ export function NowPlayingSection() {
             setQueue(queueData);
           }
         } catch (error) {
-          console.error("Error fetching queue:", error);
+          console.error('Error fetching queue:', error);
         }
       };
-      
+
       fetchQueue();
     }
   }, []);
@@ -69,21 +68,21 @@ export function NowPlayingSection() {
     const handleSongApproved = (data: any) => {
       setNowPlaying({
         id: data.songId,
-        title: data.title || "Now Playing...",
-        artist: data.artist || "Loading...",
-        status: "playing",
+        title: data.title || 'Now Playing...',
+        artist: data.artist || 'Loading...',
+        status: 'playing',
         progress: 0,
-        currentTime: "0:00",
-        duration: "3:45",
+        currentTime: '0:00',
+        duration: '3:45',
       });
     };
 
     const handleSongRejected = (data: any) => {
       setTempStatus({
         id: data.songId,
-        title: "Song Rejected",
-        artist: data.reason || "No reason provided",
-        status: "rejected",
+        title: 'Song Rejected',
+        artist: data.reason || 'No reason provided',
+        status: 'rejected',
       });
       setTimeout(() => setTempStatus(null), 2000);
     };
@@ -91,9 +90,9 @@ export function NowPlayingSection() {
     const handleSongSkipped = (data: any) => {
       setTempStatus({
         id: data.songId,
-        title: "Song Skipped",
-        artist: data.reason || "DJ skipped",
-        status: "skipped",
+        title: 'Song Skipped',
+        artist: data.reason || 'DJ skipped',
+        status: 'skipped',
       });
       setTimeout(() => setTempStatus(null), 2000);
     };
@@ -106,10 +105,12 @@ export function NowPlayingSection() {
           id: firstSong._id || firstSong.id,
           title: firstSong.title,
           artist: firstSong.artist,
-          status: (firstSong.status === "PLAYING" ? "playing" : "queued") as const,
+          status: (firstSong.status === 'PLAYING'
+            ? 'playing'
+            : 'queued') as const,
           progress: 0,
-          currentTime: "0:00",
-          duration: "3:45",
+          currentTime: '0:00',
+          duration: '3:45',
         });
       }
     };
@@ -120,10 +121,10 @@ export function NowPlayingSection() {
     onQueueUpdated(handleQueueUpdated);
 
     return () => {
-      off("song_approved", handleSongApproved);
-      off("song_rejected", handleSongRejected);
-      off("song_skipped", handleSongSkipped);
-      off("queue_updated", handleQueueUpdated);
+      off('song_approved', handleSongApproved);
+      off('song_rejected', handleSongRejected);
+      off('song_skipped', handleSongSkipped);
+      off('queue_updated', handleQueueUpdated);
     };
   }, [eventId]);
 

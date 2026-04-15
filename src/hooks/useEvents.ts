@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { eventsAPI } from "@/services/api";
+import { useState, useCallback } from 'react';
+import { eventsAPI } from '@/services/api';
 
 interface Event {
   id: string;
@@ -16,21 +16,25 @@ export function useEvents() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const createEvent = useCallback(async (name: string, description: string, startsAt: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const event = await eventsAPI.createEvent(name, description, startsAt);
-      setCurrentEvent(event);
-      return event;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to create event";
-      setError(message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const createEvent = useCallback(
+    async (name: string, description: string, startsAt: string) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const event = await eventsAPI.createEvent(name, description, startsAt);
+        setCurrentEvent(event);
+        return event;
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : 'Failed to create event';
+        setError(message);
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   const listEvents = useCallback(async (limit = 50, skip = 0) => {
     setLoading(true);
@@ -40,7 +44,8 @@ export function useEvents() {
       setEvents(eventList);
       return eventList;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to load events";
+      const message =
+        err instanceof Error ? err.message : 'Failed to load events';
       setError(message);
       throw err;
     } finally {
@@ -56,7 +61,8 @@ export function useEvents() {
       setCurrentEvent(event);
       return event;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to load event";
+      const message =
+        err instanceof Error ? err.message : 'Failed to load event';
       setError(message);
       throw err;
     } finally {
@@ -64,21 +70,25 @@ export function useEvents() {
     }
   }, []);
 
-  const updateEvent = useCallback(async (eventId: string, updates: Record<string, any>) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const event = await eventsAPI.updateEvent(eventId, updates);
-      setCurrentEvent(event);
-      return event;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to update event";
-      setError(message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const updateEvent = useCallback(
+    async (eventId: string, updates: Record<string, any>) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const event = await eventsAPI.updateEvent(eventId, updates);
+        setCurrentEvent(event);
+        return event;
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : 'Failed to update event';
+        setError(message);
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   const startEvent = useCallback(async (eventId: string) => {
     setLoading(true);
@@ -88,7 +98,8 @@ export function useEvents() {
       setCurrentEvent(event);
       return event;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to start event";
+      const message =
+        err instanceof Error ? err.message : 'Failed to start event';
       setError(message);
       throw err;
     } finally {
@@ -104,7 +115,8 @@ export function useEvents() {
       setCurrentEvent(event);
       return event;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to end event";
+      const message =
+        err instanceof Error ? err.message : 'Failed to end event';
       setError(message);
       throw err;
     } finally {

@@ -8,14 +8,14 @@ skinparam componentStyle rectangle
 
 package "SyncRekuest Frontend (PWA - React + Vite + Tailwind)" {
   [App.jsx] as AppRoot
-  
+
   package "Pages (Vistas de Pantalla)" {
     [LoginPage]
     [EventListPage]
     [AttendeeEventPage]
     [DJPanelPage]
   }
-  
+
   package "Components (UI Reutilizable)" {
     [SongCard]
     [VoteButton]
@@ -25,78 +25,78 @@ package "SyncRekuest Frontend (PWA - React + Vite + Tailwind)" {
     [ErrorAlert]
     [LoadingSpinner]
   }
-  
+
   package "Hooks (Lógica y Estado)" {
     [useAuth] <<custom_hook>>
     [useSocket] <<custom_hook>>
     [useEventData] <<custom_hook>>
     [useFetch] <<custom_hook>>
   }
-  
+
   package "Services (API e Integración)" {
     [ApiService] <<service>>
     [SocketClient] <<service>>
     [AuthService] <<service>>
   }
-  
+
   package "State Management (Zustand)" {
     [AuthStore] <<store>>
     [EventStore] <<store>>
     [SongStore] <<store>>
     [UIStore] <<store>>
   }
-  
+
   package "Utils & Helpers" {
     [formatters]
     [validators]
     [constants]
   }
-  
+
   AppRoot --> LoginPage
   AppRoot --> EventListPage
   AppRoot --> AttendeeEventPage
   AppRoot --> DJPanelPage
-  
+
   LoginPage --> useAuth
   LoginPage --> AuthStore
   LoginPage --> ApiService
-  
+
   EventListPage --> useFetch
   EventListPage --> EventStore
   EventListPage --> ApiService
   EventListPage --> SongCard
-  
+
   AttendeeEventPage --> useSocket
   AttendeeEventPage --> useEventData
   AttendeeEventPage --> SongStore
   AttendeeEventPage --> SongCard
   AttendeeEventPage --> VoteButton
   AttendeeEventPage --> QueueList
-  
+
   DJPanelPage --> ApiService
   DJPanelPage --> useSocket
   DJPanelPage --> EventStore
   DJPanelPage --> QueueList
   DJPanelPage --> EventForm
-  
+
   useAuth --> AuthService
   useAuth --> ApiService
   useAuth --> AuthStore
-  
+
   useSocket --> SocketClient
   useSocket --> SongStore
   useSocket --> EventStore
-  
+
   useEventData --> ApiService
   useEventData --> EventStore
   useEventData --> SongStore
-  
+
   ApiService --> AuthStore
   SocketClient --> SongStore
-  
+
   VoteButton --> ApiService
   VoteButton --> UIStore
-  
+
   EventForm --> validators
   EventForm --> formatters
 }
@@ -181,12 +181,14 @@ src/
 **Se usa para**: Operaciones con estado, autenticación, carga inicial de datos
 
 **Flujo**:
+
 ```
 Componente → ApiService → Axios → Backend REST API
 → AuthStore/EventStore/SongStore (almacenar resultado)
 ```
 
 **Ejemplos**:
+
 - `POST /api/auth/login` - Autenticación
 - `GET /api/events` - Obtener lista de eventos
 - `POST /api/events` - Crear evento (DJ)
@@ -194,6 +196,7 @@ Componente → ApiService → Axios → Backend REST API
 - `POST /api/votes` - Emitir voto
 
 **Encabezados**:
+
 ```
 Authorization: Bearer <JWT_TOKEN>
 Content-Type: application/json
@@ -206,11 +209,13 @@ Content-Type: application/json
 **Se usa para**: Actualizaciones en tiempo real, comunicación bidireccional
 
 **Conexión**:
+
 ```
 SocketClient.connect(socketUrl, { token: jwtToken })
 ```
 
 **Eventos del Servidor → Cliente**:
+
 ```
 votes_updated         → Actualizar contador de votos
 song_suggested        → DJ notificado de sugerencia
@@ -221,6 +226,7 @@ event_closed          → Notificación de evento terminado
 ```
 
 **Eventos del Cliente → Servidor**:
+
 ```
 join_event            → Usuario se une a sala del evento
 suggest_song          → Usuario envía canción
@@ -233,6 +239,7 @@ leave_event           → Usuario abandona evento
 ## Gestión de Estado (Zustand)
 
 ### AuthStore
+
 ```javascript
 // Almacena: token, usuario, isAuthenticated, rol
 {
@@ -246,6 +253,7 @@ leave_event           → Usuario abandona evento
 ```
 
 ### EventStore
+
 ```javascript
 // Almacena: evento actual, lista de eventos, eventos del usuario
 {
@@ -261,6 +269,7 @@ leave_event           → Usuario abandona evento
 ```
 
 ### SongStore
+
 ```javascript
 // Almacena: cola, sugerencias, detalles de canción, votos
 {
@@ -275,6 +284,7 @@ leave_event           → Usuario abandona evento
 ```
 
 ### UIStore
+
 ```javascript
 // Almacena: estado de UI, modales, notificaciones
 {
@@ -291,6 +301,7 @@ leave_event           → Usuario abandona evento
 ## Hooks Personalizados
 
 ### useAuth
+
 ```javascript
 // Gestiona estado de autenticación y login/logout
 const { user, isAuthenticated, login, logout } = useAuth();
@@ -302,6 +313,7 @@ if (!isAuthenticated) {
 ```
 
 ### useSocket
+
 ```javascript
 // Gestiona conexión Socket.IO y listeners de eventos
 const { socket, connected, emit } = useSocket();
@@ -315,6 +327,7 @@ useEffect(() => {
 ```
 
 ### useEventData
+
 ```javascript
 // Obtiene y gestiona datos del evento
 const { event, queue, loading } = useEventData(eventId);
@@ -324,6 +337,7 @@ const refresh = () => useEventData.refetch();
 ```
 
 ### useFetch
+
 ```javascript
 // Hook genérico para llamadas de API
 const { data, loading, error } = useFetch('/api/events');
@@ -336,6 +350,7 @@ const { data, loading, error } = useFetch('/api/events');
 ### Páginas (Componentes de Nivel de Pantalla)
 
 **LoginPage**
+
 - Formulario de correo/contraseña
 - Validación del lado del cliente
 - Envío a backend
@@ -343,6 +358,7 @@ const { data, loading, error } = useFetch('/api/events');
 - Redirección en caso de éxito
 
 **EventListPage**
+
 - Obtener lista de eventos activos
 - Mostrar tarjetas de eventos
 - Filtrar/buscar eventos
@@ -350,6 +366,7 @@ const { data, loading, error } = useFetch('/api/events');
 - Conteo de participantes en tiempo real vía Socket.IO
 
 **AttendeeEventPage**
+
 - Mostrar cola de canciones
 - Mostrar botones de voto
 - Formulario de sugerencia de canción
@@ -358,6 +375,7 @@ const { data, loading, error } = useFetch('/api/events');
 - Ranking de cola por votos
 
 **DJPanelPage**
+
 - Detalles del evento (código, QR)
 - Cola de moderación de canciones
 - Aceptar/rechazar sugerencias
@@ -368,12 +386,14 @@ const { data, loading, error } = useFetch('/api/events');
 ### Componentes Reutilizables
 
 **SongCard**
+
 ```
 Props: song, onVote, onApprove, onReject
 Muestra: Título, artista, votos, estado
 ```
 
 **VoteButton**
+
 ```
 Props: songId, currentVote, onVote
 Muestra: Botón de voto, contador
@@ -381,6 +401,7 @@ Maneja: Clic → Llamada a API → Actualización
 ```
 
 **QueueList**
+
 ```
 Props: songs, onVote, onSelect
 Muestra: Lista ordenada de canciones por votos
@@ -388,6 +409,7 @@ Características: Reordenamiento en tiempo real
 ```
 
 **EventForm**
+
 ```
 Props: onSubmit, loading
 Campos: Nombre, ubicación, fecha, configuración
@@ -429,12 +451,14 @@ Validación: Del lado del cliente antes de envío
 ## Manejo de Errores
 
 ### Validación Frontend
+
 - Verificación de formato de correo
 - Validación de campos requeridos
 - Validación de formato de código (6 caracteres)
 - Validación de fecha/hora
 
 ### Manejo de Errores de API
+
 ```javascript
 try {
   const response = await api.post('/api/votes', data);
@@ -454,6 +478,7 @@ try {
 ```
 
 ### Manejo de Errores de Red
+
 - Mecanismo de reintentos
 - Recargación a datos en caché si está disponible
 - Detección de desconexión
@@ -466,13 +491,14 @@ try {
 ### Listeners de Evento Socket.IO
 
 **En AttendeeEventPage**:
+
 ```javascript
 useEffect(() => {
   socket?.on('votes_updated', (data) => {
     SongStore.updateVote(data.songId, data.totalVotes);
     // QueueList se re-renderiza automáticamente
   });
-  
+
   socket?.on('queue_updated', (data) => {
     SongStore.setQueue(data.queue);
     // Visualización se reordena
@@ -481,6 +507,7 @@ useEffect(() => {
 ```
 
 **En DJPanelPage**:
+
 ```javascript
 useEffect(() => {
   socket?.on('song_suggested', (data) => {
@@ -546,18 +573,21 @@ useEffect(() => {
 ## Estrategia de Pruebas
 
 ### Pruebas Unitarias
+
 - Renderización de componentes
 - Lógica de hooks
 - Mutaciones de store
 - Funciones de utilidad
 
 ### Pruebas de Integración
+
 - Flujo de llamada a API
 - Manejo de eventos Socket.IO
 - Sincronización de estado
 - Envío de formularios
 
 ### Pruebas E2E
+
 - Flujos completos del usuario
 - Login → Explorar → Unirse → Votar
 - DJ crear → gestionar → cerrar evento
@@ -590,8 +620,9 @@ npm run test:e2e
 ---
 
 Esta arquitectura soporta:
-- Votación colaborativa en tiempo real  
-- Diseño PWA receptivo  
-- Estructura de componentes escalable  
-- Separación clara de responsabilidades  
+
+- Votación colaborativa en tiempo real
+- Diseño PWA receptivo
+- Estructura de componentes escalable
+- Separación clara de responsabilidades
 - Pruebas y mantenimiento fáciles

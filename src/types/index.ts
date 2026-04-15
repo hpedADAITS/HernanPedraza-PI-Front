@@ -1,14 +1,14 @@
 /**
  * View type for navigation between pages
  */
-export type View = 
+export type View =
   | 'role-selection'
-  | 'attendee-login' 
-  | 'dj-login' 
-  | 'attendee-dashboard' 
-  | 'dj-dashboard' 
-  | 'attendee-song-select' 
-  | 'dj-song-select' 
+  | 'attendee-login'
+  | 'dj-login'
+  | 'attendee-dashboard'
+  | 'dj-dashboard'
+  | 'attendee-song-select'
+  | 'dj-song-select'
   | 'dj-settings'
   | 'dj-account-settings';
 

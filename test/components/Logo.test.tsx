@@ -50,9 +50,13 @@ describe('Logo Component', () => {
   });
 
   it('should render with all variants', () => {
-    const variants: Array<'light' | 'dark' | 'color'> = ['light', 'dark', 'color'];
-    
-    variants.forEach(variant => {
+    const variants: Array<'light' | 'dark' | 'color'> = [
+      'light',
+      'dark',
+      'color',
+    ];
+
+    variants.forEach((variant) => {
       const { unmount } = render(<Logo variant={variant} />);
       const img = screen.getByAltText('Sync Rekuest Logo');
       expect(img).toBeInTheDocument();

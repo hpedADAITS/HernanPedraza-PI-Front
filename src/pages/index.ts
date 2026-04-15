@@ -5,8 +5,3 @@ export { NotFound } from './NotFound';
 export { RoleSelection } from './RoleSelection';
 export { Settings } from './Settings';
 export { SettingsList } from './SettingsList';
-<<<<<<< Updated upstream
-export { NotFound } from './NotFound';
-=======
-export { SongSelection } from './SongSelection';
->>>>>>> Stashed changes

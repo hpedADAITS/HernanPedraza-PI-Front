@@ -25,7 +25,7 @@ else La validación pasa
   activate API
   API -> API: Agregar encabezado de autorización si existe
   API -> API: Enviar por HTTPS
-  
+
   alt Respuesta exitosa (200)
     API --> FE: {token, user, expiresIn}
     deactivate API
@@ -48,6 +48,7 @@ end
 ![Secuencia de Inicio de Sesión Frontend](../../diagrams/sequence-frontend_diagram_1.png)
 
 ### Acciones del Usuario
+
 1. Usuario ingresa correo y contraseña
 2. Hace clic en botón "Iniciar Sesión"
 3. Frontend valida localmente
@@ -57,12 +58,13 @@ end
 7. Redirige al panel apropiado
 
 ### Responsabilidades del Frontend
-- Renderización de formulario e captura de entrada  
-- Validación del lado del cliente  
-- Gestión de estado de carga  
-- Visualización de errores  
-- Almacenamiento de token  
-- Navegación después del inicio de sesión  
+
+- Renderización de formulario e captura de entrada
+- Validación del lado del cliente
+- Gestión de estado de carga
+- Visualización de errores
+- Almacenamiento de token
+- Navegación después del inicio de sesión
 
 ---
 
@@ -89,27 +91,27 @@ alt La validación falla
   Asistente -> Form: Corregir entrada
 else La validación pasa
   Form -> Form: Deshabilitar botón de envío\nMostrar spinner de carga
-  
+
   Form -> API: POST /api/songs/suggestions\n{eventId, title, artist}\n+ JWT token
   activate API
   API -> API: Agregar encabezado de autorización\n(Bearer <token>)
   API -> API: Enviar por HTTPS
-  
+
   alt Exitoso (201)
     API --> Form: {song, message}
     deactivate API
-    
+
     Form -> Store: addSongToQueue(song)
     Form -> Form: Limpiar campos del formulario
     Form -> Form: Habilitar botón de envío\nRemover carga
     Form -> Asistente: Mostrar notificación de éxito\n"Sugerencia enviada"
-    
+
     note over Socket
       DJ recibe notificación en tiempo real
       vía evento Socket.IO "song_suggested"
       (manejado en otro lugar)
     end note
-    
+
   else Error (400/403)
     API --> Form: {error, message}
     deactivate API
@@ -123,6 +125,7 @@ end
 ![Secuencia de Sugerencia de Canción Frontend](../../diagrams/sequence-frontend_diagram_2.png)
 
 ### Acciones del Usuario
+
 1. Asistente hace clic en botón "Sugerir Canción"
 2. Aparece formulario con campos título/artista
 3. Ingresa información de canción
@@ -134,12 +137,13 @@ end
 9. Nueva canción aparece en cola (si se aprueba)
 
 ### Responsabilidades del Frontend
-- Renderización del formulario de canción  
-- Validación de entrada  
-- Gestión de estado de envío (carga/deshabilitado)  
-- Manejo de errores y visualización  
-- Actualizaciones de cola  
-- Retroalimentación de éxito  
+
+- Renderización del formulario de canción
+- Validación de entrada
+- Gestión de estado de envío (carga/deshabilitado)
+- Manejo de errores y visualización
+- Actualizaciones de cola
+- Retroalimentación de éxito
 
 ---
 
@@ -170,23 +174,23 @@ API -> API: Enviar por HTTPS
 alt Exitoso (200)
   API --> VoteBtn: {songId, totalVotes}
   deactivate API
-  
+
   VoteBtn -> Store: Confirmar conteo de votos\ndesde respuesta
   VoteBtn -> VoteBtn: Habilitar botón\nRemover carga
-  
+
   note over Socket
     Todos los clientes conectados reciben
     evento "votes_updated" vía Socket.IO
     y actualizan su visualización de cola
     (sucede en tiempo real)
   end note
-  
+
   VoteBtn -> Asistente: Mostrar nuevo conteo de votos
-  
+
 else Error (400/403/409)
   API --> VoteBtn: {error, message}
   deactivate API
-  
+
   VoteBtn -> Store: Revertir actualización\noptimista
   VoteBtn -> VoteBtn: Habilitar botón\nRemover carga
   VoteBtn -> Asistente: Mostrar mensaje de error\n(ya votado / votación deshabilitada)
@@ -197,6 +201,7 @@ end
 ![Secuencia de Votación de Canción Frontend](../../diagrams/sequence-frontend_diagram_3.png)
 
 ### Acciones del Usuario
+
 1. Asistente ve canción en cola
 2. Hace clic en botón de voto (generalmente "Me gusta" o "👍")
 3. Frontend muestra actualización optimista inmediatamente
@@ -205,14 +210,16 @@ end
 6. Cola se reordena por popularidad
 
 ### Responsabilidades del Frontend
-- Renderización del botón de voto  
-- Actualización optimista de UI (retroalimentación inmediata)  
-- Gestión de estado de carga durante envío  
-- Revertir actualización optimista en error  
-- Visualización del conteo de votos  
-- Configuración del listener de socket en tiempo real  
+
+- Renderización del botón de voto
+- Actualización optimista de UI (retroalimentación inmediata)
+- Gestión de estado de carga durante envío
+- Revertir actualización optimista en error
+- Visualización del conteo de votos
+- Configuración del listener de socket en tiempo real
 
 ### Flujo de Actualización Optimista
+
 ```
 Usuario hace clic
     ↓
@@ -272,6 +279,7 @@ Socket -> Queue: Cola reordenada\npor DJ o votos
 ## Flujo de Interacción de Componentes
 
 ### Flujo de Inicio de Sesión
+
 ```
 Entrada del Usuario
     ↓
@@ -285,6 +293,7 @@ Redirige a EventListPage o DJPanelPage
 ```
 
 ### Flujo de Votación
+
 ```
 Usuario hace clic en VoteButton
     ↓
@@ -300,6 +309,7 @@ Actualización inmediata de UI (sin recarga de página)
 ```
 
 ### Flujo de Participación en Evento
+
 ```
 Usuario se une a evento
     ↓
@@ -319,6 +329,7 @@ Actualizaciones en tiempo real
 ## Manejo de Errores en Frontend
 
 ### Errores de Red
+
 ```
 Llamada a API falla (sin conexión)
     ↓
@@ -332,6 +343,7 @@ Usuario puede reintentar operación
 ```
 
 ### Errores de Validación (400)
+
 ```
 Backend rechaza entrada
     ↓
@@ -343,6 +355,7 @@ Permitir usuario corregir y reintentar
 ```
 
 ### Errores de Autenticación (401)
+
 ```
 Token expirado o inválido
     ↓
@@ -356,6 +369,7 @@ Usuario debe iniciar sesión nuevamente
 ```
 
 ### Errores de Permiso (403)
+
 ```
 Usuario carece de permisos
     ↓
@@ -367,6 +381,7 @@ Usuario dirigido a Lista de Eventos
 ```
 
 ### Errores de Conflicto (409)
+
 ```
 Intento de voto duplicado
     ↓
@@ -382,45 +397,50 @@ Mantener botón habilitado para que usuario reintente si es necesario
 ## Resumen de Flujo de Datos Frontend
 
 ### Inicio de Sesión
+
 Entrada del Usuario → Validación → ApiService → AuthStore → Navegación
 
 ### Explorar Eventos
+
 Montaje → Obtención de ApiService → EventStore → Renderización de EventListPage
 
 ### Unirse a Evento
+
 Botón de unión → ApiService → Conexión de SocketClient → Obtención de cola → AttendeeEventPage
 
 ### Sugerir Canción
+
 Entrada del formulario → Validación → ApiService → SongStore → Actualización de cola
 
 ### Votar
+
 Hacer clic en botón → Actualización optimista → ApiService → Listener de socket → Actualización de cola
 
 ---
 
 ## Características Clave del Frontend
 
-- **Validación del lado del cliente** - Fallar rápido antes de llamada al servidor  
-- **Actualizaciones optimistas** - Retroalimentación inmediata de UI  
-- **Recuperación de errores** - Mecanismos de reintentos  
-- **Sincronización en tiempo real** - Listeners Socket.IO  
-- **Estados de carga** - Retroalimentación del usuario durante operaciones asincrónicas  
-- **Gestión de token** - Almacenamiento y actualización JWT  
-- **Soporte PWA** - Funciona offline con service worker  
+- **Validación del lado del cliente** - Fallar rápido antes de llamada al servidor
+- **Actualizaciones optimistas** - Retroalimentación inmediata de UI
+- **Recuperación de errores** - Mecanismos de reintentos
+- **Sincronización en tiempo real** - Listeners Socket.IO
+- **Estados de carga** - Retroalimentación del usuario durante operaciones asincrónicas
+- **Gestión de token** - Almacenamiento y actualización JWT
+- **Soporte PWA** - Funciona offline con service worker
 
 ---
 
 ## Tecnologías Frontend Utilizadas
 
-| Tecnología | Propósito |
-|-----------|---------|
-| React | Componentes UI y estado |
-| Vite | Herramienta de compilación y servidor dev |
-| Zustand | Gestión de estado |
-| Axios | Cliente HTTP |
-| Socket.IO Client | Comunicación en tiempo real |
-| React Router | Navegación |
-| Tailwind CSS | Estilos |
+| Tecnología       | Propósito                                 |
+| ---------------- | ----------------------------------------- |
+| React            | Componentes UI y estado                   |
+| Vite             | Herramienta de compilación y servidor dev |
+| Zustand          | Gestión de estado                         |
+| Axios            | Cliente HTTP                              |
+| Socket.IO Client | Comunicación en tiempo real               |
+| React Router     | Navegación                                |
+| Tailwind CSS     | Estilos                                   |
 
 ---
 

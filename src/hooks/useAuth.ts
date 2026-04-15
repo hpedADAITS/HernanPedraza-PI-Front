@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { authAPI, saveToken, clearToken } from "@/services/api";
+import { useState, useCallback } from 'react';
+import { authAPI, saveToken, clearToken } from '@/services/api';
 
 interface User {
   id: string;
@@ -14,22 +14,33 @@ export function useAuth() {
   const [error, setError] = useState<string | null>(null);
 
   const register = useCallback(
-    async (email: string, password: string, displayName: string, role = "ATTENDEE") => {
+    async (
+      email: string,
+      password: string,
+      displayName: string,
+      role = 'ATTENDEE',
+    ) => {
       setLoading(true);
       setError(null);
       try {
-        const result = await authAPI.register(email, password, displayName, role);
+        const result = await authAPI.register(
+          email,
+          password,
+          displayName,
+          role,
+        );
         setUser(result.user);
         return result;
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Registration failed";
+        const message =
+          err instanceof Error ? err.message : 'Registration failed';
         setError(message);
         throw err;
       } finally {
         setLoading(false);
       }
     },
-    []
+    [],
   );
 
   const login = useCallback(async (email: string, password: string) => {
@@ -40,7 +51,7 @@ export function useAuth() {
       setUser(result.user);
       return result;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Login failed";
+      const message = err instanceof Error ? err.message : 'Login failed';
       setError(message);
       throw err;
     } finally {
@@ -61,7 +72,7 @@ export function useAuth() {
       setUser(userData);
       return userData;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to get user";
+      const message = err instanceof Error ? err.message : 'Failed to get user';
       setError(message);
       throw err;
     } finally {

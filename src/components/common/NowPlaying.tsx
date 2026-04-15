@@ -12,13 +12,13 @@ interface NowPlayingProps {
 }
 
 export function NowPlaying({
-  songTitle = "Queue Song",
-  artist = "Unknown Artist",
+  songTitle = 'Queue Song',
+  artist = 'Unknown Artist',
   albumArt,
-  currentTime = "2:35",
-  duration = "3:45",
+  currentTime = '2:35',
+  duration = '3:45',
   progress = 65,
-  status = 'playing'
+  status = 'playing',
 }: NowPlayingProps) {
   const getGradient = () => {
     switch (status) {
@@ -62,12 +62,12 @@ export function NowPlaying({
           <p className="text-white/90 text-xs font-medium mb-1">
             {getStatusText()}
           </p>
-          
+
           {/* Song Title */}
           <h3 className="text-white font-bold text-lg mb-2 truncate">
             {songTitle}
           </h3>
-          
+
           {/* Progress Bar */}
           <div className="flex items-center gap-3">
             <div className="flex-1 h-2 bg-white/30 rounded-full overflow-hidden">

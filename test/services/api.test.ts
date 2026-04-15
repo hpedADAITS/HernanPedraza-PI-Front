@@ -1,10 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import {
-  loadToken,
-  saveToken,
-  clearToken,
-  API_BASE,
-} from '@/services/api';
+import { loadToken, saveToken, clearToken, API_BASE } from '@/services/api';
 
 describe('API Service', () => {
   beforeEach(() => {

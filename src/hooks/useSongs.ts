@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { songsAPI } from "@/services/api";
+import { useState, useCallback } from 'react';
+import { songsAPI } from '@/services/api';
 
 interface Song {
   id: string;
@@ -17,21 +17,32 @@ export function useSongs() {
   const [error, setError] = useState<string | null>(null);
 
   const suggestSong = useCallback(
-    async (eventId: string, participantId: string, title: string, artist: string) => {
+    async (
+      eventId: string,
+      participantId: string,
+      title: string,
+      artist: string,
+    ) => {
       setLoading(true);
       setError(null);
       try {
-        const song = await songsAPI.suggestSong(eventId, participantId, title, artist);
+        const song = await songsAPI.suggestSong(
+          eventId,
+          participantId,
+          title,
+          artist,
+        );
         return song;
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to suggest song";
+        const message =
+          err instanceof Error ? err.message : 'Failed to suggest song';
         setError(message);
         throw err;
       } finally {
         setLoading(false);
       }
     },
-    []
+    [],
   );
 
   const getQueue = useCallback(async (eventId: string) => {
@@ -42,7 +53,8 @@ export function useSongs() {
       setQueue(songs);
       return songs;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to load queue";
+      const message =
+        err instanceof Error ? err.message : 'Failed to load queue';
       setError(message);
       throw err;
     } finally {
@@ -58,7 +70,8 @@ export function useSongs() {
       setPendingSongs(songs);
       return songs;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to load pending songs";
+      const message =
+        err instanceof Error ? err.message : 'Failed to load pending songs';
       setError(message);
       throw err;
     } finally {
@@ -75,7 +88,8 @@ export function useSongs() {
       setPendingSongs((prev) => prev.filter((s) => s.id !== songId));
       return song;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to approve song";
+      const message =
+        err instanceof Error ? err.message : 'Failed to approve song';
       setError(message);
       throw err;
     } finally {
@@ -83,21 +97,25 @@ export function useSongs() {
     }
   }, []);
 
-  const rejectSong = useCallback(async (eventId: string, songId: string, reason: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const song = await songsAPI.rejectSong(eventId, songId, reason);
-      setPendingSongs((prev) => prev.filter((s) => s.id !== songId));
-      return song;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to reject song";
-      setError(message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const rejectSong = useCallback(
+    async (eventId: string, songId: string, reason: string) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const song = await songsAPI.rejectSong(eventId, songId, reason);
+        setPendingSongs((prev) => prev.filter((s) => s.id !== songId));
+        return song;
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : 'Failed to reject song';
+        setError(message);
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   const getSongPosition = useCallback(async (songId: string) => {
     setLoading(true);
@@ -106,7 +124,8 @@ export function useSongs() {
       const data = await songsAPI.getSongPosition(songId);
       return data;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to get song position";
+      const message =
+        err instanceof Error ? err.message : 'Failed to get song position';
       setError(message);
       throw err;
     } finally {

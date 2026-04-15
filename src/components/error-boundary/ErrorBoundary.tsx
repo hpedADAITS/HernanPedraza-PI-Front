@@ -1,6 +1,6 @@
-import React, { ReactNode } from "react";
-import { logError } from "@/utils/errors";
-import ErrorFallback from "./ErrorFallback";
+import React, { ReactNode } from 'react';
+import { logError } from '@/utils/errors';
+import ErrorFallback from './ErrorFallback';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -17,7 +17,10 @@ interface ErrorBoundaryState {
  * Error Boundary component to catch React rendering errors
  * Displays error UI and logs errors for debugging
  */
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+class ErrorBoundary extends React.Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = {
@@ -33,7 +36,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log error details
-    logError(error, "ErrorBoundary");
+    logError(error, 'ErrorBoundary');
 
     // Call optional error handler
     if (this.props.onError) {
@@ -54,7 +57,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     });
 
     // Reload the page
-    window.location.href = "/";
+    window.location.href = '/';
   };
 
   render() {

@@ -10,15 +10,16 @@ export function NotFound({ onNavigate }: PageProps) {
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
         className="text-center flex flex-col items-center gap-8"
       >
         <div className="text-8xl font-bold text-slate-400">404</div>
-        
+
         <h1 className="text-4xl font-bold text-slate-800">Page Not Found</h1>
-        
+
         <p className="text-lg text-slate-600 max-w-md">
-          The page you're looking for doesn't exist. Let's get you back on track.
+          The page you're looking for doesn't exist. Let's get you back on
+          track.
         </p>
 
         <motion.button

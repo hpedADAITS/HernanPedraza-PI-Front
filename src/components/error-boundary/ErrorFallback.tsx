@@ -1,5 +1,5 @@
-import { AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface ErrorFallbackProps {
   error: Error;
@@ -33,12 +33,12 @@ export default function ErrorFallback({
 
         {/* Subtitle */}
         <p className="text-center text-gray-600 mb-4">
-          We&apos;re sorry for the inconvenience. Please try again or contact support if the
-          problem persists.
+          We&apos;re sorry for the inconvenience. Please try again or contact
+          support if the problem persists.
         </p>
 
         {/* Error Details (Development only) */}
-        {process.env.NODE_ENV === "development" && (
+        {process.env.NODE_ENV === 'development' && (
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
             <h3 className="text-sm font-semibold text-gray-900 mb-2">
               Error Details
@@ -81,8 +81,11 @@ export default function ErrorFallback({
 
         {/* Help Text */}
         <p className="text-xs text-gray-500 text-center mt-4">
-          If you need help, please{" "}
-          <a href="mailto:support@example.com" className="text-blue-600 hover:underline">
+          If you need help, please{' '}
+          <a
+            href="mailto:support@example.com"
+            className="text-blue-600 hover:underline"
+          >
             contact support
           </a>
         </p>

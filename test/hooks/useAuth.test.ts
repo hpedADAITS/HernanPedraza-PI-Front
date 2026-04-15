@@ -26,7 +26,7 @@ describe('useAuth Hook', () => {
 
   it('should initialize with null user and no error', () => {
     const { result } = renderHook(() => useAuth());
-    
+
     expect(result.current.user).toBeNull();
     expect(result.current.error).toBeNull();
     expect(result.current.loading).toBe(false);
@@ -48,7 +48,10 @@ describe('useAuth Hook', () => {
     const { result } = renderHook(() => useAuth());
 
     await act(async () => {
-      const response = await result.current.login('test@example.com', 'password');
+      const response = await result.current.login(
+        'test@example.com',
+        'password',
+      );
       expect(response.user).toEqual(mockUser);
     });
 
@@ -93,7 +96,7 @@ describe('useAuth Hook', () => {
       const response = await result.current.register(
         'newuser@example.com',
         'password123',
-        'New User'
+        'New User',
       );
       expect(response.user).toEqual(mockUser);
     });
@@ -113,7 +116,7 @@ describe('useAuth Hook', () => {
         await result.current.register(
           'existing@example.com',
           'password123',
-          'Existing User'
+          'Existing User',
         );
       } catch (error) {
         // Expected to throw
@@ -163,12 +166,12 @@ describe('useAuth Hook', () => {
     };
 
     let resolveLogin: any;
-    const loginPromise = new Promise(resolve => {
+    const loginPromise = new Promise((resolve) => {
       resolveLogin = resolve;
     });
 
     mockAuthAPI.login.mockReturnValue(
-      loginPromise.then(() => ({ user: mockUser, token: 'token' }))
+      loginPromise.then(() => ({ user: mockUser, token: 'token' })),
     );
 
     const { result } = renderHook(() => useAuth());

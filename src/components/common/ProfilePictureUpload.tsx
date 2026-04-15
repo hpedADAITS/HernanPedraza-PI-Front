@@ -17,7 +17,9 @@ export function ProfilePictureUpload({
 }: ProfilePictureUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [previewPicture, setPreviewPicture] = useState<string | null>(currentPicture || null);
+  const [previewPicture, setPreviewPicture] = useState<string | null>(
+    currentPicture || null,
+  );
 
   const sizeClasses = {
     sm: 'w-16 h-16',
@@ -25,7 +27,9 @@ export function ProfilePictureUpload({
     lg: 'w-32 h-32',
   };
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -66,7 +70,11 @@ export function ProfilePictureUpload({
           onPictureUpdated?.(base64String);
         } catch (error) {
           setPreviewPicture(currentPicture || null);
-          toast.error(error instanceof Error ? error.message : 'Failed to update profile picture');
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : 'Failed to update profile picture',
+          );
         }
       };
       reader.readAsDataURL(file);
@@ -110,12 +118,18 @@ export function ProfilePictureUpload({
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-black/0 hover:bg-black/20 flex items-center justify-center transition-all">
-              <Upload size={size === 'sm' ? 16 : size === 'md' ? 20 : 24} className="text-white opacity-0 hover:opacity-100" />
+              <Upload
+                size={size === 'sm' ? 16 : size === 'md' ? 20 : 24}
+                className="text-white opacity-0 hover:opacity-100"
+              />
             </div>
           </>
         ) : (
           <div className="flex flex-col items-center justify-center">
-            <Upload size={size === 'sm' ? 16 : size === 'md' ? 20 : 24} className="text-slate-400 mb-1" />
+            <Upload
+              size={size === 'sm' ? 16 : size === 'md' ? 20 : 24}
+              className="text-slate-400 mb-1"
+            />
             <span className="text-xs text-slate-400">Upload</span>
           </div>
         )}

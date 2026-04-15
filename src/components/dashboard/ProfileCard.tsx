@@ -25,20 +25,28 @@ function calculateYearsFollowing(joinedAt: Date | string): string {
   const now = new Date();
   const diffMs = now.getTime() - joinDate.getTime();
   const diffYears = diffMs / (1000 * 60 * 60 * 24 * 365.25);
-  
+
   if (diffYears < 1) {
     const diffMonths = diffMs / (1000 * 60 * 60 * 24 * 30);
-    return diffMonths < 1 ? 'just now' : `${Math.floor(diffMonths)} month${Math.floor(diffMonths) !== 1 ? 's' : ''}`;
+    return diffMonths < 1
+      ? 'just now'
+      : `${Math.floor(diffMonths)} month${Math.floor(diffMonths) !== 1 ? 's' : ''}`;
   }
-  
+
   return `${Math.floor(diffYears)} year${Math.floor(diffYears) !== 1 ? 's' : ''}`;
 }
 
-export function ProfileCard({ mode, userName = 'Lucas', djName = 'DJ', joinedAt = new Date(), accessCode = 'PARTY2024' }: ProfileCardProps) {
+export function ProfileCard({
+  mode,
+  userName = 'Lucas',
+  djName = 'DJ',
+  joinedAt = new Date(),
+  accessCode = 'PARTY2024',
+}: ProfileCardProps) {
   const isDj = mode === 'dj';
   const config = THEME_CONFIG[isDj ? 'dj' : 'attendee'];
   const [showQRModal, setShowQRModal] = useState(false);
-  
+
   const subtitle = useMemo(() => {
     if (isDj) return 'DJ on SyncRequest';
     const duration = calculateYearsFollowing(joinedAt);
@@ -48,24 +56,24 @@ export function ProfileCard({ mode, userName = 'Lucas', djName = 'DJ', joinedAt 
   return (
     <TooltipProvider>
       <>
-        <motion.div 
+        <motion.div
           {...SLIDE_IN_LEFT}
           className={clsx(
-            "rounded-3xl p-6 shadow-xl text-white relative overflow-hidden",
-            "min-h-[200px] flex flex-col items-center justify-center text-center",
-            config.gradient
+            'rounded-3xl p-6 shadow-xl text-white relative overflow-hidden',
+            'min-h-[200px] flex flex-col items-center justify-center text-center',
+            config.gradient,
           )}
         >
           {/* Glossy overlay */}
           <div className="absolute inset-0 bg-white/10" />
-          
+
           <div className="relative z-10 flex flex-col items-center gap-4">
             {/* Avatar */}
             <div className="relative overflow-visible">
               <div className="w-24 h-24 rounded-2xl bg-white/20 backdrop-blur-md shadow-inner overflow-hidden border border-white/30 flex items-center justify-center">
-                <img 
+                <img
                   src={PROFILE_IMAGE}
-                  alt="Profile" 
+                  alt="Profile"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -87,7 +95,7 @@ export function ProfileCard({ mode, userName = 'Lucas', djName = 'DJ', joinedAt 
                 </Tooltip>
               )}
             </div>
-            
+
             {/* User Info */}
             <div>
               <h2 className="text-2xl font-bold">{userName}</h2>
@@ -97,7 +105,7 @@ export function ProfileCard({ mode, userName = 'Lucas', djName = 'DJ', joinedAt 
         </motion.div>
 
         {/* QR Code Modal */}
-        <QRCodeModal 
+        <QRCodeModal
           isOpen={showQRModal}
           accessCode={accessCode}
           onClose={() => setShowQRModal(false)}

@@ -1,23 +1,18 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { clsx } from "clsx";
-import { Play, X, Clock, UserX, SkipForward } from "lucide-react";
-import { toast } from "sonner";
+import React, { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { clsx } from 'clsx';
+import { Play, X, Clock, UserX, SkipForward } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { THEME_CONFIG } from "@/constants/dashboard";
-import { SLIDE_UP, ANIMATION_DURATION } from "@/constants/animations";
-<<<<<<< Updated upstream
-import { songsAPI, eventsAPI, participantsAPI } from "@/services/api";
-import * as socket from "@/services/socket";
-=======
-import { songsAPI, eventsAPI, participantsAPI } from "../../services/api";
-import * as socket from "../../services/socket";
->>>>>>> Stashed changes
+} from '@/components/ui/tooltip';
+import { THEME_CONFIG } from '@/constants/dashboard';
+import { SLIDE_UP, ANIMATION_DURATION } from '@/constants/animations';
+import { songsAPI, eventsAPI, participantsAPI } from '@/services/api';
+import * as socket from '@/services/socket';
 
 interface Song {
   _id: string;
@@ -30,7 +25,7 @@ interface Song {
 }
 
 interface QueueListProps {
-  mode: "attendee" | "dj";
+  mode: 'attendee' | 'dj';
   eventId?: string;
   participantId?: string;
   isDarkMode?: boolean;
@@ -42,8 +37,8 @@ export function QueueList({
   participantId: propParticipantId,
   isDarkMode = false,
 }: QueueListProps) {
-  const isDj = mode === "dj";
-  const primaryColor = THEME_CONFIG[isDj ? "dj" : "attendee"].primaryColor;
+  const isDj = mode === 'dj';
+  const primaryColor = THEME_CONFIG[isDj ? 'dj' : 'attendee'].primaryColor;
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSongId, setSelectedSongId] = useState<string | null>(null);
@@ -53,15 +48,15 @@ export function QueueList({
   );
 
   const removeSong = useCallback((songId: string) => {
-    setSongs(prev => prev.filter(s => s._id !== songId));
-    setSelectedSongId(prev => (prev === songId ? null : prev));
+    setSongs((prev) => prev.filter((s) => s._id !== songId));
+    setSelectedSongId((prev) => (prev === songId ? null : prev));
   }, []);
 
   useEffect(() => {
     const fetchQueue = async () => {
       try {
-        const eventData = localStorage.getItem("currentEvent");
-        const participantData = localStorage.getItem("currentParticipant");
+        const eventData = localStorage.getItem('currentEvent');
+        const participantData = localStorage.getItem('currentParticipant');
 
         if (!eventData) {
           setLoading(false);
@@ -91,8 +86,8 @@ export function QueueList({
         const queue = await songsAPI.getQueue(resolvedEventId);
         setSongs(queue || []);
       } catch (error) {
-        console.error("Error fetching queue:", error);
-        toast.error("Failed to load queue");
+        console.error('Error fetching queue:', error);
+        toast.error('Failed to load queue');
       } finally {
         setLoading(false);
       }
@@ -113,8 +108,8 @@ export function QueueList({
     };
     const handleVotesUpdated = (data: any) => {
       if (data?.songId && data?.voteScore != null) {
-        setSongs(prev =>
-          prev.map(s =>
+        setSongs((prev) =>
+          prev.map((s) =>
             s._id === data.songId ? { ...s, voteScore: data.voteScore } : s,
           ),
         );
@@ -131,36 +126,38 @@ export function QueueList({
     }
 
     return () => {
-      socket.off("song_approved", handleApproved);
-      socket.off("song_rejected", handleRejected);
-      socket.off("song_skipped", handleSkipped);
-      socket.off("votes_updated", handleVotesUpdated);
+      socket.off('song_approved', handleApproved);
+      socket.off('song_rejected', handleRejected);
+      socket.off('song_skipped', handleSkipped);
+      socket.off('votes_updated', handleVotesUpdated);
     };
   }, [removeSong]);
 
   return (
     <TooltipProvider>
       <motion.div
-         {...SLIDE_UP}
-         transition={{ ...SLIDE_UP.transition, delay: 0.15 }}
-         layout
-         className={clsx(
-           "backdrop-blur-xl rounded-3xl p-6 shadow-xl flex-1"
-         )}
-         style={{
-           backgroundColor: isDarkMode ? "rgba(100, 116, 139, 0.8)" : "rgba(255, 255, 255, 0.6)"
-         }}
-       >
-         <h3 className={clsx(
-           "font-bold mb-4 uppercase text-xs tracking-wider",
-           isDarkMode ? "text-slate-300" : "text-slate-500"
-         )}>
+        {...SLIDE_UP}
+        transition={{ ...SLIDE_UP.transition, delay: 0.15 }}
+        layout
+        className={clsx('backdrop-blur-xl rounded-3xl p-6 shadow-xl flex-1')}
+        style={{
+          backgroundColor: isDarkMode
+            ? 'rgba(100, 116, 139, 0.8)'
+            : 'rgba(255, 255, 255, 0.6)',
+        }}
+      >
+        <h3
+          className={clsx(
+            'font-bold mb-4 uppercase text-xs tracking-wider',
+            isDarkMode ? 'text-slate-300' : 'text-slate-500',
+          )}
+        >
           Up Next
         </h3>
 
         <motion.div
           layout
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           className="flex flex-col gap-4"
         >
           <AnimatePresence mode="wait">
@@ -237,72 +234,62 @@ function QueueItem({
 }: QueueItemProps) {
   const handleAdminAction = async (action: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log(`\n========== ADMIN ACTION: ${action} ==========`);
 
     try {
       const songId = song._id;
-      console.log("Song object:", { _id: songId, title: song.title, artist: song.artist });
-      console.log("EventId:", eventId);
-      
-      if (action === "Send Now" && eventId) {
-        console.log("[Send Now] Calling approveSong with:", { eventId, songId });
+
+      if (action === 'Send Now' && eventId) {
         if (!songId) {
-          console.error("Missing songId!");
-          toast.error("Song ID not found");
+          toast.error('Song ID not found');
           return;
         }
         await songsAPI.approveSong(eventId, songId);
         socket.approveSong(eventId, songId);
         onSongRemoved(songId);
-        console.log("[Send Now] approveSong called successfully");
         toast.success(`Now playing "${song.title}"`);
-      } else if (action === "Reject" && eventId) {
-        console.log("[Reject] Calling rejectSong with:", { eventId, songId });
+      } else if (action === 'Reject' && eventId) {
         if (!songId) {
-          console.error("Missing songId!");
-          toast.error("Song ID not found");
+          toast.error('Song ID not found');
           return;
         }
-        await songsAPI.rejectSong(eventId, songId, "Rejected by DJ");
-        socket.rejectSong(eventId, songId, "Rejected by DJ");
+        await songsAPI.rejectSong(eventId, songId, 'Rejected by DJ');
+        socket.rejectSong(eventId, songId, 'Rejected by DJ');
         onSongRemoved(songId);
-        console.log("[Reject] rejectSong called successfully");
         toast.success(`Rejected "${song.title}"`);
-      } else if (action === "Cooldown" && eventId) {
+      } else if (action === 'Cooldown' && eventId) {
         if (song.requestedBy?._id) {
           await participantsAPI.setCooldown(
             song.requestedBy._id,
             300000,
-            "DJ applied cooldown",
+            'DJ applied cooldown',
           );
-          toast.success("User on cooldown");
+          toast.success('User on cooldown');
         }
-      } else if (action === "Kick" && eventId) {
+      } else if (action === 'Kick' && eventId) {
         if (song.requestedBy?._id) {
           await participantsAPI.kickParticipant(
             song.requestedBy._id,
-            "Kicked by DJ",
+            'Kicked by DJ',
           );
-          toast.success("User kicked from event");
+          toast.success('User kicked from event');
         }
-      } else if (action === "Skip" && eventId) {
-        console.log("[Skip] Calling skipSong with:", { eventId, songId });
+      } else if (action === 'Skip' && eventId) {
         if (!songId) {
-          console.error("Missing songId!");
-          toast.error("Song ID not found");
+          toast.error('Song ID not found');
           return;
         }
-        await songsAPI.skipSong(eventId, songId, "Skipped by DJ");
-        socket.skipSong(eventId, songId, "Skipped by DJ");
+        await songsAPI.skipSong(eventId, songId, 'Skipped by DJ');
+        socket.skipSong(eventId, songId, 'Skipped by DJ');
         onSongRemoved(songId);
-        console.log("[Skip] skipSong called successfully");
         toast.success(`Skipped "${song.title}"`);
       } else {
-        console.error(`[ERROR] Action "${action}" failed - eventId: ${eventId}, songId: ${songId}`);
-        toast.error("Invalid action or missing event ID");
+        console.error(
+          `[ERROR] Action "${action}" failed - eventId: ${eventId}, songId: ${songId}`,
+        );
+        toast.error('Invalid action or missing event ID');
       }
     } catch (error) {
-      console.error("Admin action failed:", error);
+      console.error('Admin action failed:', error);
       toast.error(`Failed to ${action.toLowerCase()}`);
     }
   };
@@ -317,19 +304,19 @@ function QueueItem({
         scale: 0.95,
         transition: { duration: 0.3 },
       }}
-      whileHover={{ backgroundColor: "rgba(248, 250, 252, 0.7)" }}
+      whileHover={{ backgroundColor: 'rgba(248, 250, 252, 0.7)' }}
       transition={{ duration: ANIMATION_DURATION.fast }}
       onClick={() => isDj && onSelect(song._id)}
       className={clsx(
-        "flex items-center gap-4 group cursor-pointer p-3 rounded-xl transition-all",
-        isDj ? "cursor-pointer hover:bg-slate-50" : "",
+        'flex items-center gap-4 group cursor-pointer p-3 rounded-xl transition-all',
+        isDj ? 'cursor-pointer hover:bg-slate-50' : '',
       )}
     >
       {/* Position Badge */}
       <div
         className={clsx(
-          "w-12 h-12 rounded-xl shadow-md flex items-center justify-center text-white font-bold text-lg flex-shrink-0",
-          isFirst ? primaryColor : "bg-slate-400",
+          'w-12 h-12 rounded-xl shadow-md flex items-center justify-center text-white font-bold text-lg flex-shrink-0',
+          isFirst ? primaryColor : 'bg-slate-400',
         )}
       >
         {position}
@@ -351,14 +338,14 @@ function QueueItem({
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={(e) => handleAdminAction("Send Now", e)}
+                  onClick={(e) => handleAdminAction('Send Now', e)}
                   className={clsx(
-                    "p-2 rounded-lg transition-colors",
-                    isDarkMode 
-                      ? "bg-emerald-900/30 hover:bg-emerald-800/40 text-emerald-300"
-                      : "bg-emerald-100 hover:bg-emerald-200 text-emerald-700"
+                    'p-2 rounded-lg transition-colors',
+                    isDarkMode
+                      ? 'bg-emerald-900/30 hover:bg-emerald-800/40 text-emerald-300'
+                      : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-700',
                   )}
-                  >
+                >
                   <Play size={18} />
                 </motion.button>
               </TooltipTrigger>
@@ -369,14 +356,14 @@ function QueueItem({
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={(e) => handleAdminAction("Reject", e)}
+                  onClick={(e) => handleAdminAction('Reject', e)}
                   className={clsx(
-                    "p-2 rounded-lg transition-colors",
-                    isDarkMode 
-                      ? "bg-red-900/30 hover:bg-red-800/40 text-red-300"
-                      : "bg-red-100 hover:bg-red-200 text-red-700"
+                    'p-2 rounded-lg transition-colors',
+                    isDarkMode
+                      ? 'bg-red-900/30 hover:bg-red-800/40 text-red-300'
+                      : 'bg-red-100 hover:bg-red-200 text-red-700',
                   )}
-                  >
+                >
                   <X size={18} />
                 </motion.button>
               </TooltipTrigger>
@@ -387,14 +374,14 @@ function QueueItem({
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={(e) => handleAdminAction("Cooldown", e)}
+                  onClick={(e) => handleAdminAction('Cooldown', e)}
                   className={clsx(
-                    "p-2 rounded-lg transition-colors",
-                    isDarkMode 
-                      ? "bg-yellow-900/30 hover:bg-yellow-800/40 text-yellow-300"
-                      : "bg-yellow-100 hover:bg-yellow-200 text-yellow-700"
+                    'p-2 rounded-lg transition-colors',
+                    isDarkMode
+                      ? 'bg-yellow-900/30 hover:bg-yellow-800/40 text-yellow-300'
+                      : 'bg-yellow-100 hover:bg-yellow-200 text-yellow-700',
                   )}
-                  >
+                >
                   <Clock size={18} />
                 </motion.button>
               </TooltipTrigger>
@@ -405,14 +392,14 @@ function QueueItem({
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={(e) => handleAdminAction("Skip", e)}
+                  onClick={(e) => handleAdminAction('Skip', e)}
                   className={clsx(
-                    "p-2 rounded-lg transition-colors",
-                    isDarkMode 
-                      ? "bg-gray-900/30 hover:bg-gray-800/40 text-gray-300"
-                      : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                    'p-2 rounded-lg transition-colors',
+                    isDarkMode
+                      ? 'bg-gray-900/30 hover:bg-gray-800/40 text-gray-300'
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700',
                   )}
-                  >
+                >
                   <SkipForward size={18} />
                 </motion.button>
               </TooltipTrigger>
@@ -423,20 +410,20 @@ function QueueItem({
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={(e) => handleAdminAction("Kick", e)}
+                  onClick={(e) => handleAdminAction('Kick', e)}
                   className={clsx(
-                    "p-2 rounded-lg transition-colors",
-                    isDarkMode 
-                      ? "bg-purple-900/30 hover:bg-purple-800/40 text-purple-300"
-                      : "bg-purple-100 hover:bg-purple-200 text-purple-700"
+                    'p-2 rounded-lg transition-colors',
+                    isDarkMode
+                      ? 'bg-purple-900/30 hover:bg-purple-800/40 text-purple-300'
+                      : 'bg-purple-100 hover:bg-purple-200 text-purple-700',
                   )}
-                  >
+                >
                   <UserX size={18} />
                 </motion.button>
               </TooltipTrigger>
               <TooltipContent>Kick User</TooltipContent>
             </Tooltip>
-            </motion.div>
+          </motion.div>
         ) : (
           <motion.div
             key="song-info"
@@ -446,31 +433,43 @@ function QueueItem({
             transition={{ duration: 0.08 }}
             className="flex-1 flex items-center gap-4"
           >
-             <div className="flex-1 min-w-0 flex flex-col gap-1">
-               <span className={clsx(
-                 "font-semibold truncate",
-                 isDarkMode ? "text-slate-100" : "text-slate-800"
-               )}>
-                 {song.title}
-               </span>
-               <span className={clsx(
-                 "text-xs",
-                 isDarkMode ? "text-slate-400" : "text-slate-500"
-               )}>{song.artist}</span>
-             </div>
+            <div className="flex-1 min-w-0 flex flex-col gap-1">
+              <span
+                className={clsx(
+                  'font-semibold truncate',
+                  isDarkMode ? 'text-slate-100' : 'text-slate-800',
+                )}
+              >
+                {song.title}
+              </span>
+              <span
+                className={clsx(
+                  'text-xs',
+                  isDarkMode ? 'text-slate-400' : 'text-slate-500',
+                )}
+              >
+                {song.artist}
+              </span>
+            </div>
 
-             <div className="flex flex-col items-end gap-1">
-               <span className={clsx(
-                 "text-sm font-semibold",
-                 isDarkMode ? "text-slate-100" : "text-slate-700"
-               )}>
-                 {song.voteScore}
-               </span>
-               <span className={clsx(
-                 "text-xs",
-                 isDarkMode ? "text-slate-400" : "text-slate-400"
-               )}>votes</span>
-             </div>
+            <div className="flex flex-col items-end gap-1">
+              <span
+                className={clsx(
+                  'text-sm font-semibold',
+                  isDarkMode ? 'text-slate-100' : 'text-slate-700',
+                )}
+              >
+                {song.voteScore}
+              </span>
+              <span
+                className={clsx(
+                  'text-xs',
+                  isDarkMode ? 'text-slate-400' : 'text-slate-400',
+                )}
+              >
+                votes
+              </span>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

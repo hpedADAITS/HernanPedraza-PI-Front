@@ -14,13 +14,16 @@ export function isValidEmail(email: string): boolean {
 /**
  * Email validation with message
  */
-export function validateEmail(email: string): { valid: boolean; message?: string } {
+export function validateEmail(email: string): {
+  valid: boolean;
+  message?: string;
+} {
   if (!email) {
-    return { valid: false, message: "Email is required" };
+    return { valid: false, message: 'Email is required' };
   }
 
   if (!isValidEmail(email)) {
-    return { valid: false, message: "Invalid email format" };
+    return { valid: false, message: 'Invalid email format' };
   }
 
   return { valid: true };
@@ -45,37 +48,40 @@ export function isStrongPassword(password: string): boolean {
 /**
  * Password validation with detailed message
  */
-export function validatePassword(password: string): { valid: boolean; message?: string } {
+export function validatePassword(password: string): {
+  valid: boolean;
+  message?: string;
+} {
   if (!password) {
-    return { valid: false, message: "Password is required" };
+    return { valid: false, message: 'Password is required' };
   }
 
   if (password.length < 8) {
-    return { valid: false, message: "Password must be at least 8 characters" };
+    return { valid: false, message: 'Password must be at least 8 characters' };
   }
 
   if (password.length > 128) {
-    return { valid: false, message: "Password must not exceed 128 characters" };
+    return { valid: false, message: 'Password must not exceed 128 characters' };
   }
 
   if (!/[A-Z]/.test(password)) {
     return {
       valid: false,
-      message: "Password must include at least one uppercase letter",
+      message: 'Password must include at least one uppercase letter',
     };
   }
 
   if (!/[a-z]/.test(password)) {
     return {
       valid: false,
-      message: "Password must include at least one lowercase letter",
+      message: 'Password must include at least one lowercase letter',
     };
   }
 
   if (!/[0-9]/.test(password)) {
     return {
       valid: false,
-      message: "Password must include at least one number",
+      message: 'Password must include at least one number',
     };
   }
 
@@ -96,23 +102,32 @@ export function isValidDisplayName(name: string): boolean {
 /**
  * Display name validation with message
  */
-export function validateDisplayName(name: string): { valid: boolean; message?: string } {
+export function validateDisplayName(name: string): {
+  valid: boolean;
+  message?: string;
+} {
   if (!name) {
-    return { valid: false, message: "Display name is required" };
+    return { valid: false, message: 'Display name is required' };
   }
 
   if (name.length < 2) {
-    return { valid: false, message: "Display name must be at least 2 characters" };
+    return {
+      valid: false,
+      message: 'Display name must be at least 2 characters',
+    };
   }
 
   if (name.length > 50) {
-    return { valid: false, message: "Display name must not exceed 50 characters" };
+    return {
+      valid: false,
+      message: 'Display name must not exceed 50 characters',
+    };
   }
 
   if (!isValidDisplayName(name)) {
     return {
       valid: false,
-      message: "Display name can only contain letters, numbers, and spaces",
+      message: 'Display name can only contain letters, numbers, and spaces',
     };
   }
 
@@ -133,23 +148,26 @@ export function isValidNickname(nickname: string): boolean {
 /**
  * Nickname validation with message
  */
-export function validateNickname(nickname: string): { valid: boolean; message?: string } {
+export function validateNickname(nickname: string): {
+  valid: boolean;
+  message?: string;
+} {
   if (!nickname) {
-    return { valid: false, message: "Nickname is required" };
+    return { valid: false, message: 'Nickname is required' };
   }
 
   if (nickname.length < 2) {
-    return { valid: false, message: "Nickname must be at least 2 characters" };
+    return { valid: false, message: 'Nickname must be at least 2 characters' };
   }
 
   if (nickname.length > 30) {
-    return { valid: false, message: "Nickname must not exceed 30 characters" };
+    return { valid: false, message: 'Nickname must not exceed 30 characters' };
   }
 
   if (!isValidNickname(nickname)) {
     return {
       valid: false,
-      message: "Nickname can only contain letters, numbers, and underscores",
+      message: 'Nickname can only contain letters, numbers, and underscores',
     };
   }
 
@@ -166,15 +184,18 @@ export function isValidAccessCode(code: string): boolean {
 /**
  * Event access code validation with message
  */
-export function validateAccessCode(code: string): { valid: boolean; message?: string } {
+export function validateAccessCode(code: string): {
+  valid: boolean;
+  message?: string;
+} {
   if (!code) {
-    return { valid: false, message: "Access code is required" };
+    return { valid: false, message: 'Access code is required' };
   }
 
   if (!isValidAccessCode(code)) {
     return {
       valid: false,
-      message: "Access code must be 6 alphanumeric characters",
+      message: 'Access code must be 6 alphanumeric characters',
     };
   }
 
@@ -197,7 +218,7 @@ export function isValidUrl(url: string): boolean {
  * Non-empty string validation
  */
 export function isNonEmptyString(value: any): boolean {
-  return typeof value === "string" && value.trim().length > 0;
+  return typeof value === 'string' && value.trim().length > 0;
 }
 
 /**
@@ -212,8 +233,8 @@ export function isPositiveNumber(value: any): boolean {
  * Required field validation
  */
 export function isRequired(value: any): { valid: boolean; message?: string } {
-  if (value === null || value === undefined || value === "") {
-    return { valid: false, message: "This field is required" };
+  if (value === null || value === undefined || value === '') {
+    return { valid: false, message: 'This field is required' };
   }
 
   return { valid: true };
@@ -222,7 +243,10 @@ export function isRequired(value: any): { valid: boolean; message?: string } {
 /**
  * Min length validation
  */
-export function minLength(value: string, min: number): { valid: boolean; message?: string } {
+export function minLength(
+  value: string,
+  min: number,
+): { valid: boolean; message?: string } {
   if (value.length < min) {
     return {
       valid: false,
@@ -236,7 +260,10 @@ export function minLength(value: string, min: number): { valid: boolean; message
 /**
  * Max length validation
  */
-export function maxLength(value: string, max: number): { valid: boolean; message?: string } {
+export function maxLength(
+  value: string,
+  max: number,
+): { valid: boolean; message?: string } {
   if (value.length > max) {
     return {
       valid: false,
@@ -253,7 +280,7 @@ export function maxLength(value: string, max: number): { valid: boolean; message
 export function inRange(
   value: number,
   min: number,
-  max: number
+  max: number,
 ): { valid: boolean; message?: string } {
   if (value < min || value > max) {
     return {
@@ -270,7 +297,10 @@ export function inRange(
  */
 export function validateForm(
   data: Record<string, any>,
-  validators: Record<string, (value: any) => { valid: boolean; message?: string }>
+  validators: Record<
+    string,
+    (value: any) => { valid: boolean; message?: string }
+  >,
 ): { valid: boolean; errors: Record<string, string> } {
   const errors: Record<string, string> = {};
 

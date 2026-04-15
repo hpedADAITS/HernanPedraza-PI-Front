@@ -20,7 +20,7 @@ export default function App() {
   useEffect(() => {
     // Load token from localStorage on app startup
     loadToken();
-    
+
     const checkDatabaseConnection = async () => {
       const health = await checkHealth();
       if (health.database) {
@@ -49,26 +49,46 @@ export default function App() {
 
   return (
     <div className="relative w-full h-screen overflow-hidden font-sans text-slate-800">
-      <Toaster position="top-center" toastOptions={{ classNames: { toast: 'z-[1000]' } }} />
+      <Toaster
+        position="top-center"
+        toastOptions={{ classNames: { toast: 'z-[1000]' } }}
+      />
       <AnimatePresence mode="wait" custom={direction}>
         {currentView === 'role-selection' && (
-          <RoleSelection key="role-selection" onNavigate={navigate} logoWhite={logoWhite} onLogoChange={setLogoWhite} />
-        )}
-        {currentView === 'attendee-login' && (
-          <AttendeeLogin key="attendee-login" onNavigate={navigate} logoWhite={logoWhite} onLogoChange={setLogoWhite} />
-        )}
-        {currentView === 'dj-login' && (
-          <DjLogin key="dj-login" onNavigate={navigate} logoWhite={logoWhite} onLogoChange={setLogoWhite} />
-        )}
-        {(currentView === 'attendee-dashboard' || currentView === 'dj-dashboard') && (
-          <Dashboard 
-            key={currentView} 
-            mode={currentView === 'attendee-dashboard' ? 'attendee' : 'dj'} 
-            onNavigate={navigate} 
+          <RoleSelection
+            key="role-selection"
+            onNavigate={navigate}
+            logoWhite={logoWhite}
+            onLogoChange={setLogoWhite}
           />
         )}
-        {(currentView === 'attendee-song-select' || currentView === 'dj-song-select') && (
-          <SongSelection 
+        {currentView === 'attendee-login' && (
+          <AttendeeLogin
+            key="attendee-login"
+            onNavigate={navigate}
+            logoWhite={logoWhite}
+            onLogoChange={setLogoWhite}
+          />
+        )}
+        {currentView === 'dj-login' && (
+          <DjLogin
+            key="dj-login"
+            onNavigate={navigate}
+            logoWhite={logoWhite}
+            onLogoChange={setLogoWhite}
+          />
+        )}
+        {(currentView === 'attendee-dashboard' ||
+          currentView === 'dj-dashboard') && (
+          <Dashboard
+            key={currentView}
+            mode={currentView === 'attendee-dashboard' ? 'attendee' : 'dj'}
+            onNavigate={navigate}
+          />
+        )}
+        {(currentView === 'attendee-song-select' ||
+          currentView === 'dj-song-select') && (
+          <SongSelection
             key={currentView}
             mode={currentView === 'attendee-song-select' ? 'attendee' : 'dj'}
             onNavigate={navigate}

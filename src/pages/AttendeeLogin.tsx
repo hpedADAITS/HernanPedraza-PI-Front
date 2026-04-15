@@ -1,16 +1,12 @@
-import React, { useState, useRef, useEffect } from "react";
-import jsQR from "jsqr";
-<<<<<<< Updated upstream
-import { Layout } from "@/components/layout/Layout";
-import { Logo } from "@/components/common";
-=======
-import { Layout } from "../components/layout/Layout";
->>>>>>> Stashed changes
-import { motion, AnimatePresence } from "motion/react";
-import { Ticket, ArrowLeft, QrCode, X, Camera } from "lucide-react";
-import { toast } from "sonner";
-import { participantsAPI, eventsAPI, authAPI } from "@/services/api";
-import * as socket from "@/services/socket";
+import React, { useState, useRef, useEffect } from 'react';
+import jsQR from 'jsqr';
+import { Layout } from '@/components/layout/Layout';
+import { Logo } from '@/components/common';
+import { motion, AnimatePresence } from 'motion/react';
+import { Ticket, ArrowLeft, QrCode, X, Camera } from 'lucide-react';
+import { toast } from 'sonner';
+import { participantsAPI, eventsAPI, authAPI } from '@/services/api';
+import * as socket from '@/services/socket';
 
 interface Props {
   onNavigate: (view: any) => void;
@@ -18,10 +14,14 @@ interface Props {
   onLogoChange?: (white: boolean) => void;
 }
 
-export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: Props) {
+export function AttendeeLogin({
+  onNavigate,
+  logoWhite = false,
+  onLogoChange,
+}: Props) {
   const [loading, setLoading] = useState(false);
-  const [eventCode, setEventCode] = useState("");
-  const [nickname, setNickname] = useState("");
+  const [eventCode, setEventCode] = useState('');
+  const [nickname, setNickname] = useState('');
   const [showQRScanner, setShowQRScanner] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -34,7 +34,7 @@ export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: P
     const startCamera = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
+          video: { facingMode: 'environment' },
         });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
@@ -43,7 +43,7 @@ export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: P
           };
         }
       } catch (error) {
-        toast.error("Unable to access camera. Please check permissions.");
+        toast.error('Unable to access camera. Please check permissions.');
         setShowQRScanner(false);
       }
     };
@@ -63,7 +63,7 @@ export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: P
     if (!videoRef.current || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
-    const context = canvas.getContext("2d");
+    const context = canvas.getContext('2d');
     if (!context) return;
 
     const video = videoRef.current;
@@ -79,7 +79,7 @@ export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: P
       if (code) {
         setEventCode(code.toUpperCase());
         setShowQRScanner(false);
-        toast.success("Event code scanned!");
+        toast.success('Event code scanned!');
         return;
       }
     } catch (error) {
@@ -101,7 +101,7 @@ export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: P
     const raw = result.data.trim();
     try {
       const url = new URL(raw);
-      const code = url.searchParams.get("code");
+      const code = url.searchParams.get('code');
       if (code) return code.toUpperCase();
     } catch {
       // Not a URL, treat as raw code
@@ -114,7 +114,7 @@ export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: P
     setLoading(true);
     try {
       if (!eventCode.trim() || !nickname.trim()) {
-        throw new Error("Please enter both event code and nickname");
+        throw new Error('Please enter both event code and nickname');
       }
 
       // Step 1: Create/register attendee account
@@ -125,53 +125,59 @@ export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: P
         tempEmail,
         tempPassword,
         nickname,
-        "ATTENDEE",
+        'ATTENDEE',
       );
 
       if (!authResult || !authResult.token) {
-        throw new Error("Failed to create account");
+        throw new Error('Failed to create account');
       }
 
       // Step 2: Validate event code against database
       const event = await eventsAPI.getEventByAccessCode(eventCode);
 
       if (!event) {
-        throw new Error("Event not found. Please check the event code.");
+        throw new Error('Event not found. Please check the event code.');
       }
 
       // Step 3: Join the event as a participant
-      const participant = await participantsAPI.joinEvent(event._id || event.id, nickname);
+      const participant = await participantsAPI.joinEvent(
+        event._id || event.id,
+        nickname,
+      );
 
       if (!participant) {
-        throw new Error("Failed to join event");
+        throw new Error('Failed to join event');
       }
 
       // Store attendee session data
-       const sessionData = {
-         nickname,
-         eventCode,
-         eventId: event._id || event.id,
-         participantId: participant._id || participant.id,
-         joinedAt: new Date().toISOString(),
-         ownerName: event.ownerId?.displayName || "DJ",
-       };
-       localStorage.setItem("user", JSON.stringify({ displayName: nickname }));
-       localStorage.setItem("currentEvent", JSON.stringify(sessionData));
-       
-       // Store participant data
-       localStorage.setItem("currentParticipant", JSON.stringify({
-         _id: participant._id || participant.id,
-         nickname,
-         eventId: event._id || event.id
-       }));
+      const sessionData = {
+        nickname,
+        eventCode,
+        eventId: event._id || event.id,
+        participantId: participant._id || participant.id,
+        joinedAt: new Date().toISOString(),
+        ownerName: event.ownerId?.displayName || 'DJ',
+      };
+      localStorage.setItem('user', JSON.stringify({ displayName: nickname }));
+      localStorage.setItem('currentEvent', JSON.stringify(sessionData));
 
-      toast.success("Account created and joined event successfully!");
+      // Store participant data
+      localStorage.setItem(
+        'currentParticipant',
+        JSON.stringify({
+          _id: participant._id || participant.id,
+          nickname,
+          eventId: event._id || event.id,
+        }),
+      );
+
+      toast.success('Account created and joined event successfully!');
       // Initialize socket connection
       socket.initSocket(authResult.authToken || authResult.token);
-      onNavigate("attendee-dashboard");
+      onNavigate('attendee-dashboard');
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to join event",
+        error instanceof Error ? error.message : 'Failed to join event',
       );
     } finally {
       setLoading(false);
@@ -181,13 +187,13 @@ export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: P
   return (
     <Layout theme="green" className="items-center justify-center min-h-screen">
       <motion.div
-         initial={{ y: -12, opacity: 0 }}
-         animate={{ y: 0, opacity: 1 }}
-         transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-         className="mb-12"
-       >
-         <h1 className="text-4xl font-bold text-white">SyncRequst</h1>
-       </motion.div>
+        initial={{ y: -12, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+        className="mb-12"
+      >
+        <h1 className="text-4xl font-bold text-white">SyncRequst</h1>
+      </motion.div>
 
       <motion.form
         onSubmit={handleJoinEvent}
@@ -247,7 +253,7 @@ export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: P
           {loading ? (
             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
           ) : (
-            "Join Event"
+            'Join Event'
           )}
         </motion.button>
       </motion.form>
@@ -257,10 +263,14 @@ export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: P
         <motion.button
           initial={{ opacity: 0, x: 12 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.15, duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+          transition={{
+            delay: 0.15,
+            duration: 0.25,
+            ease: [0.25, 0.1, 0.25, 1],
+          }}
           whileHover={{ scale: 1.05, transition: { duration: 0.12 } }}
           whileTap={{ scale: 0.95, transition: { duration: 0.08 } }}
-          onClick={() => onNavigate("role-selection")}
+          onClick={() => onNavigate('role-selection')}
           className="bg-white px-8 py-4 rounded-full shadow-xl shadow-black/10 text-xl font-light text-slate-800 flex items-center gap-2 border border-slate-100"
         >
           <ArrowLeft size={20} />
@@ -295,10 +305,13 @@ export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: P
                   </h2>
                 </div>
                 <button
-                   onClick={() => setShowQRScanner(false)}
-                   className="p-2 rounded-full hover:bg-slate-100 transition-all duration-200 group"
-                 >
-                   <X size={24} className="text-slate-600 group-hover:animate-pulse group-hover:rotate-0" />
+                  onClick={() => setShowQRScanner(false)}
+                  className="p-2 rounded-full hover:bg-slate-100 transition-all duration-200 group"
+                >
+                  <X
+                    size={24}
+                    className="text-slate-600 group-hover:animate-pulse group-hover:rotate-0"
+                  />
                 </button>
               </div>
 
@@ -316,7 +329,7 @@ export function AttendeeLogin({ onNavigate, logoWhite = false, onLogoChange }: P
                     playsInline
                     className="w-full h-full object-cover"
                   />
-                  <canvas ref={canvasRef} style={{ display: "none" }} />
+                  <canvas ref={canvasRef} style={{ display: 'none' }} />
 
                   {/* QR Scanning Frame */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

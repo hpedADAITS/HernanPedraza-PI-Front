@@ -16,7 +16,7 @@ export function FrequentSongWarningModal({
   songTitle,
   requestCount,
   onConfirm,
-  onCancel
+  onCancel,
 }: FrequentSongWarningModalProps) {
   return (
     <AnimatePresence>
@@ -42,14 +42,20 @@ export function FrequentSongWarningModal({
               {/* Header */}
               <div className="bg-gradient-to-r from-amber-500 to-amber-600 p-6 flex items-center gap-3">
                 <AlertCircle size={28} className="text-white flex-shrink-0" />
-                <h2 className="text-xl font-semibold text-white">Popular Song</h2>
+                <h2 className="text-xl font-semibold text-white">
+                  Popular Song
+                </h2>
               </div>
 
               {/* Content */}
               <div className="p-6 space-y-4">
                 <p className="text-slate-700">
-                  <span className="font-semibold">"{songTitle}"</span> has been requested{' '}
-                  <span className="font-bold" style={{ color: '#ef4444' }}>{requestCount} times</span> already.
+                  <span className="font-semibold">"{songTitle}"</span> has been
+                  requested{' '}
+                  <span className="font-bold" style={{ color: '#ef4444' }}>
+                    {requestCount} times
+                  </span>{' '}
+                  already.
                 </p>
                 <p className="text-sm text-slate-600">
                   This song is very popular! Would you still like to request it?

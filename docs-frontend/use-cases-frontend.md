@@ -9,6 +9,7 @@
 ### Casos de Uso de Autenticación (Asistente y DJ)
 
 **UC-FE-001: Iniciar Sesión en la Aplicación**
+
 - Actor: Asistente, DJ
 - Precondición: El usuario tiene cuenta registrada
 - Flujo: Ingresar correo/contraseña → Validar → Recibir token → Redirigir al panel
@@ -16,6 +17,7 @@
 - Post-condición: Usuario autenticado, viendo panel apropiado
 
 **UC-FE-002: Ver Perfil de Usuario**
+
 - Actor: Asistente, DJ, Admin
 - Precondición: Usuario ha iniciado sesión
 - Flujo: Hacer clic en ícono de perfil → Ver nombre, correo, rol → Opción de cerrar sesión
@@ -23,6 +25,7 @@
 - Post-condición: Información del usuario mostrada
 
 **UC-FE-003: Cerrar Sesión de Aplicación**
+
 - Actor: Asistente, DJ, Admin
 - Precondición: Usuario ha iniciado sesión
 - Flujo: Hacer clic en cerrar sesión → Confirmar → Limpiar token → Redirigir a login
@@ -34,6 +37,7 @@
 ### Casos de Uso de Exploración de Eventos (Asistente y DJ)
 
 **UC-FE-004: Ver Lista de Eventos Activos**
+
 - Actor: Asistente, DJ
 - Precondición: Usuario ha iniciado sesión
 - Flujo: Navegar a Eventos → Mostrar lista con filtros → Ver detalles
@@ -46,6 +50,7 @@
 - Post-condición: Usuario ve eventos disponibles con opción de unirse
 
 **UC-FE-005: Buscar Eventos**
+
 - Actor: Asistente, DJ
 - Precondición: En página de Lista de Eventos
 - Flujo: Ingresar término de búsqueda → Filtrar eventos → Ver resultados coincidentes
@@ -57,6 +62,7 @@
 - Post-condición: Lista de eventos filtrada mostrada
 
 **UC-FE-006: Filtrar Eventos por Estado**
+
 - Actor: Asistente, DJ
 - Precondición: En página de Lista de Eventos
 - Flujo: Seleccionar filtro → Aplicar → Ver resultados filtrados
@@ -71,6 +77,7 @@
 ### Casos de Uso de Participación en Evento (Asistente)
 
 **UC-FE-007: Unirse a Evento por Código**
+
 - Actor: Asistente
 - Precondición: Usuario ha iniciado sesión, conoce código de evento
 - Flujo: Hacer clic en "Unirse a Evento" → Ingresar código → Enviar → Unirse a evento
@@ -79,6 +86,7 @@
 - Post-condición: Asistente en evento, ve cola
 
 **UC-FE-008: Unirse a Evento por Código QR**
+
 - Actor: Asistente
 - Precondición: Tiene acceso a cámara, código QR visible
 - Flujo: Escanear QR → Extraer código → Unirse automáticamente → Entrar a evento
@@ -90,6 +98,7 @@
 - Post-condición: Asistente en evento, ve cola
 
 **UC-FE-009: Ver Cola de Evento Actual**
+
 - Actor: Asistente
 - Precondición: Asistente en evento activo
 - Flujo: Ver cola de canciones → Mostrar ordenadas por votos → Actualizaciones en tiempo real
@@ -103,6 +112,7 @@
 - Post-condición: Usuario ve cola dinámica
 
 **UC-FE-010: Abandonar Evento**
+
 - Actor: Asistente
 - Precondición: En evento activo
 - Flujo: Hacer clic en "Abandonar" → Confirmar → Salir de evento → Volver a lista de eventos
@@ -114,6 +124,7 @@
 ### Casos de Uso de Interacción con Canciones (Asistente)
 
 **UC-FE-011: Sugerir Canción**
+
 - Actor: Asistente
 - Precondición: Asistente en evento activo, no ha excedido límite
 - Flujo: Hacer clic en "Sugerir Canción" → Ingresar título/artista → Enviar
@@ -126,6 +137,7 @@
 - Post-condición: Canción agregada a cola de sugerencias
 
 **UC-FE-012: Ver Detalles de Canción**
+
 - Actor: Asistente
 - Precondición: Canción visible en cola
 - Flujo: Hacer clic en tarjeta de canción → Ver detalles completos → Votos actuales → Quién sugirió
@@ -139,6 +151,7 @@
 - Post-condición: Usuario ve información detallada de canción
 
 **UC-FE-013: Votar en Canción Sugerida**
+
 - Actor: Asistente
 - Precondición: Estado de canción es APROBADO o REPRODUCIENDO
 - Flujo: Hacer clic en botón de voto → Actualización optimista de UI → Enviar solicitud
@@ -152,6 +165,7 @@
 - Post-condición: Voto registrado, cola se actualiza en tiempo real
 
 **UC-FE-014: Ver Ranking de Canciones**
+
 - Actor: Asistente
 - Precondición: En evento activo
 - Flujo: Ver cola ordenada por votos → Ver canciones principales primero
@@ -168,6 +182,7 @@
 ### Casos de Uso de Estadísticas de Evento (Asistente y DJ)
 
 **UC-FE-015: Ver Estadísticas del Evento**
+
 - Actor: Asistente, DJ
 - Precondición: En evento activo o vista de detalles de evento
 - Flujo: Hacer clic en estadísticas → Ver métricas del evento
@@ -181,6 +196,7 @@
 - Post-condición: Estadísticas mostradas
 
 **UC-FE-016: Ver Historial de Votación Personal**
+
 - Actor: Asistente
 - Precondición: En evento, ha votado en canciones
 - Flujo: Hacer clic en "Mis Votos" → Ver canciones votadas → Conteos de votos
@@ -196,6 +212,7 @@
 ### Casos de Uso Específicos de DJ
 
 **UC-FE-017: Crear Evento (DJ)**
+
 - Actor: DJ
 - Precondición: Usuario ha iniciado sesión con rol = DJ
 - Flujo: Hacer clic en "Crear Evento" → Completar formulario → Enviar → Obtener código + QR
@@ -208,6 +225,7 @@
 - Post-condición: Evento creado, DJ ve panel de control
 
 **UC-FE-018: Configurar Ajustes de Evento (DJ)**
+
 - Actor: DJ
 - Precondición: DJ en su propio evento (estado BORRADOR o ACTIVO)
 - Flujo: Hacer clic en configuración → Modificar opciones → Guardar cambios
@@ -220,6 +238,7 @@
 - Post-condición: Configuración actualizada, cambios aplicados
 
 **UC-FE-019: Panel DJ - Gestionar Sugerencias**
+
 - Actor: DJ
 - Precondición: DJ en evento activo
 - Flujo: Ver sugerencias pendientes → Aprobar/Rechazar → Actualizar cola
@@ -233,6 +252,7 @@
 - Post-condición: Sugerencias moderadas, cola actualizada
 
 **UC-FE-020: Panel DJ - Controlar Reproducción**
+
 - Actor: DJ
 - Precondición: DJ en evento activo
 - Flujo: Ver canción actual → Controles de saltar/reproducir
@@ -245,6 +265,7 @@
 - Post-condición: Reproducción controlada
 
 **UC-FE-021: Panel DJ - Ver Actualizaciones en Tiempo Real**
+
 - Actor: DJ
 - Precondición: DJ en panel de evento
 - Flujo: Ver votos actualizándose en tiempo real → Ver nuevas sugerencias aparecer
@@ -256,6 +277,7 @@
 - Post-condición: DJ ve actividad del evento en vivo
 
 **UC-FE-022: Panel DJ - Copiar Código de Evento**
+
 - Actor: DJ
 - Precondición: En su propio evento
 - Flujo: Hacer clic en código → Copiar al portapapeles → Compartir con asistentes
@@ -267,6 +289,7 @@
 - Post-condición: Código copiado, listo para compartir
 
 **UC-FE-023: Panel DJ - Descargar Código QR**
+
 - Actor: DJ
 - Precondición: En su propio evento
 - Flujo: Hacer clic en código QR → Descargar o Imprimir → Compartir con asistentes
@@ -278,6 +301,7 @@
 - Post-condición: Código QR disponible para distribuir
 
 **UC-FE-024: Panel DJ - Cerrar Evento**
+
 - Actor: DJ
 - Precondición: Evento está ACTIVO
 - Flujo: Hacer clic en "Cerrar Evento" → Confirmar → Evento termina → Mostrar resumen
@@ -289,6 +313,7 @@
 ### Características en Tiempo Real (Todos los Usuarios)
 
 **UC-FE-025: Recibir Notificaciones en Tiempo Real**
+
 - Actor: Asistente, DJ
 - Precondición: En evento activo con Socket.IO conectado
 - Flujo: Eventos ocurren → Notificaciones Toast aparecen
@@ -302,6 +327,7 @@
 - Post-condición: Usuario ve actualizaciones en tiempo real
 
 **UC-FE-026: Ver Actualizaciones de Cola en Tiempo Real**
+
 - Actor: Asistente, DJ
 - Precondición: En evento activo, viendo cola
 - Flujo: Otro asistente vota → Cola se reordena inmediatamente
@@ -314,6 +340,7 @@
 - Post-condición: Cola siempre muestra estado actual
 
 **UC-FE-027: Ver Conteo de Participantes en Tiempo Real**
+
 - Actor: Asistente, DJ
 - Precondición: En evento activo
 - Flujo: Usuario se une/abandona → Conteo de participantes se actualiza
@@ -329,6 +356,7 @@
 ### Características de UI/UX (Todos los Usuarios)
 
 **UC-FE-028: Ver Estados de Carga**
+
 - Actor: Todos los usuarios
 - Precondición: Cualquier operación asincrónica en progreso
 - Flujo: Acción disparada → Indicador de carga mostrado → Operación completa
@@ -336,6 +364,7 @@
 - Post-condición: Usuario entiende que algo está sucediendo
 
 **UC-FE-029: Ver Mensajes de Error**
+
 - Actor: Todos los usuarios
 - Precondición: Error ocurre durante operación
 - Flujo: Error sucede → Mensaje de error mostrado → Opciones para reintentar
@@ -348,6 +377,7 @@
 - Post-condición: Usuario entiende qué salió mal
 
 **UC-FE-030: Interfaz Receptiva Móvil**
+
 - Actor: Todos los usuarios
 - Precondición: Accediendo en dispositivo móvil
 - Flujo: Ver en teléfono/tableta → UI se adapta → Controles amigables al tacto
@@ -360,6 +390,7 @@
 - Post-condición: Aplicación funciona sin problemas en móvil
 
 **UC-FE-031: Soporte de Modo Oscuro (Opcional)**
+
 - Actor: Todos los usuarios
 - Precondición: Usuario prefiere modo oscuro
 - Flujo: Habilitar modo oscuro → UI cambia de tema → Preferencia guardada
@@ -367,6 +398,7 @@
 - Post-condición: Aplicación se muestra en tema oscuro
 
 **UC-FE-032: Características de Accesibilidad**
+
 - Actor: Usuarios con necesidades de accesibilidad
 - Precondición: Usando herramientas de accesibilidad (lectores de pantalla, etc.)
 - Flujo: Navegar con teclado → Todas las funciones accesibles
@@ -489,18 +521,18 @@ UC_Manage .> UC_ViewQueue : <<include>>
 
 ## Tabla Resumen
 
-| Caso de Uso | Actor | Componente UI | ¿Tiempo Real? |
-|----------|-------|-------------|-----------|
-| UC-FE-001 | Asistente, DJ | LoginPage | No |
-| UC-FE-004 | Asistente, DJ | EventListPage | No |
-| UC-FE-007 | Asistente | JoinEventModal | No |
-| UC-FE-009 | Asistente, DJ | QueueList | Sí |
-| UC-FE-011 | Asistente | SongSuggestionForm | No |
-| UC-FE-013 | Asistente | VoteButton | Sí |
-| UC-FE-017 | DJ | CreateEventPage | No |
-| UC-FE-019 | DJ | DJPanelPage | Sí |
-| UC-FE-025 | Todos | Toast Component | Sí |
-| UC-FE-026 | Todos | QueueList | Sí |
+| Caso de Uso | Actor         | Componente UI      | ¿Tiempo Real? |
+| ----------- | ------------- | ------------------ | ------------- |
+| UC-FE-001   | Asistente, DJ | LoginPage          | No            |
+| UC-FE-004   | Asistente, DJ | EventListPage      | No            |
+| UC-FE-007   | Asistente     | JoinEventModal     | No            |
+| UC-FE-009   | Asistente, DJ | QueueList          | Sí            |
+| UC-FE-011   | Asistente     | SongSuggestionForm | No            |
+| UC-FE-013   | Asistente     | VoteButton         | Sí            |
+| UC-FE-017   | DJ            | CreateEventPage    | No            |
+| UC-FE-019   | DJ            | DJPanelPage        | Sí            |
+| UC-FE-025   | Todos         | Toast Component    | Sí            |
+| UC-FE-026   | Todos         | QueueList          | Sí            |
 
 ---
 
@@ -511,7 +543,7 @@ UC_Manage .> UC_ViewQueue : <<include>>
 ✅ **Conciencia en tiempo real** - Listeners Socket.IO documentados  
 ✅ **Mobile-first** - Todos los casos de uso receptivos  
 ✅ **Accesibilidad** - Incluida en características UX  
-✅ **Manejo de errores** - Mensajes de error amigables al usuario  
+✅ **Manejo de errores** - Mensajes de error amigables al usuario
 
 ---
 

@@ -26,7 +26,9 @@ function getLocalStorageIds() {
   const eventData = localStorage.getItem('currentEvent');
   const participantData = localStorage.getItem('currentParticipant');
   const eventId = eventData ? JSON.parse(eventData).eventId : null;
-  const participantId = participantData ? JSON.parse(participantData)._id : null;
+  const participantId = participantData
+    ? JSON.parse(participantData)._id
+    : null;
   return { eventId, participantId };
 }
 
@@ -66,9 +68,10 @@ export function SongSelection({ mode, onNavigate }: Props) {
     }
   }, [isDj, fetchPendingSongs]);
 
-  const filteredSongs = pendingSongs.filter(s =>
-    s.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.artist.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredSongs = pendingSongs.filter(
+    (s) =>
+      s.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.artist.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const handleApprove = async (songId: string) => {
@@ -102,8 +105,19 @@ export function SongSelection({ mode, onNavigate }: Props) {
     if (!eventId || !participantId || !title.trim() || !artist.trim()) return;
     setSubmitting(true);
     try {
-      const song = await songsAPI.suggestSong(eventId, participantId, title.trim(), artist.trim());
-      socket.suggestSong(eventId, song._id, song.title, song.artist, participantId);
+      const song = await songsAPI.suggestSong(
+        eventId,
+        participantId,
+        title.trim(),
+        artist.trim(),
+      );
+      socket.suggestSong(
+        eventId,
+        song._id,
+        song.title,
+        song.artist,
+        participantId,
+      );
       toast.success(`"${song.title}" suggested`);
       onNavigate('attendee-dashboard');
     } catch (err: any) {
@@ -116,7 +130,6 @@ export function SongSelection({ mode, onNavigate }: Props) {
   return (
     <Layout theme={theme} className="p-6 md:p-12" showNav={true}>
       <div className="max-w-5xl mx-auto w-full flex flex-col items-center mt-8">
-
         <motion.h1
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -171,34 +184,50 @@ export function SongSelection({ mode, onNavigate }: Props) {
                       hidden: { y: 20, opacity: 0 },
                       show: { y: 0, opacity: 1 },
                     }}
-                    onClick={() => setActiveSongId(activeSongId === song._id ? null : song._id)}
+                    onClick={() =>
+                      setActiveSongId(
+                        activeSongId === song._id ? null : song._id,
+                      )
+                    }
                     className="bg-slate-200 hover:bg-white hover:scale-[1.01] hover:shadow-lg transition-all duration-300 rounded-2xl p-4 md:p-6 cursor-pointer relative group overflow-hidden"
                   >
                     <div className="flex items-center gap-4 md:gap-6 relative z-10">
                       {/* Requester Avatar */}
                       <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl bg-gradient-to-br from-slate-400 to-slate-500 shadow-sm flex items-center justify-center overflow-hidden border-2 border-white flex-shrink-0">
                         <span className="text-lg md:text-xl font-bold text-white">
-                          {(song.requestedBy?.nickname || '?').charAt(0).toUpperCase()}
+                          {(song.requestedBy?.nickname || '?')
+                            .charAt(0)
+                            .toUpperCase()}
                         </span>
                       </div>
 
                       {/* Song Info */}
                       <div className="flex-1 min-w-0 flex flex-col">
-                        <h3 className="text-xl md:text-2xl font-light text-slate-800 truncate">{song.title}</h3>
-                        <p className="text-sm font-light text-slate-500 truncate">{song.artist}</p>
+                        <h3 className="text-xl md:text-2xl font-light text-slate-800 truncate">
+                          {song.title}
+                        </h3>
+                        <p className="text-sm font-light text-slate-500 truncate">
+                          {song.artist}
+                        </p>
                       </div>
 
                       {/* Approve / Reject or Chevron */}
                       {activeSongId === song._id ? (
                         <div className="flex gap-2 flex-shrink-0">
                           <button
-                            onClick={(e) => { e.stopPropagation(); handleApprove(song._id); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleApprove(song._id);
+                            }}
                             className="bg-emerald-500 hover:bg-emerald-600 text-white w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center transition-colors shadow-md"
                           >
                             <Check size={24} />
                           </button>
                           <button
-                            onClick={(e) => { e.stopPropagation(); handleReject(song._id); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleReject(song._id);
+                            }}
                             className="bg-red-500 hover:bg-red-600 text-white w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center transition-colors shadow-md"
                           >
                             <X size={24} />
@@ -259,7 +288,7 @@ export function SongSelection({ mode, onNavigate }: Props) {
                 'w-full h-20 rounded-2xl shadow-xl text-xl font-light text-white transition-all',
                 submitting || !title.trim() || !artist.trim()
                   ? 'bg-slate-400 cursor-not-allowed'
-                  : 'bg-emerald-500 hover:bg-emerald-600 cursor-pointer'
+                  : 'bg-emerald-500 hover:bg-emerald-600 cursor-pointer',
               )}
             >
               {submitting ? 'Submitting...' : 'Suggest Song'}
@@ -274,14 +303,15 @@ export function SongSelection({ mode, onNavigate }: Props) {
             animate={{ opacity: 1, x: 0 }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => onNavigate(isDj ? 'dj-dashboard' : 'attendee-dashboard')}
+            onClick={() =>
+              onNavigate(isDj ? 'dj-dashboard' : 'attendee-dashboard')
+            }
             className="bg-white px-8 py-4 rounded-full shadow-xl shadow-black/10 text-xl font-light text-slate-800 flex items-center gap-2 border border-slate-100 select-none pointer-events-auto cursor-pointer"
           >
             <ArrowLeft size={20} />
             Back
           </motion.button>
         </div>
-
       </div>
     </Layout>
   );

@@ -10,6 +10,7 @@
     "downlevelIteration": true,
     "moduleResolution": "bundler",
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "strict": true
   }
 }

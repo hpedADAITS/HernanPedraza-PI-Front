@@ -1,36 +1,38 @@
 // @ts-ignore
 const VITE_API_URL = import.meta.env?.VITE_API_URL as string | undefined;
-export const API_BASE: string = VITE_API_URL ? `${VITE_API_URL}/api/v1` : "http://localhost:5000/api/v1";
+export const API_BASE: string = VITE_API_URL
+  ? `${VITE_API_URL}/api/v1`
+  : 'http://localhost:5000/api/v1';
 
 let authToken: string | null = null;
 
 // Retrieve token from localStorage
 export function loadToken() {
-  if (typeof window !== "undefined") {
-    authToken = localStorage.getItem("authToken");
+  if (typeof window !== 'undefined') {
+    authToken = localStorage.getItem('authToken');
   }
 }
 
 // Store token in localStorage
 export function saveToken(token: string) {
   authToken = token;
-  if (typeof window !== "undefined") {
-    localStorage.setItem("authToken", token);
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('authToken', token);
   }
 }
 
 // Clear token
 export function clearToken() {
   authToken = null;
-  if (typeof window !== "undefined") {
-    localStorage.removeItem("authToken");
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('authToken');
   }
 }
 
 // Helper to make API calls
 async function apiCall(endpoint: string, options: RequestInit = {}) {
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   };
 
   // Add auth token if available
@@ -45,7 +47,7 @@ async function apiCall(endpoint: string, options: RequestInit = {}) {
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.error?.message || "API Error");
+    throw new Error(error.error?.message || 'API Error');
   }
 
   return response.json();
@@ -67,9 +69,14 @@ export async function checkHealth() {
 // ============ AUTH ENDPOINTS ============
 
 export const authAPI = {
-  register: async (email: string, password: string, displayName: string, role: string = "ATTENDEE") => {
-    const data = await apiCall("/auth/register", {
-      method: "POST",
+  register: async (
+    email: string,
+    password: string,
+    displayName: string,
+    role: string = 'ATTENDEE',
+  ) => {
+    const data = await apiCall('/auth/register', {
+      method: 'POST',
       body: JSON.stringify({ email, password, displayName, role }),
     });
     if (data.data.token) {
@@ -79,8 +86,8 @@ export const authAPI = {
   },
 
   login: async (email: string, password: string) => {
-    const data = await apiCall("/auth/login", {
-      method: "POST",
+    const data = await apiCall('/auth/login', {
+      method: 'POST',
       body: JSON.stringify({ email, password }),
     });
     if (data.data.token) {
@@ -90,8 +97,8 @@ export const authAPI = {
   },
 
   refreshToken: async (token: string) => {
-    const data = await apiCall("/auth/refresh", {
-      method: "POST",
+    const data = await apiCall('/auth/refresh', {
+      method: 'POST',
       body: JSON.stringify({ token }),
     });
     if (data.data.token) {
@@ -101,21 +108,21 @@ export const authAPI = {
   },
 
   getCurrentUser: async () => {
-    const data = await apiCall("/auth/me");
+    const data = await apiCall('/auth/me');
     return data.data.user;
   },
 
   updateProfile: async (updates: { displayName?: string }) => {
-    const data = await apiCall("/auth/me", {
-      method: "PATCH",
+    const data = await apiCall('/auth/me', {
+      method: 'PATCH',
       body: JSON.stringify(updates),
     });
     return data.data.user;
   },
 
   updateProfilePicture: async (updates: { profilePicture: string }) => {
-    const data = await apiCall("/auth/me/picture", {
-      method: "PATCH",
+    const data = await apiCall('/auth/me/picture', {
+      method: 'PATCH',
       body: JSON.stringify(updates),
     });
     return data.data.user;
@@ -126,8 +133,8 @@ export const authAPI = {
 
 export const eventsAPI = {
   createEvent: async (name: string, description: string, startsAt: string) => {
-    const data = await apiCall("/events", {
-      method: "POST",
+    const data = await apiCall('/events', {
+      method: 'POST',
       body: JSON.stringify({ name, description, startsAt }),
     });
     return data.data.event;
@@ -150,7 +157,7 @@ export const eventsAPI = {
 
   updateEvent: async (eventId: string, updates: Record<string, any>) => {
     const data = await apiCall(`/events/${eventId}`, {
-      method: "PUT",
+      method: 'PUT',
       body: JSON.stringify(updates),
     });
     return data.data.event;
@@ -158,21 +165,21 @@ export const eventsAPI = {
 
   startEvent: async (eventId: string) => {
     const data = await apiCall(`/events/${eventId}/start`, {
-      method: "POST",
+      method: 'POST',
     });
     return data.data.event;
   },
 
   endEvent: async (eventId: string) => {
     const data = await apiCall(`/events/${eventId}/end`, {
-      method: "POST",
+      method: 'POST',
     });
     return data.data.event;
   },
 
   cancelEvent: async (eventId: string, reason: string) => {
     const data = await apiCall(`/events/${eventId}/cancel`, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify({ reason }),
     });
     return data.data.event;
@@ -189,7 +196,7 @@ export const eventsAPI = {
 export const participantsAPI = {
   joinEvent: async (eventId: string, nickname: string) => {
     const data = await apiCall(`/participants/${eventId}/join`, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify({ nickname }),
     });
     return data.data.participant;
@@ -197,7 +204,7 @@ export const participantsAPI = {
 
   leaveEvent: async (participantId: string) => {
     const data = await apiCall(`/participants/${participantId}/leave`, {
-      method: "POST",
+      method: 'POST',
     });
     return data.data.participant;
   },
@@ -214,15 +221,19 @@ export const participantsAPI = {
 
   setPremium: async (participantId: string, isPremium: boolean) => {
     const data = await apiCall(`/participants/${participantId}/premium`, {
-      method: "PUT",
+      method: 'PUT',
       body: JSON.stringify({ isPremium }),
     });
     return data.data.participant;
   },
 
-  setCooldown: async (participantId: string, durationMs: number, reason: string) => {
+  setCooldown: async (
+    participantId: string,
+    durationMs: number,
+    reason: string,
+  ) => {
     const data = await apiCall(`/participants/${participantId}/cooldown`, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify({ durationMs, reason }),
     });
     return data.data.participant;
@@ -230,7 +241,7 @@ export const participantsAPI = {
 
   kickParticipant: async (participantId: string, reason: string) => {
     const data = await apiCall(`/participants/${participantId}/kick`, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify({ reason }),
     });
     return data.data.participant;
@@ -240,9 +251,14 @@ export const participantsAPI = {
 // ============ SONGS ENDPOINTS ============
 
 export const songsAPI = {
-  suggestSong: async (eventId: string, participantId: string, title: string, artist: string) => {
+  suggestSong: async (
+    eventId: string,
+    participantId: string,
+    title: string,
+    artist: string,
+  ) => {
     const data = await apiCall(`/songs/${eventId}/suggest`, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify({ participantId, title, artist }),
     });
     return data.data.song;
@@ -260,14 +276,14 @@ export const songsAPI = {
 
   approveSong: async (eventId: string, songId: string) => {
     const data = await apiCall(`/songs/${eventId}/${songId}/approve`, {
-      method: "POST",
+      method: 'POST',
     });
     return data.data.song;
   },
 
   rejectSong: async (eventId: string, songId: string, reason: string) => {
     const data = await apiCall(`/songs/${eventId}/${songId}/reject`, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify({ reason }),
     });
     return data.data.song;
@@ -275,7 +291,7 @@ export const songsAPI = {
 
   skipSong: async (eventId: string, songId: string, reason: string) => {
     const data = await apiCall(`/songs/${eventId}/${songId}/skip`, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify({ reason }),
     });
     return data.data.song;
@@ -291,8 +307,8 @@ export const songsAPI = {
 
 export const votesAPI = {
   castVote: async (songId: string, participantId: string, value: number) => {
-    const data = await apiCall("/votes", {
-      method: "POST",
+    const data = await apiCall('/votes', {
+      method: 'POST',
       body: JSON.stringify({ songId, participantId, value }),
     });
     return data.data.vote;
@@ -300,7 +316,7 @@ export const votesAPI = {
 
   removeVote: async (songId: string, participantId: string) => {
     const data = await apiCall(`/votes/${songId}/${participantId}`, {
-      method: "DELETE",
+      method: 'DELETE',
     });
     return data.data;
   },
