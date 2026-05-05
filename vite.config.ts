@@ -1,30 +1,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import tailwindcss from '@tailwindcss/vite';
-import path from 'node:path';
-import os from 'node:os';
-
-function getLocalIp() {
-  const interfaces = os.networkInterfaces();
-  for (const name of Object.keys(interfaces)) {
-    for (const iface of interfaces[name]!) {
-      if (iface.family === 'IPv4' && !iface.internal) {
-        return iface.address;
-      }
-    }
-  }
-  return 'localhost';
-}
-
-const isHost = process.argv.includes('--host');
-const localIp = isHost ? getLocalIp() : 'localhost';
-const apiUrl = `http://${localIp}:5000`;
 
 export default defineConfig({
-  define: {
-    'import.meta.env.VITE_API_URL': JSON.stringify(apiUrl),
-  },
-  plugins: [tailwindcss(), react()],
+  plugins: [react(), tailwindcss()],
   resolve: {
     extensions: ['.tsx', '.ts', '.jsx', '.js', '.json'],
     alias: {
@@ -38,5 +17,6 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true,
+    },
   },
 });

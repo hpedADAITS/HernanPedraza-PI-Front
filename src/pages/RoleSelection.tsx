@@ -3,7 +3,9 @@ import { Layout } from '@/components/layout/Layout';
 import { Logo } from '@/components/common';
 import { motion, AnimatePresence } from 'motion/react';
 import { User, Headphones } from 'lucide-react';
-import logo from '@/assets/logo_white.png';
+import { useDarkMode } from '@/hooks/useDarkMode';
+import logoNormal from '@/assets/logo_normal.png';
+import logoWhite from '@/assets/logo_white.png';
 
 interface Props {
   onNavigate: (view: any) => void;
@@ -12,6 +14,7 @@ interface Props {
 }
 
 export function RoleSelection({ onNavigate, logoWhite, onLogoChange }: Props) {
+  const [isDarkMode] = useDarkMode();
   const [expandingCircle, setExpandingCircle] = useState<{
     x: number;
     y: number;
@@ -48,7 +51,7 @@ export function RoleSelection({ onNavigate, logoWhite, onLogoChange }: Props) {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
         >
-          <img src={logo} alt="SyncRequst" className="h-20 w-auto" />
+          <img src={isDarkMode ? logoWhite : logoNormal} alt="SyncRequst" className="h-20 w-auto" />
         </motion.div>
 
         {/* Cards Container */}

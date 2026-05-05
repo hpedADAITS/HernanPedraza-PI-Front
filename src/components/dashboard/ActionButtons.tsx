@@ -9,7 +9,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { ANIMATION_DURATION } from '@/constants/animations';
-import { songsAPI, votesAPI, clearToken } from '@/services/api';
+import { songsAPI, votesAPI, eventsAPI, clearToken } from '@/services/api';
 import * as socket from '@/services/socket';
 import { disconnectSocket } from '@/services/socket';
 import type { View } from '@/types';
@@ -22,7 +22,24 @@ interface ActionButtonsProps {
 export function ActionButtons({ mode, onNavigate }: ActionButtonsProps) {
   const isDj = mode === 'dj';
 
-  const handleLeaveParty = () => {
+  const handleLeaveParty = async () => {
+    if (isDj) {
+      const eventRaw = localStorage.getItem('currentEvent');
+      let eventId = '';
+      if (eventRaw) {
+        try {
+          const parsed = JSON.parse(eventRaw);
+          eventId = parsed.eventId || parsed._id || parsed.id || '';
+        } catch {}
+      }
+      if (eventId) {
+        try {
+          await eventsAPI.endEvent(eventId);
+        } catch (err: any) {
+          toast.error(err?.message || 'Failed to end event');
+        }
+      }
+    }
     clearToken();
     disconnectSocket();
     localStorage.removeItem('currentEvent');

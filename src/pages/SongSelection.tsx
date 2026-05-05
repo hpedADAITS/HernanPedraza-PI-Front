@@ -49,6 +49,16 @@ export function SongSelection({ mode, onNavigate }: Props) {
   const [artist, setArtist] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const getLocalNickname = () => {
+    const data = localStorage.getItem('currentParticipant');
+    if (!data) return 'User';
+    try {
+      return JSON.parse(data).nickname || 'User';
+    } catch {
+      return 'User';
+    }
+  };
+
   const fetchPendingSongs = useCallback(async () => {
     if (!eventId) return;
     setLoading(true);
@@ -117,6 +127,7 @@ export function SongSelection({ mode, onNavigate }: Props) {
         song.title,
         song.artist,
         participantId,
+        getLocalNickname(),
       );
       toast.success(`"${song.title}" suggested`);
       onNavigate('attendee-dashboard');

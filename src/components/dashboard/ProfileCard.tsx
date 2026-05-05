@@ -18,30 +18,17 @@ interface ProfileCardProps {
   djName?: string;
   joinedAt?: Date | string;
   accessCode?: string;
-}
-
-function calculateYearsFollowing(joinedAt: Date | string): string {
-  const joinDate = typeof joinedAt === 'string' ? new Date(joinedAt) : joinedAt;
-  const now = new Date();
-  const diffMs = now.getTime() - joinDate.getTime();
-  const diffYears = diffMs / (1000 * 60 * 60 * 24 * 365.25);
-
-  if (diffYears < 1) {
-    const diffMonths = diffMs / (1000 * 60 * 60 * 24 * 30);
-    return diffMonths < 1
-      ? 'just now'
-      : `${Math.floor(diffMonths)} month${Math.floor(diffMonths) !== 1 ? 's' : ''}`;
-  }
-
-  return `${Math.floor(diffYears)} year${Math.floor(diffYears) !== 1 ? 's' : ''}`;
+  eventId?: string;
+  onAccessCodeChange?: (newCode: string) => void;
 }
 
 export function ProfileCard({
   mode,
   userName = 'Lucas',
   djName = 'DJ',
-  joinedAt = new Date(),
   accessCode = 'PARTY2024',
+  eventId,
+  onAccessCodeChange,
 }: ProfileCardProps) {
   const isDj = mode === 'dj';
   const config = THEME_CONFIG[isDj ? 'dj' : 'attendee'];
@@ -49,9 +36,8 @@ export function ProfileCard({
 
   const subtitle = useMemo(() => {
     if (isDj) return 'DJ on SyncRequest';
-    const duration = calculateYearsFollowing(joinedAt);
-    return `${duration} following ${djName}`;
-  }, [isDj, djName, joinedAt]);
+    return `DJ: ${djName}`;
+  }, [isDj, djName]);
 
   return (
     <TooltipProvider>
@@ -109,6 +95,9 @@ export function ProfileCard({
           isOpen={showQRModal}
           accessCode={accessCode}
           onClose={() => setShowQRModal(false)}
+          isDj={isDj}
+          eventId={eventId}
+          onAccessCodeChange={onAccessCodeChange}
         />
       </>
     </TooltipProvider>

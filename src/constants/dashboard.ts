@@ -1,10 +1,3 @@
-export const QUEUE_SONGS = [
-  { title: 'Blinding Lights', artist: 'The Weeknd', votes: 42 },
-  { title: 'Levitating', artist: 'Dua Lipa', votes: 38 },
-  { title: 'Save Your Tears', artist: 'The Weeknd', votes: 25 },
-  { title: "Don't Start Now", artist: 'Dua Lipa', votes: 19 },
-] as const;
-
 export const PROFILE_IMAGE = new URL(
   '../assets/ProfilePicture.png',
   import.meta.url,

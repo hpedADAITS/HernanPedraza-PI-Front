@@ -49,6 +49,7 @@ export function suggestSong(
   title: string,
   artist: string,
   participantId: string,
+  nickname: string,
 ) {
   const socket = getSocketInstance();
   if (!socket) throw new Error('Socket not initialized');
@@ -58,6 +59,7 @@ export function suggestSong(
     title,
     artist,
     participantId,
+    nickname,
   });
 }
 

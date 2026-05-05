@@ -25,8 +25,11 @@ export default function App() {
 
     const checkDatabaseConnection = async () => {
       const health = await checkHealth();
+      const isDebug = import.meta.env.DEV && (window as any).__DEBUG_MODE__;
       if (health.database) {
-        toast.success(`Connected to ${API_BASE}`);
+        if (isDebug) {
+          toast.success(`Connected to ${API_BASE}`);
+        }
       } else {
         toast.error(`Failed to connect to ${API_BASE}`);
       }

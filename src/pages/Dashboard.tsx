@@ -10,8 +10,18 @@ import {
   ParticipantsList,
   ConnectedUsers,
 } from '@/components/dashboard';
-import { initSocket, joinEvent } from '@/services/socket';
+import {
+  initSocket,
+  joinEvent,
+  onAccessCodeUpdated,
+  onSongSuggested,
+  onEventEnded,
+  off,
+  disconnectSocket,
+} from '@/services/socket';
+import { clearToken } from '@/services/api';
 import { useDarkMode } from '@/hooks/useDarkMode';
+import { toast } from 'sonner';
 
 interface DashboardProps extends PageProps {
   mode: 'attendee' | 'dj';
@@ -23,7 +33,21 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
   const [djName, setDjName] = useState('DJ');
   const [joinedAt, setJoinedAt] = useState(new Date());
   const [accessCode, setAccessCode] = useState('');
+  const [eventId, setEventId] = useState('');
   const [isDarkMode] = useDarkMode();
+
+  const persistAccessCode = (newCode: string) => {
+    setAccessCode(newCode);
+    const eventData = localStorage.getItem('currentEvent');
+    if (eventData) {
+      try {
+        const parsed = JSON.parse(eventData);
+        parsed.accessCode = newCode;
+        parsed.eventCode = newCode;
+        localStorage.setItem('currentEvent', JSON.stringify(parsed));
+      } catch {}
+    }
+  };
 
   useEffect(() => {
     const eventData = localStorage.getItem('currentEvent');
@@ -55,6 +79,7 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
         if (eventParsed.eventCode || eventParsed.accessCode) {
           setAccessCode(eventParsed.eventCode || eventParsed.accessCode);
         }
+        if (eventParsed.eventId) setEventId(eventParsed.eventId);
 
         joinEvent(
           eventParsed.eventId,
@@ -66,11 +91,54 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
       }
     };
 
+    const handleAccessCodeUpdated = (data: { accessCode: string }) => {
+      if (!data?.accessCode) return;
+      persistAccessCode(data.accessCode);
+      toast.info(`Access code changed to ${data.accessCode}`);
+    };
+
+    const handleSongSuggested = (data: {
+      participantId?: string;
+      nickname?: string;
+      title?: string;
+    }) => {
+      if (!data?.title) return;
+      try {
+        const localId = JSON.parse(participantData)._id;
+        if (data.participantId === localId) return;
+      } catch {}
+      toast.info(`${data.nickname || 'Someone'} suggested ${data.title}!`);
+    };
+
+    const handleEventEnded = (data: { cancelled?: boolean; reason?: string }) => {
+      if (isDj) return;
+      const msg = data?.cancelled
+        ? `Event cancelled${data.reason ? `: ${data.reason}` : ''}`
+        : 'The DJ ended the event';
+      toast.info(msg);
+      clearToken();
+      disconnectSocket();
+      localStorage.removeItem('currentEvent');
+      localStorage.removeItem('currentParticipant');
+      localStorage.removeItem('user');
+      onNavigate('attendee-login');
+    };
+
+    onAccessCodeUpdated(handleAccessCodeUpdated);
+    onSongSuggested(handleSongSuggested);
+    onEventEnded(handleEventEnded);
+
     if (socket?.connected) {
       handleConnect();
     } else {
       socket?.once('connect', handleConnect);
     }
+
+    return () => {
+      off('access_code_updated', handleAccessCodeUpdated);
+      off('song_suggested', handleSongSuggested);
+      off('event_ended', handleEventEnded);
+    };
   }, [isDj]);
 
   return (
@@ -84,6 +152,8 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
             djName={djName}
             joinedAt={joinedAt}
             accessCode={accessCode}
+            eventId={eventId}
+            onAccessCodeChange={persistAccessCode}
           />
           <QueueList mode={mode} isDarkMode={isDarkMode} />
         </div>

@@ -24,6 +24,13 @@ export const eventsAPI = {
     return data.data.event;
   },
 
+  regenerateAccessCode: async (eventId: string) => {
+    const data = await apiCall(`/events/${eventId}/regenerate-code`, {
+      method: 'POST',
+    });
+    return data.data.event;
+  },
+
   updateEvent: async (eventId: string, updates: Record<string, any>) => {
     const data = await apiCall(`/events/${eventId}`, {
       method: 'PUT',

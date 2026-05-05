@@ -22,4 +22,6 @@ export {
   onSongSkipped,
   onQueueUpdated,
   onSocketError,
+  onAccessCodeUpdated,
+  onEventEnded,
 } from './listeners';

@@ -12,7 +12,9 @@ import {
 import { toast } from 'sonner';
 import { authAPI, eventsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
-import logoAsset from '@/assets/logo_normal.png';
+import { useDarkMode } from '@/hooks/useDarkMode';
+import logoNormal from '@/assets/logo_normal.png';
+import logoWhite from '@/assets/logo_white.png';
 
 interface Props {
   onNavigate: (view: any) => void;
@@ -32,6 +34,7 @@ export function DjRegister({
   const [displayName, setDisplayName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isDarkMode] = useDarkMode();
 
   const validateForm = (): boolean => {
     if (
@@ -165,7 +168,7 @@ export function DjRegister({
           {/* Brand lockup (logo PNG already contains the wordmark) */}
           <div className="flex items-center justify-center mb-8">
             <img
-              src={logoAsset}
+              src={isDarkMode ? logoWhite : logoNormal}
               alt="SyncRequest"
               className="h-28 w-auto object-contain select-none"
               draggable={false}

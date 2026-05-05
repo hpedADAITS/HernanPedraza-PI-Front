@@ -74,3 +74,11 @@ export function onQueueUpdated(callback: (data: any) => void) {
 export function onSocketError(callback: (data: any) => void) {
   on('error', callback);
 }
+
+export function onAccessCodeUpdated(callback: (data: any) => void) {
+  on('access_code_updated', callback);
+}
+
+export function onEventEnded(callback: (data: any) => void) {
+  on('event_ended', callback);
+}

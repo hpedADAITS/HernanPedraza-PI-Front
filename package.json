@@ -71,6 +71,7 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev:debug": "vite --define __DEBUG_MODE__=true",
     "host": "vite --host",
     "build": "vite build",
     "test": "vitest",
