@@ -12,12 +12,12 @@ export const PROFILE_IMAGE = new URL(
 
 export const NOW_PLAYING = {
   id: 'default',
-  title: 'Blinding Lights',
-  artist: 'The Weeknd',
-  currentTime: '2:35',
-  duration: '3:45',
-  progress: 68,
-  status: 'playing' as const,
+  title: 'No Song Playing',
+  artist: 'Waiting for DJ to start',
+  currentTime: '0:00',
+  duration: '0:00',
+  progress: 0,
+  status: 'idle' as const,
 };
 
 export const THEME_CONFIG = {

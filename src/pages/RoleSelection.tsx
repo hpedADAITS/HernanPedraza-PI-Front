@@ -3,6 +3,7 @@ import { Layout } from '@/components/layout/Layout';
 import { Logo } from '@/components/common';
 import { motion, AnimatePresence } from 'motion/react';
 import { User, Headphones } from 'lucide-react';
+import logo from '@/assets/logo_white.png';
 
 interface Props {
   onNavigate: (view: any) => void;
@@ -47,7 +48,7 @@ export function RoleSelection({ onNavigate, logoWhite, onLogoChange }: Props) {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
         >
-          <h1 className="text-4xl font-bold">SyncRequst</h1>
+          <img src={logo} alt="SyncRequst" className="h-20 w-auto" />
         </motion.div>
 
         {/* Cards Container */}

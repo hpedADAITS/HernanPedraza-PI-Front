@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { motion } from 'motion/react';
 import { Search, User, Settings as SettingsIcon } from 'lucide-react';
@@ -8,6 +8,8 @@ interface Props {
 }
 
 export function Settings({ onNavigate }: Props) {
+  const [searchQuery, setSearchQuery] = useState('');
+
   return (
     <Layout theme="blue" className="p-6 md:p-12 items-center" showNav={true}>
       <motion.div
@@ -25,7 +27,9 @@ export function Settings({ onNavigate }: Props) {
           </div>
           <input
             type="text"
-            placeholder=""
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search settings..."
             className="w-full h-16 pl-16 pr-6 rounded-2xl shadow-lg bg-white border-none outline-none text-xl transition-all"
           />
         </div>

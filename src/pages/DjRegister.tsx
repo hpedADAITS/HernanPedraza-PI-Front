@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import {
+  User,
   Mail,
   Lock,
   ArrowLeft,
@@ -19,7 +20,7 @@ interface Props {
   onLogoChange?: (white: boolean) => void;
 }
 
-export function DjLogin({
+export function DjRegister({
   onNavigate,
   logoWhite = false,
   onLogoChange,
@@ -27,58 +28,104 @@ export function DjLogin({
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const validateForm = (): boolean => {
+    if (
+      !email.trim() ||
+      !password.trim() ||
+      !confirmPassword.trim() ||
+      !displayName.trim()
+    ) {
+      toast.error('All fields are required');
+      return false;
+    }
+
+    if (password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return false;
+    }
+
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match');
+      return false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address');
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
     setLoading(true);
     try {
-      const result = await authAPI.login(email, password);
-      const displayName = result.user?.displayName || 'DJ';
+      const result = await authAPI.register(
+        email,
+        password,
+        displayName,
+        'DJ',
+      );
 
-      if (result.user) {
-        localStorage.setItem('user', JSON.stringify(result.user));
-
-        let event;
-        const events = await eventsAPI.listEvents();
-
-        if (events && events.length > 0) {
-          event = events[0];
-        } else {
-          event = await eventsAPI.createEvent(
-            `${displayName}'s Party`,
-            'Auto-created event',
-            new Date().toISOString(),
-          );
-        }
-
-        const eventId = event._id || event.id;
-        const eventCode = event.accessCode || event.access_code;
-
-        localStorage.setItem(
-          'currentEvent',
-          JSON.stringify({
-            eventCode,
-            eventId,
-            ownerName: displayName,
-          }),
-        );
-
-        localStorage.setItem(
-          'currentParticipant',
-          JSON.stringify({
-            _id: result.user._id || result.user.id,
-            nickname: displayName,
-            eventId,
-          }),
-        );
+      if (!result || !result.token) {
+        throw new Error('Failed to create account');
       }
 
-      toast.success(`Welcome back, ${displayName}!`);
-      socket.initSocket(result.authToken);
+      localStorage.setItem(
+        'user',
+        JSON.stringify({
+          displayName,
+          email,
+          role: 'DJ',
+        }),
+      );
+
+      const event = await eventsAPI.createEvent(
+        `${displayName}'s Event`,
+        'Welcome to your event!',
+        new Date().toISOString(),
+      );
+
+      const eventId = event._id || event.id;
+      const eventCode = event.accessCode || event.access_code;
+
+      localStorage.setItem(
+        'currentEvent',
+        JSON.stringify({
+          eventCode,
+          eventId,
+          ownerName: displayName,
+        }),
+      );
+
+      localStorage.setItem(
+        'currentParticipant',
+        JSON.stringify({
+          _id: result.user?._id || result.user?.id,
+          nickname: displayName,
+          eventId,
+        }),
+      );
+
+      toast.success(`Welcome, ${displayName}! Your account is ready.`);
+      socket.initSocket(result.authToken || result.token);
       onNavigate('dj-dashboard');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Login failed');
+      toast.error(
+        error instanceof Error ? error.message : 'Registration failed',
+      );
     } finally {
       setLoading(false);
     }
@@ -99,7 +146,7 @@ export function DjLogin({
         transition={{ delay: 0.05, duration: 0.3 }}
         whileHover={{ x: -2 }}
         whileTap={{ scale: 0.97 }}
-        onClick={() => onNavigate('role-selection')}
+        onClick={() => onNavigate('dj-login')}
         className="absolute top-6 left-6 md:top-8 md:left-8 z-50 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium text-white/70 hover:text-white bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 backdrop-blur-md transition-colors"
       >
         <ArrowLeft size={14} strokeWidth={2.25} />
@@ -109,7 +156,7 @@ export function DjLogin({
       {/* Main */}
       <div className="relative z-10 min-h-screen flex items-center justify-center px-5 py-16">
         <motion.form
-          onSubmit={handleLogin}
+          onSubmit={handleRegister}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
@@ -127,14 +174,38 @@ export function DjLogin({
 
           {/* Headline */}
           <h1 className="text-[26px] leading-[1.15] font-semibold tracking-[-0.015em] text-slate-900">
-            Welcome back
+            Create your account
           </h1>
           <p className="mt-2 text-[14px] leading-relaxed text-slate-500">
-            Sign in to manage your events and requests.
+            Set up your DJ profile to start hosting events.
           </p>
 
           {/* Inputs */}
           <div className="mt-7 space-y-4">
+            <div>
+              <label
+                htmlFor="dj-name"
+                className="block text-[12px] font-medium text-slate-700 mb-1.5"
+              >
+                DJ name
+              </label>
+              <div className="group relative flex items-stretch h-11 rounded-lg bg-white ring-1 ring-inset ring-slate-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-900 focus-within:shadow-[0_0_0_4px_rgba(37,99,235,0.22)] transition-shadow duration-150">
+                <div className="flex items-center justify-center w-11 text-slate-400 group-focus-within:text-slate-900 border-r border-slate-200 transition-colors">
+                  <User size={16} strokeWidth={2} />
+                </div>
+                <input
+                  id="dj-name"
+                  type="text"
+                  placeholder="Your stage name"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  required
+                  autoComplete="nickname"
+                  className="flex-1 bg-transparent px-3.5 text-[14.5px] text-slate-900 placeholder:text-slate-400 outline-none"
+                />
+              </div>
+            </div>
+
             <div>
               <label
                 htmlFor="dj-email"
@@ -173,11 +244,11 @@ export function DjLogin({
                 <input
                   id="dj-password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Enter your password"
+                  placeholder="At least 6 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                   className="flex-1 bg-transparent px-3.5 text-[14.5px] text-slate-900 placeholder:text-slate-400 outline-none"
                 />
                 <button
@@ -187,6 +258,44 @@ export function DjLogin({
                   className="flex items-center justify-center w-11 text-slate-400 hover:text-slate-700 transition-colors"
                 >
                   {showPassword ? (
+                    <EyeOff size={16} strokeWidth={2} />
+                  ) : (
+                    <Eye size={16} strokeWidth={2} />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="dj-confirm-password"
+                className="block text-[12px] font-medium text-slate-700 mb-1.5"
+              >
+                Confirm password
+              </label>
+              <div className="group relative flex items-stretch h-11 rounded-lg bg-white ring-1 ring-inset ring-slate-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-900 focus-within:shadow-[0_0_0_4px_rgba(37,99,235,0.22)] transition-shadow duration-150">
+                <div className="flex items-center justify-center w-11 text-slate-400 group-focus-within:text-slate-900 border-r border-slate-200 transition-colors">
+                  <Lock size={16} strokeWidth={2} />
+                </div>
+                <input
+                  id="dj-confirm-password"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  placeholder="Re-enter your password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  autoComplete="new-password"
+                  className="flex-1 bg-transparent px-3.5 text-[14.5px] text-slate-900 placeholder:text-slate-400 outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  aria-label={
+                    showConfirmPassword ? 'Hide password' : 'Show password'
+                  }
+                  className="flex items-center justify-center w-11 text-slate-400 hover:text-slate-700 transition-colors"
+                >
+                  {showConfirmPassword ? (
                     <EyeOff size={16} strokeWidth={2} />
                   ) : (
                     <Eye size={16} strokeWidth={2} />
@@ -206,11 +315,11 @@ export function DjLogin({
             {loading ? (
               <>
                 <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                Signing in…
+                Creating account…
               </>
             ) : (
               <>
-                Sign in
+                Create account
                 <ArrowRight
                   size={15}
                   strokeWidth={2.5}
@@ -223,13 +332,13 @@ export function DjLogin({
           {/* Hairline divider */}
           <div className="mt-7 pt-5 border-t border-slate-100">
             <p className="text-center text-[13px] text-slate-500">
-              New to SyncRequest?{' '}
+              Already have an account?{' '}
               <button
                 type="button"
-                onClick={() => onNavigate('dj-register')}
+                onClick={() => onNavigate('dj-login')}
                 className="font-medium text-slate-900 hover:underline underline-offset-2"
               >
-                Create an account
+                Sign in
               </button>
             </p>
           </div>

@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
+import tailwindcss from '@tailwindcss/vite';
 import path from 'node:path';
 import os from 'node:os';
 
@@ -23,7 +24,7 @@ export default defineConfig({
   define: {
     'import.meta.env.VITE_API_URL': JSON.stringify(apiUrl),
   },
-  plugins: [react()],
+  plugins: [tailwindcss(), react()],
   resolve: {
     extensions: ['.tsx', '.ts', '.jsx', '.js', '.json'],
     alias: {

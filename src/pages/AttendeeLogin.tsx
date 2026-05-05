@@ -1,12 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import jsQR from 'jsqr';
-import { Layout } from '@/components/layout/Layout';
-import { Logo } from '@/components/common';
 import { motion, AnimatePresence } from 'motion/react';
-import { Ticket, ArrowLeft, QrCode, X, Camera } from 'lucide-react';
+import {
+  User,
+  Ticket,
+  ArrowLeft,
+  ArrowRight,
+  QrCode,
+  X,
+  Camera,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { participantsAPI, eventsAPI, authAPI } from '@/services/api';
 import * as socket from '@/services/socket';
+import logoAsset from '@/assets/logo_normal.png';
 
 interface Props {
   onNavigate: (view: any) => void;
@@ -117,7 +124,6 @@ export function AttendeeLogin({
         throw new Error('Please enter both event code and nickname');
       }
 
-      // Step 1: Create/register attendee account
       const tempEmail = `attendee_${Date.now()}@syncrekuest.local`;
       const tempPassword = Math.random().toString(36).substring(2, 15);
 
@@ -132,14 +138,12 @@ export function AttendeeLogin({
         throw new Error('Failed to create account');
       }
 
-      // Step 2: Validate event code against database
       const event = await eventsAPI.getEventByAccessCode(eventCode);
 
       if (!event) {
         throw new Error('Event not found. Please check the event code.');
       }
 
-      // Step 3: Join the event as a participant
       const participant = await participantsAPI.joinEvent(
         event._id || event.id,
         nickname,
@@ -149,7 +153,6 @@ export function AttendeeLogin({
         throw new Error('Failed to join event');
       }
 
-      // Store attendee session data
       const sessionData = {
         nickname,
         eventCode,
@@ -161,7 +164,6 @@ export function AttendeeLogin({
       localStorage.setItem('user', JSON.stringify({ displayName: nickname }));
       localStorage.setItem('currentEvent', JSON.stringify(sessionData));
 
-      // Store participant data
       localStorage.setItem(
         'currentParticipant',
         JSON.stringify({
@@ -172,7 +174,6 @@ export function AttendeeLogin({
       );
 
       toast.success('Account created and joined event successfully!');
-      // Initialize socket connection
       socket.initSocket(authResult.authToken || authResult.token);
       onNavigate('attendee-dashboard');
     } catch (error) {
@@ -185,97 +186,150 @@ export function AttendeeLogin({
   };
 
   return (
-    <Layout theme="green" className="items-center justify-center min-h-screen">
-      <motion.div
-        initial={{ y: -12, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-        className="mb-12"
+    <div
+      className="dark relative w-full min-h-screen overflow-hidden font-sans text-white"
+      style={{
+        background:
+          'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(255,255,255,0.10) 0%, transparent 60%), linear-gradient(180deg, #065f46 0%, #052e22 100%)',
+      }}
+    >
+      {/* Top-left back chip */}
+      <motion.button
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.05, duration: 0.3 }}
+        whileHover={{ x: -2 }}
+        whileTap={{ scale: 0.97 }}
+        onClick={() => onNavigate('role-selection')}
+        className="absolute top-6 left-6 md:top-8 md:left-8 z-50 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium text-white/70 hover:text-white bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 backdrop-blur-md transition-colors"
       >
-        <h1 className="text-4xl font-bold text-white">SyncRequst</h1>
-      </motion.div>
+        <ArrowLeft size={14} strokeWidth={2.25} />
+        Back
+      </motion.button>
 
-      <motion.form
-        onSubmit={handleJoinEvent}
-        initial={{ scale: 0.97, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.08, duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
-        className="w-full max-w-[400px] px-6 flex flex-col gap-5"
-      >
-        {/* Nickname Input */}
-        <div className="relative group">
-          <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-800 pointer-events-none">
-            👤
+      {/* Main */}
+      <div className="relative z-10 min-h-screen flex items-center justify-center px-5 py-16">
+        <motion.form
+          onSubmit={handleJoinEvent}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+          className="w-full max-w-[400px] bg-white rounded-2xl border border-slate-200/80 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.45),0_8px_20px_-8px_rgba(0,0,0,0.15)] p-7 sm:p-9"
+        >
+          {/* Brand lockup (logo PNG already contains the wordmark) */}
+          <div className="flex items-center justify-center mb-8">
+            <img
+              src={logoAsset}
+              alt="SyncRequest"
+              className="h-28 w-auto object-contain select-none"
+              draggable={false}
+            />
           </div>
-          <input
-            type="text"
-            placeholder="Your Nickname"
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-            required
-            className="w-full h-16 pl-16 pr-6 rounded-2xl bg-white shadow-lg shadow-emerald-900/5 border-none outline-none text-lg text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-white/50 transition-all"
-          />
-        </div>
 
-        {/* Event Code Input with QR Scanner */}
-        <div className="relative group">
-          <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-800 pointer-events-none">
-            <Ticket size={26} strokeWidth={2} />
+          {/* Headline */}
+          <h1 className="text-[26px] leading-[1.15] font-semibold tracking-[-0.015em] text-slate-900">
+            Join the event
+          </h1>
+          <p className="mt-2 text-[14px] leading-relaxed text-slate-500">
+            Enter the event code to start sending song requests.
+          </p>
+
+          {/* Inputs */}
+          <div className="mt-7 space-y-4">
+            <div>
+              <label
+                htmlFor="att-nickname"
+                className="block text-[12px] font-medium text-slate-700 mb-1.5"
+              >
+                Nickname
+              </label>
+              <div className="group relative flex items-stretch h-11 rounded-lg bg-white ring-1 ring-inset ring-slate-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-900 focus-within:shadow-[0_0_0_4px_rgba(5,150,105,0.22)] transition-shadow duration-150">
+                <div className="flex items-center justify-center w-11 text-slate-400 group-focus-within:text-slate-900 border-r border-slate-200 transition-colors">
+                  <User size={16} strokeWidth={2} />
+                </div>
+                <input
+                  id="att-nickname"
+                  type="text"
+                  placeholder="Pick a name to display"
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                  required
+                  className="flex-1 bg-transparent px-3.5 text-[14.5px] text-slate-900 placeholder:text-slate-400 outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="att-code"
+                className="block text-[12px] font-medium text-slate-700 mb-1.5"
+              >
+                Event code
+              </label>
+              <div className="group relative flex items-stretch h-11 rounded-lg bg-white ring-1 ring-inset ring-slate-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-900 focus-within:shadow-[0_0_0_4px_rgba(5,150,105,0.22)] transition-shadow duration-150">
+                <div className="flex items-center justify-center w-11 text-slate-400 group-focus-within:text-slate-900 border-r border-slate-200 transition-colors">
+                  <Ticket size={16} strokeWidth={2} />
+                </div>
+                <input
+                  id="att-code"
+                  type="text"
+                  placeholder="e.g. ABCD-1234"
+                  value={eventCode}
+                  onChange={(e) => setEventCode(e.target.value.toUpperCase())}
+                  required
+                  className="flex-1 bg-transparent px-3.5 text-[14.5px] tracking-[0.08em] font-medium text-slate-900 placeholder:text-slate-400 placeholder:font-normal placeholder:tracking-normal outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowQRScanner(true)}
+                  aria-label="Scan QR code"
+                  title="Scan QR code"
+                  className="flex items-center justify-center w-11 text-slate-400 hover:text-slate-700 border-l border-slate-200 transition-colors"
+                >
+                  <QrCode size={16} strokeWidth={2} />
+                </button>
+              </div>
+            </div>
           </div>
-          <input
-            type="text"
-            placeholder="Event Code"
-            value={eventCode}
-            onChange={(e) => setEventCode(e.target.value.toUpperCase())}
-            required
-            className="w-full h-16 pl-16 pr-14 rounded-2xl bg-white shadow-lg shadow-emerald-900/5 border-none outline-none text-lg text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-white/50 transition-all"
-          />
+
+          {/* Submit */}
           <motion.button
-            type="button"
-            onClick={() => setShowQRScanner(true)}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-emerald-600 transition-colors p-2 hover:bg-slate-100 rounded-lg"
-            title="Scan QR Code"
+            type="submit"
+            whileTap={{ scale: loading ? 1 : 0.99 }}
+            disabled={loading}
+            className="group/btn mt-6 w-full h-11 rounded-lg bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white text-[14.5px] font-medium shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset,0_8px_20px_-10px_rgba(15,23,42,0.7)] disabled:opacity-60 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
-            <QrCode size={20} strokeWidth={2} />
+            {loading ? (
+              <>
+                <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                Joining…
+              </>
+            ) : (
+              <>
+                Join event
+                <ArrowRight
+                  size={15}
+                  strokeWidth={2.5}
+                  className="transition-transform group-hover/btn:translate-x-0.5"
+                />
+              </>
+            )}
           </motion.button>
-        </div>
 
-        {/* Join Button */}
-        <motion.button
-          type="submit"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          disabled={loading}
-          className="h-14 mt-8 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[10px] shadow-lg shadow-emerald-900/20 text-lg font-medium tracking-wide flex items-center justify-center transition-all w-[160px] mx-auto disabled:opacity-70 disabled:cursor-not-allowed"
-        >
-          {loading ? (
-            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          ) : (
-            'Join Event'
-          )}
-        </motion.button>
-      </motion.form>
-
-      {/* Back Button */}
-      <div className="fixed bottom-8 right-8 z-50">
-        <motion.button
-          initial={{ opacity: 0, x: 12 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{
-            delay: 0.15,
-            duration: 0.25,
-            ease: [0.25, 0.1, 0.25, 1],
-          }}
-          whileHover={{ scale: 1.05, transition: { duration: 0.12 } }}
-          whileTap={{ scale: 0.95, transition: { duration: 0.08 } }}
-          onClick={() => onNavigate('role-selection')}
-          className="bg-white px-8 py-4 rounded-full shadow-xl shadow-black/10 text-xl font-light text-slate-800 flex items-center gap-2 border border-slate-100"
-        >
-          <ArrowLeft size={20} />
-          Back
-        </motion.button>
+          {/* Hairline divider */}
+          <div className="mt-7 pt-5 border-t border-slate-100">
+            <p className="text-center text-[13px] text-slate-500">
+              Don't have a code?{' '}
+              <button
+                type="button"
+                onClick={() => onNavigate('role-selection')}
+                className="font-medium text-slate-900 hover:underline underline-offset-2"
+              >
+                Go back
+              </button>
+            </p>
+          </div>
+        </motion.form>
       </div>
 
       {/* QR Code Scanner Modal */}
@@ -287,42 +341,36 @@ export function AttendeeLogin({
             exit={{ opacity: 0 }}
             onClick={() => setShowQRScanner(false)}
             style={{ zIndex: 99999 }}
-            className="fixed inset-0 bg-black/60 flex items-center justify-center"
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4"
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              initial={{ scale: 0.97, opacity: 0, y: 12 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              exit={{ scale: 0.97, opacity: 0, y: 12 }}
+              transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-3xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden flex flex-col"
+              className="bg-white rounded-2xl shadow-[0_30px_80px_-20px_rgba(0,0,0,0.5)] w-full max-w-sm overflow-hidden flex flex-col"
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-emerald-50">
-                <div className="flex items-center gap-3">
-                  <Camera size={24} className="text-emerald-600" />
-                  <h2 className="text-lg font-bold text-slate-800">
-                    Scan Event QR Code
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <Camera size={16} className="text-slate-700" />
+                  <h2 className="text-[14px] font-semibold tracking-tight text-slate-900">
+                    Scan event QR
                   </h2>
                 </div>
                 <button
                   onClick={() => setShowQRScanner(false)}
-                  className="p-2 rounded-full hover:bg-slate-100 transition-all duration-200 group"
+                  aria-label="Close"
+                  className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
                 >
-                  <X
-                    size={24}
-                    className="text-slate-600 group-hover:animate-pulse group-hover:rotate-0"
-                  />
+                  <X size={16} strokeWidth={2.25} />
                 </button>
               </div>
 
               {/* Camera Feed */}
-              <div className="p-4 flex flex-col gap-4">
-                <motion.div
-                  initial={{ scale: 0.95, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-                  className="relative bg-black rounded-2xl overflow-hidden aspect-square flex items-center justify-center"
-                >
+              <div className="p-5 flex flex-col gap-4">
+                <div className="relative bg-slate-950 rounded-xl overflow-hidden aspect-square">
                   <video
                     ref={videoRef}
                     autoPlay
@@ -331,40 +379,33 @@ export function AttendeeLogin({
                   />
                   <canvas ref={canvasRef} style={{ display: 'none' }} />
 
-                  {/* QR Scanning Frame */}
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="w-48 h-48 border-2 border-emerald-400 rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.5)]" />
-                    <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-emerald-400" />
-                    <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-emerald-400" />
-                    <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-emerald-400" />
-                    <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-emerald-400" />
+                  {/* Frame */}
+                  <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute top-7 left-7 w-7 h-7 border-t-2 border-l-2 border-white/90 rounded-tl-md" />
+                    <div className="absolute top-7 right-7 w-7 h-7 border-t-2 border-r-2 border-white/90 rounded-tr-md" />
+                    <div className="absolute bottom-7 left-7 w-7 h-7 border-b-2 border-l-2 border-white/90 rounded-bl-md" />
+                    <div className="absolute bottom-7 right-7 w-7 h-7 border-b-2 border-r-2 border-white/90 rounded-br-md" />
                   </div>
-                </motion.div>
-
-                {/* Instructions */}
-                <div className="bg-blue-50 rounded-xl p-3">
-                  <p className="text-xs text-blue-900 leading-relaxed">
-                    Position the QR code within the frame to scan it. Make sure
-                    the code is clearly visible and well-lit.
-                  </p>
                 </div>
+
+                <p className="text-[12.5px] text-slate-500 leading-relaxed text-center">
+                  Position the QR code within the frame. Make sure it's well-lit
+                  and clearly visible.
+                </p>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-2 p-4 border-t border-slate-200 bg-slate-50">
-                <motion.button
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.98 }}
+              <div className="px-5 pb-5">
+                <button
                   onClick={() => setShowQRScanner(false)}
-                  className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-800 py-2 rounded-xl font-semibold transition-colors text-sm"
+                  className="w-full h-10 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-900 text-[13.5px] font-medium transition-colors"
                 >
                   Cancel
-                </motion.button>
+                </button>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-    </Layout>
+    </div>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, X } from 'lucide-react';
@@ -10,11 +10,68 @@ interface Props {
   onNavigate: (view: any) => void;
 }
 
+type MediaQuality = 'low' | 'medium' | 'high' | 'auto';
+
+interface SocialPrefs {
+  showDisplayName: boolean;
+  showProfilePicture: boolean;
+  allowFriendRequests: boolean;
+}
+
+const MEDIA_QUALITY_OPTIONS: { value: MediaQuality; label: string }[] = [
+  { value: 'auto', label: 'Auto (recommended)' },
+  { value: 'high', label: 'High' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'low', label: 'Low (data saver)' },
+];
+
+const DEFAULT_SOCIAL_PREFS: SocialPrefs = {
+  showDisplayName: true,
+  showProfilePicture: true,
+  allowFriendRequests: true,
+};
+
 export function SettingsList({ onNavigate }: Props) {
   const [showNameModal, setShowNameModal] = useState(false);
   const [showDebugModal, setShowDebugModal] = useState(false);
+  const [showMediaQualityModal, setShowMediaQualityModal] = useState(false);
+  const [showSocialModal, setShowSocialModal] = useState(false);
   const [newDisplayName, setNewDisplayName] = useState('');
+  const [mediaQuality, setMediaQuality] = useState<MediaQuality>('auto');
+  const [socialPrefs, setSocialPrefs] =
+    useState<SocialPrefs>(DEFAULT_SOCIAL_PREFS);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const storedQuality = localStorage.getItem(
+      'mediaQuality',
+    ) as MediaQuality | null;
+    if (
+      storedQuality &&
+      MEDIA_QUALITY_OPTIONS.some((o) => o.value === storedQuality)
+    ) {
+      setMediaQuality(storedQuality);
+    }
+    const storedSocial = localStorage.getItem('socialPrefs');
+    if (storedSocial) {
+      try {
+        setSocialPrefs({ ...DEFAULT_SOCIAL_PREFS, ...JSON.parse(storedSocial) });
+      } catch {}
+    }
+  }, []);
+
+  const handleSelectMediaQuality = (value: MediaQuality) => {
+    setMediaQuality(value);
+    localStorage.setItem('mediaQuality', value);
+    toast.success(`Media quality set to ${value}`);
+    setShowMediaQualityModal(false);
+  };
+
+  const handleToggleSocial = (key: keyof SocialPrefs) => {
+    const next = { ...socialPrefs, [key]: !socialPrefs[key] };
+    setSocialPrefs(next);
+    localStorage.setItem('socialPrefs', JSON.stringify(next));
+  };
 
   const handleDisplayName = () => {
     const user = localStorage.getItem('user');
@@ -87,10 +144,10 @@ export function SettingsList({ onNavigate }: Props) {
         handleDisplayName();
         break;
       case 'Media Quality':
-        toast.info('Coming soon');
+        setShowMediaQualityModal(true);
         break;
       case 'Social Settings':
-        toast.info('Coming soon');
+        setShowSocialModal(true);
         break;
       case 'Debug / Diagnostics':
         setShowDebugModal(true);
@@ -128,7 +185,7 @@ export function SettingsList({ onNavigate }: Props) {
           </div>
           <input
             type="text"
-            placeholder=""
+            placeholder="Search settings..."
             className="w-full h-16 pl-16 pr-6 rounded-2xl shadow-lg bg-white border-none outline-none text-xl transition-all"
           />
         </div>
@@ -285,6 +342,114 @@ export function SettingsList({ onNavigate }: Props) {
                 className="w-full mt-6 bg-slate-200 hover:bg-slate-300 text-slate-700 py-3 rounded-xl font-medium transition-colors"
               >
                 Close
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showMediaQualityModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowMediaQualityModal(false)}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-slate-800">
+                  Media Quality
+                </h2>
+                <button
+                  onClick={() => setShowMediaQualityModal(false)}
+                  className="p-1 rounded-full hover:bg-slate-100"
+                >
+                  <X size={20} className="text-slate-500" />
+                </button>
+              </div>
+              <div className="flex flex-col gap-2">
+                {MEDIA_QUALITY_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => handleSelectMediaQuality(opt.value)}
+                    className={`w-full text-left px-4 py-3 rounded-xl border transition-colors ${
+                      mediaQuality === opt.value
+                        ? 'bg-blue-50 border-blue-300 text-blue-700 font-medium'
+                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showSocialModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowSocialModal(false)}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-slate-800">
+                  Social Settings
+                </h2>
+                <button
+                  onClick={() => setShowSocialModal(false)}
+                  className="p-1 rounded-full hover:bg-slate-100"
+                >
+                  <X size={20} className="text-slate-500" />
+                </button>
+              </div>
+              <div className="flex flex-col gap-3">
+                {(
+                  [
+                    ['showDisplayName', 'Show display name'],
+                    ['showProfilePicture', 'Show profile picture'],
+                    ['allowFriendRequests', 'Allow friend requests'],
+                  ] as [keyof SocialPrefs, string][]
+                ).map(([key, label]) => (
+                  <label
+                    key={key}
+                    className="flex items-center justify-between px-4 py-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50"
+                  >
+                    <span className="text-slate-700">{label}</span>
+                    <input
+                      type="checkbox"
+                      checked={socialPrefs[key]}
+                      onChange={() => handleToggleSocial(key)}
+                      className="h-5 w-5 accent-blue-500"
+                    />
+                  </label>
+                ))}
+              </div>
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowSocialModal(false)}
+                className="w-full mt-6 bg-slate-200 hover:bg-slate-300 text-slate-700 py-3 rounded-xl font-medium transition-colors"
+              >
+                Done
               </motion.button>
             </motion.div>
           </motion.div>

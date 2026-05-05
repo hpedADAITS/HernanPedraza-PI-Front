@@ -3,10 +3,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Toaster, toast } from 'sonner';
 import { AttendeeLogin } from '@/pages/AttendeeLogin';
 import { DjLogin } from '@/pages/DjLogin';
+import { DjRegister } from '@/pages/DjRegister';
 import { Dashboard } from '@/pages/Dashboard';
 import { SongSelection } from '@/pages/SongSelection';
 import { Settings } from '@/pages/Settings';
 import { SettingsList } from '@/pages/SettingsList';
+import { AppSettings } from '@/pages/AppSettings';
 import { RoleSelection } from '@/pages/RoleSelection';
 import { checkHealth, loadToken } from '@/services/api';
 import { API_BASE } from '@/services/api';
@@ -78,6 +80,14 @@ export default function App() {
             onLogoChange={setLogoWhite}
           />
         )}
+        {currentView === 'dj-register' && (
+          <DjRegister
+            key="dj-register"
+            onNavigate={navigate}
+            logoWhite={logoWhite}
+            onLogoChange={setLogoWhite}
+          />
+        )}
         {(currentView === 'attendee-dashboard' ||
           currentView === 'dj-dashboard') && (
           <Dashboard
@@ -99,6 +109,9 @@ export default function App() {
         )}
         {currentView === 'dj-account-settings' && (
           <SettingsList key="dj-account-settings" onNavigate={navigate} />
+        )}
+        {currentView === 'dj-app-settings' && (
+          <AppSettings key="dj-app-settings" onNavigate={navigate} />
         )}
       </AnimatePresence>
     </div>

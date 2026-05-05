@@ -17,7 +17,7 @@ interface NowPlayingSong {
   id: string;
   title: string;
   artist: string;
-  status: 'playing' | 'rejected' | 'queued' | 'skipped';
+  status: 'playing' | 'rejected' | 'queued' | 'skipped' | 'idle';
   progress?: number;
   currentTime?: string;
   duration?: string;
