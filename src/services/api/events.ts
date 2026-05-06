@@ -1,10 +1,10 @@
 import { apiCall } from './client';
 
 export const eventsAPI = {
-  createEvent: async (name: string, description: string, startsAt: string) => {
+  createEvent: async (name: string, description: string, startsAt: string, eventId?: string) => {
     const data = await apiCall('/events', {
       method: 'POST',
-      body: JSON.stringify({ name, description, startsAt }),
+      body: JSON.stringify({ name, description, startsAt, eventId }),
     });
     return data.data.event;
   },

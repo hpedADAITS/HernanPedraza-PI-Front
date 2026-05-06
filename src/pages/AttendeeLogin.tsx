@@ -25,7 +25,7 @@ interface Props {
 
 export function AttendeeLogin({
   onNavigate,
-  logoWhite = false,
+  logoWhite: isLogoWhite = false,
   onLogoChange,
 }: Props) {
   const [loading, setLoading] = useState(false);

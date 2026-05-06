@@ -13,7 +13,7 @@ interface Props {
   onLogoChange: (white: boolean) => void;
 }
 
-export function RoleSelection({ onNavigate, logoWhite, onLogoChange }: Props) {
+export function RoleSelection({ onNavigate, logoWhite: isLogoWhite, onLogoChange }: Props) {
   const [isDarkMode] = useDarkMode();
   const [expandingCircle, setExpandingCircle] = useState<{
     x: number;

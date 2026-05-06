@@ -23,7 +23,7 @@ interface Props {
 
 export function DjLogin({
   onNavigate,
-  logoWhite = false,
+  logoWhite: isLogoWhite = false,
   onLogoChange,
 }: Props) {
   const [loading, setLoading] = useState(false);

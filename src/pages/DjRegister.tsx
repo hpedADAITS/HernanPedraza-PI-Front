@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { authAPI, eventsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
 import { useDarkMode } from '@/hooks/useDarkMode';
+import { EventIdSetupModal } from '@/components/EventIdSetupModal';
 import logoNormal from '@/assets/logo_normal.png';
 import logoWhite from '@/assets/logo_white.png';
 
@@ -35,6 +36,8 @@ export function DjRegister({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isDarkMode] = useDarkMode();
+  const [showEventIdModal, setShowEventIdModal] = useState(false);
+  const [registrationData, setRegistrationData] = useState<any>(null);
 
   const validateForm = (): boolean => {
     if (
@@ -95,20 +98,39 @@ export function DjRegister({
         }),
       );
 
+      // Save registration data and show Event ID modal
+      setRegistrationData({
+        token: result.authToken || result.token,
+        userId: result.user?._id || result.user?.id,
+      });
+      setShowEventIdModal(true);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Registration failed',
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEventIdSetup = async (eventId: string) => {
+    try {
       const event = await eventsAPI.createEvent(
         `${displayName}'s Event`,
         'Welcome to your event!',
         new Date().toISOString(),
+        eventId,
       );
 
-      const eventId = event._id || event.id;
+      const eventMongoDB = event._id || event.id;
       const eventCode = event.accessCode || event.access_code;
 
       localStorage.setItem(
         'currentEvent',
         JSON.stringify({
           eventCode,
-          eventId,
+          eventId: eventMongoDB,
+          eventIdCode: eventId,
           ownerName: displayName,
         }),
       );
@@ -116,21 +138,20 @@ export function DjRegister({
       localStorage.setItem(
         'currentParticipant',
         JSON.stringify({
-          _id: result.user?._id || result.user?.id,
+          _id: registrationData.userId,
           nickname: displayName,
-          eventId,
+          eventId: eventMongoDB,
         }),
       );
 
-      toast.success(`Welcome, ${displayName}! Your account is ready.`);
-      socket.initSocket(result.authToken || result.token);
+      toast.success(`Welcome, ${displayName}! Your event is ready to go.`);
+      socket.initSocket(registrationData.token);
+      setShowEventIdModal(false);
       onNavigate('dj-dashboard');
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'Registration failed',
+        error instanceof Error ? error.message : 'Failed to create event',
       );
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -347,6 +368,13 @@ export function DjRegister({
           </div>
         </motion.form>
       </div>
+
+      {/* Event ID Setup Modal */}
+      <EventIdSetupModal
+        isOpen={showEventIdModal}
+        onConfirm={handleEventIdSetup}
+        displayName={displayName}
+      />
     </div>
   );
 }

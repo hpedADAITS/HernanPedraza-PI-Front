@@ -2,13 +2,21 @@ import { useState, useEffect } from 'react';
 
 export function useDarkMode() {
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('darkMode');
-    return saved ? JSON.parse(saved) : false;
+    try {
+      const saved = localStorage.getItem('darkMode');
+      return saved ? JSON.parse(saved) : false;
+    } catch {
+      return false;
+    }
   });
 
   useEffect(() => {
     localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
     // Trigger storage event for other components
+    try {
+      localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
+    } catch {
+    }
     window.dispatchEvent(
       new StorageEvent('storage', {
         key: 'darkMode',
