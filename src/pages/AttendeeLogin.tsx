@@ -13,9 +13,7 @@ import {
 import { toast } from 'sonner';
 import { participantsAPI, eventsAPI, authAPI } from '@/services/api';
 import * as socket from '@/services/socket';
-import { useDarkMode } from '@/hooks/useDarkMode';
 import logoNormal from '@/assets/logo_normal.png';
-import logoWhite from '@/assets/logo_white.png';
 
 interface Props {
   onNavigate: (view: any) => void;
@@ -32,7 +30,6 @@ export function AttendeeLogin({
   const [eventCode, setEventCode] = useState('');
   const [nickname, setNickname] = useState('');
   const [showQRScanner, setShowQRScanner] = useState(false);
-  const [isDarkMode] = useDarkMode();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scanningRef = useRef(true);
@@ -222,7 +219,7 @@ export function AttendeeLogin({
           {/* Brand lockup (logo PNG already contains the wordmark) */}
           <div className="flex items-center justify-center mb-8">
             <img
-              src={isDarkMode ? logoWhite : logoNormal}
+              src={logoNormal}
               alt="SyncRequest"
               className="h-28 w-auto object-contain select-none"
               draggable={false}

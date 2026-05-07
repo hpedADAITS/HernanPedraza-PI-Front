@@ -11,9 +11,7 @@ import {
 import { toast } from 'sonner';
 import { authAPI, eventsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
-import { useDarkMode } from '@/hooks/useDarkMode';
 import logoNormal from '@/assets/logo_normal.png';
-import logoWhite from '@/assets/logo_white.png';
 
 interface Props {
   onNavigate: (view: any) => void;
@@ -30,7 +28,6 @@ export function DjLogin({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isDarkMode] = useDarkMode();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,7 +118,7 @@ export function DjLogin({
           {/* Brand lockup (logo PNG already contains the wordmark) */}
           <div className="flex items-center justify-center mb-8">
             <img
-              src={isDarkMode ? logoWhite : logoNormal}
+              src={logoNormal}
               alt="SyncRequest"
               className="h-28 w-auto object-contain select-none"
               draggable={false}
