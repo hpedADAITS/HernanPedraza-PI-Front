@@ -78,7 +78,7 @@ export function EventIdSetupModal({
               Create Your Event ID
             </h2>
             <p className="text-blue-200 text-sm mb-6">
-              Attendees will use this to join your event. You can customize it or use a generated one.
+              Attendees will use this to join your event. You can customize it or use a generated one. 
             </p>
 
             <div className="space-y-4 mb-6">

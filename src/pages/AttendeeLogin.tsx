@@ -138,10 +138,17 @@ export function AttendeeLogin({
         throw new Error('Failed to create account');
       }
 
-      const event = await eventsAPI.getEventByAccessCode(eventCode);
+      let event;
+      try {
+        event = await eventsAPI.getEventByAccessCode(eventCode);
+      } catch (err: any) {
+        throw new Error(
+          'Invalid access code. Please check the code and try again.'
+        );
+      }
 
       if (!event) {
-        throw new Error('Event not found. Please check the event code.');
+        throw new Error('Invalid access code. Please check the code and try again, or ask the DJ to share a new QR code.');
       }
 
       const participant = await participantsAPI.joinEvent(
@@ -264,7 +271,7 @@ export function AttendeeLogin({
                 htmlFor="att-code"
                 className="block text-[12px] font-medium text-slate-700 mb-1.5"
               >
-                Event code
+                Access Code
               </label>
               <div className="group relative flex items-stretch h-11 rounded-lg bg-white ring-1 ring-inset ring-slate-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-900 focus-within:shadow-[0_0_0_4px_rgba(5,150,105,0.22)] transition-shadow duration-150">
                 <div className="flex items-center justify-center w-11 text-slate-400 group-focus-within:text-slate-900 border-r border-slate-200 transition-colors">
@@ -273,7 +280,7 @@ export function AttendeeLogin({
                 <input
                   id="att-code"
                   type="text"
-                  placeholder="e.g. ABCD-1234"
+                  placeholder="Scan QR or enter code"
                   value={eventCode}
                   onChange={(e) => setEventCode(e.target.value.toUpperCase())}
                   required
