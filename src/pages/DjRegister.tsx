@@ -98,7 +98,7 @@ export function DjRegister({
         }),
       );
 
-      // Save registration data and show Event ID modal
+      // Event ID Modal Dialog
       setRegistrationData({
         token: result.authToken || result.token,
         userId: result.user?._id || result.user?.id,
