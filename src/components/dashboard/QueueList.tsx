@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx } from 'clsx';
-import { Play, X, Clock, UserX, SkipForward } from 'lucide-react';
+import { Play, X, Clock, UserX, SkipForward, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Tooltip,
@@ -13,15 +13,14 @@ import { THEME_CONFIG } from '@/constants/dashboard';
 import { SLIDE_UP, ANIMATION_DURATION } from '@/constants/animations';
 import { songsAPI, eventsAPI, participantsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
+import type { Song } from '@/types/songs';
 
-interface Song {
-  _id: string;
-  title: string;
-  artist: string;
-  voteScore: number;
-  status: string;
-  requestedBy?: any;
-  eventId?: string;
+function formatWait(totalSeconds: number): string {
+  const safe = Math.max(0, Math.floor(totalSeconds));
+  const m = Math.floor(safe / 60);
+  const s = safe % 60;
+  if (m === 0) return `${s}s`;
+  return `${m}m ${s.toString().padStart(2, '0')}s`;
 }
 
 interface QueueListProps {
@@ -46,6 +45,19 @@ export function QueueList({
   const [participantId, setParticipantId] = useState<string | null>(
     propParticipantId || null,
   );
+  const [nowPlaying, setNowPlaying] = useState<{
+    songId: string;
+    duration: number;
+    startedAt: number;
+  } | null>(null);
+  const [tick, setTick] = useState(0);
+
+  // Tick every second to refresh per-attendee wait times
+  useEffect(() => {
+    if (mode !== 'attendee' || !nowPlaying) return undefined;
+    const id = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(id);
+  }, [mode, nowPlaying?.songId]);
 
   const removeSong = useCallback((songId: string) => {
     setSongs((prev) => prev.filter((s) => s._id !== songId));
@@ -97,8 +109,40 @@ export function QueueList({
   }, [propEventId, propParticipantId]);
 
   useEffect(() => {
-    const handleApproved = (data: any) => {
-      if (data?.songId) removeSong(data.songId);
+    const handleQueued = (data: any) => {
+      // Song was approved into the queue. Add or update.
+      if (!data?.songId) return;
+      setSongs((prev) => {
+        const exists = prev.some((s) => s._id === data.songId);
+        const incoming: Song = {
+          _id: data.songId,
+          title: data.title,
+          artist: data.artist,
+          voteScore: 0,
+          status: 'QUEUED',
+          duration: data.duration,
+          queuePosition: data.queuePosition,
+          requestedBy: data.requestedBy,
+        };
+        if (exists) {
+          return prev.map((s) =>
+            s._id === data.songId ? { ...s, ...incoming } : s,
+          );
+        }
+        return [...prev, incoming];
+      });
+    };
+    const handleNowPlaying = (data: any) => {
+      if (!data?.songId) return;
+      removeSong(data.songId);
+      const startedAt = data.playingStartedAt
+        ? new Date(data.playingStartedAt).getTime()
+        : Date.now();
+      setNowPlaying({
+        songId: data.songId,
+        duration: data.duration || 0,
+        startedAt,
+      });
     };
     const handleRejected = (data: any) => {
       if (data?.songId) removeSong(data.songId);
@@ -114,24 +158,88 @@ export function QueueList({
           ),
         );
       }
+      // Apply position recalculations from backend
+      if (Array.isArray(data?.affectedSongs)) {
+        setSongs((prev) =>
+          prev.map((s) => {
+            const upd = data.affectedSongs.find(
+              (a: any) => a.songId === s._id,
+            );
+            return upd ? { ...s, queuePosition: upd.queuePosition } : s;
+          }),
+        );
+      }
+    };
+    const handleQueueUpdated = (data: any) => {
+      if (Array.isArray(data?.queue)) {
+        setSongs(data.queue);
+      }
+      if (data?.nowPlaying?.songId) {
+        const np = data.nowPlaying;
+        const startedAt = np.playingStartedAt
+          ? new Date(np.playingStartedAt).getTime()
+          : Date.now() - (np.elapsedTime || 0) * 1000;
+        setNowPlaying({
+          songId: np.songId,
+          duration: np.duration || 0,
+          startedAt,
+        });
+      }
     };
 
     try {
-      socket.onSongApproved(handleApproved);
+      socket.onSongQueued(handleQueued);
+      socket.onSongNowPlaying(handleNowPlaying);
       socket.onSongRejected(handleRejected);
       socket.onSongSkipped(handleSkipped);
       socket.onVotesUpdated(handleVotesUpdated);
+      socket.onQueueUpdated(handleQueueUpdated);
     } catch {
       // Socket not initialized yet — listeners will be missed, but no crash
     }
 
     return () => {
-      socket.off('song_approved', handleApproved);
+      socket.off('song_queued', handleQueued);
+      socket.off('song_now_playing', handleNowPlaying);
       socket.off('song_rejected', handleRejected);
       socket.off('song_skipped', handleSkipped);
       socket.off('votes_updated', handleVotesUpdated);
+      socket.off('queue_updated', handleQueueUpdated);
     };
   }, [removeSong]);
+
+  // Sort: PLAYING first, then QUEUED by voteScore desc (defensive — backend should sort too)
+  const sortedSongs = useMemo(() => {
+    const order: Record<string, number> = {
+      PLAYING: 0,
+      QUEUED: 1,
+      PENDING: 2,
+    };
+    return [...songs].sort((a, b) => {
+      const ao = order[a.status as string] ?? 99;
+      const bo = order[b.status as string] ?? 99;
+      if (ao !== bo) return ao - bo;
+      return (b.voteScore || 0) - (a.voteScore || 0);
+    });
+  }, [songs]);
+
+  // Compute cumulative wait time for each queued song (for attendees)
+  const waitTimes = useMemo(() => {
+    if (mode !== 'attendee') return new Map<string, number>();
+    const map = new Map<string, number>();
+    let cumulative = 0;
+    if (nowPlaying) {
+      const elapsed = Math.max(0, (Date.now() - nowPlaying.startedAt) / 1000);
+      cumulative = Math.max(0, nowPlaying.duration - elapsed);
+    }
+    void tick; // dependency for live update
+    for (const s of sortedSongs) {
+      if (s.status === 'PLAYING') continue;
+      map.set(s._id, cumulative);
+      cumulative += s.duration || 0;
+    }
+    return map;
+  }, [sortedSongs, nowPlaying, mode, tick]);
 
   return (
     <TooltipProvider>
@@ -165,30 +273,38 @@ export function QueueList({
               <motion.div key="loading" layout className="text-slate-500 py-4">
                 Loading queue...
               </motion.div>
-            ) : songs.length > 0 ? (
+            ) : sortedSongs.length > 0 ? (
               <motion.div
                 key="queue-list"
                 layout
                 className="flex flex-col gap-4"
               >
                 <AnimatePresence>
-                  {songs.map((song, i) => (
-                    <QueueItem
-                      key={song._id}
-                      song={song}
-                      position={i + 1}
-                      isFirst={i === 0}
-                      primaryColor={primaryColor}
-                      isDj={isDj}
-                      isSelected={selectedSongId === song._id}
-                      onSelect={(id) =>
-                        setSelectedSongId(selectedSongId === id ? null : id)
-                      }
-                      onSongRemoved={removeSong}
-                      eventId={eventId || undefined}
-                      isDarkMode={isDarkMode}
-                    />
-                  ))}
+                  {sortedSongs.map((song, i) => {
+                    const isMine =
+                      !!participantId &&
+                      song.requestedBy?._id === participantId;
+                    const wait = waitTimes.get(song._id);
+                    return (
+                      <QueueItem
+                        key={song._id}
+                        song={song}
+                        position={song.queuePosition ?? i + 1}
+                        isFirst={i === 0}
+                        primaryColor={primaryColor}
+                        isDj={isDj}
+                        isSelected={selectedSongId === song._id}
+                        onSelect={(id) =>
+                          setSelectedSongId(selectedSongId === id ? null : id)
+                        }
+                        onSongRemoved={removeSong}
+                        eventId={eventId || undefined}
+                        isDarkMode={isDarkMode}
+                        waitSeconds={wait}
+                        isMine={isMine}
+                      />
+                    );
+                  })}
                 </AnimatePresence>
               </motion.div>
             ) : (
@@ -218,6 +334,8 @@ interface QueueItemProps {
   onSongRemoved: (songId: string) => void;
   eventId?: string;
   isDarkMode?: boolean;
+  waitSeconds?: number;
+  isMine?: boolean;
 }
 
 function QueueItem({
@@ -231,6 +349,8 @@ function QueueItem({
   onSongRemoved,
   eventId,
   isDarkMode = false,
+  waitSeconds,
+  isMine = false,
 }: QueueItemProps) {
   const handleAdminAction = async (action: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -238,13 +358,21 @@ function QueueItem({
     try {
       const songId = song._id;
 
-      if (action === 'Send Now' && eventId) {
+      if (action === 'Approve' && eventId) {
         if (!songId) {
           toast.error('Song ID not found');
           return;
         }
         await songsAPI.approveSong(eventId, songId);
         socket.approveSong(eventId, songId);
+        toast.success(`Queued "${song.title}"`);
+      } else if (action === 'Send Now' && eventId) {
+        if (!songId) {
+          toast.error('Song ID not found');
+          return;
+        }
+        await songsAPI.sendNow(eventId, songId);
+        socket.sendNowSong(eventId, songId);
         onSongRemoved(songId);
         toast.success(`Now playing "${song.title}"`);
       } else if (action === 'Reject' && eventId) {
@@ -333,6 +461,24 @@ function QueueItem({
             transition={{ duration: 0.2 }}
             className="flex-1 flex items-center gap-2"
           >
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={(e) => handleAdminAction('Approve', e)}
+                  className={clsx(
+                    'p-2 rounded-lg transition-colors',
+                    isDarkMode
+                      ? 'bg-blue-900/30 hover:bg-blue-800/40 text-blue-300'
+                      : 'bg-blue-100 hover:bg-blue-200 text-blue-700',
+                  )}
+                >
+                  <Check size={18} />
+                </motion.button>
+              </TooltipTrigger>
+              <TooltipContent>Approve (Add to Queue)</TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <motion.button
@@ -441,6 +587,18 @@ function QueueItem({
                 )}
               >
                 {song.title}
+                {isMine && (
+                  <span
+                    className={clsx(
+                      'ml-2 text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wider',
+                      isDarkMode
+                        ? 'bg-emerald-900/40 text-emerald-300'
+                        : 'bg-emerald-100 text-emerald-700',
+                    )}
+                  >
+                    You
+                  </span>
+                )}
               </span>
               <span
                 className={clsx(
@@ -450,6 +608,23 @@ function QueueItem({
               >
                 {song.artist}
               </span>
+              {!isDj && waitSeconds != null && song.status !== 'PLAYING' && (
+                <span
+                  className={clsx(
+                    'text-[11px] flex items-center gap-1 mt-0.5',
+                    isMine
+                      ? isDarkMode
+                        ? 'text-emerald-300 font-semibold'
+                        : 'text-emerald-700 font-semibold'
+                      : isDarkMode
+                        ? 'text-slate-400'
+                        : 'text-slate-500',
+                  )}
+                >
+                  <Clock size={11} />
+                  {waitSeconds <= 0 ? 'Up next' : `~${formatWait(waitSeconds)}`}
+                </span>
+              )}
             </div>
 
             <div className="flex flex-col items-end gap-1">

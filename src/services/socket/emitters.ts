@@ -68,7 +68,15 @@ export function approveSong(eventId: string, songId: string) {
   if (!socket) {
     throw new Error('Socket not initialized');
   }
-  socket.emit('song_approved', { eventId, songId });
+  socket.emit('song_queued', { eventId, songId });
+}
+
+export function sendNowSong(eventId: string, songId: string) {
+  const socket = getSocketInstance();
+  if (!socket) {
+    throw new Error('Socket not initialized');
+  }
+  socket.emit('song_now_playing', { eventId, songId });
 }
 
 export function rejectSong(eventId: string, songId: string, reason: string) {

@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { NowPlaying } from '@/components/common';
 import { NOW_PLAYING } from '@/constants/dashboard';
 import { SCALE_IN } from '@/constants/animations';
 import {
   initSocket,
-  onSongApproved,
+  onSongQueued,
+  onSongNowPlaying,
   onSongRejected,
   onSongSkipped,
   onQueueUpdated,
@@ -21,6 +22,8 @@ interface NowPlayingSong {
   progress?: number;
   currentTime?: string;
   duration?: string;
+  durationSec?: number;
+  startedAt?: number;
 }
 
 interface QueueSong {
@@ -31,20 +34,38 @@ interface QueueSong {
   eventId?: string;
 }
 
+function formatTime(totalSeconds: number): string {
+  const safe = Math.max(0, Math.floor(totalSeconds));
+  const m = Math.floor(safe / 60);
+  const s = safe % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
 export function NowPlayingSection() {
   const [nowPlaying, setNowPlaying] = useState<NowPlayingSong | null>(null);
   const [eventId, setEventId] = useState<string | null>(null);
-  const [queue, setQueue] = useState<QueueSong[]>([]);
+  const [, setQueue] = useState<QueueSong[]>([]);
   const [tempStatus, setTempStatus] = useState<NowPlayingSong | null>(null);
+  const [tick, setTick] = useState(0);
+  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Tick every second so progress/elapsed advance smoothly
+  useEffect(() => {
+    if (nowPlaying?.status === 'playing' && nowPlaying.startedAt) {
+      tickRef.current = setInterval(() => setTick((t) => t + 1), 1000);
+      return () => {
+        if (tickRef.current) clearInterval(tickRef.current);
+      };
+    }
+    return undefined;
+  }, [nowPlaying?.id, nowPlaying?.status, nowPlaying?.startedAt]);
 
   useEffect(() => {
-    // Get event ID from localStorage and fetch initial queue
     const eventData = localStorage.getItem('currentEvent');
     if (eventData) {
       const parsed = JSON.parse(eventData);
       setEventId(parsed.eventId);
 
-      // Fetch initial queue
       const fetchQueue = async () => {
         try {
           const queueData = await songsAPI.getQueue(parsed.eventId);
@@ -65,15 +86,36 @@ export function NowPlayingSection() {
 
     initSocket();
 
-    const handleSongApproved = (data: any) => {
+    const handleSongQueued = (data: any) => {
+      // Song was added to the queue (NOT immediate playback)
+      setNowPlaying((prev) =>
+        prev ?? {
+          id: data.songId,
+          title: data.title || 'Queued',
+          artist: data.artist || '',
+          status: 'queued',
+          progress: 0,
+          currentTime: '0:00',
+          duration: data.duration ? formatTime(data.duration) : '0:00',
+          durationSec: data.duration,
+        },
+      );
+    };
+
+    const handleSongNowPlaying = (data: any) => {
+      const startedAt = data.playingStartedAt
+        ? new Date(data.playingStartedAt).getTime()
+        : Date.now();
       setNowPlaying({
         id: data.songId,
         title: data.title || 'Now Playing...',
-        artist: data.artist || 'Loading...',
+        artist: data.artist || '',
         status: 'playing',
         progress: 0,
         currentTime: '0:00',
-        duration: '3:45',
+        duration: data.duration ? formatTime(data.duration) : '0:00',
+        durationSec: data.duration,
+        startedAt,
       });
     };
 
@@ -98,36 +140,66 @@ export function NowPlayingSection() {
     };
 
     const handleQueueUpdated = (data: any) => {
-      if (data.queue && data.queue.length > 0) {
-        setQueue(data.queue);
-        const firstSong = data.queue[0];
+      if (data.queue) setQueue(data.queue);
+
+      // Prefer nowPlaying metadata from enhanced event
+      if (data.nowPlaying && data.nowPlaying.songId) {
+        const np = data.nowPlaying;
+        const startedAt = np.playingStartedAt
+          ? new Date(np.playingStartedAt).getTime()
+          : Date.now() - (np.elapsedTime || 0) * 1000;
         setNowPlaying({
-          id: firstSong._id || firstSong.id,
-          title: firstSong.title,
-          artist: firstSong.artist,
-          status: firstSong.status === 'PLAYING' ? 'playing' : 'queued',
-          progress: 0,
-          currentTime: '0:00',
-          duration: '3:45',
+          id: np.songId,
+          title: np.title,
+          artist: np.artist,
+          status: 'playing',
+          progress: np.duration
+            ? Math.min(100, ((np.elapsedTime || 0) / np.duration) * 100)
+            : 0,
+          currentTime: formatTime(np.elapsedTime || 0),
+          duration: formatTime(np.duration || 0),
+          durationSec: np.duration,
+          startedAt,
         });
       }
     };
 
-    onSongApproved(handleSongApproved);
+    onSongQueued(handleSongQueued);
+    onSongNowPlaying(handleSongNowPlaying);
     onSongRejected(handleSongRejected);
     onSongSkipped(handleSongSkipped);
     onQueueUpdated(handleQueueUpdated);
 
     return () => {
-      off('song_approved', handleSongApproved);
+      off('song_queued', handleSongQueued);
+      off('song_now_playing', handleSongNowPlaying);
       off('song_rejected', handleSongRejected);
       off('song_skipped', handleSongSkipped);
       off('queue_updated', handleQueueUpdated);
     };
   }, [eventId]);
 
-  // Use temp status (rejected/skipped) if available, otherwise current playing, fallback to default
-  const displayData = tempStatus || nowPlaying || NOW_PLAYING;
+  // Compute live elapsed/progress when playing
+  let display: NowPlayingSong | typeof NOW_PLAYING =
+    tempStatus || nowPlaying || NOW_PLAYING;
+
+  if (
+    !tempStatus &&
+    nowPlaying &&
+    nowPlaying.status === 'playing' &&
+    nowPlaying.startedAt &&
+    nowPlaying.durationSec
+  ) {
+    const elapsed = Math.max(0, (Date.now() - nowPlaying.startedAt) / 1000);
+    const progress = Math.min(100, (elapsed / nowPlaying.durationSec) * 100);
+    display = {
+      ...nowPlaying,
+      progress,
+      currentTime: formatTime(elapsed),
+    };
+    // tick is read implicitly to trigger re-renders
+    void tick;
+  }
 
   return (
     <motion.div
@@ -137,19 +209,19 @@ export function NowPlayingSection() {
     >
       <motion.div
         className="w-full max-w-2xl"
-        key={`${displayData.id}-${displayData.status}`}
+        key={`${display.id}-${display.status}`}
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.3 }}
       >
         <NowPlaying
-          songTitle={displayData.title}
-          artist={displayData.artist}
-          status={displayData.status}
-          progress={displayData.progress}
-          currentTime={displayData.currentTime}
-          duration={displayData.duration}
+          songTitle={display.title}
+          artist={display.artist}
+          status={display.status}
+          progress={display.progress}
+          currentTime={display.currentTime}
+          duration={display.duration}
         />
       </motion.div>
     </motion.div>

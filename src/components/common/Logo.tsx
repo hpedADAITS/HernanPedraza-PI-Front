@@ -3,6 +3,7 @@ import { clsx } from 'clsx';
 import { motion } from 'motion/react';
 import logoWhite from '@/assets/logo_white.png';
 import logoNormal from '@/assets/logo_normal.png';
+import { useAssetCache } from '@/services/cache';
 
 interface LogoProps {
   className?: string;
@@ -16,10 +17,14 @@ export function Logo({
   useWhite = false,
 }: LogoProps) {
   const useLogo = useWhite ? logoWhite : logoNormal;
+  const { src } = useAssetCache(useLogo, {
+    ttlMs: 7 * 24 * 60 * 60 * 1000,
+    cooldownMs: 60000,
+    fallbackSrc: useLogo,
+  });
 
   return (
     <div className={clsx('flex items-center gap-3 select-none', className)}>
-      {/* Image Logo */}
       <div
         className={clsx(
           'w-32 h-32 flex items-center justify-center rounded-lg transition-colors',
@@ -28,7 +33,7 @@ export function Logo({
       >
         <motion.img
           key={useLogo}
-          src={useLogo}
+          src={src}
           alt="Sync Rekuest Logo"
           className="w-full h-full object-contain"
           initial={{ opacity: 0 }}

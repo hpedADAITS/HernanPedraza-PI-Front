@@ -59,6 +59,14 @@ export function onSongApproved(callback: (data: any) => void) {
   on('song_approved', callback);
 }
 
+export function onSongQueued(callback: (data: any) => void) {
+  on('song_queued', callback);
+}
+
+export function onSongNowPlaying(callback: (data: any) => void) {
+  on('song_now_playing', callback);
+}
+
 export function onSongRejected(callback: (data: any) => void) {
   on('song_rejected', callback);
 }

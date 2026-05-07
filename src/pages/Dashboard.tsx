@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { PageProps } from '@/types';
 import { Layout } from '@/components/layout/Layout';
+import { Logo } from '@/components/common/Logo';
 import {
   ProfileCard,
   QueueList,
@@ -143,7 +144,10 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
 
   return (
     <Layout theme="white" className="p-6 md:p-12" showNav={true}>
-      <div className="max-w-7xl mx-auto w-full h-full flex flex-col lg:flex-row gap-8 mt-12">
+      <div className="max-w-7xl mx-auto w-full flex justify-center mt-4">
+        <Logo useWhite={isDarkMode} className="h-16" />
+      </div>
+      <div className="max-w-7xl mx-auto w-full h-full flex flex-col lg:flex-row gap-8 mt-6">
         {/* Left Column: Profile & Queue */}
         <div className="w-full lg:w-1/3 flex flex-col gap-6">
           <ProfileCard

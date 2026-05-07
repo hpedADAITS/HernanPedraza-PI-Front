@@ -1,3 +1,5 @@
+import { cacheManager } from '../cache/cacheManager';
+
 // @ts-ignore
 const VITE_API_URL = import.meta.env?.VITE_API_URL as string | undefined;
 export const API_BASE: string = VITE_API_URL
@@ -64,6 +66,11 @@ export async function checkHealth() {
   } catch {
     return { api: false, database: false };
   }
+}
+
+// Clear all caches when token changes (logout/login)
+export function clearAllCaches() {
+  cacheManager.clear();
 }
 
 // Load token on module init
