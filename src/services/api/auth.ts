@@ -59,4 +59,18 @@ export const authAPI = {
     });
     return data.data.user;
   },
+
+  verifyEmailToken: async (token: string) => {
+    const data = await apiCall(`/auth/verify-email/${token}`, {
+      method: 'GET',
+    });
+    return data;
+  },
+
+  verifyEmail: async () => {
+    const data = await apiCall('/auth/verify-email', {
+      method: 'POST',
+    });
+    return data.data.user;
+  },
 };

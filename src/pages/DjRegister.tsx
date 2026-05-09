@@ -41,6 +41,18 @@ export function DjRegister({
   const [showEventIdModal, setShowEventIdModal] = useState(false);
   const [registrationData, setRegistrationData] = useState<any>(null);
 
+  // Listen for email verification from external link
+  React.useEffect(() => {
+    const handleEmailVerified = () => {
+      // Email was verified via link, auto-close email modal and show event ID modal
+      setShowEmailModal(false);
+      setShowEventIdModal(true);
+    };
+
+    window.addEventListener('emailVerified', handleEmailVerified);
+    return () => window.removeEventListener('emailVerified', handleEmailVerified);
+  }, []);
+
   const validateForm = (): boolean => {
     if (
       !email.trim() ||
@@ -116,12 +128,7 @@ export function DjRegister({
     }
   };
 
-  const handleEmailConfirmed = () => {
-    // Email confirmed, move to Event ID setup
-    // emailRegistered flag will be set only after dashboard link is clicked
-    setShowEmailModal(false);
-    setShowEventIdModal(true);
-  };
+
 
   const handleEventIdSetup = async (eventId: string) => {
     try {
@@ -153,14 +160,6 @@ export function DjRegister({
           eventId: eventMongoDB,
         }),
       );
-
-      // Mark email as registered only after DJ completes the full setup
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        const userData = JSON.parse(userStr);
-        userData.emailRegistered = true;
-        localStorage.setItem('user', JSON.stringify(userData));
-      }
 
       toast.success(`Welcome, ${displayName}! Your event is ready to go.`);
       socket.initSocket(registrationData.token);
@@ -388,12 +387,15 @@ export function DjRegister({
       </div>
 
       {/* Email Confirmation Modal */}
-      <EmailConfirmationModal
-        isOpen={showEmailModal}
-        email={email}
-        displayName={displayName}
-        onContinue={handleEmailConfirmed}
-      />
+       <EmailConfirmationModal
+         isOpen={showEmailModal}
+         email={email}
+         displayName={displayName}
+         onContinue={() => {
+           // This is now only used for error recovery
+           // Normal flow: email link verification auto-proceeds
+         }}
+       />
 
       {/* Event ID Setup Modal */}
       <EventIdSetupModal

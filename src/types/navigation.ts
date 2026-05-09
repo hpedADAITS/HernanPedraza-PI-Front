@@ -3,6 +3,7 @@ export type View =
   | 'attendee-login'
   | 'dj-login'
   | 'dj-register'
+  | 'verify-email'
   | 'attendee-dashboard'
   | 'dj-dashboard'
   | 'attendee-song-select'

@@ -10,6 +10,7 @@ import { Settings } from '@/pages/Settings';
 import { SettingsList } from '@/pages/SettingsList';
 import { AppSettings } from '@/pages/AppSettings';
 import { RoleSelection } from '@/pages/RoleSelection';
+import { VerifyEmail } from '@/pages/VerifyEmail';
 import { checkHealth, loadToken } from '@/services/api';
 import { API_BASE } from '@/services/api';
 import type { View } from '@/types';
@@ -22,6 +23,13 @@ export default function App() {
   useEffect(() => {
     // Load token from localStorage on app startup
     loadToken();
+
+    // Check if we're on verify-email page
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('token')) {
+      setCurrentView('verify-email');
+      return;
+    }
 
     const checkDatabaseConnection = async () => {
       const health = await checkHealth();
@@ -59,15 +67,18 @@ export default function App() {
         toastOptions={{ classNames: { toast: 'z-[1000]' } }}
       />
       <AnimatePresence mode="wait" custom={direction}>
-        {currentView === 'role-selection' && (
-          <RoleSelection
-            key="role-selection"
-            onNavigate={navigate}
-            logoWhite={logoWhite}
-            onLogoChange={setLogoWhite}
-          />
-        )}
-        {currentView === 'attendee-login' && (
+         {currentView === 'verify-email' && (
+           <VerifyEmail key="verify-email" onNavigate={navigate} />
+         )}
+         {currentView === 'role-selection' && (
+           <RoleSelection
+             key="role-selection"
+             onNavigate={navigate}
+             logoWhite={logoWhite}
+             onLogoChange={setLogoWhite}
+           />
+         )}
+         {currentView === 'attendee-login' && (
           <AttendeeLogin
             key="attendee-login"
             onNavigate={navigate}

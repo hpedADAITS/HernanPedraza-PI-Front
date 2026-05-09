@@ -112,21 +112,21 @@ export function EmailConfirmationModal({
             </motion.div>
 
             {/* Info Box */}
-            {status === 'sent' && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6"
-              >
-                <h3 className="font-semibold text-blue-900 mb-2">What's Next?</h3>
-                <ul className="text-sm text-blue-800 space-y-1">
-                  <li>✓ Check your email for the welcome message</li>
-                  <li>✓ Set up your event details</li>
-                  <li>✓ Share the event code with attendees</li>
-                </ul>
-              </motion.div>
-            )}
+             {status === 'sent' && (
+               <motion.div
+                 initial={{ opacity: 0 }}
+                 animate={{ opacity: 1 }}
+                 transition={{ delay: 0.4 }}
+                 className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6"
+               >
+                 <h3 className="font-semibold text-blue-900 mb-2">What's Next?</h3>
+                 <ul className="text-sm text-blue-800 space-y-1">
+                   <li>✓ Check your email inbox</li>
+                   <li>✓ Click the "Verify Email & Continue" button in the email</li>
+                   <li>✓ You'll be redirected back to complete event setup</li>
+                 </ul>
+               </motion.div>
+             )}
 
             {/* Loading Indicator */}
             {status === 'sending' && (
@@ -150,21 +150,7 @@ export function EmailConfirmationModal({
               </motion.div>
             )}
 
-            {/* Continue Button */}
-            {status !== 'sending' && (
-              <motion.button
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                onClick={onContinue}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2"
-              >
-                Continue to Setup
-                <ArrowRight size={18} />
-              </motion.button>
-            )}
+
 
             {/* Footer Message */}
             <motion.p
@@ -175,7 +161,7 @@ export function EmailConfirmationModal({
             >
               {status === 'sending'
                 ? 'This should only take a moment...'
-                : `Hi ${displayName}, thanks for joining SyncRekuest!`}
+                : `Hi ${displayName}, we'll see you in a moment!`}
             </motion.p>
           </motion.div>
         </motion.div>
