@@ -14,6 +14,7 @@ import { authAPI, eventsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
 import { useDarkMode } from '@/hooks/useDarkMode';
 import { EventIdSetupModal } from '@/components/EventIdSetupModal';
+import { EmailConfirmationModal } from '@/components/EmailConfirmationModal';
 import logoNormal from '@/assets/logo_normal.png';
 import logoWhite from '@/assets/logo_white.png';
 
@@ -36,6 +37,7 @@ export function DjRegister({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isDarkMode] = useDarkMode();
+  const [showEmailModal, setShowEmailModal] = useState(false);
   const [showEventIdModal, setShowEventIdModal] = useState(false);
   const [registrationData, setRegistrationData] = useState<any>(null);
 
@@ -95,15 +97,16 @@ export function DjRegister({
           displayName,
           email,
           role: 'DJ',
+          emailRegistered: false,
         }),
       );
 
-      // Event ID Modal Dialog
+      // Show email confirmation modal first
       setRegistrationData({
         token: result.authToken || result.token,
         userId: result.user?._id || result.user?.id,
       });
-      setShowEventIdModal(true);
+      setShowEmailModal(true);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : 'Registration failed',
@@ -111,6 +114,13 @@ export function DjRegister({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEmailConfirmed = () => {
+    // Email confirmed, move to Event ID setup
+    // emailRegistered flag will be set only after dashboard link is clicked
+    setShowEmailModal(false);
+    setShowEventIdModal(true);
   };
 
   const handleEventIdSetup = async (eventId: string) => {
@@ -143,6 +153,14 @@ export function DjRegister({
           eventId: eventMongoDB,
         }),
       );
+
+      // Mark email as registered only after DJ completes the full setup
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const userData = JSON.parse(userStr);
+        userData.emailRegistered = true;
+        localStorage.setItem('user', JSON.stringify(userData));
+      }
 
       toast.success(`Welcome, ${displayName}! Your event is ready to go.`);
       socket.initSocket(registrationData.token);
@@ -368,6 +386,14 @@ export function DjRegister({
           </div>
         </motion.form>
       </div>
+
+      {/* Email Confirmation Modal */}
+      <EmailConfirmationModal
+        isOpen={showEmailModal}
+        email={email}
+        displayName={displayName}
+        onContinue={handleEmailConfirmed}
+      />
 
       {/* Event ID Setup Modal */}
       <EventIdSetupModal
