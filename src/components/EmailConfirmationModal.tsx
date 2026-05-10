@@ -124,12 +124,12 @@ export function EmailConfirmationModal({
                  <h3 className="font-semibold text-blue-900 mb-2">What's Next?</h3>
                  {debugToken ? (
                    <div className="text-sm text-blue-800">
-                     <p className="mb-3">🐛 Debug Mode: Verification Token</p>
+                     <p className="mb-3">🐛 Debug Mode: Verification URL</p>
                      <code className="block bg-white p-2 rounded border border-blue-300 break-all text-xs font-mono mb-2 cursor-pointer hover:bg-blue-100"
-                       onClick={() => navigator.clipboard.writeText(debugToken)}>
-                       {debugToken}
+                       onClick={() => navigator.clipboard.writeText(`https://sr-backend-im3y.onrender.com/verify-email?token=${debugToken}`)}>
+                       https://sr-backend-im3y.onrender.com/verify-email?token={debugToken}
                      </code>
-                     <p className="text-xs text-blue-700">Click to copy. Use with /verify-email?token=...</p>
+                     <p className="text-xs text-blue-700">Click to copy and paste in browser</p>
                    </div>
                  ) : (
                    <ul className="text-sm text-blue-800 space-y-1">

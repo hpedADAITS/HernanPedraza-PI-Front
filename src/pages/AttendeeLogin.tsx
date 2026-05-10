@@ -13,6 +13,7 @@ import {
 import { toast } from 'sonner';
 import { participantsAPI, eventsAPI, authAPI } from '@/services/api';
 import * as socket from '@/services/socket';
+import { ProfilePictureUpload } from '@/components/common';
 import logoNormal from '@/assets/logo_normal.png';
 
 interface Props {
@@ -29,6 +30,7 @@ export function AttendeeLogin({
   const [loading, setLoading] = useState(false);
   const [eventCode, setEventCode] = useState('');
   const [nickname, setNickname] = useState('');
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -154,6 +156,7 @@ export function AttendeeLogin({
       const participant = await participantsAPI.joinEvent(
         event._id || event.id,
         nickname,
+        profilePicture,
       );
 
       if (!participant) {
@@ -242,7 +245,15 @@ export function AttendeeLogin({
           </p>
 
           {/* Inputs */}
-          <div className="mt-7 space-y-4">
+          <div className="mt-7 space-y-6">
+            <div className="flex justify-center">
+              <ProfilePictureUpload
+                currentPicture={profilePicture}
+                onPictureUpdated={setProfilePicture}
+                size="lg"
+              />
+            </div>
+
             <div>
               <label
                 htmlFor="att-nickname"

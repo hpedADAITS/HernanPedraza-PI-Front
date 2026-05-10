@@ -1,10 +1,10 @@
 import { apiCall } from './client';
 
 export const participantsAPI = {
-  joinEvent: async (eventId: string, nickname: string) => {
+  joinEvent: async (eventId: string, nickname: string, profilePicture?: string | null) => {
     const data = await apiCall(`/participants/${eventId}/join`, {
       method: 'POST',
-      body: JSON.stringify({ nickname }),
+      body: JSON.stringify({ nickname, profilePicture: profilePicture || null }),
     });
     return data.data.participant;
   },

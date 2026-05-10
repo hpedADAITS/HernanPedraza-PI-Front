@@ -5,6 +5,7 @@ import { Search, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { authAPI, clearToken } from '@/services/api';
 import { disconnectSocket, getSocket } from '@/services/socket';
+import { ProfilePictureUpload } from '@/components/common';
 
 interface Props {
   onNavigate: (view: any) => void;
@@ -36,10 +37,12 @@ export function SettingsList({ onNavigate }: Props) {
   const [showDebugModal, setShowDebugModal] = useState(false);
   const [showMediaQualityModal, setShowMediaQualityModal] = useState(false);
   const [showSocialModal, setShowSocialModal] = useState(false);
+  const [showProfilePictureModal, setShowProfilePictureModal] = useState(false);
   const [newDisplayName, setNewDisplayName] = useState('');
   const [mediaQuality, setMediaQuality] = useState<MediaQuality>('auto');
   const [socialPrefs, setSocialPrefs] =
     useState<SocialPrefs>(DEFAULT_SOCIAL_PREFS);
+  const [currentProfilePicture, setCurrentProfilePicture] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -56,6 +59,13 @@ export function SettingsList({ onNavigate }: Props) {
     if (storedSocial) {
       try {
         setSocialPrefs({ ...DEFAULT_SOCIAL_PREFS, ...JSON.parse(storedSocial) });
+      } catch {}
+    }
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        const parsed = JSON.parse(user);
+        setCurrentProfilePicture(parsed.profilePicture || null);
       } catch {}
     }
   }, []);
@@ -140,6 +150,9 @@ export function SettingsList({ onNavigate }: Props) {
 
   const handleItemClick = (item: string) => {
     switch (item) {
+      case 'Profile Picture':
+        setShowProfilePictureModal(true);
+        break;
       case 'Display Name Visibility':
         handleDisplayName();
         break;
@@ -159,6 +172,7 @@ export function SettingsList({ onNavigate }: Props) {
   };
 
   const SETTINGS_ITEMS = [
+    'Profile Picture',
     'Display Name Visibility',
     'Media Quality',
     'Social Settings',
@@ -396,65 +410,114 @@ export function SettingsList({ onNavigate }: Props) {
       </AnimatePresence>
 
       <AnimatePresence>
-        {showSocialModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowSocialModal(false)}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6"
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-slate-800">
-                  Social Settings
-                </h2>
-                <button
-                  onClick={() => setShowSocialModal(false)}
-                  className="p-1 rounded-full hover:bg-slate-100"
-                >
-                  <X size={20} className="text-slate-500" />
-                </button>
-              </div>
-              <div className="flex flex-col gap-3">
-                {(
-                  [
-                    ['showDisplayName', 'Show display name'],
-                    ['showProfilePicture', 'Show profile picture'],
-                    ['allowFriendRequests', 'Allow friend requests'],
-                  ] as [keyof SocialPrefs, string][]
-                ).map(([key, label]) => (
-                  <label
-                    key={key}
-                    className="flex items-center justify-between px-4 py-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50"
-                  >
-                    <span className="text-slate-700">{label}</span>
-                    <input
-                      type="checkbox"
-                      checked={socialPrefs[key]}
-                      onChange={() => handleToggleSocial(key)}
-                      className="h-5 w-5 accent-blue-500"
-                    />
-                  </label>
-                ))}
-              </div>
-              <motion.button
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setShowSocialModal(false)}
-                className="w-full mt-6 bg-slate-200 hover:bg-slate-300 text-slate-700 py-3 rounded-xl font-medium transition-colors"
-              >
-                Done
-              </motion.button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </Layout>
+         {showSocialModal && (
+           <motion.div
+             initial={{ opacity: 0 }}
+             animate={{ opacity: 1 }}
+             exit={{ opacity: 0 }}
+             onClick={() => setShowSocialModal(false)}
+             className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
+           >
+             <motion.div
+               initial={{ scale: 0.95, opacity: 0 }}
+               animate={{ scale: 1, opacity: 1 }}
+               exit={{ scale: 0.95, opacity: 0 }}
+               onClick={(e) => e.stopPropagation()}
+               className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6"
+             >
+               <div className="flex items-center justify-between mb-6">
+                 <h2 className="text-xl font-bold text-slate-800">
+                   Social Settings
+                 </h2>
+                 <button
+                   onClick={() => setShowSocialModal(false)}
+                   className="p-1 rounded-full hover:bg-slate-100"
+                 >
+                   <X size={20} className="text-slate-500" />
+                 </button>
+               </div>
+               <div className="flex flex-col gap-3">
+                 {(
+                   [
+                     ['showDisplayName', 'Show display name'],
+                     ['showProfilePicture', 'Show profile picture'],
+                     ['allowFriendRequests', 'Allow friend requests'],
+                   ] as [keyof SocialPrefs, string][]
+                 ).map(([key, label]) => (
+                   <label
+                     key={key}
+                     className="flex items-center justify-between px-4 py-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50"
+                   >
+                     <span className="text-slate-700">{label}</span>
+                     <input
+                       type="checkbox"
+                       checked={socialPrefs[key]}
+                       onChange={() => handleToggleSocial(key)}
+                       className="h-5 w-5 accent-blue-500"
+                     />
+                   </label>
+                 ))}
+               </div>
+               <motion.button
+                 whileTap={{ scale: 0.98 }}
+                 onClick={() => setShowSocialModal(false)}
+                 className="w-full mt-6 bg-slate-200 hover:bg-slate-300 text-slate-700 py-3 rounded-xl font-medium transition-colors"
+               >
+                 Done
+               </motion.button>
+             </motion.div>
+           </motion.div>
+         )}
+       </AnimatePresence>
+
+       <AnimatePresence>
+         {showProfilePictureModal && (
+           <motion.div
+             initial={{ opacity: 0 }}
+             animate={{ opacity: 1 }}
+             exit={{ opacity: 0 }}
+             onClick={() => setShowProfilePictureModal(false)}
+             className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
+           >
+             <motion.div
+               initial={{ scale: 0.95, opacity: 0 }}
+               animate={{ scale: 1, opacity: 1 }}
+               exit={{ scale: 0.95, opacity: 0 }}
+               onClick={(e) => e.stopPropagation()}
+               className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6"
+             >
+               <div className="flex items-center justify-between mb-6">
+                 <h2 className="text-xl font-bold text-slate-800">
+                   Profile Picture
+                 </h2>
+                 <button
+                   onClick={() => setShowProfilePictureModal(false)}
+                   className="p-1 rounded-full hover:bg-slate-100"
+                 >
+                   <X size={20} className="text-slate-500" />
+                 </button>
+               </div>
+               <div className="flex justify-center mb-6">
+                 <ProfilePictureUpload
+                   currentPicture={currentProfilePicture}
+                   onPictureUpdated={(newPicture) => {
+                     setCurrentProfilePicture(newPicture);
+                     setShowProfilePictureModal(false);
+                   }}
+                   size="lg"
+                 />
+               </div>
+               <motion.button
+                 whileTap={{ scale: 0.98 }}
+                 onClick={() => setShowProfilePictureModal(false)}
+                 className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 py-3 rounded-xl font-medium transition-colors"
+               >
+                 Done
+               </motion.button>
+             </motion.div>
+           </motion.div>
+         )}
+       </AnimatePresence>
+      </Layout>
   );
 }
