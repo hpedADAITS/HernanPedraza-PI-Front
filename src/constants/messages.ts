@@ -3,7 +3,7 @@
  */
 
 export const MESSAGES = {
-  // Authentication
+  /* Authentication */
   AUTH: {
     REGISTER_SUCCESS: 'Account created successfully!',
     LOGIN_SUCCESS: 'Logged in successfully!',
@@ -14,7 +14,7 @@ export const MESSAGES = {
     NOT_AUTHENTICATED: 'You must be logged in to access this',
   },
 
-  // Events
+  /* Events */
   EVENTS: {
     CREATE_SUCCESS: 'Event created successfully!',
     JOIN_SUCCESS: 'Joined event successfully!',
@@ -26,7 +26,7 @@ export const MESSAGES = {
     EVENT_CANCELLED: 'Event has been cancelled',
   },
 
-  // Songs
+  /* Songs */
   SONGS: {
     SUGGEST_SUCCESS: 'Song suggested successfully!',
     SONG_NOT_FOUND: 'Song not found',
@@ -37,21 +37,21 @@ export const MESSAGES = {
     SKIP_SUCCESS: 'Song skipped',
   },
 
-  // Participants
+  /* Participants */
   PARTICIPANTS: {
     KICK_SUCCESS: 'Participant removed',
     COOLDOWN_SET: 'Cooldown applied',
     PREMIUM_UPDATED: 'Premium status updated',
   },
 
-  // Votes
+  /* Votes */
   VOTES: {
     VOTE_SUCCESS: 'Vote cast successfully!',
     VOTE_REMOVED: 'Vote removed',
     ALREADY_VOTED: "You've already voted on this song",
   },
 
-  // Validation
+  /* Validation */
   VALIDATION: {
     REQUIRED_FIELD: 'This field is required',
     INVALID_EMAIL: 'Invalid email format',
@@ -64,7 +64,7 @@ export const MESSAGES = {
     ACCESS_CODE_INVALID: 'Access code must be 6 alphanumeric characters',
   },
 
-  // Network/System
+  /* Network/System */
   NETWORK: {
     CONNECTION_ERROR:
       'Unable to connect to server. Please check your connection.',
@@ -73,7 +73,7 @@ export const MESSAGES = {
     OFFLINE: 'You are offline. Please check your connection.',
   },
 
-  // General
+  /* General */
   GENERAL: {
     LOADING: 'Loading...',
     SAVING: 'Saving...',
@@ -93,7 +93,7 @@ export const MESSAGES = {
     LOGOUT: 'Logout',
   },
 
-  // Buttons
+  /* Buttons */
   BUTTONS: {
     LOGIN: 'Login',
     REGISTER: 'Register',

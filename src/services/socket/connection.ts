@@ -22,15 +22,15 @@ export function initSocket(token?: string) {
   });
 
   socket.on('connect', () => {
-    // Socket connected
+    /* Socket connected */
   });
 
   socket.on('disconnect', () => {
-    // Socket disconnected
+    /* Socket disconnected */
   });
 
   socket.on('error', (error) => {
-    // Handle socket error silently
+    /* Handle socket error silently */
   });
 
   return socket;

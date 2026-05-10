@@ -17,7 +17,7 @@ export function useMicrophone(isDj: boolean): UseMicrophoneReturn {
   const [error, setError] = useState<string | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Only DJ role can access microphone
+  /* Only DJ role can access microphone */
   const canAccessMicrophone = isDj;
 
   const stopMicrophone = useCallback(() => {
@@ -32,7 +32,7 @@ export function useMicrophone(isDj: boolean): UseMicrophoneReturn {
   }, []);
 
   const requestMicrophoneAccess = useCallback(async () => {
-    // Only DJ role can request microphone access
+    /* Only DJ role can request microphone access */
     if (!canAccessMicrophone) {
       const msg = 'Only DJs can access the microphone';
       setError(msg);
@@ -41,7 +41,7 @@ export function useMicrophone(isDj: boolean): UseMicrophoneReturn {
       return;
     }
 
-    // Check browser support
+    /* Check browser support */
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       const msg =
         'Microphone access is not supported in your browser. Please use Chrome, Firefox, or Edge.';
@@ -80,7 +80,7 @@ export function useMicrophone(isDj: boolean): UseMicrophoneReturn {
     }
   }, [canAccessMicrophone]);
 
-  // Cleanup on unmount
+  /* Cleanup on unmount */
   useEffect(() => {
     return () => {
       stopMicrophone();

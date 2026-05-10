@@ -18,17 +18,17 @@ export interface ApiErrorResponse {
  * Parse API error response into user-friendly message
  */
 export function parseApiError(error: any): string {
-  // Handle network errors
+  /* Handle network errors */
   if (!error.response && error.message) {
     return 'Network error. Please check your connection.';
   }
 
-  // Handle API response errors
+  /* Handle API response errors */
   if (error instanceof Error) {
     return error.message;
   }
 
-  // Handle error objects
+  /* Handle error objects */
   if (typeof error === 'object') {
     if (error.error?.message) {
       return error.error.message;
@@ -38,7 +38,7 @@ export function parseApiError(error: any): string {
     }
   }
 
-  // Handle string errors
+  /* Handle string errors */
   if (typeof error === 'string') {
     return error;
   }

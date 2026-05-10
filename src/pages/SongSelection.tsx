@@ -38,13 +38,13 @@ export function SongSelection({ mode, onNavigate }: Props) {
 
   const { eventId, participantId } = getLocalStorageIds();
 
-  // DJ state
+  /* DJ state */
   const [pendingSongs, setPendingSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeSongId, setActiveSongId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Attendee state
+  /* Attendee state */
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
   const [submitting, setSubmitting] = useState(false);

@@ -2,12 +2,12 @@ import '@testing-library/jest-dom';
 import { expect, afterEach, vi, beforeAll, afterAll } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
-// Cleanup after each test
+/* Cleanup after each test */
 afterEach(() => {
   cleanup();
 });
 
-// Mock window.matchMedia
+/* Mock window.matchMedia */
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: vi.fn().mockImplementation((query) => ({
@@ -22,7 +22,7 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
-// Mock socket.io-client
+/* Mock socket.io-client */
 vi.mock('socket.io-client', () => ({
   io: vi.fn(() => ({
     on: vi.fn(),
@@ -33,7 +33,7 @@ vi.mock('socket.io-client', () => ({
   })),
 }));
 
-// Suppress console warnings in tests
+/* Suppress console warnings in tests */
 const originalError = console.error;
 beforeAll(() => {
   console.error = (...args: any[]) => {

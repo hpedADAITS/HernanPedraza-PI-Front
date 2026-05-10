@@ -49,7 +49,7 @@ export function NowPlayingSection() {
   const [tick, setTick] = useState(0);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Tick every second so progress/elapsed advance smoothly
+  /* Tick every second so progress/elapsed advance smoothly */
   useEffect(() => {
     if (nowPlaying?.status === 'playing' && nowPlaying.startedAt) {
       tickRef.current = setInterval(() => setTick((t) => t + 1), 1000);
@@ -87,7 +87,7 @@ export function NowPlayingSection() {
     initSocket();
 
     const handleSongQueued = (data: any) => {
-      // Song was added to the queue (NOT immediate playback)
+      /* Song was added to the queue (NOT immediate playback) */
       setNowPlaying((prev) =>
         prev ?? {
           id: data.songId,
@@ -142,7 +142,7 @@ export function NowPlayingSection() {
     const handleQueueUpdated = (data: any) => {
       if (data.queue) setQueue(data.queue);
 
-      // Prefer nowPlaying metadata from enhanced event
+      /* Prefer nowPlaying metadata from enhanced event */
       if (data.nowPlaying && data.nowPlaying.songId) {
         const np = data.nowPlaying;
         const startedAt = np.playingStartedAt
@@ -179,7 +179,7 @@ export function NowPlayingSection() {
     };
   }, [eventId]);
 
-  // Compute live elapsed/progress when playing
+  /* Compute live elapsed/progress when playing */
   let display: NowPlayingSong | typeof NOW_PLAYING =
     tempStatus || nowPlaying || NOW_PLAYING;
 
@@ -197,7 +197,7 @@ export function NowPlayingSection() {
       progress,
       currentTime: formatTime(elapsed),
     };
-    // tick is read implicitly to trigger re-renders
+    /* tick is read implicitly to trigger re-renders */
     void tick;
   }
 

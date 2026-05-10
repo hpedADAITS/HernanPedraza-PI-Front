@@ -35,16 +35,16 @@ export function useAssetCache(
   const cacheKey = `asset:${assetUrl}`;
 
   const loadAsset = useCallback(async () => {
-    // Check if already cached
+    /* Check if already cached */
     const cached = cacheManager.get<string>(cacheKey);
     if (cached) {
       setSrc(cached);
       return;
     }
 
-    // Check cooldown
+    /* Check cooldown */
     if (!cacheManager.isRequestAllowed(assetUrl, cooldownMs)) {
-      // Return cached or fallback
+      /* Return cached or fallback */
       if (cached) {
         setSrc(cached);
       } else if (fallbackSrc) {
@@ -57,10 +57,10 @@ export function useAssetCache(
     setError(null);
 
     try {
-      // Create new abort controller
+      /* Create new abort controller */
       abortControllerRef.current = new AbortController();
 
-      // For direct URLs, load directly (they're typically served with cache headers)
+      /* For direct URLs, load directly (they're typically served with cache headers) */
       const response = await fetch(assetUrl, {
         signal: abortControllerRef.current.signal,
       });
@@ -88,14 +88,14 @@ export function useAssetCache(
       reader.readAsDataURL(blob);
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
-        // Request was cancelled, don't update state
+        /* Request was cancelled, don't update state */
         return;
       }
 
       const error = err instanceof Error ? err : new Error('Unknown error');
       setError(error);
 
-      // Use fallback or cached version on error
+      /* Use fallback or cached version on error */
       const cached = cacheManager.get<string>(cacheKey);
       if (cached) {
         setSrc(cached);
@@ -112,7 +112,7 @@ export function useAssetCache(
     loadAsset();
 
     return () => {
-      // Cancel in-flight requests
+      /* Cancel in-flight requests */
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }

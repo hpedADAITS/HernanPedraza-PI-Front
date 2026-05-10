@@ -33,41 +33,41 @@ export async function cachedApiCall(
   const isGetRequest = method === 'GET';
   const cacheKey = `api:${method}:${endpoint}`;
 
-  // Only cache GET requests (idempotent, safe operations)
+  /* Only cache GET requests (idempotent, safe operations) */
   if (!isGetRequest) {
-    // For non-GET requests, record request and bypass cache
+    /* For non-GET requests, record request and bypass cache */
     cacheManager.recordRequest(endpoint, cooldownMs);
     return apiCall(endpoint, options);
   }
 
-  // Check if we should use cache
+  /* Check if we should use cache */
   if (!skipCache && !forceRefresh && cacheManager.has(cacheKey)) {
     return cacheManager.get(cacheKey);
   }
 
-  // Check cooldown for spam protection
+  /* Check cooldown for spam protection */
   if (!cacheManager.isRequestAllowed(endpoint, cooldownMs)) {
     const cached = cacheManager.get(cacheKey);
     if (cached) {
-      // Return stale cache rather than fail
+      /* Return stale cache rather than fail */
       return cached;
     }
-    // Wait for cooldown to complete
+    /* Wait for cooldown to complete */
     await cacheManager.waitForCooldown(endpoint);
   }
 
-  // Record the request
+  /* Record the request */
   cacheManager.recordRequest(endpoint, cooldownMs);
 
   try {
     const response = await apiCall(endpoint, options);
 
-    // Cache successful responses
+    /* Cache successful responses */
     cacheManager.set(cacheKey, response, ttlMs);
 
     return response;
   } catch (error) {
-    // On error, try to return cached data if available
+    /* On error, try to return cached data if available */
     const cached = cacheManager.get(cacheKey);
     if (cached) {
       console.warn(`API call failed, returning stale cache for ${endpoint}`);

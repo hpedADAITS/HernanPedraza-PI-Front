@@ -3,7 +3,7 @@ import { renderHook, act } from '@testing-library/react';
 import { useAuth } from '@/hooks/useAuth';
 import { authAPI } from '@/services/api';
 
-// Mock the API service
+/* Mock the API service */
 vi.mock('@/services/api', () => ({
   authAPI: {
     register: vi.fn(),
@@ -70,7 +70,7 @@ describe('useAuth Hook', () => {
       try {
         await result.current.login('wrong@example.com', 'wrong');
       } catch (error) {
-        // Expected to throw
+        /* Expected to throw */
       }
     });
 
@@ -120,7 +120,7 @@ describe('useAuth Hook', () => {
           'Existing User',
         );
       } catch (error) {
-        // Expected to throw
+        /* Expected to throw */
       }
     });
 
@@ -176,8 +176,8 @@ describe('useAuth Hook', () => {
       result.current.login('test@example.com', 'password').catch(() => {});
     });
 
-    // Check loading state during API call
-    // Note: This is tricky in tests, but we can verify the loading state changes
+    /* Check loading state during API call */
+    /* Note: This is tricky in tests, but we can verify the loading state changes */
 
     resolveLogin();
     await loginPromiseResult;
@@ -199,18 +199,18 @@ describe('useAuth Hook', () => {
 
     const { result } = renderHook(() => useAuth());
 
-    // First failed attempt
+    /* First failed attempt */
     await act(async () => {
       try {
         await result.current.login('test@example.com', 'wrong');
       } catch (error) {
-        // Expected
+        /* Expected */
       }
     });
 
     expect(result.current.error).not.toBeNull();
 
-    // Second successful attempt
+    /* Second successful attempt */
     await act(async () => {
       await result.current.login('test@example.com', 'correct');
     });

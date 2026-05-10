@@ -8,14 +8,14 @@ export const API_BASE: string = VITE_API_URL
 
 let authToken: string | null = null;
 
-// Retrieve token from localStorage
+/* Retrieve token from localStorage */
 export function loadToken() {
   if (typeof window !== 'undefined') {
     authToken = localStorage.getItem('authToken');
   }
 }
 
-// Store token in localStorage
+/* Store token in localStorage */
 export function saveToken(token: string) {
   authToken = token;
   if (typeof window !== 'undefined') {
@@ -23,7 +23,7 @@ export function saveToken(token: string) {
   }
 }
 
-// Clear token
+/* Clear token */
 export function clearToken() {
   authToken = null;
   if (typeof window !== 'undefined') {
@@ -31,13 +31,13 @@ export function clearToken() {
   }
 }
 
-// Helper to make API calls
+/* Helper to make API calls */
 export async function apiCall(endpoint: string, options: RequestInit = {}) {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
 
-  // Add auth token if available
+  /* Add auth token if available */
   if (authToken) {
     headers.Authorization = `Bearer ${authToken}`;
   }
@@ -55,7 +55,7 @@ export async function apiCall(endpoint: string, options: RequestInit = {}) {
   return response.json();
 }
 
-// Health check endpoint
+/* Health check endpoint */
 export async function checkHealth() {
   try {
     const response = await fetch(`${API_BASE}/ping/health`);
@@ -68,10 +68,10 @@ export async function checkHealth() {
   }
 }
 
-// Clear all caches when token changes (logout/login)
+/* Clear all caches when token changes (logout/login) */
 export function clearAllCaches() {
   cacheManager.clear();
 }
 
-// Load token on module init
+/* Load token on module init */
 loadToken();

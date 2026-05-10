@@ -22,7 +22,7 @@ class CacheManager {
   private readonly DEFAULT_COOLDOWN = 1000; // 1 second
 
   constructor() {
-    // Initialize localStorage if available
+    /* Initialize localStorage if available */
     if (typeof window !== 'undefined') {
       this.localStorage = window.localStorage;
       this.loadFromLocalStorage();
@@ -53,7 +53,7 @@ class CacheManager {
       return null;
     }
 
-    // Check if expired
+    /* Check if expired */
     if (Date.now() > entry.expiresAt) {
       this.delete(key);
       return null;
@@ -173,7 +173,7 @@ class CacheManager {
     } catch (e) {
       if (e instanceof DOMException && e.code === 22) {
         console.warn('LocalStorage quota exceeded');
-        // Clear some old cache items
+        /* Clear some old cache items */
         this.clearOldestCache();
       } else {
         console.warn('Failed to persist cache to localStorage:', e);
@@ -196,7 +196,7 @@ class CacheManager {
             const entry = JSON.parse(serialized);
             const cacheKey = key.substring(6); // Remove 'cache:' prefix
 
-            // Only load if not expired
+            /* Only load if not expired */
             if (Date.now() <= entry.expiresAt) {
               this.cache.set(cacheKey, entry);
             } else {
@@ -234,5 +234,5 @@ class CacheManager {
   }
 }
 
-// Export singleton instance
+/* Export singleton instance */
 export const cacheManager = new CacheManager();

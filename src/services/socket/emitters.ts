@@ -1,6 +1,6 @@
 import { getSocketInstance } from './connection';
 
-// ============ PARTICIPATION ============
+/* ============ PARTICIPATION ============ */
 
 export function joinEvent(
   eventId: string,
@@ -18,7 +18,7 @@ export function leaveEvent(eventId: string, participantId: string) {
   socket.emit('leave_event', { eventId, participantId });
 }
 
-// ============ VOTING ============
+/* ============ VOTING ============ */
 
 export function castVote(
   eventId: string,
@@ -41,7 +41,7 @@ export function removeVote(
   socket.emit('vote_removed', { eventId, songId, participantId });
 }
 
-// ============ SONGS ============
+/* ============ SONGS ============ */
 
 export function suggestSong(
   eventId: string,

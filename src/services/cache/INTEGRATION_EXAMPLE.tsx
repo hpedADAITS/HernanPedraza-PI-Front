@@ -129,7 +129,7 @@ export function EventDetailsExample({ eventId }: { eventId: string }) {
   const handleLoadDetails = async () => {
     setIsLoadingDetails(true);
     try {
-      // Preload and cache event details
+      /* Preload and cache event details */
       const details = await preloadCache(`/events/${eventId}`, {
         cacheOptions: {
           ttlMs: 10 * 60 * 1000,
@@ -163,11 +163,11 @@ import React from 'react';
 
 export function LogoutButtonExample() {
   const handleLogout = async () => {
-    // Clear all API caches when user logs out
+    /* Clear all API caches when user logs out */
     clearAllCaches();
 
-    // Then proceed with logout
-    // await logoutAPI();
+    /* Then proceed with logout */
+    /* await logoutAPI(); */
     console.log('Logged out and caches cleared');
   };
 
@@ -212,19 +212,19 @@ export function OptimisticUpdateExample({ eventId }: { eventId: string }) {
   });
 
   const handleUpdateEvent = async (newName: string) => {
-    // Optimistically update cache
+    /* Optimistically update cache */
     const optimisticEvent = { ...event, name: newName };
     cacheManager.set(`api:GET:/events/${eventId}`, optimisticEvent, 5 * 60 * 1000);
 
     try {
-      // Make API call
+      /* Make API call */
       await fetch(`/events/${eventId}`, {
         method: 'PUT',
         body: JSON.stringify({ name: newName }),
       });
-      // API confirmed, cache is already updated
+      /* API confirmed, cache is already updated */
     } catch (error) {
-      // On error, refresh from API to get actual state
+      /* On error, refresh from API to get actual state */
       console.error('Update failed:', error);
       refetch();
     }

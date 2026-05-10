@@ -76,7 +76,7 @@ export function useSongs() {
     setError(null);
     try {
       const song = await songsAPI.approveSong(eventId, songId);
-      // Update pending list
+      /* Update pending list */
       setPendingSongs((prev) => prev.filter((s) => s._id !== songId));
       return song;
     } catch (err) {

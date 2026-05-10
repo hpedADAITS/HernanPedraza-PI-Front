@@ -13,7 +13,7 @@ export function MicrophoneControl({ isDj }: MicrophoneControlProps) {
   const analyzerRef = useRef<AnalyserNode | null>(null);
 
   useEffect(() => {
-    // Initialize Web Audio API if not already done
+    /* Initialize Web Audio API if not already done */
     if (!audioContextRef.current && typeof window !== 'undefined') {
       audioContextRef.current = new (window.AudioContext ||
         (window as any).webkitAudioContext)();
@@ -28,7 +28,7 @@ export function MicrophoneControl({ isDj }: MicrophoneControlProps) {
     }
   };
 
-  // Only show for DJ role
+  /* Only show for DJ role */
   if (!isDj) {
     return null;
   }

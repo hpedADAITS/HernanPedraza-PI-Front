@@ -98,7 +98,7 @@ describe('cacheManager', () => {
   describe('waitForCooldown', () => {
     it('should resolve immediately if no cooldown', async () => {
       await cacheManager.waitForCooldown('/api/no-pending-cooldown');
-      // If it doesn't timeout, the test passes
+      /* If it doesn't timeout, the test passes */
       expect(true).toBe(true);
     });
 
@@ -108,7 +108,7 @@ describe('cacheManager', () => {
       const promise = cacheManager.waitForCooldown('/api/test');
 
       vi.advanceTimersByTime(500);
-      // Still waiting
+      /* Still waiting */
       let resolved = false;
       promise.then(() => {
         resolved = true;
@@ -116,7 +116,7 @@ describe('cacheManager', () => {
       expect(resolved).toBe(false);
 
       vi.advanceTimersByTime(600);
-      // Should be resolved now
+      /* Should be resolved now */
       await promise;
       expect(resolved).toBe(true);
     });
@@ -124,7 +124,7 @@ describe('cacheManager', () => {
 
   describe('getStats', () => {
     it('should return cache statistics', () => {
-      // Just test that stats are returned and increase with new cache/cooldowns
+      /* Just test that stats are returned and increase with new cache/cooldowns */
       const initialStats = cacheManager.getStats();
       
       cacheManager.set('stat-key1', { id: 1 });
@@ -142,11 +142,11 @@ describe('cacheManager', () => {
       const data = { id: 1 };
       cacheManager.set('test-key', data);
 
-      // Should still be cached after 1 second
+      /* Should still be cached after 1 second */
       vi.advanceTimersByTime(1000);
       expect(cacheManager.get('test-key')).toEqual(data);
 
-      // Should expire after 5 minutes (default)
+      /* Should expire after 5 minutes (default) */
       vi.advanceTimersByTime(5 * 60 * 1000);
       expect(cacheManager.get('test-key')).toBeNull();
     });
@@ -155,7 +155,7 @@ describe('cacheManager', () => {
       const data = { id: 1 };
       cacheManager.set('zero-ttl-key', data, 0);
 
-      // Immediately expired (or expires before get call)
+      /* Immediately expired (or expires before get call) */
       vi.advanceTimersByTime(1);
       expect(cacheManager.get('zero-ttl-key')).toBeNull();
     });
@@ -165,7 +165,7 @@ describe('cacheManager', () => {
       const oneDayMs = 24 * 60 * 60 * 1000;
       cacheManager.set('test-key', data, oneDayMs);
 
-      // Should still be cached
+      /* Should still be cached */
       vi.advanceTimersByTime(oneDayMs - 1000);
       expect(cacheManager.get('test-key')).toEqual(data);
     });

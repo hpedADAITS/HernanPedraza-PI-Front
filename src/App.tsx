@@ -21,10 +21,10 @@ export default function App() {
   const [logoWhite, setLogoWhite] = useState(false);
 
   useEffect(() => {
-    // Load token from localStorage on app startup
+    /* Load token from localStorage on app startup */
     loadToken();
 
-    // Check if we're on verify-email page
+    /* Check if we're on verify-email page */
     const params = new URLSearchParams(window.location.search);
     if (params.has('token')) {
       setCurrentView('verify-email');
@@ -46,7 +46,7 @@ export default function App() {
   }, []);
 
   const navigate = (view: View) => {
-    // Simple logic to determine animation direction
+    /* Simple logic to determine animation direction */
     if (view === 'role-selection') {
       setDirection(-1);
       setLogoWhite(false);

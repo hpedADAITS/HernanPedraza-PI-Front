@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import * as React from 'react';
 import { Logo } from '@/components/common/Logo';
 
-// Mock the image imports
+/* Mock the image imports */
 vi.mock('@/assets/logo_white.png', () => ({
   default: 'logo_white.png',
 }));

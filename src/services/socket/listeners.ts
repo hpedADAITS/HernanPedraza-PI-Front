@@ -1,6 +1,6 @@
 import { initSocket, getSocketInstance, getEventListeners } from './connection';
 
-// ============ EVENT LISTENERS ============
+/* ============ EVENT LISTENERS ============ */
 
 export function on(event: string, callback: (data: any) => void) {
   const s = getSocketInstance() || initSocket();
@@ -37,7 +37,7 @@ export function off(event: string, callback?: (data: any) => void) {
   }
 }
 
-// ============ LISTENER HELPERS ============
+/* ============ LISTENER HELPERS ============ */
 
 export function onParticipantJoined(callback: (data: any) => void) {
   on('participant_joined', callback);

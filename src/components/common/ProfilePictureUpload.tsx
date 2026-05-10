@@ -33,13 +33,13 @@ export function ProfilePictureUpload({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
+    /* Validate file type */
     if (!file.type.startsWith('image/')) {
       toast.error('Please select an image file');
       return;
     }
 
-    // Validate file size (5MB max)
+    /* Validate file size (5MB max) */
     if (file.size > 5 * 1024 * 1024) {
       toast.error('Image must be less than 5MB');
       return;
@@ -52,13 +52,13 @@ export function ProfilePictureUpload({
         const base64String = e.target?.result as string;
         setPreviewPicture(base64String);
 
-        // Send to backend
+        /* Send to backend */
         try {
           const response = await authAPI.updateProfilePicture({
             profilePicture: base64String,
           });
 
-          // Update localStorage
+          /* Update localStorage */
           const user = localStorage.getItem('user');
           if (user) {
             const parsed = JSON.parse(user);

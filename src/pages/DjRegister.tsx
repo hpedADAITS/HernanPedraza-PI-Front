@@ -40,11 +40,12 @@ export function DjRegister({
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showEventIdModal, setShowEventIdModal] = useState(false);
   const [registrationData, setRegistrationData] = useState<any>(null);
+  const [debugToken, setDebugToken] = useState<string | undefined>(undefined);
 
-  // Listen for email verification from external link
+  /* Listen for email verification from external link */
   React.useEffect(() => {
     const handleEmailVerified = () => {
-      // Email was verified via link, auto-close email modal and show event ID modal
+      /* Email was verified via link, auto-close email modal and show event ID modal */
       setShowEmailModal(false);
       setShowEventIdModal(true);
     };
@@ -113,11 +114,15 @@ export function DjRegister({
         }),
       );
 
-      // Show email confirmation modal first
+      /* Show email confirmation modal first */
       setRegistrationData({
         token: result.authToken || result.token,
         userId: result.user?._id || result.user?.id,
       });
+      /* Capture debug token if present */
+      if (result.token && typeof result.token === 'string' && result.token.split('.').length === 3) {
+        setDebugToken(result.token);
+      }
       setShowEmailModal(true);
     } catch (error) {
       toast.error(
@@ -392,9 +397,10 @@ export function DjRegister({
          email={email}
          displayName={displayName}
          onContinue={() => {
-           // This is now only used for error recovery
-           // Normal flow: email link verification auto-proceeds
+           /* This is now only used for error recovery */
+           /* Normal flow: email link verification auto-proceeds */
          }}
+         debugToken={debugToken}
        />
 
       {/* Event ID Setup Modal */}

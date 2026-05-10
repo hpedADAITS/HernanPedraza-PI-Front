@@ -37,7 +37,7 @@ export function ConnectedUsers({
         const list = await participantsAPI.listEventParticipants(eventId);
         const userList = Array.isArray(list) ? list : [];
 
-        // Show all users (filter out kicked/left ones via API)
+        /* Show all users (filter out kicked/left ones via API) */
         setUsers(userList);
         setLoading(false);
       } catch (error) {
@@ -48,10 +48,10 @@ export function ConnectedUsers({
 
     fetchUsers();
 
-    // Listen for real-time updates via socket
+    /* Listen for real-time updates via socket */
     const socket = getSocket();
     if (socket && eventId) {
-      // Handle new participant joining
+      /* Handle new participant joining */
       const handleParticipantJoined = (data: any) => {
         setUsers((prev) => {
           const exists = prev.some((u) => u._id === data.participantId);
@@ -70,12 +70,12 @@ export function ConnectedUsers({
         });
       };
 
-      // Handle participant leaving
+      /* Handle participant leaving */
       const handleParticipantLeft = (data: any) => {
         setUsers((prev) => prev.filter((u) => u._id !== data.participantId));
       };
 
-      // Handle participant kicked
+      /* Handle participant kicked */
       const handleParticipantKicked = (data: any) => {
         setUsers((prev) => prev.filter((u) => u._id !== data.participantId));
       };

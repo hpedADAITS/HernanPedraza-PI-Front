@@ -7,6 +7,7 @@ interface EmailConfirmationModalProps {
   email: string;
   displayName: string;
   onContinue: () => void;
+  debugToken?: string;
 }
 
 export function EmailConfirmationModal({
@@ -14,13 +15,14 @@ export function EmailConfirmationModal({
   email,
   displayName,
   onContinue,
+  debugToken,
 }: EmailConfirmationModalProps) {
   const [status, setStatus] = useState<'sending' | 'sent' | 'timeout'>('sending');
 
   useEffect(() => {
     if (isOpen) {
       setStatus('sending');
-      // Simulate email sending with a timeout
+      /* Simulate email sending with a timeout */
       const timer = setTimeout(() => {
         setStatus('sent');
       }, 2000);
@@ -120,11 +122,22 @@ export function EmailConfirmationModal({
                  className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6"
                >
                  <h3 className="font-semibold text-blue-900 mb-2">What's Next?</h3>
-                 <ul className="text-sm text-blue-800 space-y-1">
-                   <li>✓ Check your email inbox</li>
-                   <li>✓ Click the "Verify Email & Continue" button in the email</li>
-                   <li>✓ You'll be redirected back to complete event setup</li>
-                 </ul>
+                 {debugToken ? (
+                   <div className="text-sm text-blue-800">
+                     <p className="mb-3">🐛 Debug Mode: Verification Token</p>
+                     <code className="block bg-white p-2 rounded border border-blue-300 break-all text-xs font-mono mb-2 cursor-pointer hover:bg-blue-100"
+                       onClick={() => navigator.clipboard.writeText(debugToken)}>
+                       {debugToken}
+                     </code>
+                     <p className="text-xs text-blue-700">Click to copy. Use with /verify-email?token=...</p>
+                   </div>
+                 ) : (
+                   <ul className="text-sm text-blue-800 space-y-1">
+                     <li>✓ Check your email inbox</li>
+                     <li>✓ Click the "Verify Email & Continue" button in the email</li>
+                     <li>✓ You'll be redirected back to complete event setup</li>
+                   </ul>
+                 )}
                </motion.div>
              )}
 

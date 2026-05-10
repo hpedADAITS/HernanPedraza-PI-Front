@@ -52,7 +52,7 @@ export function QueueList({
   } | null>(null);
   const [tick, setTick] = useState(0);
 
-  // Tick every second to refresh per-attendee wait times
+  /* Tick every second to refresh per-attendee wait times */
   useEffect(() => {
     if (mode !== 'attendee' || !nowPlaying) return undefined;
     const id = setInterval(() => setTick((t) => t + 1), 1000);
@@ -110,7 +110,7 @@ export function QueueList({
 
   useEffect(() => {
     const handleQueued = (data: any) => {
-      // Song was approved into the queue. Add or update.
+      /* Song was approved into the queue. Add or update. */
       if (!data?.songId) return;
       setSongs((prev) => {
         const exists = prev.some((s) => s._id === data.songId);
@@ -158,7 +158,7 @@ export function QueueList({
           ),
         );
       }
-      // Apply position recalculations from backend
+      /* Apply position recalculations from backend */
       if (Array.isArray(data?.affectedSongs)) {
         setSongs((prev) =>
           prev.map((s) => {
@@ -195,7 +195,7 @@ export function QueueList({
       socket.onVotesUpdated(handleVotesUpdated);
       socket.onQueueUpdated(handleQueueUpdated);
     } catch {
-      // Socket not initialized yet — listeners will be missed, but no crash
+      /* Socket not initialized yet — listeners will be missed, but no crash */
     }
 
     return () => {
@@ -208,7 +208,7 @@ export function QueueList({
     };
   }, [removeSong]);
 
-  // Sort: PLAYING first, then QUEUED by voteScore desc (defensive — backend should sort too)
+  /* Sort: PLAYING first, then QUEUED by voteScore desc (defensive — backend should sort too) */
   const sortedSongs = useMemo(() => {
     const order: Record<string, number> = {
       PLAYING: 0,
@@ -223,7 +223,7 @@ export function QueueList({
     });
   }, [songs]);
 
-  // Compute cumulative wait time for each queued song (for attendees)
+  /* Compute cumulative wait time for each queued song (for attendees) */
   const waitTimes = useMemo(() => {
     if (mode !== 'attendee') return new Map<string, number>();
     const map = new Map<string, number>();

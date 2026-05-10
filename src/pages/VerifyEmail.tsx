@@ -34,7 +34,7 @@ export function VerifyEmail({ onNavigate }: Props) {
             'Email verified! Redirecting to registration flow...',
           );
 
-          // Update localStorage with verified status
+          /* Update localStorage with verified status */
           const userData = {
             displayName: response.data.user.displayName,
             email: response.data.user.email,
@@ -43,10 +43,10 @@ export function VerifyEmail({ onNavigate }: Props) {
           };
           localStorage.setItem('user', JSON.stringify(userData));
           
-          // Signal verification complete to register page via custom event
+          /* Signal verification complete to register page via custom event */
           window.dispatchEvent(new CustomEvent('emailVerified', { detail: userData }));
 
-          // Redirect to home after 2 seconds
+          /* Redirect to home after 2 seconds */
           setTimeout(() => {
             window.location.href = '/';
           }, 2000);

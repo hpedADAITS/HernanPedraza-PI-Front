@@ -35,15 +35,15 @@ class ErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log error details
+    /* Log error details */
     logError(error, 'ErrorBoundary');
 
-    // Call optional error handler
+    /* Call optional error handler */
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
     }
 
-    // Update state to show error UI
+    /* Update state to show error UI */
     this.setState({
       errorInfo,
     });
@@ -56,7 +56,7 @@ class ErrorBoundary extends React.Component<
       errorInfo: null,
     });
 
-    // Reload the page
+    /* Reload the page */
     window.location.href = '/';
   };
 

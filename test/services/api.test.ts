@@ -3,7 +3,7 @@ import { loadToken, saveToken, clearToken, API_BASE } from '@/services/api';
 
 describe('API Service', () => {
   beforeEach(() => {
-    // Clear localStorage before each test
+    /* Clear localStorage before each test */
     if (typeof window !== 'undefined') {
       localStorage.clear();
     }
@@ -22,8 +22,8 @@ describe('API Service', () => {
       localStorage.setItem('authToken', testToken);
 
       loadToken();
-      // We can't directly check the private authToken variable,
-      // but we can verify it was loaded by checking localStorage
+      /* We can't directly check the private authToken variable, */
+      /* but we can verify it was loaded by checking localStorage */
       expect(localStorage.getItem('authToken')).toBe(testToken);
     });
 
@@ -37,7 +37,7 @@ describe('API Service', () => {
     });
 
     it('should handle clearing token when none exists', () => {
-      // Should not throw
+      /* Should not throw */
       expect(() => clearToken()).not.toThrow();
       expect(localStorage.getItem('authToken')).toBeNull();
     });
@@ -45,7 +45,7 @@ describe('API Service', () => {
 
   describe('API Configuration', () => {
     it('should have valid API_BASE URL', () => {
-      // Check if it's a valid URL
+      /* Check if it's a valid URL */
       expect(API_BASE).toMatch(/^https?:\/\//);
     });
 
@@ -59,15 +59,15 @@ describe('API Service', () => {
       const token1 = 'token-1';
       const token2 = 'token-2';
 
-      // Save first token
+      /* Save first token */
       saveToken(token1);
       expect(localStorage.getItem('authToken')).toBe(token1);
 
-      // Update with new token
+      /* Update with new token */
       saveToken(token2);
       expect(localStorage.getItem('authToken')).toBe(token2);
 
-      // Clear token
+      /* Clear token */
       clearToken();
       expect(localStorage.getItem('authToken')).toBeNull();
     });
@@ -76,11 +76,11 @@ describe('API Service', () => {
       const testToken = 'persistent-token';
       saveToken(testToken);
 
-      // Simulate page reload
+      /* Simulate page reload */
       loadToken();
       expect(localStorage.getItem('authToken')).toBe(testToken);
 
-      // Load again
+      /* Load again */
       loadToken();
       expect(localStorage.getItem('authToken')).toBe(testToken);
     });

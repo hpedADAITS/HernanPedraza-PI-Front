@@ -3,7 +3,7 @@
  */
 
 export const ROUTES = {
-  // Main navigation views
+  /* Main navigation views */
   ROLE_SELECTION: 'role-selection' as const,
   ATTENDEE_LOGIN: 'attendee-login' as const,
   DJ_LOGIN: 'dj-login' as const,

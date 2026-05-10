@@ -122,7 +122,7 @@ function VotingButtons() {
         }
       })
       .catch(() => {
-        // queue fetch failed silently
+        /* queue fetch failed silently */
       });
 
     const handleQueueUpdate = (data: any) => {
@@ -136,14 +136,14 @@ function VotingButtons() {
     try {
       socket.onQueueUpdated(handleQueueUpdate);
     } catch {
-      // socket not initialized
+      /* socket not initialized */
     }
 
     return () => {
       try {
         socket.off('queue_updated', handleQueueUpdate);
       } catch {
-        // socket already gone
+        /* socket already gone */
       }
     };
   }, []);

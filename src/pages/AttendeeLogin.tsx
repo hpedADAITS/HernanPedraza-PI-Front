@@ -90,7 +90,7 @@ export function AttendeeLogin({
         return;
       }
     } catch (error) {
-      // Continue scanning if decoding fails
+      /* Continue scanning if decoding fails */
     }
 
     if (scanningRef.current) {
@@ -111,7 +111,7 @@ export function AttendeeLogin({
       const code = url.searchParams.get('code');
       if (code) return code.toUpperCase();
     } catch {
-      // Not a URL, treat as raw code
+      /* Not a URL, treat as raw code */
     }
     return raw.length >= 4 ? raw.toUpperCase() : null;
   };

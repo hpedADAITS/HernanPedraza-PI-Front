@@ -56,9 +56,9 @@ export function ParticipantsList({ mode }: ParticipantsListProps) {
         const list = await participantsAPI.listEventParticipants(eventId);
         const newList = Array.isArray(list) ? list : [];
 
-        // Merge with existing state, keeping local UI state intact
+        /* Merge with existing state, keeping local UI state intact */
         setParticipants((prevParticipants) => {
-          // Only update if there are significant changes (different IDs)
+          /* Only update if there are significant changes (different IDs) */
           const prevIds = new Set(prevParticipants.map((p) => p._id));
           const newIds = new Set(newList.map((p) => p._id));
 
@@ -76,20 +76,20 @@ export function ParticipantsList({ mode }: ParticipantsListProps) {
       }
     };
 
-    // Initial fetch
+    /* Initial fetch */
     fetchParticipants();
 
-    // Listen for real-time socket events
+    /* Listen for real-time socket events */
     const socket = getSocket();
     if (socket && eventId) {
-      // Handle participant kicked
+      /* Handle participant kicked */
       socket.on('participant_kicked', (data) => {
         setParticipants((prev) =>
           prev.filter((p) => p._id !== data.participantId),
         );
       });
 
-      // Handle participant cooldown
+      /* Handle participant cooldown */
       socket.on('participant_cooldown', (data) => {
         setParticipants((prev) =>
           prev.map((p) =>
@@ -101,7 +101,7 @@ export function ParticipantsList({ mode }: ParticipantsListProps) {
       });
     }
 
-    // Fallback: Poll every 60 seconds for participants list updates (joins)
+    /* Fallback: Poll every 60 seconds for participants list updates (joins) */
     const interval = setInterval(fetchParticipants, 60000);
 
     return () => {
