@@ -25,8 +25,8 @@ export default function App() {
     loadToken();
 
     /* Check if we're on verify-email page */
-    const params = new URLSearchParams(window.location.search);
-    if (params.has('token')) {
+    const pathname = window.location.pathname;
+    if (pathname.includes('/verify-email/')) {
       setCurrentView('verify-email');
       return;
     }

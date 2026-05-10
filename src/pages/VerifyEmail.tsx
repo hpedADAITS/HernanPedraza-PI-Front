@@ -16,17 +16,17 @@ export function VerifyEmail({ onNavigate }: Props) {
 
   useEffect(() => {
     const verifyToken = async () => {
-      const params = new URLSearchParams(window.location.search);
-      const token = params.get('token');
+      /* Extract token from URL path: /verify-email/:token */
+      const URLtoken = new URL(window.location.href).pathname.split('/').pop();
 
-      if (!token) {
+      if (!URLtoken) {
         setStatus('error');
         setMessage('No verification token provided');
         return;
       }
 
       try {
-        const response = await authAPI.verifyEmailToken(token);
+        const response = await authAPI.verifyEmailToken(URLtoken);
 
         if (response.data?.user) {
           setStatus('success');
