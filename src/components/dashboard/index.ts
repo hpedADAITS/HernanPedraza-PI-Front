@@ -6,3 +6,4 @@ export { NowPlayingSection } from './NowPlayingSection';
 export { QRCodeModal } from './QRCodeModal';
 export { ParticipantsList } from './ParticipantsList';
 export { ConnectedUsers } from './ConnectedUsers';
+export { MicrophoneControl } from './MicrophoneControl';

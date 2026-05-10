@@ -10,6 +10,7 @@ import {
   NowPlayingSection,
   ParticipantsList,
   ConnectedUsers,
+  MicrophoneControl,
 } from '@/components/dashboard';
 import {
   initSocket,
@@ -164,7 +165,14 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
 
         {/* Right Column: Search, Now Playing, Participants, Connected Users & Actions */}
         <div className="w-full lg:w-2/3 flex flex-col justify-between gap-6 relative">
-          <SearchBar onNavigate={onNavigate} isDj={isDj} />
+          <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+            <div className="flex-1">
+              <SearchBar onNavigate={onNavigate} isDj={isDj} />
+            </div>
+            <div className="flex-shrink-0">
+              <MicrophoneControl isDj={isDj} />
+            </div>
+          </div>
           <NowPlayingSection />
           {isDj && <ParticipantsList mode={mode} />}
           {!isDj && <ConnectedUsers mode={mode} isDarkMode={isDarkMode} />}
