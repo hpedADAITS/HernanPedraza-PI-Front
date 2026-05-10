@@ -31,7 +31,7 @@ export function VerifyEmail({ onNavigate }: Props) {
         if (response.data?.user) {
           setStatus('success');
           setMessage(
-            'Email verified! Redirecting to registration flow...',
+            'Email verified! You may close this window.',
           );
 
           /* Update localStorage with verified status */
@@ -45,11 +45,6 @@ export function VerifyEmail({ onNavigate }: Props) {
           
           /* Signal verification complete to register page via custom event */
           window.dispatchEvent(new CustomEvent('emailVerified', { detail: userData }));
-
-          /* Redirect to home after 2 seconds */
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 2000);
         }
       } catch (error) {
         setStatus('error');
