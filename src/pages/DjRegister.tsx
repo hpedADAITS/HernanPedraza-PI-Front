@@ -119,7 +119,7 @@ export function DjRegister({
         token: result.authToken || result.token,
         userId: result.user?._id || result.user?.id,
       });
-      const debugTokenToUse = result.emailVerificationToken || result.token;
+      const debugTokenToUse = result.emailVerificationToken;
       if (debugTokenToUse && typeof debugTokenToUse === 'string' && debugTokenToUse.split('.').length === 3) {
         setDebugToken(debugTokenToUse);
       }

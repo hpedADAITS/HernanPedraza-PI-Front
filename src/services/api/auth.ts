@@ -71,6 +71,6 @@ export const authAPI = {
     const data = await apiCall('/auth/verify-email', {
       method: 'POST',
     });
-    return data.data.user;
+    return data.data;
   },
 };

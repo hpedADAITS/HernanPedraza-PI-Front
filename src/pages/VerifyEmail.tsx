@@ -17,7 +17,9 @@ export function VerifyEmail({ onNavigate }: Props) {
   useEffect(() => {
     const verifyToken = async () => {
       /* Extract token from URL path: /verify-email/:token */
-      const URLtoken = new URL(window.location.href).pathname.split('/').pop();
+      const URLtoken = decodeURIComponent(
+        new URL(window.location.href).pathname.split('/').pop() || '',
+      );
 
       if (!URLtoken) {
         setStatus('error');
