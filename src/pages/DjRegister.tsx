@@ -119,9 +119,9 @@ export function DjRegister({
         token: result.authToken || result.token,
         userId: result.user?._id || result.user?.id,
       });
-      /* Capture debug token if present */
-      if (result.token && typeof result.token === 'string' && result.token.split('.').length === 3) {
-        setDebugToken(result.token);
+      const debugTokenToUse = result.emailVerificationToken || result.token;
+      if (debugTokenToUse && typeof debugTokenToUse === 'string' && debugTokenToUse.split('.').length === 3) {
+        setDebugToken(debugTokenToUse);
       }
       setShowEmailModal(true);
     } catch (error) {
