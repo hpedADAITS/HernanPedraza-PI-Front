@@ -42,17 +42,26 @@ export function DjRegister({
   const [registrationData, setRegistrationData] = useState<any>(null);
   const [debugToken, setDebugToken] = useState<string | undefined>(undefined);
 
-  /* Listen for email verification from external link */
+  /* Poll for email verification status */
   React.useEffect(() => {
-    const handleEmailVerified = () => {
-      /* Email was verified via link, auto-close email modal and show event ID modal */
-      setShowEmailModal(false);
-      setShowEventIdModal(true);
-    };
+    if (showEmailModal) {
+      const pollInterval = setInterval(async () => {
+        try {
+          const user = await authAPI.getCurrentUser();
+          if (user?.emailRegistered) {
+            /* Email was verified, auto-close email modal and show event ID modal */
+            setShowEmailModal(false);
+            setShowEventIdModal(true);
+            clearInterval(pollInterval);
+          }
+        } catch (error) {
+          /* Silently fail - user will manually trigger next step */
+        }
+      }, 2000); /* Poll every 2 seconds */
 
-    window.addEventListener('emailVerified', handleEmailVerified);
-    return () => window.removeEventListener('emailVerified', handleEmailVerified);
-  }, []);
+      return () => clearInterval(pollInterval);
+    }
+  }, [showEmailModal]);
 
   const validateForm = (): boolean => {
     if (

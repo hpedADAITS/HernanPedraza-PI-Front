@@ -30,10 +30,10 @@ export function VerifyEmail({ onNavigate }: Props) {
       try {
         const response = await authAPI.verifyEmailToken(URLtoken);
 
-        if (response.data?.user) {
+        if (response.data?.user && response.data.user.emailRegistered) {
           setStatus('success');
           setMessage(
-            'Email verified! You may close this window.',
+            'Email verified! Returning to registration...',
           );
 
           /* Update localStorage with verified status */
@@ -44,9 +44,6 @@ export function VerifyEmail({ onNavigate }: Props) {
             emailRegistered: true,
           };
           localStorage.setItem('user', JSON.stringify(userData));
-          
-          /* Signal verification complete to register page via custom event */
-          window.dispatchEvent(new CustomEvent('emailVerified', { detail: userData }));
         }
       } catch (error) {
         setStatus('error');
