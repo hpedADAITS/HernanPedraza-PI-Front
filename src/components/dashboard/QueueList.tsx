@@ -199,7 +199,7 @@ export function QueueList({
     }
 
     return () => {
-      socket.off('song_queued', handleQueued);
+      socket.off('song_approved', handleQueued);
       socket.off('song_now_playing', handleNowPlaying);
       socket.off('song_rejected', handleRejected);
       socket.off('song_skipped', handleSkipped);
@@ -372,7 +372,6 @@ function QueueItem({
           return;
         }
         await songsAPI.sendNow(eventId, songId);
-        socket.sendNowSong(eventId, songId);
         onSongRemoved(songId);
         toast.success(`Now playing "${song.title}"`);
       } else if (action === 'Reject' && eventId) {

@@ -93,9 +93,9 @@ export function useSongs() {
     setLoading(true);
     setError(null);
     try {
-      const data = await songsAPI.sendNow(eventId, songId);
+      const song = await songsAPI.sendNow(eventId, songId);
       setPendingSongs((prev) => prev.filter((s) => s._id !== songId));
-      return data;
+      return song;
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Failed to send song now';
@@ -126,24 +126,21 @@ export function useSongs() {
     [],
   );
 
-  const getSongPosition = useCallback(
-    async (eventId: string, songId: string) => {
-      setLoading(true);
-      setError(null);
-      try {
-        const data = await songsAPI.getSongPosition(eventId, songId);
-        return data;
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : 'Failed to get song position';
-        setError(message);
-        throw err;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [],
-  );
+  const getSongPosition = useCallback(async (songId: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await songsAPI.getSongPosition(songId);
+      return data;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to get song position';
+      setError(message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   return {
     queue,

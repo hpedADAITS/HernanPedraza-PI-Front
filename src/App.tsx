@@ -26,7 +26,11 @@ export default function App() {
 
     /* Check if we're on verify-email page */
     const pathname = window.location.pathname;
-    if (pathname.includes('/verify-email/')) {
+    const searchParams = new URLSearchParams(window.location.search);
+    if (
+      pathname.includes('/verify-email/') ||
+      Boolean(searchParams.get('verifyEmailToken'))
+    ) {
       setCurrentView('verify-email');
       return;
     }

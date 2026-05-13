@@ -35,7 +35,7 @@ export const songsAPI = {
     const data = await apiCall(`/songs/${eventId}/${songId}/send-now`, {
       method: 'POST',
     });
-    return data.data;
+    return data.data.song;
   },
 
   rejectSong: async (eventId: string, songId: string, reason: string) => {
@@ -54,8 +54,8 @@ export const songsAPI = {
     return data.data.song;
   },
 
-  getSongPosition: async (eventId: string, songId: string) => {
-    const data = await apiCall(`/songs/${eventId}/${songId}/position`);
+  getSongPosition: async (songId: string) => {
+    const data = await apiCall(`/songs/${songId}/position`);
     return data.data;
   },
 };

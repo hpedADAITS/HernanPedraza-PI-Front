@@ -18,6 +18,9 @@ export function EmailConfirmationModal({
   debugToken,
 }: EmailConfirmationModalProps) {
   const [status, setStatus] = useState<'sending' | 'sent' | 'timeout'>('sending');
+  const debugVerificationUrl = debugToken
+    ? `${window.location.origin}/?verifyEmailToken=${encodeURIComponent(debugToken)}`
+    : '';
 
   useEffect(() => {
     if (isOpen) {
@@ -128,14 +131,14 @@ export function EmailConfirmationModal({
                      <code className="block bg-white p-2 rounded border border-blue-300 break-all text-xs font-mono mb-2 cursor-pointer hover:bg-blue-100"
                       onClick={async () => {
                          try {
-                          await navigator.clipboard.writeText(`${window.location.origin}/verify-email/${debugToken}`);
+                          await navigator.clipboard.writeText(debugVerificationUrl);
                            alert('URL copied to clipboard!');
                          } catch (err) {
                            console.error('Failed to copy:', err);
                            alert('Failed to copy URL');
                          }
                        }}>
-                      {window.location.origin}/verify-email/{debugToken}
+                      {debugVerificationUrl}
                      </code>
                      <p className="text-xs text-blue-700">Click to copy and paste in browser</p>
                    </div>

@@ -16,10 +16,10 @@ export function VerifyEmail({ onNavigate }: Props) {
 
   useEffect(() => {
     const verifyToken = async () => {
-      /* Extract token from URL path: /verify-email/:token */
-      const URLtoken = decodeURIComponent(
-        new URL(window.location.href).pathname.split('/').pop() || '',
-      );
+      const url = new URL(window.location.href);
+      const queryToken = url.searchParams.get('verifyEmailToken');
+      const pathToken = url.pathname.split('/').pop() || '';
+      const URLtoken = decodeURIComponent(queryToken || pathToken);
 
       if (!URLtoken) {
         setStatus('error');

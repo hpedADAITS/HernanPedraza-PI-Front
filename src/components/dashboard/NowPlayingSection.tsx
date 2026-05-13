@@ -171,7 +171,7 @@ export function NowPlayingSection() {
     onQueueUpdated(handleQueueUpdated);
 
     return () => {
-      off('song_queued', handleSongQueued);
+      off('song_approved', handleSongQueued);
       off('song_now_playing', handleSongNowPlaying);
       off('song_rejected', handleSongRejected);
       off('song_skipped', handleSongSkipped);

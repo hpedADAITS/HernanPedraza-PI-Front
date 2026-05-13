@@ -59,8 +59,9 @@ export function onSongApproved(callback: (data: any) => void) {
   on('song_approved', callback);
 }
 
+/** @deprecated Usar onSongApproved; el servidor emite `song_approved`. */
 export function onSongQueued(callback: (data: any) => void) {
-  on('song_queued', callback);
+  on('song_approved', callback);
 }
 
 export function onSongNowPlaying(callback: (data: any) => void) {
