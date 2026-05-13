@@ -1,1 +1,0 @@
-export const FREQUENT_REQUEST_THRESHOLD = 5;

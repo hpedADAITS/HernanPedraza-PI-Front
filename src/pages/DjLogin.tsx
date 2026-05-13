@@ -53,12 +53,11 @@ export function DjLogin({
         }
 
         const eventId = event.id || event._id;
-        const eventCode = event.accessCode;
 
         localStorage.setItem(
           'currentEvent',
           JSON.stringify({
-            eventCode,
+            accessCode: event.accessCode,
             eventId,
             ownerName: displayName,
           }),
@@ -67,7 +66,7 @@ export function DjLogin({
         localStorage.setItem(
           'currentParticipant',
           JSON.stringify({
-            _id: result.user._id || result.user.id,
+            _id: result.user.id,
             nickname: displayName,
             eventId,
           }),

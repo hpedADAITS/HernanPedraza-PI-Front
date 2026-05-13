@@ -21,7 +21,7 @@ import {
   off,
   disconnectSocket,
 } from '@/services/socket';
-import { clearToken } from '@/services/api';
+import { clearToken, eventsAPI } from '@/services/api';
 import { useDarkMode } from '@/hooks/useDarkMode';
 import { toast } from 'sonner';
 
@@ -45,7 +45,6 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
       try {
         const parsed = JSON.parse(eventData);
         parsed.accessCode = newCode;
-        parsed.eventCode = newCode;
         localStorage.setItem('currentEvent', JSON.stringify(parsed));
       } catch {}
     }
@@ -71,17 +70,22 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
       } catch {}
     }
 
-    const handleConnect = () => {
+    const handleConnect = async () => {
       try {
         const eventParsed = JSON.parse(eventData);
         const participantParsed = JSON.parse(participantData);
 
         if (eventParsed.ownerName) setDjName(eventParsed.ownerName);
         if (eventParsed.joinedAt) setJoinedAt(new Date(eventParsed.joinedAt));
-        if (eventParsed.eventCode || eventParsed.accessCode) {
-          setAccessCode(eventParsed.eventCode || eventParsed.accessCode);
-        }
         if (eventParsed.eventId) setEventId(eventParsed.eventId);
+
+        // Fetch fresh event data from backend to get current accessCode
+        const freshEvent = await eventsAPI.getEvent(eventParsed.eventId);
+        if (freshEvent?.accessCode) {
+          setAccessCode(freshEvent.accessCode);
+          // Update localStorage with fresh accessCode
+          persistAccessCode(freshEvent.accessCode);
+        }
 
         joinEvent(
           eventParsed.eventId,
@@ -90,6 +94,13 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
         );
       } catch (error) {
         console.error('Error initializing dashboard:', error);
+        // Fallback to localStorage if backend fetch fails
+        try {
+          const eventParsed = JSON.parse(eventData);
+          if (eventParsed.accessCode) {
+            setAccessCode(eventParsed.accessCode);
+          }
+        } catch {}
       }
     };
 

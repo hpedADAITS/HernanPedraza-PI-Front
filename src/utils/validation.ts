@@ -89,17 +89,6 @@ export function validatePassword(password: string): {
 }
 
 /**
- * Display name validation (2-50 characters, alphanumeric + spaces)
- */
-export function isValidDisplayName(name: string): boolean {
-  if (name.length < 2 || name.length > 50) {
-    return false;
-  }
-
-  return /^[a-zA-Z0-9\s]+$/.test(name);
-}
-
-/**
  * Display name validation with message
  */
 export function validateDisplayName(name: string): {
@@ -124,7 +113,8 @@ export function validateDisplayName(name: string): {
     };
   }
 
-  if (!isValidDisplayName(name)) {
+  // Validate alphanumeric + spaces (2-50 chars)
+  if (name.length > 50 || !/^[a-zA-Z0-9\s]+$/.test(name)) {
     return {
       valid: false,
       message: 'Display name can only contain letters, numbers, and spaces',
