@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Mail, Check, Clock, AlertCircle, ArrowRight } from 'lucide-react';
+import { authAPI } from '@/services/api';
 
 interface EmailConfirmationModalProps {
   isOpen: boolean;
@@ -33,6 +34,25 @@ export function EmailConfirmationModal({
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && status === 'sent') {
+      const pollInterval = setInterval(async () => {
+        try {
+          const user = await authAPI.getCurrentUser();
+          if (user?.emailRegistered) {
+            setStatus('sent');
+            onContinue();
+            clearInterval(pollInterval);
+          }
+        } catch (error) {
+          /* Silently fail - user will manually verify or use debug link */
+        }
+      }, 3000); /* Poll every 3 seconds */
+
+      return () => clearInterval(pollInterval);
+    }
+  }, [isOpen, status, onContinue]);
 
   return (
     <AnimatePresence>
