@@ -136,4 +136,74 @@ describe('SongSelection attendee request form', () => {
       expect(approveSongMock).toHaveBeenCalledWith('event-1', 'song-1');
     });
   });
+
+  it('lets DJs reject a held song by releasing on the left side of the viewport', async () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      value: 900,
+    });
+    localStorage.setItem('currentEvent', JSON.stringify({ eventId: 'event-1' }));
+    getPendingSongsMock.mockResolvedValue([
+      {
+        _id: 'song-1',
+        title: 'Left side song',
+        artist: 'Test artist',
+        voteScore: 0,
+        status: 'pending',
+        requestedBy: { _id: 'user-1', nickname: 'Taylor' },
+        eventId: 'event-1',
+      },
+    ]);
+    rejectSongMock.mockResolvedValue(undefined);
+
+    render(<SongSelection mode="dj" onNavigate={vi.fn()} />);
+
+    const songCard = await screen.findByRole('button', {
+      name: /decide left side song\. swipe right to approve or left to reject\./i,
+    });
+
+    fireEvent.pointerDown(songCard, { clientX: 450, clientY: 200, pointerId: 1 });
+    fireEvent.pointerMove(songCard, { clientX: 120, clientY: 206, pointerId: 1 });
+    fireEvent.pointerUp(songCard, { clientX: 70, clientY: 206, pointerId: 1 });
+
+    await waitFor(() => {
+      expect(rejectSongMock).toHaveBeenCalledWith(
+        'event-1',
+        'song-1',
+        'Rejected by DJ',
+      );
+    });
+  });
+
+  it('keeps vertical scrolling from deciding a DJ song', async () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      value: 900,
+    });
+    localStorage.setItem('currentEvent', JSON.stringify({ eventId: 'event-1' }));
+    getPendingSongsMock.mockResolvedValue([
+      {
+        _id: 'song-1',
+        title: 'Scroll song',
+        artist: 'Test artist',
+        voteScore: 0,
+        status: 'pending',
+        requestedBy: { _id: 'user-1', nickname: 'Taylor' },
+        eventId: 'event-1',
+      },
+    ]);
+
+    render(<SongSelection mode="dj" onNavigate={vi.fn()} />);
+
+    const songCard = await screen.findByRole('button', {
+      name: /decide scroll song\. swipe right to approve or left to reject\./i,
+    });
+
+    fireEvent.pointerDown(songCard, { clientX: 450, clientY: 200, pointerId: 1 });
+    fireEvent.pointerMove(songCard, { clientX: 456, clientY: 270, pointerId: 1 });
+    fireEvent.pointerUp(songCard, { clientX: 70, clientY: 270, pointerId: 1 });
+
+    expect(approveSongMock).not.toHaveBeenCalled();
+    expect(rejectSongMock).not.toHaveBeenCalled();
+  });
 });

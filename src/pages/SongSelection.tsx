@@ -199,6 +199,15 @@ function DjSongCard({
   const pointerLockRef = React.useRef<'x' | 'y' | null>(null);
   const [showOverlay, setShowOverlay] = useState(false);
 
+  const releasePointerCapture = (
+    target: HTMLDivElement,
+    pointerId: number,
+  ) => {
+    if (target.hasPointerCapture?.(pointerId)) {
+      target.releasePointerCapture(pointerId);
+    }
+  };
+
   const getSwipeExitX = (direction: 'left' | 'right') => {
     if (typeof window === 'undefined') {
       return direction === 'right' ? 420 : -420;
@@ -299,9 +308,7 @@ function DjSongCard({
     pointerLockRef.current = null;
     setShowOverlay(false);
 
-    if (e.currentTarget.releasePointerCapture) {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    }
+    releasePointerCapture(e.currentTarget, e.pointerId);
 
     if (lockedAxis !== 'x' || isProcessing) {
       return;
@@ -323,9 +330,7 @@ function DjSongCard({
     pointerLockRef.current = null;
     setShowOverlay(false);
 
-    if (e.currentTarget.releasePointerCapture) {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    }
+    releasePointerCapture(e.currentTarget, e.pointerId);
 
     animate(x, 0, {
       duration: 0.14,
