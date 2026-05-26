@@ -1,6 +1,14 @@
 import { apiCall } from './client';
 
 export const participantsAPI = {
+  validateNickname: async (nickname: string) => {
+    const data = await apiCall('/participants/nickname/validate', {
+      method: 'POST',
+      body: JSON.stringify({ nickname }),
+    });
+    return data.data;
+  },
+
   joinEvent: async (
     eventId: string,
     nickname: string,

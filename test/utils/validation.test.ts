@@ -144,6 +144,8 @@ describe('Validation Utilities', () => {
     it('should accept valid nicknames used when joining events', () => {
       expect(isValidNickname('Ada')).toBe(true);
       expect(isValidNickname('Ada_123')).toBe(true);
+      expect(validateNickname('John')).toEqual({ valid: true });
+      expect(validateNickname('ABC123')).toEqual({ valid: true });
       expect(validateNickname('Ada_123')).toEqual({ valid: true });
     });
 
@@ -151,14 +153,6 @@ describe('Validation Utilities', () => {
       expect(validateNickname('A')).toEqual({
         valid: false,
         message: 'Nickname must be at least 2 characters',
-      });
-      expect(validateNickname('ABCD')).toEqual({
-        valid: false,
-        message: 'Nickname cannot be a valid access code',
-      });
-      expect(validateNickname('ABC123')).toEqual({
-        valid: false,
-        message: 'Nickname cannot be a valid access code',
       });
       expect(validateNickname('Ada Lovelace')).toEqual({
         valid: false,

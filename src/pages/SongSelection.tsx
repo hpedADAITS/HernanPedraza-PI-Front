@@ -35,6 +35,7 @@ interface DjSongCardProps {
 
 const SWIPE_ACTION_THRESHOLD = 110;
 const SWIPE_EXIT_PADDING = 96;
+const DECISION_SIDE_RATIO = 0.34;
 
 function getLocalStorageIds() {
   const eventData = readStoredJson<{ eventId?: string }>('currentEvent');
@@ -207,22 +208,35 @@ function DjSongCard({
     return direction === 'right' ? exitDistance : -exitDistance;
   };
 
-  const finishSwipe = async (offsetX: number) => {
+  const getReleaseDirection = (clientX: number) => {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
+    const sideWidth = window.innerWidth * DECISION_SIDE_RATIO;
+    if (clientX <= sideWidth) return 'left';
+    if (clientX >= window.innerWidth - sideWidth) return 'right';
+    return null;
+  };
+
+  const finishDecision = async (direction: 'left' | 'right') => {
+    animate(x, getSwipeExitX(direction), {
+      duration: 0.18,
+      ease: 'linear',
+    });
+
+    if (direction === 'right') {
+      await onApprove();
+    } else {
+      await onReject();
+    }
+
+    x.set(0);
+  };
+
+  const finishKeyboardSwipe = async (offsetX: number) => {
     if (Math.abs(offsetX) >= SWIPE_ACTION_THRESHOLD) {
-      const direction = offsetX > 0 ? 'right' : 'left';
-
-      animate(x, getSwipeExitX(direction), {
-        duration: 0.18,
-        ease: 'linear',
-      });
-
-      if (direction === 'right') {
-        await onApprove();
-      } else {
-        await onReject();
-      }
-
-      x.set(0);
+      await finishDecision(offsetX > 0 ? 'right' : 'left');
       return;
     }
 
@@ -239,7 +253,10 @@ function DjSongCard({
 
     pointerStartRef.current = { x: e.clientX, y: e.clientY };
     pointerLockRef.current = null;
-    setShowOverlay(true);
+
+    if (e.currentTarget.setPointerCapture) {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    }
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -270,28 +287,46 @@ function DjSongCard({
     }
 
     e.preventDefault();
+    setShowOverlay(true);
     x.set(deltaX);
   };
 
-  const handlePointerUp = async () => {
+  const handlePointerUp = async (e: React.PointerEvent<HTMLDivElement>) => {
     const lockedAxis = pointerLockRef.current;
-    const offsetX = x.get();
+    const direction = getReleaseDirection(e.clientX);
 
     pointerStartRef.current = null;
     pointerLockRef.current = null;
     setShowOverlay(false);
+
+    if (e.currentTarget.releasePointerCapture) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
 
     if (lockedAxis !== 'x' || isProcessing) {
       return;
     }
 
-    await finishSwipe(offsetX);
+    if (direction) {
+      await finishDecision(direction);
+      return;
+    }
+
+    animate(x, 0, {
+      duration: 0.14,
+      ease: 'easeOut',
+    });
   };
 
-  const handlePointerCancel = () => {
+  const handlePointerCancel = (e: React.PointerEvent<HTMLDivElement>) => {
     pointerStartRef.current = null;
     pointerLockRef.current = null;
     setShowOverlay(false);
+
+    if (e.currentTarget.releasePointerCapture) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+
     animate(x, 0, {
       duration: 0.14,
       ease: 'easeOut',
@@ -307,12 +342,12 @@ function DjSongCard({
 
     if (e.key === 'ArrowRight') {
       e.preventDefault();
-      await finishSwipe(SWIPE_ACTION_THRESHOLD);
+      await finishKeyboardSwipe(SWIPE_ACTION_THRESHOLD);
     }
 
     if (e.key === 'ArrowLeft') {
       e.preventDefault();
-      await finishSwipe(-SWIPE_ACTION_THRESHOLD);
+      await finishKeyboardSwipe(-SWIPE_ACTION_THRESHOLD);
     }
   };
 

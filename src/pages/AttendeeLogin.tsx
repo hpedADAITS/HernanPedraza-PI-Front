@@ -69,12 +69,14 @@ export function AttendeeLogin({
   const scanningRef = useRef(true);
   const isAccessCodeVerified = Boolean(state.verifiedEvent);
 
-  const ensureNicknameAllowed = () => {
+  const ensureNicknameAllowed = async () => {
     const result = validateNickname(state.nickname.trim());
 
     if (!result.valid) {
       throw new Error(result.message || 'Invalid nickname');
     }
+
+    await participantsAPI.validateNickname(state.nickname.trim());
   };
 
   useEffect(() => {
@@ -171,7 +173,7 @@ export function AttendeeLogin({
         throw new Error('Please enter both event code and nickname');
       }
 
-      ensureNicknameAllowed();
+      await ensureNicknameAllowed();
 
       let event;
       try {
@@ -204,7 +206,7 @@ export function AttendeeLogin({
         throw new Error('Please enter a valid access code first');
       }
 
-      ensureNicknameAllowed();
+      await ensureNicknameAllowed();
 
       const tempEmail = `attendee_${Date.now()}@syncrekuest.local`;
       const tempPassword = Math.random().toString(36).substring(2, 15);
