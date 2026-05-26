@@ -24,6 +24,21 @@ interface DebugAccount {
 interface DebugAccountsResult {
   createdAt: string;
   validatedAgainstMongo: boolean;
+  event?: {
+    id: string;
+    name: string;
+    eventId: string;
+    accessCode: string;
+    state: string;
+    ownerId: string;
+    ownerName: string;
+  };
+  attendeeLogin?: {
+    nickname: string;
+    accessCode: string;
+    password: string;
+    participantId: string;
+  };
   accounts: DebugAccount[];
 }
 
@@ -136,6 +151,13 @@ function writeDebugWindow(target: Window, body: string) {
             color: #166534;
             font-weight: 700;
           }
+          .login {
+            border: 1px solid #86efac;
+            border-radius: 8px;
+            background: #f0fdf4;
+            margin-bottom: 16px;
+            padding: 16px;
+          }
         </style>
       </head>
       <body>
@@ -152,6 +174,37 @@ function renderAccountsWindow(result: DebugAccountsResult) {
       Created ${escapeHtml(result.createdAt)}.
       <span class="status">Validated against MongoDB: ${result.validatedAgainstMongo ? 'yes' : 'no'}</span>
     </p>
+    ${
+      result.attendeeLogin && result.event
+        ? `
+          <section class="login">
+            <span class="role">ATTENDEE GUI LOGIN</span>
+            <dl>
+              <div>
+                <dt>Nickname</dt>
+                <dd>${escapeHtml(result.attendeeLogin.nickname)}</dd>
+              </div>
+              <div>
+                <dt>Access Code</dt>
+                <dd>${escapeHtml(result.attendeeLogin.accessCode)}</dd>
+              </div>
+              <div>
+                <dt>Nickname Password</dt>
+                <dd>${escapeHtml(result.attendeeLogin.password)}</dd>
+              </div>
+              <div>
+                <dt>Mock Event</dt>
+                <dd>${escapeHtml(result.event.name)} (${escapeHtml(result.event.state)})</dd>
+              </div>
+              <div>
+                <dt>DJ</dt>
+                <dd>${escapeHtml(result.event.ownerName)}</dd>
+              </div>
+            </dl>
+          </section>
+        `
+        : ''
+    }
     <div class="grid">
       ${result.accounts
         .map(
