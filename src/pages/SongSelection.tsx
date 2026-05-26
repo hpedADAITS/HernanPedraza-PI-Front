@@ -8,6 +8,7 @@ import { UserAvatar } from '@/components/common';
 import { useDarkMode } from '@/hooks/useDarkMode';
 import { songsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
+import { listenDebugSongEvents } from '@/utils/debugSongEvents';
 import { readStoredJson } from '@/utils/storage';
 import type { NavigateToView } from '@/types';
 
@@ -477,10 +478,18 @@ export function SongSelection({ mode, onNavigate }: Props) {
       /* Socket not initialized yet */
     }
 
+    const stopDebugEvents = listenDebugSongEvents(({ type, payload }) => {
+      if (type === 'song_suggested') handleSongSuggested(payload);
+      if (type === 'song_approved' || type === 'song_rejected') {
+        removePendingSong(payload);
+      }
+    });
+
     return () => {
       socket.off('song_suggested', handleSongSuggested);
       socket.off('song_approved', removePendingSong);
       socket.off('song_rejected', removePendingSong);
+      stopDebugEvents();
     };
   }, [eventId, isDj]);
 

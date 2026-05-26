@@ -1,5 +1,6 @@
 export type SongStatus =
   | 'PENDING'
+  | 'APPROVED'
   | 'QUEUED'
   | 'PLAYING'
   | 'PLAYED'
@@ -12,6 +13,7 @@ export interface Song {
   artist: string;
   voteScore: number;
   status: SongStatus | string;
+  totalDuration?: number;
   duration?: number;
   queuePosition?: number;
   approvedAt?: string;
@@ -25,6 +27,7 @@ export interface NowPlayingMeta {
   songId: string;
   title: string;
   artist: string;
+  totalDuration?: number;
   duration: number;
   playingStartedAt: string;
   elapsedTime?: number;

@@ -3,10 +3,9 @@ import { motion } from 'motion/react';
 import { NowPlaying } from '@/components/common';
 import { NOW_PLAYING } from '@/constants/dashboard';
 import { SCALE_IN } from '@/constants/animations';
-import { initSocket, onSongQueued, onSongNowPlaying, onSongRejected, onSongSkipped, onQueueUpdated, off,  } from '@/services/socket';
+import { initSocket, onSongQueued, onSongNowPlaying, onSongRejected, onSongSkipped, onQueueUpdated, onSongSuggested, off,  } from '@/services/socket';
 import { songsAPI } from '@/services/api';
-import { DEBUG_EVENT_NAME } from '@/components/debug/SongCardDebugModal';
-import { isDebugModeEnabled } from '@/utils/debugMode';
+import { listenDebugSongEvents } from '@/utils/debugSongEvents';
 import { readStoredJson } from '@/utils/storage';
 import type { Song } from '@/types/songs';
 
@@ -37,7 +36,13 @@ function formatTime(totalSeconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
+function getSongDuration(song?: Partial<Song> | null): number | undefined {
+  const duration = song?.totalDuration ?? song?.duration;
+  return Number.isFinite(duration) && duration != null ? duration : undefined;
+}
+
 function toPlayerSong(song: Song): NowPlayingSong {
+  const duration = getSongDuration(song);
   return {
     id: song._id,
     title: song.title || 'Queued Song',
@@ -45,8 +50,8 @@ function toPlayerSong(song: Song): NowPlayingSong {
     status: song.status === 'PLAYING' ? 'playing' : 'queued',
     progress: 0,
     currentTime: '0:00',
-    duration: song.duration ? formatTime(song.duration) : '0:00',
-    durationSec: song.duration || 0,
+    duration: duration ? formatTime(duration) : undefined,
+    durationSec: duration,
     startedAt: song.playingStartedAt
       ? new Date(song.playingStartedAt).getTime()
       : undefined,
@@ -82,7 +87,7 @@ interface NowPlayingSectionState {
 
 type NowPlayingSectionAction =
   | { type: 'initialize'; queue: Song[]; nowPlaying: NowPlayingSong | null }
-  | { type: 'song_queued'; payload: any }
+  | { type: 'song_queued'; payload: any; fallbackStatus?: string }
   | { type: 'song_now_playing'; payload: any }
   | {
       type: 'song_status';
@@ -111,8 +116,9 @@ function nowPlayingSectionReducer(
         title: data.title || 'Queued',
         artist: data.artist || '',
         voteScore: data.voteScore || 0,
-        status: 'QUEUED',
-        duration: data.duration,
+        status: data.status || action.fallbackStatus || 'APPROVED',
+        duration: data.totalDuration ?? data.duration,
+        totalDuration: data.totalDuration ?? data.duration,
         queuePosition: data.queuePosition,
         requestedBy: data.requestedBy,
       };
@@ -141,8 +147,10 @@ function nowPlayingSectionReducer(
           status: 'playing',
           progress: 0,
           currentTime: '0:00',
-          duration: data.duration ? formatTime(data.duration) : '0:00',
-          durationSec: data.duration,
+          duration: data.totalDuration || data.duration
+            ? formatTime(data.totalDuration ?? data.duration)
+            : undefined,
+          durationSec: data.totalDuration ?? data.duration,
           startedAt,
         },
         queue: state.queue.filter((song) => song._id !== data.songId),
@@ -183,17 +191,19 @@ function nowPlayingSectionReducer(
               title: data.nowPlaying.title,
               artist: data.nowPlaying.artist,
               status: 'playing' as const,
-              progress: data.nowPlaying.duration
+              progress: (data.nowPlaying.totalDuration ?? data.nowPlaying.duration)
                 ? Math.min(
                     100,
                     ((data.nowPlaying.elapsedTime || 0) /
-                      data.nowPlaying.duration) *
+                      (data.nowPlaying.totalDuration ?? data.nowPlaying.duration)) *
                       100,
                   )
                 : 0,
               currentTime: formatTime(data.nowPlaying.elapsedTime || 0),
-              duration: formatTime(data.nowPlaying.duration || 0),
-              durationSec: data.nowPlaying.duration,
+              duration: data.nowPlaying.totalDuration || data.nowPlaying.duration
+                ? formatTime(data.nowPlaying.totalDuration ?? data.nowPlaying.duration)
+                : undefined,
+              durationSec: data.nowPlaying.totalDuration ?? data.nowPlaying.duration,
               startedAt: data.nowPlaying.playingStartedAt
                 ? new Date(data.nowPlaying.playingStartedAt).getTime()
                 : Date.now() - (data.nowPlaying.elapsedTime || 0) * 1000,
@@ -315,6 +325,10 @@ export function NowPlayingSection() {
       dispatch({ type: 'song_queued', payload: data });
     };
 
+    const handleSongSuggested = (data: any) => {
+      dispatch({ type: 'song_queued', payload: data, fallbackStatus: 'PENDING' });
+    };
+
     const handleSongNowPlaying = (data: any) => {
       dispatch({ type: 'song_now_playing', payload: data });
     };
@@ -332,31 +346,29 @@ export function NowPlayingSection() {
     };
 
     onSongQueued(handleSongQueued);
+    onSongSuggested(handleSongSuggested);
     onSongNowPlaying(handleSongNowPlaying);
     onSongRejected(handleSongRejected);
     onSongSkipped(handleSongSkipped);
     onQueueUpdated(handleQueueUpdated);
 
-    const handleDebugSongEvent = (event: Event) => {
-      const { type, payload } = (event as CustomEvent).detail || {};
+    const stopDebugEvents = listenDebugSongEvents(({ type, payload }) => {
+      if (type === 'song_suggested') handleSongSuggested(payload);
       if (type === 'song_approved') handleSongQueued(payload);
       if (type === 'song_now_playing') handleSongNowPlaying(payload);
       if (type === 'song_rejected') handleSongRejected(payload);
       if (type === 'song_skipped') handleSongSkipped(payload);
       if (type === 'queue_updated') handleQueueUpdated(payload);
-    };
-
-    if (isDebugModeEnabled()) {
-      window.addEventListener(DEBUG_EVENT_NAME, handleDebugSongEvent);
-    }
+    });
 
     return () => {
+      off('song_suggested', handleSongSuggested);
       off('song_approved', handleSongQueued);
       off('song_now_playing', handleSongNowPlaying);
       off('song_rejected', handleSongRejected);
       off('song_skipped', handleSongSkipped);
       off('queue_updated', handleQueueUpdated);
-      window.removeEventListener(DEBUG_EVENT_NAME, handleDebugSongEvent);
+      stopDebugEvents();
     };
   }, [eventId]);
 
@@ -429,7 +441,7 @@ export function NowPlayingSection() {
                     wait = Math.max(0, state.nowPlaying.durationSec - elapsed);
                   }
                   for (const song of sorted.slice(0, Math.max(0, previewIndex))) {
-                    wait += song.duration || 0;
+                    wait += getSongDuration(song) || 0;
                   }
                   return wait <= 0
                     ? 'Up Next'

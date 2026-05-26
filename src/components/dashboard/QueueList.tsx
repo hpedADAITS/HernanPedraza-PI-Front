@@ -13,8 +13,7 @@ import { THEME_CONFIG } from '@/constants/dashboard';
 import { SLIDE_UP, ANIMATION_DURATION } from '@/constants/animations';
 import { songsAPI, eventsAPI, participantsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
-import { DEBUG_EVENT_NAME } from '@/components/debug/SongCardDebugModal';
-import { isDebugModeEnabled } from '@/utils/debugMode';
+import { listenDebugSongEvents } from '@/utils/debugSongEvents';
 import { readStoredJson } from '@/utils/storage';
 import type { Song } from '@/types/songs';
 
@@ -26,6 +25,11 @@ function formatWait(totalSeconds: number): string {
   const s = safe % 60;
   if (m === 0) return `${s}s`;
   return `${m}m ${s.toString().padStart(2, '0')}s`;
+}
+
+function getSongDuration(song?: Partial<Song> | null): number | undefined {
+  const duration = song?.totalDuration ?? song?.duration;
+  return Number.isFinite(duration) && duration != null ? duration : undefined;
 }
 
 interface QueueListProps {
@@ -43,6 +47,7 @@ interface QueueState {
   nowPlaying: {
     songId: string;
     duration: number;
+    totalDuration?: number;
     startedAt: number;
   } | null;
 }
@@ -63,6 +68,7 @@ function getNowPlayingSnapshot(
   nowPlaying?: {
     songId?: string;
     duration?: number;
+    totalDuration?: number;
     playingStartedAt?: string;
     elapsedTime?: number;
   } | null,
@@ -71,7 +77,8 @@ function getNowPlayingSnapshot(
 
   return {
     songId: nowPlaying.songId,
-    duration: nowPlaying.duration || 0,
+    duration: nowPlaying.totalDuration ?? nowPlaying.duration ?? 0,
+    totalDuration: nowPlaying.totalDuration ?? nowPlaying.duration,
     startedAt: nowPlaying.playingStartedAt
       ? new Date(nowPlaying.playingStartedAt).getTime()
       : Date.now() - (nowPlaying.elapsedTime || 0) * 1000,
@@ -167,7 +174,8 @@ export function QueueList({
           nowPlaying: playing
             ? {
                 songId: playing._id,
-                duration: playing.duration || 0,
+                duration: getSongDuration(playing) || 0,
+                totalDuration: getSongDuration(playing),
                 startedAt: playing.playingStartedAt
                   ? new Date(playing.playingStartedAt).getTime()
                   : Date.now(),
@@ -188,21 +196,23 @@ export function QueueList({
   }, [propEventId, propParticipantId]);
 
   useEffect(() => {
-    const handleQueued = (data: any) => {
-      /* Song was approved into the queue. Add or update. */
+    const upsertSong = (data: any, status: string) => {
       if (!data?.songId) return;
       setQueueState((current) => {
-        const exists = current.songs.some((song) => song._id === data.songId);
         const incoming: Song = {
           _id: data.songId,
-          title: data.title,
-          artist: data.artist,
-          voteScore: 0,
-          status: 'QUEUED',
-          duration: data.duration,
+          title: data.title || 'Untitled song',
+          artist: data.artist || 'Unknown artist',
+          voteScore: data.voteScore || 0,
+          status: data.status || status,
+          duration: data.totalDuration ?? data.duration,
+          totalDuration: data.totalDuration ?? data.duration,
           queuePosition: data.queuePosition,
-          requestedBy: data.requestedBy,
+          requestedBy: data.requestedBy || null,
+          eventId: data.eventId || current.resolvedEventId || undefined,
         };
+        const exists = current.songs.some((song) => song._id === data.songId);
+
         return {
           ...current,
           songs: exists
@@ -213,6 +223,15 @@ export function QueueList({
         };
       });
     };
+
+    const handleSuggested = (data: any) => {
+      upsertSong(data, 'PENDING');
+    };
+
+    const handleQueued = (data: any) => {
+      /* Song was approved into the queue. Add or update. */
+      upsertSong(data, 'APPROVED');
+    };
     const handleNowPlaying = (data: any) => {
       if (!data?.songId) return;
       removeSong(data.songId);
@@ -220,7 +239,8 @@ export function QueueList({
         ...current,
         nowPlaying: {
           songId: data.songId,
-          duration: data.duration || 0,
+          duration: data.totalDuration ?? data.duration ?? 0,
+          totalDuration: data.totalDuration ?? data.duration,
           startedAt: data.playingStartedAt
             ? new Date(data.playingStartedAt).getTime()
             : Date.now(),
@@ -266,13 +286,23 @@ export function QueueList({
     const handleQueueUpdated = (data: any) => {
       setQueueState((current) => ({
         ...current,
-        songs: Array.isArray(data?.queue) ? data.queue : current.songs,
+        songs: Array.isArray(data?.queue)
+          ? [
+              ...data.queue,
+              ...current.songs.filter(
+                (song) =>
+                  song.status === 'PENDING' &&
+                  !data.queue.some((queued: Song) => queued._id === song._id),
+              ),
+            ]
+          : current.songs,
         nowPlaying: getNowPlayingSnapshot(data?.nowPlaying) ?? current.nowPlaying,
       }));
     };
 
     try {
       socket.onSongQueued(handleQueued);
+      socket.onSongSuggested(handleSuggested);
       socket.onSongNowPlaying(handleNowPlaying);
       socket.onSongRejected(handleRejected);
       socket.onSongSkipped(handleSkipped);
@@ -282,27 +312,25 @@ export function QueueList({
       /* Socket not initialized yet — listeners will be missed, but no crash */
     }
 
-    const handleDebugSongEvent = (event: Event) => {
-      const { type, payload } = (event as CustomEvent).detail || {};
+    const stopDebugEvents = listenDebugSongEvents(({ type, payload }) => {
+      if (type === 'song_suggested') handleSuggested(payload);
       if (type === 'song_approved') handleQueued(payload);
       if (type === 'song_now_playing') handleNowPlaying(payload);
       if (type === 'song_rejected') handleRejected(payload);
       if (type === 'song_skipped') handleSkipped(payload);
       if (type === 'queue_updated') handleQueueUpdated(payload);
-    };
-
-    if (isDebugModeEnabled()) {
-      window.addEventListener(DEBUG_EVENT_NAME, handleDebugSongEvent);
-    }
+      if (type === 'votes_updated') handleVotesUpdated(payload);
+    });
 
     return () => {
+      socket.off('song_suggested', handleSuggested);
       socket.off('song_approved', handleQueued);
       socket.off('song_now_playing', handleNowPlaying);
       socket.off('song_rejected', handleRejected);
       socket.off('song_skipped', handleSkipped);
       socket.off('votes_updated', handleVotesUpdated);
       socket.off('queue_updated', handleQueueUpdated);
-      window.removeEventListener(DEBUG_EVENT_NAME, handleDebugSongEvent);
+      stopDebugEvents();
     };
   }, [removeSong]);
 
@@ -332,13 +360,15 @@ export function QueueList({
         0,
         (Date.now() - queueState.nowPlaying.startedAt) / 1000,
       );
-      cumulative = Math.max(0, queueState.nowPlaying.duration - elapsed);
+      const duration =
+        queueState.nowPlaying.totalDuration ?? queueState.nowPlaying.duration;
+      cumulative = duration == null ? 0 : Math.max(0, duration - elapsed);
     }
     void tick; // dependency for live update
     for (const s of sortedSongs) {
       if (s.status === 'PLAYING') continue;
       map.set(s._id, cumulative);
-      cumulative += s.duration || 0;
+      cumulative += getSongDuration(s) || 0;
     }
     return map;
   }, [sortedSongs, queueState.nowPlaying, mode, tick]);

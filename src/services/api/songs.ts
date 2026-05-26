@@ -6,10 +6,11 @@ export const songsAPI = {
     participantId: string,
     title: string,
     artist: string,
+    totalDuration?: number,
   ) => {
     const data = await apiCall(`/songs/${eventId}/suggest`, {
       method: 'POST',
-      body: JSON.stringify({ participantId, title, artist }),
+      body: JSON.stringify({ participantId, title, artist, totalDuration }),
     });
     return data.data.song;
   },
