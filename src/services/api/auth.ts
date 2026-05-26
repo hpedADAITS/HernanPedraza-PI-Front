@@ -73,4 +73,11 @@ export const authAPI = {
     });
     return data.data;
   },
+
+  createDebugMockAccounts: async () => {
+    const data = await apiCall('/debug/mock-accounts', {
+      method: 'POST',
+    });
+    return data.data;
+  },
 };

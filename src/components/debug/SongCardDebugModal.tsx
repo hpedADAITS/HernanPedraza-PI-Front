@@ -1,14 +1,31 @@
 import React, { useMemo, useState } from 'react';
-import { Bug, X } from 'lucide-react';
+import { Bug, ExternalLink, KeyRound, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { toast } from 'sonner';
 import { isDebugModeEnabled } from '@/utils/debugMode';
 import { readStoredJson } from '@/utils/storage';
+import { authAPI } from '@/services/api';
 
 type DebugTrigger = 'queue' | 'playing' | 'rejected' | 'skipped';
 
 const DEBUG_EVENT_NAME = 'syncrekuest:debug-song-event';
 const COOLDOWN_MS = 5000;
+
+interface DebugAccount {
+  id: string;
+  email: string;
+  password: string;
+  displayName: string;
+  role: 'DJ' | 'ATTENDEE';
+  emailRegistered: boolean;
+  token: string;
+}
+
+interface DebugAccountsResult {
+  createdAt: string;
+  validatedAgainstMongo: boolean;
+  accounts: DebugAccount[];
+}
 
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -33,9 +50,152 @@ function dispatchDebugSongEvent(type: string, payload: Record<string, any>) {
   );
 }
 
+function escapeHtml(value: unknown) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function writeDebugWindow(target: Window, body: string) {
+  target.document.open();
+  target.document.write(`<!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Debug Mock Accounts</title>
+        <style>
+          :root {
+            color-scheme: light;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+          }
+          body {
+            margin: 0;
+            padding: 28px;
+          }
+          main {
+            max-width: 860px;
+            margin: 0 auto;
+          }
+          h1 {
+            margin: 0 0 8px;
+            font-size: 24px;
+            line-height: 1.2;
+          }
+          .meta {
+            margin: 0 0 20px;
+            color: #475569;
+            font-size: 14px;
+          }
+          .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 14px;
+          }
+          .card {
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background: white;
+            padding: 16px;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+          }
+          .role {
+            display: inline-flex;
+            margin-bottom: 12px;
+            border-radius: 999px;
+            background: #0f172a;
+            color: white;
+            padding: 4px 9px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+          }
+          dl {
+            margin: 0;
+            display: grid;
+            gap: 10px;
+          }
+          dt {
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+          }
+          dd {
+            margin: 3px 0 0;
+            overflow-wrap: anywhere;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+            font-size: 13px;
+          }
+          .status {
+            color: #166534;
+            font-weight: 700;
+          }
+        </style>
+      </head>
+      <body>
+        <main>${body}</main>
+      </body>
+    </html>`);
+  target.document.close();
+}
+
+function renderAccountsWindow(result: DebugAccountsResult) {
+  return `
+    <h1>Debug Mock Accounts</h1>
+    <p class="meta">
+      Created ${escapeHtml(result.createdAt)}.
+      <span class="status">Validated against MongoDB: ${result.validatedAgainstMongo ? 'yes' : 'no'}</span>
+    </p>
+    <div class="grid">
+      ${result.accounts
+        .map(
+          (account) => `
+            <section class="card">
+              <span class="role">${escapeHtml(account.role)}</span>
+              <dl>
+                <div>
+                  <dt>Name</dt>
+                  <dd>${escapeHtml(account.displayName)}</dd>
+                </div>
+                <div>
+                  <dt>Email</dt>
+                  <dd>${escapeHtml(account.email)}</dd>
+                </div>
+                <div>
+                  <dt>Password</dt>
+                  <dd>${escapeHtml(account.password)}</dd>
+                </div>
+                <div>
+                  <dt>Email Verified</dt>
+                  <dd>${account.emailRegistered ? 'true' : 'false'}</dd>
+                </div>
+                <div>
+                  <dt>User ID</dt>
+                  <dd>${escapeHtml(account.id)}</dd>
+                </div>
+                <div>
+                  <dt>Token</dt>
+                  <dd>${escapeHtml(account.token)}</dd>
+                </div>
+              </dl>
+            </section>
+          `,
+        )
+        .join('')}
+    </div>
+  `;
+}
+
 export function SongCardDebugModal() {
   const [open, setOpen] = useState(false);
   const [running, setRunning] = useState(false);
+  const [creatingAccounts, setCreatingAccounts] = useState(false);
   const [selected, setSelected] = useState<Record<DebugTrigger, boolean>>({
     queue: true,
     playing: true,
@@ -161,6 +321,35 @@ export function SongCardDebugModal() {
     }
   };
 
+  const openMockAccountsWindow = async () => {
+    const accountWindow = window.open('', '_blank');
+    if (!accountWindow) {
+      toast.error('Allow popups to open the debug accounts window');
+      return;
+    }
+
+    writeDebugWindow(
+      accountWindow,
+      '<h1>Debug Mock Accounts</h1><p class="meta">Creating accounts in MongoDB...</p>',
+    );
+
+    setCreatingAccounts(true);
+    try {
+      const result = await authAPI.createDebugMockAccounts();
+      writeDebugWindow(accountWindow, renderAccountsWindow(result));
+      toast.success('Debug accounts created and validated');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      writeDebugWindow(
+        accountWindow,
+        `<h1>Debug Mock Accounts</h1><p class="meta">Failed: ${escapeHtml(message)}</p>`,
+      );
+      toast.error(message);
+    } finally {
+      setCreatingAccounts(false);
+    }
+  };
+
   return (
     <>
       <button
@@ -229,6 +418,24 @@ export function SongCardDebugModal() {
                 )}
               >
                 {running ? 'Running…' : 'Run selected'}
+              </button>
+            </div>
+
+            <div className="mt-4 border-t border-slate-200 pt-4">
+              <button
+                type="button"
+                onClick={openMockAccountsWindow}
+                disabled={creatingAccounts}
+                className={clsx(
+                  'flex w-full items-center justify-center gap-2 rounded border border-slate-300 px-3 py-2 text-sm font-semibold',
+                  creatingAccounts
+                    ? 'cursor-wait bg-slate-100 text-slate-400'
+                    : 'bg-white text-slate-900 hover:bg-slate-50',
+                )}
+              >
+                <KeyRound size={16} />
+                {creatingAccounts ? 'Creating accounts...' : 'Create mock accounts'}
+                <ExternalLink size={15} />
               </button>
             </div>
           </div>
