@@ -6,6 +6,7 @@ import type {
   CoverCubeWorkerMessage,
   SetCoverCubeTextureOptions,
 } from './coverCubeWorkerMessages';
+import { getTextureTransitionRotation } from './coverCubeRotation';
 
 interface TextureTransitionState {
   durationMs: number;
@@ -473,17 +474,14 @@ function updateScene(deltaSeconds: number) {
     const elapsed = performance.now() - state.textureTransition.startedAt;
     const progress = Math.min(elapsed / state.textureTransition.durationMs, 1);
     const eased = 1 - (1 - progress) * (1 - progress);
-
-    state.displayRotationX = THREE.MathUtils.lerp(
+    const rotation = getTextureTransitionRotation(
       state.textureTransition.startRotationX,
-      0,
-      eased,
-    );
-    state.displayRotationY = THREE.MathUtils.lerp(
       state.textureTransition.startRotationY,
-      0,
-      eased,
+      progress,
     );
+
+    state.displayRotationX = rotation.x;
+    state.displayRotationY = rotation.y;
     fadeMaterial.opacity = eased;
 
     if (progress >= 1) {
@@ -499,6 +497,8 @@ function updateScene(deltaSeconds: number) {
       state.textureTransition = null;
       state.currentRotationX = 0;
       state.currentRotationY = 0;
+      state.displayRotationX = 0;
+      state.displayRotationY = 0;
       state.targetRotationX = 0;
       state.targetRotationY = 0;
       state.spinAngle = 0;
