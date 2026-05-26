@@ -65,4 +65,17 @@ export const eventsAPI = {
     const data = await apiCall(`/events/${eventId}/participants`);
     return data.data.participants;
   },
+
+  getPhoneMicrophoneLink: async (eventId: string) => {
+    const data = await apiCall(`/events/${eventId}/phone-microphone-link`);
+    return data.data.link as string;
+  },
+
+  connectPhoneMicrophone: async (eventId: string, deviceName: string) => {
+    const data = await apiCall(`/events/${eventId}/phone-microphone/connect`, {
+      method: 'POST',
+      body: JSON.stringify({ deviceName }),
+    });
+    return data.data.microphone;
+  },
 };

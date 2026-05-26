@@ -1,17 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useReducer, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { NowPlaying } from '@/components/common';
 import { NOW_PLAYING } from '@/constants/dashboard';
 import { SCALE_IN } from '@/constants/animations';
-import {
-  initSocket,
-  onSongQueued,
-  onSongNowPlaying,
-  onSongRejected,
-  onSongSkipped,
-  onQueueUpdated,
-  off,
-} from '@/services/socket';
+import { initSocket, onSongQueued, onSongNowPlaying, onSongRejected, onSongSkipped, onQueueUpdated, off,  } from '@/services/socket';
 import { songsAPI } from '@/services/api';
 import { DEBUG_EVENT_NAME } from '@/components/debug/SongCardDebugModal';
 import { isDebugModeEnabled } from '@/utils/debugMode';
@@ -64,6 +56,7 @@ function toPlayerSong(song: Song): NowPlayingSong {
 function sortQueueSongs(songs: Song[]): Song[] {
   const order: Record<string, number> = {
     PLAYING: 0,
+    APPROVED: 1,
     QUEUED: 1,
     PENDING: 2,
   };
@@ -79,33 +72,195 @@ function sortQueueSongs(songs: Song[]): Song[] {
   });
 }
 
+interface NowPlayingSectionState {
+  queue: Song[];
+  nowPlaying: NowPlayingSong | null;
+  tempStatus: NowPlayingSong | null;
+  attentionKey: number;
+  celebrateKey: number;
+}
+
+type NowPlayingSectionAction =
+  | { type: 'initialize'; queue: Song[]; nowPlaying: NowPlayingSong | null }
+  | { type: 'song_queued'; payload: any }
+  | { type: 'song_now_playing'; payload: any }
+  | {
+      type: 'song_status';
+      payload: any;
+      status: 'rejected' | 'skipped';
+      fallbackArtist: string;
+    }
+  | { type: 'queue_updated'; payload: any }
+  | { type: 'clear_temp_status' };
+
+function nowPlayingSectionReducer(
+  state: NowPlayingSectionState,
+  action: NowPlayingSectionAction,
+): NowPlayingSectionState {
+  switch (action.type) {
+    case 'initialize':
+      return {
+        ...state,
+        queue: action.queue,
+        nowPlaying: action.nowPlaying,
+      };
+    case 'song_queued': {
+      const data = action.payload;
+      const incomingSong: Song = {
+        _id: data.songId,
+        title: data.title || 'Queued',
+        artist: data.artist || '',
+        voteScore: data.voteScore || 0,
+        status: 'QUEUED',
+        duration: data.duration,
+        queuePosition: data.queuePosition,
+        requestedBy: data.requestedBy,
+      };
+
+      return {
+        ...state,
+        queue: sortQueueSongs([
+          ...state.queue.filter((song) => song._id !== data.songId),
+          incomingSong,
+        ]),
+        attentionKey: state.attentionKey + 1,
+      };
+    }
+    case 'song_now_playing': {
+      const data = action.payload;
+      const startedAt = data.playingStartedAt
+        ? new Date(data.playingStartedAt).getTime()
+        : Date.now();
+
+      return {
+        ...state,
+        nowPlaying: {
+          id: data.songId,
+          title: data.title || 'Now Playing…',
+          artist: data.artist || '',
+          status: 'playing',
+          progress: 0,
+          currentTime: '0:00',
+          duration: data.duration ? formatTime(data.duration) : '0:00',
+          durationSec: data.duration,
+          startedAt,
+        },
+        queue: state.queue.filter((song) => song._id !== data.songId),
+        celebrateKey: state.celebrateKey + 1,
+      };
+    }
+    case 'song_status': {
+      const data = action.payload;
+      const title =
+        action.status === 'rejected' ? 'Song Rejected' : 'Song Skipped';
+
+      return {
+        ...state,
+        tempStatus: {
+          id: data.songId,
+          title,
+          artist: data.reason || action.fallbackArtist,
+          status: action.status,
+        },
+        queue: data?.songId
+          ? state.queue.filter((song) => song._id !== data.songId)
+          : state.queue,
+        nowPlaying:
+          data?.songId && state.nowPlaying?.id === data.songId
+            ? null
+            : state.nowPlaying,
+      };
+    }
+    case 'queue_updated': {
+      const data = action.payload;
+      const nextQueue = Array.isArray(data.queue)
+        ? sortQueueSongs(data.queue)
+        : state.queue;
+      const nowPlaying =
+        data.nowPlaying && data.nowPlaying.songId
+          ? {
+              id: data.nowPlaying.songId,
+              title: data.nowPlaying.title,
+              artist: data.nowPlaying.artist,
+              status: 'playing' as const,
+              progress: data.nowPlaying.duration
+                ? Math.min(
+                    100,
+                    ((data.nowPlaying.elapsedTime || 0) /
+                      data.nowPlaying.duration) *
+                      100,
+                  )
+                : 0,
+              currentTime: formatTime(data.nowPlaying.elapsedTime || 0),
+              duration: formatTime(data.nowPlaying.duration || 0),
+              durationSec: data.nowPlaying.duration,
+              startedAt: data.nowPlaying.playingStartedAt
+                ? new Date(data.nowPlaying.playingStartedAt).getTime()
+                : Date.now() - (data.nowPlaying.elapsedTime || 0) * 1000,
+            }
+          : state.nowPlaying;
+
+      return {
+        ...state,
+        queue: nextQueue,
+        nowPlaying,
+        attentionKey:
+          Array.isArray(data.queue) &&
+          data.queue.some((song: Song) => song.status !== 'PLAYING')
+            ? state.attentionKey + 1
+            : state.attentionKey,
+      };
+    }
+    case 'clear_temp_status':
+      return {
+        ...state,
+        tempStatus: null,
+      };
+    default:
+      return state;
+  }
+}
+
 export function NowPlayingSection() {
-  const [nowPlaying, setNowPlaying] = useState<NowPlayingSong | null>(null);
-  const [eventId, setEventId] = useState<string | null>(null);
-  const [queue, setQueue] = useState<Song[]>([]);
-  const [tempStatus, setTempStatus] = useState<NowPlayingSong | null>(null);
-  const [attentionKey, setAttentionKey] = useState(0);
-  const [celebrateKey, setCelebrateKey] = useState(0);
+  const [state, dispatch] = useReducer(nowPlayingSectionReducer, {
+    queue: [],
+    nowPlaying: null,
+    tempStatus: null,
+    attentionKey: 0,
+    celebrateKey: 0,
+  });
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const tempStatusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
+  const eventId = readStoredJson<{ eventId?: string }>('currentEvent')?.eventId ?? null;
 
-  const showTemporaryStatus = (status: NowPlayingSong) => {
+  const showTemporaryStatus = (
+    payload: any,
+    status: 'rejected' | 'skipped',
+    fallbackArtist: string,
+  ) => {
     if (tempStatusTimeoutRef.current) {
       clearTimeout(tempStatusTimeoutRef.current);
     }
-    setTempStatus(status);
-    tempStatusTimeoutRef.current = setTimeout(() => setTempStatus(null), 2000);
+    dispatch({
+      type: 'song_status',
+      payload,
+      status,
+      fallbackArtist,
+    });
+    tempStatusTimeoutRef.current = setTimeout(() => {
+      dispatch({ type: 'clear_temp_status' });
+    }, 2000);
   };
 
   /* Tick every second so progress/elapsed advance smoothly */
   useEffect(() => {
-    if (nowPlaying?.status === 'playing' && nowPlaying.startedAt) {
+    if (state.nowPlaying?.status === 'playing' && state.nowPlaying.startedAt) {
       const updateElapsed = () => {
         setElapsedSeconds(
-          Math.max(0, (Date.now() - nowPlaying.startedAt) / 1000),
+          Math.max(0, (Date.now() - state.nowPlaying.startedAt) / 1000),
         );
       };
       updateElapsed();
@@ -116,7 +271,7 @@ export function NowPlayingSection() {
     }
     setElapsedSeconds(0);
     return undefined;
-  }, [nowPlaying?.id, nowPlaying?.status, nowPlaying?.startedAt]);
+  }, [state.nowPlaying?.id, state.nowPlaying?.status, state.nowPlaying?.startedAt]);
 
   useEffect(() => {
     return () => {
@@ -127,30 +282,28 @@ export function NowPlayingSection() {
   }, []);
 
   useEffect(() => {
-    const eventData = readStoredJson<{ eventId?: string }>('currentEvent');
-    if (eventData?.eventId) {
-      setEventId(eventData.eventId);
+    if (!eventId) return;
 
-      const fetchQueue = async () => {
-        try {
-          const queueData = await songsAPI.getQueue(eventData.eventId);
-          if (!queueData) return;
+    const fetchQueue = async () => {
+      try {
+        const queueData = await songsAPI.getQueue(eventId);
+        if (!queueData) return;
 
-          const sortedQueue = sortQueueSongs(queueData);
-          setQueue(sortedQueue);
+        const sortedQueue = sortQueueSongs(queueData);
+        const playing = sortedQueue.find((song) => song.status === 'PLAYING');
 
-          const playing = sortedQueue.find((song) => song.status === 'PLAYING');
-          if (playing) {
-            setNowPlaying(toPlayerSong(playing));
-          }
-        } catch (error) {
-          console.error('Error fetching queue:', error);
-        }
-      };
+        dispatch({
+          type: 'initialize',
+          queue: sortedQueue,
+          nowPlaying: playing ? toPlayerSong(playing) : null,
+        });
+      } catch (error) {
+        console.error('Error fetching queue:', error);
+      }
+    };
 
-      fetchQueue();
-    }
-  }, []);
+    fetchQueue();
+  }, [eventId]);
 
   useEffect(() => {
     if (!eventId) return;
@@ -159,108 +312,23 @@ export function NowPlayingSection() {
 
     const handleSongQueued = (data: any) => {
       /* Song was added to the queue (NOT immediate playback) */
-      const newSong: NowPlayingSong = {
-        id: data.songId,
-        title: data.title || 'Queued',
-        artist: data.artist || '',
-        status: 'queued',
-        progress: 0,
-        currentTime: '0:00',
-        duration: data.duration ? formatTime(data.duration) : '0:00',
-        durationSec: data.duration,
-      };
-
-      setQueue((prev) =>
-        sortQueueSongs([
-          ...prev.filter((song) => song._id !== data.songId),
-          {
-            _id: data.songId,
-            title: newSong.title,
-            artist: newSong.artist,
-            voteScore: data.voteScore || 0,
-            status: 'QUEUED',
-            duration: data.duration,
-            queuePosition: data.queuePosition,
-            requestedBy: data.requestedBy,
-          },
-        ]),
-      );
-      setAttentionKey((key) => key + 1);
+      dispatch({ type: 'song_queued', payload: data });
     };
 
     const handleSongNowPlaying = (data: any) => {
-      const startedAt = data.playingStartedAt
-        ? new Date(data.playingStartedAt).getTime()
-        : Date.now();
-      setNowPlaying({
-        id: data.songId,
-        title: data.title || 'Now Playing…',
-        artist: data.artist || '',
-        status: 'playing',
-        progress: 0,
-        currentTime: '0:00',
-        duration: data.duration ? formatTime(data.duration) : '0:00',
-        durationSec: data.duration,
-        startedAt,
-      });
-      setQueue((prev) => prev.filter((song) => song._id !== data.songId));
-      setCelebrateKey((key) => key + 1);
+      dispatch({ type: 'song_now_playing', payload: data });
     };
 
     const handleSongRejected = (data: any) => {
-      showTemporaryStatus({
-        id: data.songId,
-        title: 'Song Rejected',
-        artist: data.reason || 'No reason provided',
-        status: 'rejected',
-      });
-      if (data?.songId) {
-        setQueue((prev) => prev.filter((song) => song._id !== data.songId));
-        setNowPlaying((prev) => (prev?.id === data.songId ? null : prev));
-      }
+      showTemporaryStatus(data, 'rejected', 'No reason provided');
     };
 
     const handleSongSkipped = (data: any) => {
-      showTemporaryStatus({
-        id: data.songId,
-        title: 'Song Skipped',
-        artist: data.reason || 'DJ skipped',
-        status: 'skipped',
-      });
-      if (data?.songId) {
-        setQueue((prev) => prev.filter((song) => song._id !== data.songId));
-        setNowPlaying((prev) => (prev?.id === data.songId ? null : prev));
-      }
+      showTemporaryStatus(data, 'skipped', 'DJ skipped');
     };
 
     const handleQueueUpdated = (data: any) => {
-      if (Array.isArray(data.queue)) {
-        setQueue(sortQueueSongs(data.queue));
-        if (data.queue.some((song: Song) => song.status !== 'PLAYING')) {
-          setAttentionKey((key) => key + 1);
-        }
-      }
-
-      /* Prefer nowPlaying metadata from enhanced event */
-      if (data.nowPlaying && data.nowPlaying.songId) {
-        const np = data.nowPlaying;
-        const startedAt = np.playingStartedAt
-          ? new Date(np.playingStartedAt).getTime()
-          : Date.now() - (np.elapsedTime || 0) * 1000;
-        setNowPlaying({
-          id: np.songId,
-          title: np.title,
-          artist: np.artist,
-          status: 'playing',
-          progress: np.duration
-            ? Math.min(100, ((np.elapsedTime || 0) / np.duration) * 100)
-            : 0,
-          currentTime: formatTime(np.elapsedTime || 0),
-          duration: formatTime(np.duration || 0),
-          durationSec: np.duration,
-          startedAt,
-        });
-      }
+      dispatch({ type: 'queue_updated', payload: data });
     };
 
     onSongQueued(handleSongQueued);
@@ -293,26 +361,26 @@ export function NowPlayingSection() {
   }, [eventId]);
 
   /* Compute live elapsed/progress when playing */
-  const queuedPreview = sortQueueSongs(queue).find(
+  const queuedPreview = sortQueueSongs(state.queue).find(
     (song) => song.status !== 'PLAYING',
   );
 
   let display: NowPlayingSong | typeof NOW_PLAYING =
-    tempStatus ||
-    nowPlaying ||
+    state.tempStatus ||
+    state.nowPlaying ||
     (queuedPreview ? toPlayerSong(queuedPreview) : NOW_PLAYING);
 
   if (
-    !tempStatus &&
-    nowPlaying &&
-    nowPlaying.status === 'playing' &&
-    nowPlaying.startedAt &&
-    nowPlaying.durationSec
+    !state.tempStatus &&
+    state.nowPlaying &&
+    state.nowPlaying.status === 'playing' &&
+    state.nowPlaying.startedAt &&
+    state.nowPlaying.durationSec
   ) {
     const elapsed = elapsedSeconds;
-    const progress = Math.min(100, (elapsed / nowPlaying.durationSec) * 100);
+    const progress = Math.min(100, (elapsed / state.nowPlaying.durationSec) * 100);
     display = {
-      ...nowPlaying,
+      ...state.nowPlaying,
       progress,
       currentTime: formatTime(elapsed),
     };
@@ -342,7 +410,7 @@ export function NowPlayingSection() {
           waitLabel={
             display.status === 'queued'
               ? (() => {
-                  const sorted = sortQueueSongs(queue).filter(
+                  const sorted = sortQueueSongs(state.queue).filter(
                     (song) => song.status !== 'PLAYING',
                   );
                   const previewIndex = sorted.findIndex(
@@ -350,15 +418,15 @@ export function NowPlayingSection() {
                   );
                   let wait = 0;
                   if (
-                    nowPlaying?.status === 'playing' &&
-                    nowPlaying.startedAt &&
-                    nowPlaying.durationSec
+                    state.nowPlaying?.status === 'playing' &&
+                    state.nowPlaying.startedAt &&
+                    state.nowPlaying.durationSec
                   ) {
                     const elapsed = Math.max(
                       0,
                       elapsedSeconds,
                     );
-                    wait = Math.max(0, nowPlaying.durationSec - elapsed);
+                    wait = Math.max(0, state.nowPlaying.durationSec - elapsed);
                   }
                   for (const song of sorted.slice(0, Math.max(0, previewIndex))) {
                     wait += song.duration || 0;
@@ -369,8 +437,8 @@ export function NowPlayingSection() {
                 })()
               : undefined
           }
-          attentionKey={attentionKey}
-          celebrateKey={celebrateKey}
+          attentionKey={state.attentionKey}
+          celebrateKey={state.celebrateKey}
         />
       </motion.div>
     </motion.div>

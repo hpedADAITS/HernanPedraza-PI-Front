@@ -105,6 +105,29 @@ describe('Connected Users dashboard UI', () => {
     expect(screen.queryByText('Bailey')).not.toBeInTheDocument();
   });
 
+  it('uses the updated profile picture for the current user', async () => {
+    mockParticipantsAPI.listEventParticipants.mockResolvedValue([
+      {
+        _id: 'attendee-2',
+        nickname: 'Bailey',
+        profilePicture: 'data:image/png;base64,old-picture',
+        joinedAt: '2026-05-21T10:01:00.000Z',
+      },
+    ]);
+
+    render(
+      <ConnectedUsers
+        mode="attendee"
+        currentProfilePicture="data:image/png;base64,new-picture"
+      />,
+    );
+
+    expect(await screen.findByAltText('You profile')).toHaveAttribute(
+      'src',
+      'data:image/png;base64,new-picture',
+    );
+  });
+
   it('updates attendee users when participants join and leave over the socket', async () => {
     const socket = createSocketMock();
     mockGetSocket.mockReturnValue(socket as Socket);
@@ -169,7 +192,9 @@ describe('Connected Users dashboard UI', () => {
       {
         _id: 'attendee-2',
         nickname: 'Bailey',
-        profilePicture: 'data:image/png;base64,bailey-picture',
+        userId: {
+          profilePicture: 'data:image/png;base64,bailey-picture',
+        },
         joinedAt: new Date(Date.now() - 30_000).toISOString(),
         isPremium: true,
       },
@@ -205,6 +230,49 @@ describe('Connected Users dashboard UI', () => {
       .getAllByText(/Alex|Bailey|Casey/)
       .map((node) => node.textContent);
     expect(names).toEqual(['Bailey', 'Alex', 'Casey']);
+  });
+
+  it('keeps a cooldowned attendee visible in DJ mode and removes them only when kicked', async () => {
+    const socket = createSocketMock();
+    mockGetSocket.mockReturnValue(socket as Socket);
+    mockParticipantsAPI.listEventParticipants.mockResolvedValue([
+      {
+        _id: 'attendee-1',
+        nickname: 'Alex',
+        joinedAt: '2026-05-21T10:00:00.000Z',
+        isPremium: false,
+        socketId: 'socket-1',
+      },
+      {
+        _id: 'attendee-2',
+        nickname: 'Bailey',
+        joinedAt: '2026-05-21T10:01:00.000Z',
+        isPremium: false,
+        socketId: 'socket-2',
+      },
+    ]);
+
+    render(<ConnectedUsers mode="dj" />);
+
+    expect(await screen.findByText('Alex')).toBeInTheDocument();
+    expect(screen.getByText('Bailey')).toBeInTheDocument();
+
+    socket.emitEvent('participant_cooldown', {
+      participantId: 'attendee-1',
+      cooldownUntil: '2026-05-21T10:10:00.000Z',
+    });
+
+    expect(screen.getByText('Alex')).toBeInTheDocument();
+    expect(screen.getByText('Bailey')).toBeInTheDocument();
+
+    socket.emitEvent('participant_kicked', {
+      participantId: 'attendee-1',
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Alex')).not.toBeInTheDocument();
+    });
+    expect(screen.getByText('Bailey')).toBeInTheDocument();
   });
 
   it('renders the DJ empty state when no attendees have joined', async () => {

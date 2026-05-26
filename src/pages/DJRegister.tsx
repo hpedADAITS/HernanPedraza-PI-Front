@@ -1,14 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { motion } from 'motion/react';
-import {
-  User,
-  Mail,
-  Lock,
-  ArrowLeft,
-  ArrowRight,
-  Eye,
-  EyeOff,
-} from 'lucide-react';
+import { User, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff,  } from 'lucide-react';
 import { toast } from 'sonner';
 import { authAPI, eventsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
@@ -250,6 +242,7 @@ export function DJRegister({
                 <input
                   id="dj-name"
                   type="text"
+                  aria-label="DJ name"
                   placeholder="Your stage name"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
@@ -274,6 +267,7 @@ export function DJRegister({
                 <input
                   id="dj-email"
                   type="email"
+                  aria-label="Email"
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -298,6 +292,7 @@ export function DJRegister({
                 <input
                   id="dj-password"
                   type={showPassword ? 'text' : 'password'}
+                  aria-label="Password"
                   placeholder="At least 6 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -334,6 +329,7 @@ export function DJRegister({
                 <input
                   id="dj-confirm-password"
                   type={showConfirmPassword ? 'text' : 'password'}
+                  aria-label="Confirm password"
                   placeholder="Re-enter your password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}

@@ -1,13 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useReducer } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Crown, Users, Music, Zap, UserX } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,  } from '@/components/ui/tooltip';
 import { ANIMATION_DURATION } from '@/constants/animations';
 import { participantsAPI } from '@/services/api';
 import { getSocket } from '@/services/socket';
@@ -18,15 +13,30 @@ interface ConnectedUser {
   _id: string;
   nickname: string;
   profilePicture?: string | null;
+  userId?: {
+    profilePicture?: string | null;
+  } | null;
   joinedAt: string;
   socketId?: string;
   isPremium?: boolean;
+  cooldownUntil?: Date | string;
+}
+
+function getParticipantProfilePicture(participant: ConnectedUser) {
+  return participant.profilePicture ?? participant.userId?.profilePicture ?? null;
+}
+
+function toCooldownDate(value: unknown): Date | undefined {
+  if (!value) return undefined;
+  const date = value instanceof Date ? value : new Date(String(value));
+  return Number.isNaN(date.getTime()) ? undefined : date;
 }
 
 interface ConnectedUsersProps {
   mode: 'attendee' | 'dj';
   isDarkMode?: boolean;
   ownerProfilePicture?: string | null;
+  currentProfilePicture?: string | null;
   previewDjName?: string | null;
   previewUsers?: ConnectedUser[];
   previewCurrentUserId?: string | null;
@@ -34,181 +44,261 @@ interface ConnectedUsersProps {
 }
 
 function formatTimeAgo(joinedAt: string): string {
-  const now = new Date();
-  const joined = new Date(joinedAt);
-  const secondsAgo = Math.floor((now.getTime() - joined.getTime()) / 1000);
+  const secondsAgo = Math.floor((Date.now() - new Date(joinedAt).getTime()) / 1000);
+  return secondsAgo < 60
+    ? `${secondsAgo}s ago`
+    : secondsAgo < 3600
+      ? `${Math.floor(secondsAgo / 60)}m ago`
+      : `${Math.floor(secondsAgo / 3600)}h ago`;
+}
 
-  if (secondsAgo < 60) return `${secondsAgo}s ago`;
-  if (secondsAgo < 3600) return `${Math.floor(secondsAgo / 60)}m ago`;
-  return `${Math.floor(secondsAgo / 3600)}h ago`;
+interface ConnectedUsersState {
+  users: ConnectedUser[];
+  loading: boolean;
+  selectedParticipantId: string | null;
+}
+
+type ConnectedUsersAction =
+  | { type: 'loading_started' }
+  | { type: 'replace_users'; users: ConnectedUser[] }
+  | { type: 'upsert_user'; user: ConnectedUser }
+  | { type: 'remove_user'; participantId?: string }
+  | { type: 'set_cooldown'; participantId?: string; cooldownUntil?: string | Date }
+  | { type: 'set_premium'; participantId?: string; isPremium?: boolean }
+  | { type: 'select_participant'; participantId: string | null };
+
+function connectedUsersReducer(
+  state: ConnectedUsersState,
+  action: ConnectedUsersAction,
+): ConnectedUsersState {
+  switch (action.type) {
+    case 'loading_started':
+      return {
+        ...state,
+        loading: true,
+      };
+    case 'replace_users':
+      return {
+        ...state,
+        users: action.users,
+        loading: false,
+      };
+    case 'upsert_user': {
+      const exists = state.users.some((user) => user._id === action.user._id);
+      return {
+        ...state,
+        users: exists
+          ? state.users.map((user) =>
+              user._id === action.user._id ? action.user : user,
+            )
+          : [...state.users, action.user],
+        loading: false,
+      };
+    }
+    case 'remove_user':
+      return {
+        ...state,
+        users: state.users.filter((user) => user._id !== action.participantId),
+        selectedParticipantId:
+          state.selectedParticipantId === action.participantId
+            ? null
+            : state.selectedParticipantId,
+      };
+    case 'set_cooldown':
+      if (!action.participantId) {
+        return state;
+      }
+      const cooldownUntil = toCooldownDate(action.cooldownUntil);
+      return {
+        ...state,
+        users: state.users.map((user) =>
+          user._id === action.participantId
+            ? {
+                ...user,
+                cooldownUntil,
+              }
+            : user,
+        ),
+      };
+    case 'set_premium':
+      if (!action.participantId || typeof action.isPremium !== 'boolean') {
+        return state;
+      }
+      return {
+        ...state,
+        users: state.users.map((user) =>
+          user._id === action.participantId
+            ? {
+                ...user,
+                isPremium: action.isPremium,
+              }
+            : user,
+        ),
+      };
+    case 'select_participant':
+      return {
+        ...state,
+        selectedParticipantId: action.participantId,
+      };
+    default:
+      return state;
+  }
 }
 
 export function ConnectedUsers({
   mode,
   isDarkMode = false,
   ownerProfilePicture,
+  currentProfilePicture,
   previewDjName,
   previewUsers,
   previewCurrentUserId,
   previewParticipants,
 }: ConnectedUsersProps) {
-  const [users, setUsers] = useState<ConnectedUser[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [djName, setDjName] = useState<string | null>(null);
-  const [djProfilePicture, setDjProfilePicture] = useState<string | null>(null);
-  const [selectedParticipantId, setSelectedParticipantId] = useState<
-    string | null
-  >(null);
+  const [state, dispatch] = useReducer(connectedUsersReducer, {
+    users: [],
+    loading: true,
+    selectedParticipantId: null,
+  });
   const isAttendee = mode === 'attendee';
   const isDj = mode === 'dj';
+  const eventData = readStoredJson<{
+    eventId?: string;
+    ownerName?: string;
+    ownerProfilePicture?: string | null;
+  }>('currentEvent');
+  const participantData = readStoredJson<{ _id?: string }>('currentParticipant');
+  const eventId = eventData?.eventId || null;
+  const usesPreviewUsers = isAttendee && !!previewUsers;
+  const usesPreviewParticipants = isDj && !!previewParticipants;
+  const djName = isAttendee
+    ? previewDjName ?? eventData?.ownerName ?? null
+    : null;
+  const djProfilePicture = isAttendee
+    ? ownerProfilePicture ?? eventData?.ownerProfilePicture ?? null
+    : null;
+  const currentUserId = isAttendee
+    ? previewCurrentUserId ?? participantData?._id ?? null
+    : null;
+  const users = usesPreviewUsers
+    ? previewUsers
+    : usesPreviewParticipants
+      ? previewParticipants
+      : state.users;
+  const loading =
+    usesPreviewUsers || usesPreviewParticipants ? false : state.loading;
+  const selectedParticipantId = state.selectedParticipantId;
 
   useEffect(() => {
-    if (isAttendee && previewUsers) {
-      setUsers(previewUsers);
-      setDjName(previewDjName ?? null);
-      setCurrentUserId(previewCurrentUserId ?? null);
-      setLoading(false);
+    if (usesPreviewUsers || usesPreviewParticipants) {
       return;
     }
 
-    if (isDj && previewParticipants) {
-      setUsers(previewParticipants);
-      setLoading(false);
+    if (!eventId) {
+      dispatch({ type: 'replace_users', users: [] });
       return;
     }
 
-    const eventData = readStoredJson<{
-      eventId?: string;
-      ownerName?: string;
-      ownerProfilePicture?: string | null;
-    }>('currentEvent');
-    const participantData = readStoredJson<{ _id?: string }>('currentParticipant');
-    const eventId = eventData?.eventId || null;
-
-    if (isAttendee && eventData) {
-      setDjName(eventData.ownerName || null);
-      setDjProfilePicture(
-        ownerProfilePicture ?? eventData.ownerProfilePicture ?? null,
-      );
-    }
-
-    if (isAttendee && participantData) {
-      setCurrentUserId(participantData._id || null);
-    }
+    dispatch({ type: 'loading_started' });
 
     const fetchUsers = async () => {
       try {
-        if (!eventId) return;
-
         const list = await participantsAPI.listEventParticipants(eventId);
         const userList = Array.isArray(list) ? list : [];
 
         if (isDj) {
-          setUsers((currentUsers) => {
-            const currentIds = new Set(currentUsers.map((user) => user._id));
-            const nextIds = new Set(userList.map((user) => user._id));
-            const changed =
-              currentIds.size !== nextIds.size ||
-              [...currentIds].some((id) => !nextIds.has(id));
-
-            return changed ? userList : currentUsers;
-          });
-        } else {
-          setUsers(userList);
+          dispatch({ type: 'replace_users', users: userList });
+          return;
         }
-        setLoading(false);
+
+        dispatch({ type: 'replace_users', users: userList });
       } catch (error) {
         console.error('Error fetching connected users:', error);
-        setLoading(false);
+        dispatch({ type: 'replace_users', users: [] });
       }
     };
 
     fetchUsers();
 
+    const fallbackRefreshMs = 5 * 60 * 1000;
     const socket = getSocket();
-    if (socket && eventId) {
+    if (socket) {
       const handleParticipantJoined = (data: any) => {
-        if (!isAttendee) return;
-        setUsers((prev) => {
-          const exists = prev.some((u) => u._id === data.participantId);
-          if (!exists) {
-            return [
-              ...prev,
-              {
-                _id: data.participantId,
-                nickname: data.nickname,
-                profilePicture: data.profilePicture || null,
-                joinedAt: data.joinedAt,
-                socketId: 'connected',
-                isPremium: data.isPremium,
-              },
-            ];
-          }
-          return prev;
+        dispatch({
+          type: 'upsert_user',
+          user: {
+            _id: data.participantId,
+            nickname: data.nickname,
+            profilePicture: data.profilePicture || null,
+            joinedAt: data.joinedAt,
+            socketId: 'connected',
+            isPremium: data.isPremium,
+          },
         });
       };
 
       const handleParticipantLeft = (data: any) => {
-        if (!isAttendee) return;
-        setUsers((prev) => prev.filter((u) => u._id !== data.participantId));
+        dispatch({ type: 'remove_user', participantId: data.participantId });
       };
 
       const handleParticipantKicked = (data: any) => {
-        setUsers((prev) => prev.filter((u) => u._id !== data.participantId));
+        dispatch({ type: 'remove_user', participantId: data.participantId });
       };
 
       const handleParticipantCooldown = (data: any) => {
         if (!isDj) return;
-        setUsers((prev) =>
-          prev.map((user) =>
-            user._id === data.participantId
-              ? { ...user, cooldownUntil: new Date(data.cooldownUntil) }
-              : user,
-          ),
-        );
+        dispatch({
+          type: 'set_cooldown',
+          participantId: data.participantId,
+          cooldownUntil: data.cooldownUntil,
+        });
       };
 
-      if (isAttendee) {
-        socket.on('participant_joined', handleParticipantJoined);
-        socket.on('participant_left', handleParticipantLeft);
-      }
+      const handleParticipantPremiumUpdated = (data: any) => {
+        if (!isDj) return;
+        dispatch({
+          type: 'set_premium',
+          participantId: data.participantId,
+          isPremium: data.isPremium,
+        });
+      };
+
+      socket.on('participant_joined', handleParticipantJoined);
+      socket.on('participant_left', handleParticipantLeft);
       socket.on('participant_kicked', handleParticipantKicked);
       if (isDj) {
         socket.on('participant_cooldown', handleParticipantCooldown);
+        socket.on('participant_premium_updated', handleParticipantPremiumUpdated);
       }
 
-      const interval = isDj ? setInterval(fetchUsers, 60000) : null;
+      const interval = isDj ? setInterval(fetchUsers, fallbackRefreshMs) : null;
 
       return () => {
         if (interval) clearInterval(interval);
-        if (isAttendee) {
-          socket.off('participant_joined', handleParticipantJoined);
-          socket.off('participant_left', handleParticipantLeft);
-        }
+        socket.off('participant_joined', handleParticipantJoined);
+        socket.off('participant_left', handleParticipantLeft);
         socket.off('participant_kicked', handleParticipantKicked);
         if (isDj) {
           socket.off('participant_cooldown', handleParticipantCooldown);
+          socket.off(
+            'participant_premium_updated',
+            handleParticipantPremiumUpdated,
+          );
         }
       };
     }
 
     if (isDj) {
-      const interval = setInterval(fetchUsers, 60000);
+      const interval = setInterval(fetchUsers, fallbackRefreshMs);
       return () => clearInterval(interval);
     }
   }, [
+    eventId,
     isAttendee,
     isDj,
-    ownerProfilePicture,
-    previewCurrentUserId,
-    previewDjName,
-    previewParticipants,
-    previewUsers,
+    usesPreviewParticipants,
+    usesPreviewUsers,
   ]);
-
-  const eventData = readStoredJson<{ eventId?: string }>('currentEvent');
-  const eventId = eventData?.eventId || null;
   const premiumCount = users.filter((user) => user.isPremium).length;
   const connectedCount = isDj
     ? users.filter((user) => user.socketId).length
@@ -224,7 +314,7 @@ export function ConnectedUsers({
   const hoverBgColor = isDarkMode ? 'hover:bg-slate-700/40' : 'hover:bg-slate-50';
 
   const handleRemoveParticipant = (participantId: string) => {
-    setUsers((prev) => prev.filter((user) => user._id !== participantId));
+    dispatch({ type: 'remove_user', participantId });
   };
 
   return (
@@ -250,6 +340,7 @@ export function ConnectedUsers({
             djName={djName}
             djProfilePicture={djProfilePicture}
             currentUserId={currentUserId}
+            currentProfilePicture={currentProfilePicture}
             connectedCount={connectedCount}
             totalCount={totalCount}
             isDarkMode={isDarkMode}
@@ -265,7 +356,12 @@ export function ConnectedUsers({
             connectedCount={connectedCount}
             premiumCount={premiumCount}
             selectedParticipantId={selectedParticipantId}
-            setSelectedParticipantId={setSelectedParticipantId}
+            setSelectedParticipantId={(participantId) =>
+              dispatch({
+                type: 'select_participant',
+                participantId,
+              })
+            }
             onRemoveParticipant={handleRemoveParticipant}
             eventId={eventId}
           />
@@ -281,6 +377,7 @@ interface AttendeeConnectedUsersProps {
   djName: string | null;
   djProfilePicture: string | null;
   currentUserId: string | null;
+  currentProfilePicture?: string | null;
   connectedCount: number;
   totalCount: number;
   isDarkMode: boolean;
@@ -296,6 +393,7 @@ function AttendeeConnectedUsers({
   djName,
   djProfilePicture,
   currentUserId,
+  currentProfilePicture,
   connectedCount,
   totalCount,
   isDarkMode,
@@ -364,7 +462,7 @@ function AttendeeConnectedUsers({
                   name={djName}
                   profilePicture={djProfilePicture}
                   imageAlt={`${djName} profile`}
-                  className="w-16 h-16 lg:w-12 lg:h-12 rounded-full shadow-xl"
+                  className="w-16 h-16 lg:w-12 lg:h-12 rounded-full overflow-hidden shadow-xl"
                   fallbackClassName="bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold text-xl lg:text-base"
                 />
                 {/* DJ Info */}
@@ -432,9 +530,14 @@ function AttendeeConnectedUsers({
                           {/* Avatar */}
                           <UserAvatar
                             name={displayName}
-                            profilePicture={user.profilePicture}
+                            profilePicture={
+                              isCurrentUser
+                                ? currentProfilePicture ??
+                                  getParticipantProfilePicture(user)
+                                : getParticipantProfilePicture(user)
+                            }
                             imageAlt={`${displayName} profile`}
-                            className="w-10 h-10 lg:w-8 lg:h-8 rounded-full shadow-md"
+                            className="w-10 h-10 lg:w-8 lg:h-8 rounded-full overflow-hidden shadow-md"
                             fallbackClassName={`flex items-center justify-center text-white font-bold text-sm ${
                               isCurrentUser
                                 ? 'bg-gradient-to-br from-blue-400 to-purple-500'
@@ -605,7 +708,6 @@ function ParticipantItem({
           success: `Cooldown applied to "${participant.nickname}"`,
           error: (err: any) => `Failed to apply cooldown: ${err.message}`,
         });
-        onRemove(participant._id);
         onSelect(null as any);
       } else if (action === 'Kick' && eventId) {
         const promise = participantsAPI.kickParticipant(
@@ -639,9 +741,9 @@ function ParticipantItem({
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <UserAvatar
           name={participant.nickname}
-          profilePicture={participant.profilePicture}
+          profilePicture={getParticipantProfilePicture(participant)}
           imageAlt={`${participant.nickname} profile`}
-          className="w-10 h-10 lg:w-9 lg:h-9 rounded-full flex-shrink-0"
+          className="w-10 h-10 lg:w-9 lg:h-9 rounded-full overflow-hidden flex-shrink-0"
           fallbackClassName="bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center text-white font-bold text-sm"
         />
 

@@ -121,10 +121,12 @@ export function EventIdSetupModal({
                       </p>
                     </div>
                     <button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         generateRandomId();
                       }}
+                      aria-label="Generate a new event ID"
                       className="p-2 hover:bg-blue-500/20 rounded-lg transition"
                       title="Generate new ID"
                     >
@@ -156,6 +158,7 @@ export function EventIdSetupModal({
                   <p className="font-semibold text-white mb-3">Custom Event ID</p>
                   <input
                     type="text"
+                    aria-label="Custom event ID"
                     placeholder="e.g., DJPARTY2024"
                     value={eventId}
                     onChange={(e) =>
@@ -174,6 +177,7 @@ export function EventIdSetupModal({
 
             <div className="space-y-3">
               <motion.button
+                type="button"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleConfirm}

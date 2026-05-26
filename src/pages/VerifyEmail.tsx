@@ -6,6 +6,15 @@ import { toast } from 'sonner';
 import { writeStoredJson } from '@/utils/storage';
 import type { NavigateToView } from '@/types';
 
+function AutoCloseWindow({ delay = 500 }: { delay?: number }) {
+  useEffect(() => {
+    const closeTimer = window.setTimeout(() => window.close(), delay);
+    return () => window.clearTimeout(closeTimer);
+  }, [delay]);
+
+  return null;
+}
+
 interface Props {
   onNavigate?: NavigateToView;
 }
@@ -34,7 +43,7 @@ export function VerifyEmail({ onNavigate }: Props) {
 
         if (response.data?.user && response.data.user.emailRegistered) {
           setStatus('success');
-          setMessage('Email verified! Returning to registration…');
+          setMessage('Email verified! Closing this window…');
 
           /* Update localStorage with verified status */
           const userData = {
@@ -92,6 +101,7 @@ export function VerifyEmail({ onNavigate }: Props) {
 
         {status === 'success' && (
           <>
+            <AutoCloseWindow />
             <m.div
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1 }}

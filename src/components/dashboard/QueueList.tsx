@@ -35,6 +35,49 @@ interface QueueListProps {
   isDarkMode?: boolean;
 }
 
+interface QueueState {
+  songs: Song[];
+  loading: boolean;
+  selectedSongId: string | null;
+  resolvedEventId: string | null;
+  nowPlaying: {
+    songId: string;
+    duration: number;
+    startedAt: number;
+  } | null;
+}
+
+function getInitialQueueState(initialEventId?: string): QueueState {
+  const eventData = readStoredJson<{ eventId?: string }>('currentEvent');
+
+  return {
+    songs: [],
+    loading: true,
+    selectedSongId: null,
+    resolvedEventId: initialEventId ?? eventData?.eventId ?? null,
+    nowPlaying: null,
+  };
+}
+
+function getNowPlayingSnapshot(
+  nowPlaying?: {
+    songId?: string;
+    duration?: number;
+    playingStartedAt?: string;
+    elapsedTime?: number;
+  } | null,
+) {
+  if (!nowPlaying?.songId) return null;
+
+  return {
+    songId: nowPlaying.songId,
+    duration: nowPlaying.duration || 0,
+    startedAt: nowPlaying.playingStartedAt
+      ? new Date(nowPlaying.playingStartedAt).getTime()
+      : Date.now() - (nowPlaying.elapsedTime || 0) * 1000,
+  };
+}
+
 export function QueueList({
   mode,
   eventId: propEventId,
@@ -43,34 +86,29 @@ export function QueueList({
 }: QueueListProps) {
   const isDj = mode === 'dj';
   const primaryColor = THEME_CONFIG[isDj ? 'dj' : 'attendee'].primaryColor;
-  const [songs, setSongs] = useState<Song[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedSongId, setSelectedSongId] = useState<string | null>(null);
-  const [eventId, setEventId] = useState<string | null>(propEventId || null);
-  const [participantId, setParticipantId] = useState<string | null>(
-    propParticipantId || null,
+  const [queueState, setQueueState] = useState<QueueState>(() =>
+    getInitialQueueState(propEventId),
   );
-  const [nowPlaying, setNowPlaying] = useState<{
-    songId: string;
-    duration: number;
-    startedAt: number;
-  } | null>(null);
   const [fallingCards, setFallingCards] = useState<
     Array<{ id: string; song: Song; reason: RemovalReason }>
   >([]);
   const [tick, setTick] = useState(0);
+  const participantId =
+    propParticipantId ||
+    readStoredJson<{ _id?: string }>('currentParticipant')?._id ||
+    null;
 
   /* Tick every second to refresh per-attendee wait times */
   useEffect(() => {
-    if (mode !== 'attendee' || !nowPlaying) return undefined;
+    if (mode !== 'attendee' || !queueState.nowPlaying) return undefined;
     const id = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(id);
-  }, [mode, nowPlaying?.songId]);
+  }, [mode, queueState.nowPlaying?.songId]);
 
   const removeSong = useCallback(
     (songId: string, reason: RemovalReason = 'played') => {
-      setSongs((prev) => {
-        const removed = prev.find((s) => s._id === songId);
+      setQueueState((current) => {
+        const removed = current.songs.find((song) => song._id === songId);
         if (removed && (reason === 'rejected' || reason === 'skipped')) {
           const id = `${songId}-${reason}-${Date.now()}`;
           setFallingCards((cards) => [...cards, { id, song: removed, reason }]);
@@ -78,9 +116,13 @@ export function QueueList({
             setFallingCards((cards) => cards.filter((card) => card.id !== id));
           }, 1300);
         }
-        return prev.filter((s) => s._id !== songId);
+        return {
+          ...current,
+          songs: current.songs.filter((song) => song._id !== songId),
+          selectedSongId:
+            current.selectedSongId === songId ? null : current.selectedSongId,
+        };
       });
-      setSelectedSongId((prev) => (prev === songId ? null : prev));
     },
     [],
   );
@@ -89,10 +131,12 @@ export function QueueList({
     const fetchQueue = async () => {
       try {
         const eventData = readStoredJson<{ eventId?: string; eventCode?: string }>('currentEvent');
-        const participantData = readStoredJson<{ _id?: string }>('currentParticipant');
 
         if (!eventData) {
-          setLoading(false);
+          setQueueState((current) => ({
+            ...current,
+            loading: false,
+          }));
           return;
         }
 
@@ -102,25 +146,41 @@ export function QueueList({
         if (!resolvedEventId) {
           const event = await eventsAPI.getEventByAccessCode(eventCode);
           if (!event) {
-            setLoading(false);
+            setQueueState((current) => ({
+              ...current,
+              loading: false,
+            }));
             return;
           }
           resolvedEventId = event._id;
         }
 
-        setEventId(resolvedEventId);
-
-        if (participantData) {
-          setParticipantId(propParticipantId || participantData._id || null);
-        }
-
         const queue = await songsAPI.getQueue(resolvedEventId);
-        setSongs(queue || []);
+        const nextSongs = queue || [];
+        const playing = nextSongs.find((song) => song.status === 'PLAYING');
+
+        setQueueState((current) => ({
+          ...current,
+          songs: nextSongs,
+          loading: false,
+          resolvedEventId,
+          nowPlaying: playing
+            ? {
+                songId: playing._id,
+                duration: playing.duration || 0,
+                startedAt: playing.playingStartedAt
+                  ? new Date(playing.playingStartedAt).getTime()
+                  : Date.now(),
+              }
+            : current.nowPlaying,
+        }));
       } catch (error) {
         console.error('Error fetching queue:', error);
         toast.error('Failed to load queue');
-      } finally {
-        setLoading(false);
+        setQueueState((current) => ({
+          ...current,
+          loading: false,
+        }));
       }
     };
 
@@ -131,8 +191,8 @@ export function QueueList({
     const handleQueued = (data: any) => {
       /* Song was approved into the queue. Add or update. */
       if (!data?.songId) return;
-      setSongs((prev) => {
-        const exists = prev.some((s) => s._id === data.songId);
+      setQueueState((current) => {
+        const exists = current.songs.some((song) => song._id === data.songId);
         const incoming: Song = {
           _id: data.songId,
           title: data.title,
@@ -143,25 +203,29 @@ export function QueueList({
           queuePosition: data.queuePosition,
           requestedBy: data.requestedBy,
         };
-        if (exists) {
-          return prev.map((s) =>
-            s._id === data.songId ? { ...s, ...incoming } : s,
-          );
-        }
-        return [...prev, incoming];
+        return {
+          ...current,
+          songs: exists
+            ? current.songs.map((song) =>
+                song._id === data.songId ? { ...song, ...incoming } : song,
+              )
+            : [...current.songs, incoming],
+        };
       });
     };
     const handleNowPlaying = (data: any) => {
       if (!data?.songId) return;
       removeSong(data.songId);
-      const startedAt = data.playingStartedAt
-        ? new Date(data.playingStartedAt).getTime()
-        : Date.now();
-      setNowPlaying({
-        songId: data.songId,
-        duration: data.duration || 0,
-        startedAt,
-      });
+      setQueueState((current) => ({
+        ...current,
+        nowPlaying: {
+          songId: data.songId,
+          duration: data.duration || 0,
+          startedAt: data.playingStartedAt
+            ? new Date(data.playingStartedAt).getTime()
+            : Date.now(),
+        },
+      }));
     };
     const handleRejected = (data: any) => {
       if (data?.songId) removeSong(data.songId, 'rejected');
@@ -170,38 +234,41 @@ export function QueueList({
       if (data?.songId) removeSong(data.songId, 'skipped');
     };
     const handleVotesUpdated = (data: any) => {
-      if (data?.songId && data?.voteScore != null) {
-        setSongs((prev) =>
-          prev.map((s) =>
-            s._id === data.songId ? { ...s, voteScore: data.voteScore } : s,
-          ),
-        );
-      }
-      /* Apply position recalculations from backend */
-      if (Array.isArray(data?.affectedSongs)) {
-        setSongs((prev) =>
-          prev.map((s) => {
-            const upd = data.affectedSongs.find((a: any) => a.songId === s._id);
-            return upd ? { ...s, queuePosition: upd.queuePosition } : s;
-          }),
-        );
-      }
+      setQueueState((current) => {
+        let nextSongs = current.songs;
+
+        if (data?.songId && data?.voteScore != null) {
+          nextSongs = nextSongs.map((song) =>
+            song._id === data.songId ? { ...song, voteScore: data.voteScore } : song,
+          );
+        }
+
+        if (Array.isArray(data?.affectedSongs)) {
+          nextSongs = nextSongs.map((song) => {
+            const update = data.affectedSongs.find(
+              (affectedSong: any) => affectedSong.songId === song._id,
+            );
+
+            return update
+              ? { ...song, queuePosition: update.queuePosition }
+              : song;
+          });
+        }
+
+        return nextSongs === current.songs
+          ? current
+          : {
+              ...current,
+              songs: nextSongs,
+            };
+      });
     };
     const handleQueueUpdated = (data: any) => {
-      if (Array.isArray(data?.queue)) {
-        setSongs(data.queue);
-      }
-      if (data?.nowPlaying?.songId) {
-        const np = data.nowPlaying;
-        const startedAt = np.playingStartedAt
-          ? new Date(np.playingStartedAt).getTime()
-          : Date.now() - (np.elapsedTime || 0) * 1000;
-        setNowPlaying({
-          songId: np.songId,
-          duration: np.duration || 0,
-          startedAt,
-        });
-      }
+      setQueueState((current) => ({
+        ...current,
+        songs: Array.isArray(data?.queue) ? data.queue : current.songs,
+        nowPlaying: getNowPlayingSnapshot(data?.nowPlaying) ?? current.nowPlaying,
+      }));
     };
 
     try {
@@ -243,25 +310,29 @@ export function QueueList({
   const sortedSongs = useMemo(() => {
     const order: Record<string, number> = {
       PLAYING: 0,
+      APPROVED: 1,
       QUEUED: 1,
       PENDING: 2,
     };
-    return songs.toSorted((a, b) => {
+    return queueState.songs.toSorted((a, b) => {
       const ao = order[a.status as string] ?? 99;
       const bo = order[b.status as string] ?? 99;
       if (ao !== bo) return ao - bo;
       return (b.voteScore || 0) - (a.voteScore || 0);
     });
-  }, [songs]);
+  }, [queueState.songs]);
 
   /* Compute cumulative wait time for each queued song (for attendees) */
   const waitTimes = useMemo(() => {
     if (mode !== 'attendee') return new Map<string, number>();
     const map = new Map<string, number>();
     let cumulative = 0;
-    if (nowPlaying) {
-      const elapsed = Math.max(0, (Date.now() - nowPlaying.startedAt) / 1000);
-      cumulative = Math.max(0, nowPlaying.duration - elapsed);
+    if (queueState.nowPlaying) {
+      const elapsed = Math.max(
+        0,
+        (Date.now() - queueState.nowPlaying.startedAt) / 1000,
+      );
+      cumulative = Math.max(0, queueState.nowPlaying.duration - elapsed);
     }
     void tick; // dependency for live update
     for (const s of sortedSongs) {
@@ -270,7 +341,7 @@ export function QueueList({
       cumulative += s.duration || 0;
     }
     return map;
-  }, [sortedSongs, nowPlaying, mode, tick]);
+  }, [sortedSongs, queueState.nowPlaying, mode, tick]);
 
   return (
     <TooltipProvider>
@@ -279,12 +350,21 @@ export function QueueList({
         transition={{ ...SLIDE_UP.transition, delay: 0.15 }}
         layout
         className={clsx(
-          'backdrop-blur-xl rounded-3xl p-7 lg:p-6 shadow-xl flex-1 min-h-0 flex flex-col overflow-hidden',
+          'relative flex min-h-[190px] flex-1 flex-col overflow-hidden rounded-[14px] border backdrop-blur-xl',
         )}
         style={{
           backgroundColor: isDarkMode
-            ? 'rgba(100, 116, 139, 0.8)'
-            : 'rgba(255, 255, 255, 0.6)',
+            ? 'rgba(8, 17, 34, 0.88)'
+            : 'rgba(255, 255, 255, 0.86)',
+          borderColor: isDarkMode
+            ? 'rgba(255, 255, 255, 0.08)'
+            : 'rgba(15, 23, 42, 0.07)',
+          boxShadow: isDarkMode
+            ? '0 18px 38px rgba(2, 8, 23, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.06)'
+            : '0 12px 28px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.92)',
+          backgroundImage: isDarkMode
+            ? 'radial-gradient(circle at 50% 54%, rgba(47, 124, 255, 0.10), transparent 28%), linear-gradient(135deg, #081122 0%, #0d1b35 100%)'
+            : 'radial-gradient(circle at 52% 55%, rgba(47, 124, 255, 0.035), transparent 26%)',
         }}
       >
         <AnimatePresence>
@@ -299,30 +379,36 @@ export function QueueList({
           ))}
         </AnimatePresence>
 
-        <h3
+        <header
           className={clsx(
-          'font-bold mb-5 lg:mb-4 uppercase text-xs tracking-wider',
-            isDarkMode ? 'text-slate-300' : 'text-slate-500',
+            'flex items-start gap-3 px-6 pt-5 sm:px-6 sm:pt-6',
           )}
         >
-          Up Next
-        </h3>
+          <QueueHeader isDarkMode={isDarkMode} />
+        </header>
 
         <motion.div
           layout
           transition={{ type: 'spring', stiffness: 380, damping: 42 }}
-          className="flex min-h-0 flex-1 flex-col gap-5 lg:gap-3 overflow-y-auto pr-1"
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pb-5 pt-4 sm:px-6 sm:pb-6"
         >
           <AnimatePresence mode="wait">
-            {loading ? (
-              <motion.div key="loading" layout className="text-slate-500 py-4">
-                Loading queue...
+            {queueState.loading ? (
+              <motion.div
+                key="loading"
+                layout
+                className={clsx(
+                  'py-8 text-sm font-medium',
+                  isDarkMode ? 'text-slate-400' : 'text-slate-500',
+                )}
+              >
+                Loading queue…
               </motion.div>
             ) : sortedSongs.length > 0 ? (
               <motion.div
                 key="queue-list"
                 layout
-                className="flex flex-col gap-5 lg:gap-3"
+                className="flex flex-col gap-3"
               >
                 <AnimatePresence>
                   {sortedSongs.map((song, i) => {
@@ -338,12 +424,16 @@ export function QueueList({
                         isFirst={i === 0}
                         primaryColor={primaryColor}
                         isDj={isDj}
-                        isSelected={selectedSongId === song._id}
+                        isSelected={queueState.selectedSongId === song._id}
                         onSelect={(id) =>
-                          setSelectedSongId(selectedSongId === id ? null : id)
+                          setQueueState((current) => ({
+                            ...current,
+                            selectedSongId:
+                              current.selectedSongId === id ? null : id,
+                          }))
                         }
                         onSongRemoved={removeSong}
-                        eventId={eventId || undefined}
+                        eventId={queueState.resolvedEventId || undefined}
                         isDarkMode={isDarkMode}
                         waitSeconds={wait}
                         isMine={isMine}
@@ -353,18 +443,138 @@ export function QueueList({
                 </AnimatePresence>
               </motion.div>
             ) : (
-              <motion.div
+              <QueueEmptyState
                 key="empty-state"
-                layout
-                className="text-slate-500 py-4"
-              >
-                No songs in queue
-              </motion.div>
+                isDarkMode={isDarkMode}
+              />
             )}
           </AnimatePresence>
         </motion.div>
       </motion.div>
     </TooltipProvider>
+  );
+}
+
+function QueueHeader({ isDarkMode }: { isDarkMode: boolean }) {
+  return (
+    <>
+      <svg
+        className={clsx(
+          'mt-0.5 h-[18px] w-[18px] flex-shrink-0',
+          isDarkMode ? 'text-slate-400' : 'text-slate-500',
+        )}
+        viewBox="0 0 24 24"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M9 7h10M9 12h10M9 17h10"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <path
+          d="M4.5 7h.01M4.5 12h.01M4.5 17h.01"
+          stroke="currentColor"
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+      </svg>
+
+      <div>
+        <h3
+          className={clsx(
+            'text-[13px] font-extrabold leading-tight tracking-[-0.02em]',
+            isDarkMode ? 'text-slate-50' : 'text-slate-900',
+          )}
+        >
+          Up Next
+        </h3>
+        <p
+          className={clsx(
+            'mt-1 text-[11px] font-semibold leading-tight',
+            isDarkMode ? 'text-slate-400' : 'text-slate-500',
+          )}
+        >
+          Songs in the queue
+        </p>
+      </div>
+    </>
+  );
+}
+
+function QueueEmptyState({ isDarkMode }: { isDarkMode: boolean }) {
+  return (
+    <motion.div
+      layout
+      className="flex flex-1 items-center justify-center py-8"
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 6 }}
+      transition={{ duration: ANIMATION_DURATION.normal }}
+    >
+      <div className="relative w-[260px] max-w-full text-center sm:w-[220px]">
+        <div
+          className={clsx(
+            'relative mx-auto mb-[9px] grid h-[58px] w-[58px] place-items-center rounded-full',
+            isDarkMode ? 'bg-sky-500/12' : 'bg-sky-100',
+          )}
+        >
+          <span
+            className="absolute left-[-24px] top-[27px] h-[3px] w-[3px] rounded-full"
+            style={{ backgroundColor: '#ff4f9a' }}
+            aria-hidden="true"
+          />
+          <span
+            className="absolute left-[-10px] top-[43px] h-[3px] w-[3px] rounded-full"
+            style={{ backgroundColor: '#2f7cff' }}
+            aria-hidden="true"
+          />
+          <span
+            className="absolute right-[-18px] top-[21px] h-[3px] w-[3px] rounded-full"
+            style={{ backgroundColor: '#32d583' }}
+            aria-hidden="true"
+          />
+          <span
+            className="absolute right-[-11px] top-[42px] h-[3px] w-[3px] rounded-full"
+            style={{ backgroundColor: '#f8c84e' }}
+            aria-hidden="true"
+          />
+
+          <svg
+            className={clsx(
+              'h-[25px] w-[25px]',
+              isDarkMode ? 'text-sky-400' : 'text-blue-600',
+            )}
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M10 17.2a3.2 3.2 0 1 1-1.9-2.9V7.2c0-.8.5-1.4 1.3-1.6l7.4-1.5c.6-.1 1.2.3 1.2.9v2.1l-7.2 1.5v8.6H10Z"
+              fill="currentColor"
+            />
+          </svg>
+        </div>
+
+        <h3
+          className={clsx(
+            'text-[13px] font-extrabold leading-tight tracking-[-0.02em]',
+            isDarkMode ? 'text-slate-50' : 'text-slate-900',
+          )}
+        >
+          The queue is empty
+        </h3>
+        <p
+          className={clsx(
+            'mt-1 text-[12px] font-semibold leading-tight',
+            isDarkMode ? 'text-slate-400' : 'text-slate-500',
+          )}
+        >
+          Be the first to request a song!
+        </p>
+      </div>
+    </motion.div>
   );
 }
 
@@ -409,7 +619,6 @@ function QueueItem({
           return;
         }
         await songsAPI.approveSong(eventId, songId);
-        socket.approveSong(eventId, songId);
         toast.success(`Queued "${song.title}"`);
       } else if (action === 'Send Now' && eventId) {
         if (!songId) {
@@ -417,7 +626,6 @@ function QueueItem({
           return;
         }
         await songsAPI.sendNow(eventId, songId);
-        socket.sendNowSong(eventId, songId, song.title, song.artist);
         onSongRemoved(songId);
         toast.success(`Now playing "${song.title}"`);
       } else if (action === 'Reject' && eventId) {
@@ -426,7 +634,6 @@ function QueueItem({
           return;
         }
         await songsAPI.rejectSong(eventId, songId, 'Rejected by DJ');
-        socket.rejectSong(eventId, songId, 'Rejected by DJ');
         onSongRemoved(songId, 'rejected');
         toast.success(`Rejected "${song.title}"`);
       } else if (action === 'Cooldown' && eventId) {
@@ -452,7 +659,6 @@ function QueueItem({
           return;
         }
         await songsAPI.skipSong(eventId, songId, 'Skipped by DJ');
-        socket.skipSong(eventId, songId, 'Skipped by DJ');
         onSongRemoved(songId, 'skipped');
         toast.success(`Skipped "${song.title}"`);
       } else {

@@ -152,6 +152,14 @@ describe('Validation Utilities', () => {
         valid: false,
         message: 'Nickname must be at least 2 characters',
       });
+      expect(validateNickname('ABCD')).toEqual({
+        valid: false,
+        message: 'Nickname cannot be a valid access code',
+      });
+      expect(validateNickname('ABC123')).toEqual({
+        valid: false,
+        message: 'Nickname cannot be a valid access code',
+      });
       expect(validateNickname('Ada Lovelace')).toEqual({
         valid: false,
         message: 'Nickname can only contain letters, numbers, and underscores',

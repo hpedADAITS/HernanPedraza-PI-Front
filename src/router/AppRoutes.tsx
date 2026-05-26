@@ -49,6 +49,11 @@ const VerifyEmail = lazy(() =>
     default: module.VerifyEmail,
   })),
 );
+const PhoneMicrophone = lazy(() =>
+  import('@/pages/PhoneMicrophone').then((module) => ({
+    default: module.PhoneMicrophone,
+  })),
+);
 
 interface AppRoutesProps {
   direction: number;
@@ -201,6 +206,10 @@ export function AppRoutes({
           <Route
             path="/verify-email/:token"
             element={<VerifyEmail onNavigate={onNavigate} />}
+          />
+          <Route
+            path="/dj/microphone/:eventId"
+            element={<PhoneMicrophone />}
           />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

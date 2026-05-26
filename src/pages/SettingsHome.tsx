@@ -1,12 +1,7 @@
 import React, { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { User, Settings as SettingsIcon } from 'lucide-react';
-import {
-  SettingsGrid,
-  SettingsOptionCard,
-  SettingsPageShell,
-  SettingsSearch,
-} from '@/components/settings/SettingsUI';
+import { SettingsGrid, SettingsOptionCard, SettingsPageShell, SettingsSearch,  } from '@/components/settings/SettingsUI';
 import type { NavigateToView } from '@/types';
 
 interface Props {

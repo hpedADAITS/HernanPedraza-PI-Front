@@ -55,9 +55,9 @@ describe('socket service', () => {
         token: 'explicit-token',
       },
       reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      reconnectionAttempts: 5,
+      reconnectionDelay: 500,
+      reconnectionDelayMax: 3000,
+      reconnectionAttempts: Number.POSITIVE_INFINITY,
     });
     expect(socket.on).toHaveBeenCalledWith('connect', expect.any(Function));
     expect(socket.on).toHaveBeenCalledWith('disconnect', expect.any(Function));
@@ -87,6 +87,23 @@ describe('socket service', () => {
     expect(initSocket()).toBe(connectedSocket);
     expect(initSocket()).toBe(connectedSocket);
     expect(socketIoMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('rebinds registered listeners when recreating the socket with a new token', () => {
+    const firstSocket = createSocketDouble(true);
+    const secondSocket = createSocketDouble(true);
+    socketIoMock.mockReturnValueOnce(firstSocket).mockReturnValueOnce(secondSocket);
+    const approvedCallback = vi.fn();
+
+    initSocket('first-token');
+    onSongApproved(approvedCallback);
+    initSocket('second-token');
+
+    expect(firstSocket.disconnect).toHaveBeenCalled();
+    expect(secondSocket.on).toHaveBeenCalledWith(
+      'song_approved',
+      approvedCallback,
+    );
   });
 
   it('emits participation, vote, and song events through the real emitter functions', () => {

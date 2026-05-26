@@ -206,6 +206,7 @@ export function SongCardDebugModal() {
                     type="checkbox"
                     checked={selected[key]}
                     onChange={() => updateSelected(key)}
+                    aria-label={label}
                     className="h-4 w-4"
                     disabled={running}
                   />

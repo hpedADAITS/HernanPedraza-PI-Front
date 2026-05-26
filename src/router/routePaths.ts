@@ -15,6 +15,7 @@ export const viewPaths: Record<View, string> = {
   'dj-settings': '/dj/settings',
   'dj-account-settings': '/dj/settings/account',
   'dj-app-settings': '/dj/settings/app',
+  'dj-phone-microphone': '/dj/microphone',
   'verify-email': '/verify-email',
 };
 
@@ -25,6 +26,10 @@ export function getViewPath(view: View) {
 export function getViewFromPath(pathname: string): View {
   if (pathname.startsWith('/verify-email')) {
     return 'verify-email';
+  }
+
+  if (pathname.startsWith('/dj/microphone')) {
+    return 'dj-phone-microphone';
   }
 
   return (

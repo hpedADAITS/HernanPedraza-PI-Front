@@ -4,21 +4,8 @@ import { toast } from 'sonner';
 import { authAPI, clearToken } from '@/services/api';
 import { disconnectSocket, getSocket } from '@/services/socket';
 import { ProfilePictureUpload } from '@/components/common';
-import {
-  SettingsChoiceRow,
-  SettingsDialog,
-  SettingsDialogActions,
-  SettingsDialogButton,
-  SettingsList,
-  SettingsListItem,
-  SettingsPageShell,
-  SettingsSearch,
-  SettingsToggleRow,
-} from '@/components/settings/SettingsUI';
-import {
-  readStoredJson,
-  writeStoredJson,
-} from '@/utils/storage';
+import { SettingsChoiceRow, SettingsDialog, SettingsDialogActions, SettingsDialogButton, SettingsList, SettingsListItem, SettingsPageShell, SettingsSearch, SettingsToggleRow,  } from '@/components/settings/SettingsUI';
+import { readStoredJson, writeStoredJson,  } from '@/utils/storage';
 import type { NavigateToView } from '@/types';
 
 interface Props {
@@ -229,6 +216,7 @@ export function AccountSettings({ mode, onNavigate }: Props) {
           type="text"
           value={newDisplayName}
           onChange={(event) => setNewDisplayName(event.target.value)}
+          aria-label="New display name"
           placeholder="New display name"
           className="h-12 w-full rounded-lg border border-slate-200 px-4 text-base text-slate-700 outline-none focus:ring-4 focus:ring-blue-100"
         />

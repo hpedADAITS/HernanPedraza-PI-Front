@@ -1,10 +1,4 @@
-import React, {
-  memo,
-  useCallback,
-  useState,
-  useEffect,
-  useEffectEvent,
-} from 'react';
+import React, { memo } from 'react';
 import type { PageProps } from '@/types';
 import { Layout } from '@/components/layout/Layout';
 import { Logo } from '@/components/common/Logo';
@@ -17,23 +11,8 @@ import {
   NowPlayingSection,
   ConnectedUsers,
 } from '@/components/dashboard';
-import {
-  initSocket,
-  joinEvent,
-  onAccessCodeUpdated,
-  onSongSuggested,
-  onEventEnded,
-  off,
-  disconnectSocket,
-} from '@/services/socket';
-import { clearToken, eventsAPI } from '@/services/api';
+import { useDashboardSession } from '@/hooks/useDashboardSession';
 import { useDarkMode } from '@/hooks/useDarkMode';
-import { toast } from 'sonner';
-import {
-  readStoredJson,
-  writeStoredJson,
-  removeStoredItem,
-} from '@/utils/storage';
 
 interface DashboardProps extends PageProps {
   mode: 'attendee' | 'dj';
@@ -104,6 +83,8 @@ const DashboardLeftColumn = memo(function DashboardLeftColumn({
 
 interface DashboardRightColumnProps {
   djProfilePicture?: string | null;
+  currentProfilePicture?: string | null;
+  eventId: string;
   isDarkMode: boolean;
   isDj: boolean;
   mode: 'attendee' | 'dj';
@@ -112,6 +93,8 @@ interface DashboardRightColumnProps {
 
 const DashboardRightColumn = memo(function DashboardRightColumn({
   djProfilePicture,
+  currentProfilePicture,
+  eventId,
   isDarkMode,
   isDj,
   mode,
@@ -124,12 +107,14 @@ const DashboardRightColumn = memo(function DashboardRightColumn({
           onNavigate={onNavigate}
           isDj={isDj}
           isDarkMode={isDarkMode}
+          eventId={eventId}
         />
         <DashboardNowPlayingSection />
         <DashboardConnectedUsers
           mode={mode}
           isDarkMode={isDarkMode}
           ownerProfilePicture={djProfilePicture}
+          currentProfilePicture={currentProfilePicture}
         />
         {!isDj && (
           <DashboardActionButtons
@@ -145,161 +130,12 @@ const DashboardRightColumn = memo(function DashboardRightColumn({
 
 export function Dashboard({ mode, onNavigate }: DashboardProps) {
   const isDj = mode === 'dj';
-  const [userName, setUserName] = useState('User');
-  const [profilePicture, setProfilePicture] = useState<string | null>(null);
-  const [djName, setDjName] = useState('DJ');
-  const [djProfilePicture, setDjProfilePicture] = useState<string | null>(null);
-  const [accessCode, setAccessCode] = useState('');
-  const [eventId, setEventId] = useState('');
   const [isDarkMode] = useDarkMode();
-  const navigateAway = useEffectEvent(() => {
-    onNavigate(isDj ? 'dj-login' : 'attendee-login');
-  });
-
-  const persistAccessCode = useCallback((newCode: string) => {
-    setAccessCode((currentCode) =>
-      currentCode === newCode ? currentCode : newCode,
-    );
-    const eventData = readStoredJson<
-      { accessCode?: string } & Record<string, unknown>
-    >('currentEvent');
-    if (eventData) {
-      writeStoredJson('currentEvent', {
-        ...eventData,
-        accessCode: newCode,
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    const eventData = readStoredJson<{
-      eventId?: string;
-      ownerName?: string;
-      accessCode?: string;
-      ownerProfilePicture?: string | null;
-    }>('currentEvent');
-    const participantData = readStoredJson<{
-      _id?: string;
-      nickname?: string;
-      profilePicture?: string | null;
-    }>('currentParticipant');
-
-    if (!eventData || !participantData) {
-      navigateAway();
-      return;
-    }
-
-    const token = localStorage.getItem('authToken');
-    const socket = initSocket(token ?? undefined);
-
-    const user = readStoredJson<{
-      displayName?: string;
-      profilePicture?: string | null;
-    }>('user');
-    if (user) {
-      setUserName(user.displayName || 'User');
-      setProfilePicture(user.profilePicture || null);
-    }
-
-    if (participantData?.profilePicture) {
-      setProfilePicture(participantData.profilePicture);
-    }
-
-    const handleConnect = async () => {
-      try {
-        if (!eventData.eventId || !participantData._id) {
-          throw new Error('Session data is incomplete');
-        }
-        if (eventData.ownerName) setDjName(eventData.ownerName);
-        if (eventData.ownerProfilePicture) {
-          setDjProfilePicture(eventData.ownerProfilePicture);
-        }
-        setEventId(eventData.eventId);
-
-        // Fetch fresh event data from backend to get current accessCode
-        const freshEvent = await eventsAPI.getEvent(eventData.eventId);
-        if (freshEvent?.accessCode) {
-          // Update localStorage with fresh accessCode
-          persistAccessCode(freshEvent.accessCode);
-        }
-        if (freshEvent?.ownerId?.profilePicture) {
-          setDjProfilePicture(freshEvent.ownerId.profilePicture);
-          writeStoredJson('currentEvent', {
-            ...eventData,
-            accessCode: freshEvent.accessCode || eventData.accessCode,
-            ownerProfilePicture: freshEvent.ownerId.profilePicture,
-          });
-        }
-
-        joinEvent(
-          eventData.eventId,
-          participantData._id,
-          participantData.nickname || 'User',
-          participantData.profilePicture || user?.profilePicture || null,
-        );
-      } catch (error) {
-        console.error('Error initializing dashboard:', error);
-        // Fallback to localStorage if backend fetch fails
-        try {
-          if (eventData.accessCode) {
-            persistAccessCode(eventData.accessCode);
-          }
-        } catch {}
-      }
-    };
-
-    const handleAccessCodeUpdated = (data: { accessCode: string }) => {
-      if (!data?.accessCode) return;
-      persistAccessCode(data.accessCode);
-      toast.info(`Access code changed to ${data.accessCode}`);
-    };
-
-    const handleSongSuggested = (data: {
-      participantId?: string;
-      nickname?: string;
-      title?: string;
-    }) => {
-      if (!data?.title) return;
-      try {
-        const localId = JSON.parse(participantData)._id;
-        if (data.participantId === localId) return;
-      } catch {}
-      toast.info(`${data.nickname || 'Someone'} suggested ${data.title}!`);
-    };
-
-    const handleEventEnded = (data: {
-      cancelled?: boolean;
-      reason?: string;
-    }) => {
-      if (isDj) return;
-      const msg = data?.cancelled
-        ? `Event cancelled${data.reason ? `: ${data.reason}` : ''}`
-        : 'The DJ ended the event';
-      toast.info(msg);
-      clearToken();
-      disconnectSocket();
-      removeStoredItem('currentEvent');
-      removeStoredItem('currentParticipant');
-      removeStoredItem('user');
-      onNavigate('attendee-login');
-    };
-
-    onAccessCodeUpdated(handleAccessCodeUpdated);
-    onSongSuggested(handleSongSuggested);
-    onEventEnded(handleEventEnded);
-
-    if (socket?.connected) {
-      handleConnect();
-    } else {
-      socket?.once('connect', handleConnect);
-    }
-
-    return () => {
-      off('access_code_updated', handleAccessCodeUpdated);
-      off('song_suggested', handleSongSuggested);
-      off('event_ended', handleEventEnded);
-    };
-  }, [isDj, persistAccessCode]);
+  const { dashboardState, handleProfilePictureChange, persistAccessCode } =
+    useDashboardSession({
+      mode,
+      onNavigate,
+    });
 
   return (
     <Layout
@@ -316,21 +152,23 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
       </div>
       <div className="mx-auto mt-6 flex w-full max-w-[1400px] flex-1 min-h-0 flex-col gap-10 lg:mt-3 lg:flex-row lg:gap-8">
         <DashboardLeftColumn
-          accessCode={accessCode}
-          djName={djName}
-          eventId={eventId}
+          accessCode={dashboardState.accessCode}
+          djName={dashboardState.djName}
+          eventId={dashboardState.eventId}
           isDarkMode={isDarkMode}
           isDj={isDj}
           mode={mode}
           onAccessCodeChange={persistAccessCode}
           onNavigate={onNavigate}
-          onProfilePictureChange={setProfilePicture}
-          profilePicture={profilePicture}
-          userName={userName}
+          onProfilePictureChange={handleProfilePictureChange}
+          profilePicture={dashboardState.profilePicture}
+          userName={dashboardState.userName}
         />
 
         <DashboardRightColumn
-          djProfilePicture={djProfilePicture}
+          currentProfilePicture={dashboardState.profilePicture}
+          djProfilePicture={dashboardState.djProfilePicture}
+          eventId={dashboardState.eventId}
           isDarkMode={isDarkMode}
           isDj={isDj}
           mode={mode}

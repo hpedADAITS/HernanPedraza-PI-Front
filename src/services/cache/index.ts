@@ -3,11 +3,5 @@
  */
 
 export { cacheManager } from './cacheManager';
-export {
-  cachedApiCall,
-  clearEndpointCache,
-  clearApiCache,
-  preloadCache,
-  type CacheOptions,
-} from './cachedApiCall';
+export { cachedApiCall, clearEndpointCache, clearApiCache, preloadCache, type CacheOptions,  } from './cachedApiCall';
 export { useAssetCache } from './useAssetCache';

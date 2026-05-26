@@ -2,18 +2,9 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { clsx } from 'clsx';
 import { QrCode } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,  } from '@/components/ui/tooltip';
 import { ProfilePictureUpload, UserAvatar } from '@/components/common';
-import {
-  SettingsDialog,
-  SettingsDialogActions,
-  SettingsDialogButton,
-} from '@/components/settings/SettingsUI';
+import { SettingsDialog, SettingsDialogActions, SettingsDialogButton } from '@/components/settings/SettingsUI';
 import { PROFILE_IMAGE, THEME_CONFIG } from '@/constants/dashboard';
 import { SLIDE_IN_LEFT } from '@/constants/animations';
 import { QRCodeModal } from './QRCodeModal';
@@ -66,7 +57,7 @@ export function DJProfileCard({
                 <UserAvatar
                   name={userName}
                   profilePicture={profilePicture}
-                  className="w-24 h-24 lg:w-16 lg:h-16 rounded-2xl bg-white/20 backdrop-blur-md shadow-inner border border-white/30 flex items-center justify-center transition-transform hover:scale-[1.02]"
+                  className="w-24 h-24 lg:w-16 lg:h-16 rounded-2xl overflow-hidden bg-white/20 backdrop-blur-md shadow-inner border border-white/30 flex items-center justify-center transition-transform hover:scale-[1.02]"
                   fallbackClassName="flex items-center justify-center"
                   fallbackContent={
                     <img

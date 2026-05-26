@@ -1,16 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { AlertCircle, Mic, MicOff } from 'lucide-react';
 import { useMicrophone } from '@/hooks/useMicrophone';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,  } from '@/components/ui/alert-dialog';
 
 interface MicrophoneControlProps {
   isDj: boolean;
@@ -54,6 +45,7 @@ export function MicrophoneControl({ isDj }: MicrophoneControlProps) {
     <>
       <div className="flex items-center gap-3">
         <button
+          type="button"
           onClick={handleToggleMicrophone}
           className={`flex h-12 items-center gap-2 rounded-xl px-4 font-medium shadow-md transition-all duration-200 ${
             isListening

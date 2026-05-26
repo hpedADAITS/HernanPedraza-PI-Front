@@ -72,6 +72,16 @@ export function ProfilePictureUpload({
             });
           }
 
+          const participant = readStoredJson<
+            { profilePicture?: string | null } & Record<string, unknown>
+          >('currentParticipant');
+          if (participant) {
+            writeStoredJson('currentParticipant', {
+              ...participant,
+              profilePicture: base64String,
+            });
+          }
+
           toast.success('Profile picture updated');
           onPictureUpdated?.(base64String);
         } catch (error) {
@@ -105,6 +115,7 @@ export function ProfilePictureUpload({
       <input
         ref={fileInputRef}
         type="file"
+        aria-label="Upload profile picture"
         accept="image/*"
         onChange={handleFileSelect}
         className="hidden"
@@ -112,10 +123,12 @@ export function ProfilePictureUpload({
       />
 
       <motion.button
+        type="button"
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         onClick={handleOpenFilePicker}
         disabled={isBusy}
+        aria-label={previewPicture ? 'Change profile picture' : 'Upload profile picture'}
         className={`relative ${sizeClasses[size]} rounded-full overflow-hidden border-2 border-dashed border-slate-300 hover:border-slate-400 flex items-center justify-center bg-slate-50 transition-all disabled:opacity-50`}
       >
         {previewPicture ? (

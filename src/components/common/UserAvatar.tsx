@@ -6,6 +6,7 @@ interface UserAvatarProps {
   profilePicture?: string | null;
   imageAlt?: string;
   className: string;
+  imageClassName?: string;
   fallbackClassName: string;
   fallbackContent?: React.ReactNode;
 }
@@ -15,16 +16,17 @@ export function UserAvatar({
   profilePicture,
   imageAlt = 'Profile',
   className,
+  imageClassName,
   fallbackClassName,
   fallbackContent,
 }: UserAvatarProps) {
   return (
-    <div className={clsx(className, 'overflow-hidden')}>
+    <div className={className}>
       {profilePicture ? (
         <img
           src={profilePicture}
           alt={imageAlt}
-          className="h-full w-full object-cover"
+          className={clsx('h-full w-full object-cover', imageClassName)}
         />
       ) : (
         <div className={clsx('h-full w-full', fallbackClassName)}>

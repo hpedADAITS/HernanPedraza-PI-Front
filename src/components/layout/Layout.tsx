@@ -59,6 +59,7 @@ export function Layout({
           <div></div>
 
           <button
+            type="button"
             onClick={() => setIsDarkMode(!isDarkMode)}
             aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             className={clsx(

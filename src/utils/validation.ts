@@ -161,6 +161,13 @@ export function validateNickname(nickname: string): {
     };
   }
 
+  if (/^[A-Za-z0-9]{4,20}$/.test(nickname)) {
+    return {
+      valid: false,
+      message: 'Nickname cannot be a valid access code',
+    };
+  }
+
   return { valid: true };
 }
 

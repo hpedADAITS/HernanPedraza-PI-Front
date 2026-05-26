@@ -16,7 +16,7 @@ export interface Song {
   queuePosition?: number;
   approvedAt?: string;
   playingStartedAt?: string;
-  requestedBy?: { _id: string; nickname: string } | null;
+  requestedBy?: { _id: string; nickname: string; profilePicture?: string | null } | null;
   eventId?: string;
   createdAt?: string;
 }

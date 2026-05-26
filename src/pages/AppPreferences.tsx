@@ -2,16 +2,7 @@ import React, { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Music2, Users } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  SettingsChoiceRow,
-  SettingsDialog,
-  SettingsDialogActions,
-  SettingsDialogButton,
-  SettingsGrid,
-  SettingsOptionCard,
-  SettingsPageShell,
-  SettingsToggleRow,
-} from '@/components/settings/SettingsUI';
+import { SettingsChoiceRow, SettingsDialog, SettingsDialogActions, SettingsDialogButton, SettingsGrid, SettingsOptionCard, SettingsPageShell, SettingsToggleRow,  } from '@/components/settings/SettingsUI';
 import type { NavigateToView } from '@/types';
 
 interface Props {

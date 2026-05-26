@@ -1,13 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import {
-  Mail,
-  Lock,
-  ArrowLeft,
-  ArrowRight,
-  Eye,
-  EyeOff,
-} from 'lucide-react';
+import { Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { authAPI, eventsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
@@ -28,9 +21,21 @@ export function DJLogin({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPassword = password.trim().toLowerCase();
+
+    if (normalizedEmail && normalizedEmail === normalizedPassword) {
+      const message = 'Your password cannot be the same as your email address.';
+      setError(message);
+      toast.error(message);
+      return;
+    }
+
+    setError(null);
     setLoading(true);
     try {
       const result = await authAPI.login(email, password);
@@ -146,9 +151,13 @@ export function DJLogin({
                 <input
                   id="dj-email"
                   type="email"
+                  aria-label="Email"
                   placeholder="you@example.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setError(null);
+                  }}
                   required
                   autoComplete="email"
                   className="flex-1 bg-transparent px-3.5 text-[14.5px] text-slate-900 placeholder:text-slate-400 outline-none"
@@ -170,9 +179,13 @@ export function DJLogin({
                 <input
                   id="dj-password"
                   type={showPassword ? 'text' : 'password'}
+                  aria-label="Password"
                   placeholder="Enter your password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setError(null);
+                  }}
                   required
                   autoComplete="current-password"
                   className="flex-1 bg-transparent px-3.5 text-[14.5px] text-slate-900 placeholder:text-slate-400 outline-none"
@@ -190,6 +203,11 @@ export function DJLogin({
                   )}
                 </button>
               </div>
+              {error ? (
+                <p className="mt-2 text-[12px] font-medium text-red-600" role="alert">
+                  {error}
+                </p>
+              ) : null}
             </div>
           </div>
 

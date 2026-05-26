@@ -12,7 +12,12 @@ export function on(event: string, callback: (data: any) => void) {
     eventListeners.set(event, []);
   }
 
-  eventListeners.get(event)!.push(callback);
+  const listeners = eventListeners.get(event)!;
+  if (listeners.includes(callback)) {
+    return;
+  }
+
+  listeners.push(callback);
   s.on(event, callback);
 }
 
@@ -88,10 +93,22 @@ export function onAccessCodeUpdated(callback: (data: any) => void) {
   on('access_code_updated', callback);
 }
 
+export function onEventUpdated(callback: (data: any) => void) {
+  on('event_updated', callback);
+}
+
 export function onEventEnded(callback: (data: any) => void) {
   on('event_ended', callback);
 }
 
+export function onParticipantPremiumUpdated(callback: (data: any) => void) {
+  on('participant_premium_updated', callback);
+}
+
 export function onAttendeePasswordPromptRequested(callback: (data: any) => void) {
   on('attendee_password_prompt_requested', callback);
+}
+
+export function onPhoneMicrophoneConnected(callback: (data: any) => void) {
+  on('phone_microphone_connected', callback);
 }

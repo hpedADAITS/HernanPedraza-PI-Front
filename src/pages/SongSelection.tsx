@@ -1,16 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Layout } from '@/components/layout/Layout';
-import { motion } from 'motion/react';
-import {
-  Search,
-  ChevronRight,
-  ArrowLeft,
-  Check,
-  X,
-  Music2,
-  Mic2,
-  UserRound,
-} from 'lucide-react';
+import { AnimatePresence, animate, motion, useMotionValue } from 'motion/react';
+import { Search, ArrowLeft, Music2, Mic2 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { toast } from 'sonner';
 import { UserAvatar } from '@/components/common';
@@ -26,7 +17,7 @@ interface Song {
   artist: string;
   voteScore: number;
   status: string;
-  requestedBy: { _id: string; nickname: string } | null;
+  requestedBy: { _id: string; nickname: string; profilePicture?: string | null } | null;
   eventId: string;
 }
 
@@ -34,6 +25,16 @@ interface Props {
   mode: 'attendee' | 'dj';
   onNavigate: NavigateToView;
 }
+
+interface DjSongCardProps {
+  isProcessing: boolean;
+  onApprove: () => Promise<void>;
+  onReject: () => Promise<void>;
+  song: Song;
+}
+
+const SWIPE_ACTION_THRESHOLD = 110;
+const SWIPE_EXIT_PADDING = 96;
 
 function getLocalStorageIds() {
   const eventData = readStoredJson<{ eventId?: string }>('currentEvent');
@@ -43,28 +44,338 @@ function getLocalStorageIds() {
   return { eventId, participantId };
 }
 
+function SwipeBorderGlow() {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      className="pointer-events-none fixed inset-0 z-[9999] bg-transparent"
+      aria-hidden="true"
+    >
+      <style>
+        {`
+          .swipe-border-glow-svg {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            overflow: visible;
+          }
+
+          .swipe-border-line {
+            fill: none;
+            stroke-linecap: square;
+            stroke-linejoin: miter;
+            vector-effect: non-scaling-stroke;
+          }
+
+          .swipe-border-line.red {
+            stroke: url(#swipe-red-gradient);
+          }
+
+          .swipe-border-line.green {
+            stroke: url(#swipe-green-gradient);
+          }
+
+          .swipe-border-line.glow-mega {
+            stroke-width: 72px;
+            opacity: 1;
+            filter: url(#swipe-mega-blur);
+          }
+
+          .swipe-border-line.glow-ambient {
+            stroke-width: 112px;
+            opacity: 1;
+            filter: url(#swipe-ambient-blur);
+          }
+
+          .swipe-border-line.glow-strong {
+            stroke-width: 44px;
+            opacity: 1;
+            filter: url(#swipe-strong-blur);
+            animation: swipe-border-pulse 0.9s ease-in-out infinite alternate;
+          }
+
+          @keyframes swipe-border-pulse {
+            from {
+              opacity: 1;
+              stroke-width: 38px;
+            }
+
+            to {
+              opacity: 1;
+              stroke-width: 56px;
+            }
+          }
+        `}
+      </style>
+
+      <svg
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        className="swipe-border-glow-svg"
+      >
+        <defs>
+          <linearGradient id="swipe-red-gradient" x1="0" y1="0" x2="0" y2="100" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#ff2a2a" stopOpacity="0.08" />
+            <stop offset="14%" stopColor="#ff2a2a" stopOpacity="0.96" />
+            <stop offset="50%" stopColor="#ff3b30" stopOpacity="1" />
+            <stop offset="86%" stopColor="#ff2a2a" stopOpacity="0.96" />
+            <stop offset="100%" stopColor="#ff2a2a" stopOpacity="0.08" />
+          </linearGradient>
+          <linearGradient id="swipe-green-gradient" x1="100" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#00ff66" stopOpacity="0.08" />
+            <stop offset="14%" stopColor="#00ff66" stopOpacity="0.96" />
+            <stop offset="50%" stopColor="#22ff88" stopOpacity="1" />
+            <stop offset="86%" stopColor="#00ff66" stopOpacity="0.96" />
+            <stop offset="100%" stopColor="#00ff66" stopOpacity="0.08" />
+          </linearGradient>
+          <filter id="swipe-strong-blur" x="-90%" y="-90%" width="280%" height="280%">
+            <feGaussianBlur stdDeviation="22" />
+          </filter>
+          <filter id="swipe-mega-blur" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="42" />
+          </filter>
+          <filter id="swipe-ambient-blur" x="-120%" y="-120%" width="340%" height="340%">
+            <feGaussianBlur stdDeviation="68" />
+          </filter>
+        </defs>
+
+        <path className="swipe-border-line glow-ambient red" d="M 50 0 L 0 0 L 0 100 L 50 100" />
+        <path className="swipe-border-line glow-ambient green" d="M 50 0 L 100 0 L 100 100 L 50 100" />
+        <path className="swipe-border-line glow-mega red" d="M 50 0 L 0 0 L 0 100 L 50 100" />
+        <path className="swipe-border-line glow-mega green" d="M 50 0 L 100 0 L 100 100 L 50 100" />
+        <path className="swipe-border-line glow-strong red" d="M 50 0 L 0 0 L 0 100 L 50 100" />
+        <path className="swipe-border-line glow-strong green" d="M 50 0 L 100 0 L 100 100 L 50 100" />
+      </svg>
+    </motion.div>
+  );
+}
+
+function DjSongCardContent({ song }: { song: Song }) {
+  return (
+    <>
+      <div className="relative z-10 flex items-center gap-3 md:gap-4">
+        <UserAvatar
+          name={song.requestedBy?.nickname || '?'}
+          imageAlt={`${song.requestedBy?.nickname || 'Unknown'} profile`}
+          className="h-11 w-11 flex-shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-800 shadow-sm md:h-12 md:w-12"
+          fallbackClassName="flex items-center justify-center text-base font-semibold text-white"
+        />
+
+        <div className="flex-1 min-w-0 flex flex-col">
+          <h3 className="truncate text-base font-semibold text-slate-900 md:text-lg">
+            {song.title}
+          </h3>
+          <p className="truncate text-sm font-medium text-slate-500">
+            {song.artist}
+          </p>
+          <p className="mt-1 flex items-center gap-1.5 truncate text-xs font-medium text-slate-400">
+            <UserAvatar
+              name={song.requestedBy?.nickname || 'Unknown'}
+              profilePicture={song.requestedBy?.profilePicture || null}
+              imageAlt={`${song.requestedBy?.nickname || 'Unknown'} profile`}
+              className="h-4 w-4 flex-shrink-0 overflow-hidden rounded-full border border-slate-300 bg-slate-200 shadow-sm"
+              fallbackClassName="flex h-full w-full items-center justify-center bg-slate-700 text-[9px] font-semibold text-white"
+            />
+            {song.requestedBy?.nickname || 'Unknown'}
+          </p>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function DjSongCard({
+  isProcessing,
+  onApprove,
+  onReject,
+  song,
+}: DjSongCardProps) {
+  const x = useMotionValue(0);
+  const pointerStartRef = React.useRef<{ x: number; y: number } | null>(null);
+  const pointerLockRef = React.useRef<'x' | 'y' | null>(null);
+  const [showOverlay, setShowOverlay] = useState(false);
+
+  const getSwipeExitX = (direction: 'left' | 'right') => {
+    if (typeof window === 'undefined') {
+      return direction === 'right' ? 420 : -420;
+    }
+
+    const exitDistance = window.innerWidth + SWIPE_EXIT_PADDING;
+    return direction === 'right' ? exitDistance : -exitDistance;
+  };
+
+  const finishSwipe = async (offsetX: number) => {
+    if (Math.abs(offsetX) >= SWIPE_ACTION_THRESHOLD) {
+      const direction = offsetX > 0 ? 'right' : 'left';
+
+      animate(x, getSwipeExitX(direction), {
+        duration: 0.18,
+        ease: 'linear',
+      });
+
+      if (direction === 'right') {
+        await onApprove();
+      } else {
+        await onReject();
+      }
+
+      x.set(0);
+      return;
+    }
+
+    animate(x, 0, {
+      duration: 0.14,
+      ease: 'easeOut',
+    });
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isProcessing) {
+      return;
+    }
+
+    pointerStartRef.current = { x: e.clientX, y: e.clientY };
+    pointerLockRef.current = null;
+    setShowOverlay(true);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const start = pointerStartRef.current;
+
+    if (!start || isProcessing) {
+      return;
+    }
+
+    const deltaX = e.clientX - start.x;
+    const deltaY = e.clientY - start.y;
+
+    if (!pointerLockRef.current) {
+      if (Math.abs(deltaX) < 8 && Math.abs(deltaY) < 8) {
+        return;
+      }
+
+      if (Math.abs(deltaX) > Math.abs(deltaY) + 6) {
+        pointerLockRef.current = 'x';
+      } else {
+        pointerLockRef.current = 'y';
+        return;
+      }
+    }
+
+    if (pointerLockRef.current !== 'x') {
+      return;
+    }
+
+    e.preventDefault();
+    x.set(deltaX);
+  };
+
+  const handlePointerUp = async () => {
+    const lockedAxis = pointerLockRef.current;
+    const offsetX = x.get();
+
+    pointerStartRef.current = null;
+    pointerLockRef.current = null;
+    setShowOverlay(false);
+
+    if (lockedAxis !== 'x' || isProcessing) {
+      return;
+    }
+
+    await finishSwipe(offsetX);
+  };
+
+  const handlePointerCancel = () => {
+    pointerStartRef.current = null;
+    pointerLockRef.current = null;
+    setShowOverlay(false);
+    animate(x, 0, {
+      duration: 0.14,
+      ease: 'easeOut',
+    });
+  };
+
+  const handleDecisionKeyDown = async (
+    e: React.KeyboardEvent<HTMLDivElement>,
+  ) => {
+    if (isProcessing) {
+      return;
+    }
+
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      await finishSwipe(SWIPE_ACTION_THRESHOLD);
+    }
+
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      await finishSwipe(-SWIPE_ACTION_THRESHOLD);
+    }
+  };
+
+  return (
+    <motion.div
+      variants={{
+        hidden: { y: 20, opacity: 0 },
+        show: { y: 0, opacity: 1 },
+      }}
+      className="relative overflow-hidden rounded-2xl"
+    >
+      <AnimatePresence>
+        {showOverlay ? <SwipeBorderGlow /> : null}
+      </AnimatePresence>
+
+      <div
+        aria-hidden="true"
+        className="pointer-events-none invisible rounded-2xl border border-slate-200/80 bg-white p-4 md:p-5"
+      >
+        <DjSongCardContent song={song} />
+      </div>
+
+      <motion.div
+        style={{ x, touchAction: 'pan-y' }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
+        onKeyDown={handleDecisionKeyDown}
+        tabIndex={0}
+        role="button"
+        aria-label={`Decide ${song.title}. Swipe right to approve or left to reject.`}
+        className={clsx(
+          'group absolute inset-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_14px_30px_rgba(15,23,42,0.10)] focus:outline-none focus:ring-4 focus:ring-sky-100 md:p-5',
+          isProcessing ? 'cursor-wait opacity-80' : 'cursor-grab active:cursor-grabbing',
+        )}
+      >
+        <DjSongCardContent song={song} />
+      </motion.div>
+    </motion.div>
+  );
+}
+
 export function SongSelection({ mode, onNavigate }: Props) {
   const isDj = mode === 'dj';
   const theme = isDj ? 'blue' : 'green';
   const [isDarkMode] = useDarkMode();
+  const navigateBack = useCallback(() => {
+    onNavigate(isDj ? 'dj-dashboard' : 'attendee-dashboard');
+  }, [isDj, onNavigate]);
 
   const { eventId, participantId } = getLocalStorageIds();
 
   /* DJ state */
   const [pendingSongs, setPendingSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeSongId, setActiveSongId] = useState<string | null>(null);
+  const [processingSongId, setProcessingSongId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   /* Attendee state */
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
   const [submitting, setSubmitting] = useState(false);
-
-  const getLocalNickname = () => {
-    const data = readStoredJson<{ nickname?: string }>('currentParticipant');
-    return data?.nickname || 'User';
-  };
 
   const fetchPendingSongs = useCallback(async () => {
     if (!eventId) return;
@@ -85,6 +396,54 @@ export function SongSelection({ mode, onNavigate }: Props) {
     }
   }, [isDj, fetchPendingSongs]);
 
+  useEffect(() => {
+    if (!isDj) return undefined;
+
+    const handleSongSuggested = (data: any) => {
+      if (!data?.songId) return;
+
+      setPendingSongs((current) => {
+        if (current.some((song) => song._id === data.songId)) {
+          return current;
+        }
+
+        return [
+          ...current,
+          {
+            _id: data.songId,
+            title: data.title || 'Untitled song',
+            artist: data.artist || 'Unknown artist',
+            voteScore: data.voteScore || 0,
+            status: data.status || 'PENDING',
+            requestedBy: data.requestedBy || null,
+            eventId: data.eventId || eventId || '',
+          },
+        ];
+      });
+    };
+
+    const removePendingSong = (data: any) => {
+      if (!data?.songId) return;
+      setPendingSongs((current) =>
+        current.filter((song) => song._id !== data.songId),
+      );
+    };
+
+    try {
+      socket.onSongSuggested(handleSongSuggested);
+      socket.onSongApproved(removePendingSong);
+      socket.onSongRejected(removePendingSong);
+    } catch {
+      /* Socket not initialized yet */
+    }
+
+    return () => {
+      socket.off('song_suggested', handleSongSuggested);
+      socket.off('song_approved', removePendingSong);
+      socket.off('song_rejected', removePendingSong);
+    };
+  }, [eventId, isDj]);
+
   const filteredSongs = pendingSongs.filter(
     (s) =>
       s.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -93,27 +452,33 @@ export function SongSelection({ mode, onNavigate }: Props) {
 
   const handleApprove = async (songId: string) => {
     if (!eventId) return;
+    setProcessingSongId(songId);
     try {
       await songsAPI.approveSong(eventId, songId);
-      socket.approveSong(eventId, songId);
+      setPendingSongs((current) =>
+        current.filter((song) => song._id !== songId),
+      );
       toast.success('Song approved');
-      setActiveSongId(null);
-      await fetchPendingSongs();
     } catch (err: any) {
       toast.error(err.message || 'Failed to approve song');
+    } finally {
+      setProcessingSongId(null);
     }
   };
 
   const handleReject = async (songId: string) => {
     if (!eventId) return;
+    setProcessingSongId(songId);
     try {
       await songsAPI.rejectSong(eventId, songId, 'Rejected by DJ');
-      socket.rejectSong(eventId, songId, 'Rejected by DJ');
+      setPendingSongs((current) =>
+        current.filter((song) => song._id !== songId),
+      );
       toast.success('Song rejected');
-      setActiveSongId(null);
-      await fetchPendingSongs();
     } catch (err: any) {
       toast.error(err.message || 'Failed to reject song');
+    } finally {
+      setProcessingSongId(null);
     }
   };
 
@@ -128,14 +493,6 @@ export function SongSelection({ mode, onNavigate }: Props) {
         title.trim(),
         artist.trim(),
       );
-      socket.suggestSong(
-        eventId,
-        song._id,
-        song.title,
-        song.artist,
-        participantId,
-        getLocalNickname(),
-      );
       toast.success(`"${song.title}" suggested`);
       onNavigate('attendee-dashboard');
     } catch (err: any) {
@@ -143,6 +500,13 @@ export function SongSelection({ mode, onNavigate }: Props) {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleBackKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (mode !== 'attendee' || e.key !== 'Tab') return;
+
+    e.preventDefault();
+    navigateBack();
   };
 
   const requestCardClassName = clsx(
@@ -204,9 +568,8 @@ export function SongSelection({ mode, onNavigate }: Props) {
             initial={{ opacity: 0, x: -12 }}
             animate={{ opacity: 1, x: 0 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() =>
-              onNavigate(isDj ? 'dj-dashboard' : 'attendee-dashboard')
-            }
+            onClick={navigateBack}
+            onKeyDown={handleBackKeyDown}
             className="flex h-11 items-center gap-2 rounded-full border border-white/55 bg-white/16 px-4 text-sm font-semibold text-white shadow-lg shadow-slate-950/10 backdrop-blur-md transition-colors hover:bg-white/24"
           >
             <ArrowLeft size={18} />
@@ -227,20 +590,23 @@ export function SongSelection({ mode, onNavigate }: Props) {
         {isDj ? (
           <>
             {/* Search Bar */}
-            <motion.div
+            <motion.label
               layoutId="search-bar"
-              whileHover={{ y: -2 }}
               className="group mx-auto mb-6 mt-2 flex h-[52px] w-full max-w-2xl cursor-text items-center gap-3.5 rounded-xl border border-slate-900/10 bg-white px-[18px] shadow-[0_10px_20px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.95)] md:mb-8 md:mt-4"
             >
-              <Search className="h-5 w-5 flex-shrink-0 text-[#526990] transition-colors group-hover:text-[#2878ff]" />
+              <Search
+                aria-hidden="true"
+                className="h-5 w-5 flex-shrink-0 text-[#526990] transition-colors group-hover:text-[#2878ff]"
+              />
               <input
                 type="search"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                aria-label="Search pending songs"
                 placeholder="Search pending songs..."
-                className="h-full min-w-0 flex-1 border-0 bg-transparent text-sm font-semibold tracking-normal text-[#14213f] outline-none placeholder:text-[#8b9ab4]"
+                className="h-full min-w-0 flex-1 cursor-text border-0 bg-transparent text-sm font-semibold tracking-normal text-[#14213f] outline-none placeholder:text-[#8b9ab4]"
               />
-            </motion.div>
+            </motion.label>
 
             {/* Song List */}
             {loading ? (
@@ -265,75 +631,13 @@ export function SongSelection({ mode, onNavigate }: Props) {
                 }}
               >
                 {filteredSongs.map((song) => (
-                  <motion.div
+                  <DjSongCard
                     key={song._id}
-                    variants={{
-                      hidden: { y: 20, opacity: 0 },
-                      show: { y: 0, opacity: 1 },
-                    }}
-                    onClick={() =>
-                      setActiveSongId(
-                        activeSongId === song._id ? null : song._id,
-                      )
-                    }
-                    className="group relative cursor-pointer overflow-hidden rounded-xl border border-white/65 bg-white p-3 shadow-lg shadow-slate-900/10 transition-colors duration-200 hover:bg-slate-50 md:p-4"
-                  >
-                    <div className="relative z-10 flex items-center gap-3 md:gap-4">
-                      {/* Requester Avatar */}
-                      <UserAvatar
-                        name={song.requestedBy?.nickname || '?'}
-                        imageAlt={`${song.requestedBy?.nickname || 'Unknown'} profile`}
-                        className="h-11 w-11 flex-shrink-0 rounded-lg border border-slate-200 bg-slate-800 shadow-sm md:h-12 md:w-12"
-                        fallbackClassName="flex items-center justify-center text-base font-semibold text-white"
-                      />
-
-                      {/* Song Info */}
-                      <div className="flex-1 min-w-0 flex flex-col">
-                        <h3 className="truncate text-base font-semibold text-slate-900 md:text-lg">
-                          {song.title}
-                        </h3>
-                        <p className="truncate text-sm font-medium text-slate-500">
-                          {song.artist}
-                        </p>
-                        <p className="mt-1 flex items-center gap-1.5 truncate text-xs font-medium text-slate-400">
-                          <UserRound size={13} />
-                          {song.requestedBy?.nickname || 'Unknown'}
-                        </p>
-                      </div>
-
-                      {/* Approve / Reject or Chevron */}
-                      {activeSongId === song._id ? (
-                        <div className="flex flex-shrink-0 gap-2">
-                          <button
-                            type="button"
-                            aria-label={`Approve ${song.title}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleApprove(song._id);
-                            }}
-                            className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500 text-white shadow-sm transition-colors hover:bg-emerald-600 focus:outline-none focus:ring-4 focus:ring-emerald-200 md:h-11 md:w-11"
-                          >
-                            <Check size={21} />
-                          </button>
-                          <button
-                            type="button"
-                            aria-label={`Reject ${song.title}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleReject(song._id);
-                            }}
-                            className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-500 text-white shadow-sm transition-colors hover:bg-red-600 focus:outline-none focus:ring-4 focus:ring-red-200 md:h-11 md:w-11"
-                          >
-                            <X size={21} />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-slate-700 text-white shadow-sm transition-colors group-hover:bg-slate-900 md:h-11 md:w-11">
-                          <ChevronRight size={22} />
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
+                    isProcessing={processingSongId === song._id}
+                    onApprove={() => handleApprove(song._id)}
+                    onReject={() => handleReject(song._id)}
+                    song={song}
+                  />
                 ))}
               </motion.div>
             )}
@@ -399,6 +703,7 @@ export function SongSelection({ mode, onNavigate }: Props) {
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
+                  aria-label="Song title"
                   placeholder="Song title"
                   required
                   className={requestInputClassName}
@@ -411,6 +716,7 @@ export function SongSelection({ mode, onNavigate }: Props) {
                   type="text"
                   value={artist}
                   onChange={(e) => setArtist(e.target.value)}
+                  aria-label="Artist"
                   placeholder="Artist"
                   required
                   className={requestInputClassName}

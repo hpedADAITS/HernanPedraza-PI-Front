@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Music2 } from 'lucide-react';
+import { CoverCube } from './CoverCube';
 
 type PlayerState =
   | 'playing'
@@ -236,28 +236,11 @@ export function NowPlaying({
       </div>
 
       <div className="grid h-full grid-cols-[80px_minmax(0,1fr)] items-center gap-4 pb-14 sm:grid-cols-[96px_minmax(0,1fr)] sm:gap-5 sm:pb-12 lg:grid-cols-[114px_minmax(0,1fr)_171px] lg:gap-5 lg:pb-6">
-        <div
-          className="grid h-20 w-20 place-items-center overflow-hidden rounded-[10px] shadow-[inset_0_1px_0_rgba(255,255,255,.28),0_15px_32px_rgba(0,0,0,.22)] sm:h-24 sm:w-24 lg:h-[116px] lg:w-[114px]"
-          style={{
-            background:
-              'radial-gradient(circle at 78% 82%, color-mix(in srgb, var(--state-color) 76%, #24e0df), transparent 38%), radial-gradient(circle at 34% 18%, rgba(117, 83, 255, .76), transparent 45%), linear-gradient(135deg, color-mix(in srgb, var(--state-color) 48%, #4e3fc0), color-mix(in srgb, var(--state-color) 65%, #41d7de))',
-          }}
-        >
-          {albumArt ? (
-            <img
-              src={albumArt}
-              alt=""
-              className="h-full w-full object-cover"
-              draggable={false}
-            />
-          ) : (
-            <Music2
-              className="h-12 w-12 text-white drop-shadow-[0_7px_10px_rgba(0,0,0,.16)] sm:h-14 sm:w-14 lg:h-16 lg:w-16"
-              strokeWidth={2.4}
-              aria-hidden="true"
-            />
-          )}
-        </div>
+        <CoverCube
+          albumArt={albumArt}
+          accentColor={config.color}
+          className="h-20 w-20 sm:h-24 sm:w-24 lg:h-[116px] lg:w-[114px]"
+        />
 
         <div className="min-w-0 self-center lg:pb-5">
           <h3 className="mb-1 break-words text-xl font-extrabold leading-tight tracking-normal text-white drop-shadow-[0_2px_12px_rgba(0,0,0,.3)] lg:text-[19px]">

@@ -1,21 +1,13 @@
 import React, { useState, useRef, useEffect, useReducer } from 'react';
 import jsQR from 'jsqr';
 import { motion, AnimatePresence } from 'motion/react';
-import {
-  User,
-  Ticket,
-  ArrowLeft,
-  ArrowRight,
-  QrCode,
-  X,
-  Camera,
-  Lock,
-} from 'lucide-react';
+import { User, Ticket, ArrowLeft, ArrowRight, QrCode, X, Camera, Lock,  } from 'lucide-react';
 import { toast } from 'sonner';
 import { participantsAPI, eventsAPI, authAPI } from '@/services/api';
 import * as socket from '@/services/socket';
 import logoWhite from '@/assets/logo_white.png';
 import { writeStoredJson } from '@/utils/storage';
+import { validateNickname } from '@/utils/validation';
 import type { NavigateToView } from '@/types';
 
 interface Props {
@@ -76,6 +68,14 @@ export function AttendeeLogin({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scanningRef = useRef(true);
   const isAccessCodeVerified = Boolean(state.verifiedEvent);
+
+  const ensureNicknameAllowed = () => {
+    const result = validateNickname(state.nickname.trim());
+
+    if (!result.valid) {
+      throw new Error(result.message || 'Invalid nickname');
+    }
+  };
 
   useEffect(() => {
     if (!state.showQRScanner) return;
@@ -171,6 +171,8 @@ export function AttendeeLogin({
         throw new Error('Please enter both event code and nickname');
       }
 
+      ensureNicknameAllowed();
+
       let event;
       try {
         event = await eventsAPI.getEventByAccessCode(state.eventCode);
@@ -201,6 +203,8 @@ export function AttendeeLogin({
       if (!event) {
         throw new Error('Please enter a valid access code first');
       }
+
+      ensureNicknameAllowed();
 
       const tempEmail = `attendee_${Date.now()}@syncrekuest.local`;
       const tempPassword = Math.random().toString(36).substring(2, 15);
@@ -344,6 +348,7 @@ export function AttendeeLogin({
                       <input
                         id="att-nickname"
                         type="text"
+                        aria-label="Nickname"
                         placeholder="Pick a name to display"
                         value={state.nickname}
                         onChange={(e) => {
@@ -373,6 +378,7 @@ export function AttendeeLogin({
                       <input
                         id="att-code"
                         type="text"
+                        aria-label="Access code"
                         placeholder="Scan QR or enter code"
                         value={state.eventCode}
                         onChange={(e) => handleEventCodeChange(e.target.value)}
@@ -440,6 +446,7 @@ export function AttendeeLogin({
                     <input
                       id="att-password"
                       type="password"
+                      aria-label="Name password"
                       placeholder="Only if you protected this name"
                       value={state.nicknamePassword}
                       onChange={(e) =>
@@ -512,6 +519,7 @@ export function AttendeeLogin({
                   </h2>
                 </div>
                 <button
+                  type="button"
                 onClick={() =>
                   dispatch({ type: 'set_show_qr_scanner', value: false })
                 }
@@ -529,8 +537,11 @@ export function AttendeeLogin({
                     ref={videoRef}
                     autoPlay
                     playsInline
+                    aria-label="Live QR code scanner preview"
                     className="w-full h-full object-cover"
-                  />
+                  >
+                    <track kind="captions" label="No audio captions available" />
+                  </video>
                   <canvas ref={canvasRef} style={{ display: 'none' }} />
 
                   {/* Frame */}
@@ -550,6 +561,7 @@ export function AttendeeLogin({
 
               <div className="px-5 pb-5">
                 <button
+                  type="button"
                   onClick={() =>
                     dispatch({ type: 'set_show_qr_scanner', value: false })
                   }

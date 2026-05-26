@@ -1,31 +1,31 @@
-import React from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
-import { AlertCircle, Mic, MicOff, Search } from 'lucide-react';
+import { AlertCircle, Check, Copy, Mic, MicOff, Search, Smartphone } from 'lucide-react';
 import { SLIDE_UP } from '@/constants/animations';
 import { useMicrophone } from '@/hooks/useMicrophone';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { eventsAPI } from '@/services/api';
+import { off, onPhoneMicrophoneConnected } from '@/services/socket';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,  } from '@/components/ui/alert-dialog';
 import type { View } from '@/types';
 
 interface SearchBarProps {
   onNavigate: (view: View) => void;
   isDj: boolean;
   isDarkMode?: boolean;
+  eventId?: string;
 }
 
 export function SearchBar({
   onNavigate,
   isDj,
   isDarkMode = false,
+  eventId = '',
 }: SearchBarProps) {
+  const [phoneMicrophoneLink, setPhoneMicrophoneLink] = useState('');
+  const [phoneMicrophoneStatus, setPhoneMicrophoneStatus] = useState('');
+  const [connectedMicrophoneName, setConnectedMicrophoneName] = useState('');
+  const [isLinkCopied, setIsLinkCopied] = useState(false);
+  const connectedMicrophoneTimeoutRef = useRef<number | null>(null);
   const {
     isListening,
     isAccessDenied,
@@ -53,6 +53,92 @@ export function SearchBar({
 
     await requestMicrophoneAccess();
   };
+
+  const loadPhoneMicrophoneLink = useCallback(async () => {
+    if (!eventId || phoneMicrophoneLink) return;
+
+    try {
+      const link = await eventsAPI.getPhoneMicrophoneLink(eventId);
+      setPhoneMicrophoneLink(link);
+    } catch (error) {
+      setPhoneMicrophoneStatus(
+        error instanceof Error
+          ? error.message
+          : 'Unable to create phone microphone link',
+      );
+    }
+  }, [eventId, phoneMicrophoneLink]);
+
+  const copyPhoneMicrophoneLink = async () => {
+    if (!phoneMicrophoneLink) return;
+
+    try {
+      await navigator.clipboard.writeText(phoneMicrophoneLink);
+      setIsLinkCopied(true);
+      window.setTimeout(() => setIsLinkCopied(false), 1400);
+    } catch {
+      setPhoneMicrophoneStatus('Copy failed. Open the link and share it from the browser.');
+    }
+  };
+
+  const closeMicrophoneDialog = useCallback(() => {
+    if (connectedMicrophoneTimeoutRef.current) {
+      window.clearTimeout(connectedMicrophoneTimeoutRef.current);
+      connectedMicrophoneTimeoutRef.current = null;
+    }
+
+    setConnectedMicrophoneName('');
+    dismissMicrophoneIssue();
+  }, [dismissMicrophoneIssue]);
+
+  useEffect(() => {
+    if (isAccessDenied) {
+      void loadPhoneMicrophoneLink();
+    }
+  }, [isAccessDenied, loadPhoneMicrophoneLink]);
+
+  useEffect(() => {
+    if (!isDj || !eventId) return;
+
+    const handlePhoneMicrophoneConnected = (data: {
+      eventId?: string;
+      microphone?: { deviceName?: string; eventId?: string };
+    }) => {
+      const connectedEventId = data?.eventId || data?.microphone?.eventId;
+      if (connectedEventId !== eventId) return;
+
+      const deviceName = data.microphone?.deviceName || 'Phone microphone';
+      setPhoneMicrophoneStatus(`${deviceName} connected`);
+      setConnectedMicrophoneName(deviceName);
+      dismissMicrophoneIssue();
+
+      if (connectedMicrophoneTimeoutRef.current) {
+        window.clearTimeout(connectedMicrophoneTimeoutRef.current);
+      }
+
+      connectedMicrophoneTimeoutRef.current = window.setTimeout(() => {
+        setConnectedMicrophoneName('');
+        connectedMicrophoneTimeoutRef.current = null;
+      }, 1200);
+    };
+
+    onPhoneMicrophoneConnected(handlePhoneMicrophoneConnected);
+
+    return () => {
+      off('phone_microphone_connected', handlePhoneMicrophoneConnected);
+    };
+  }, [dismissMicrophoneIssue, eventId, isDj]);
+
+  useEffect(() => {
+    return () => {
+      if (connectedMicrophoneTimeoutRef.current) {
+        window.clearTimeout(connectedMicrophoneTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const isMicrophoneDialogOpen = isAccessDenied || Boolean(connectedMicrophoneName);
+  const isMicrophoneConnected = Boolean(connectedMicrophoneName);
 
   return (
     <>
@@ -121,7 +207,9 @@ export function SearchBar({
             isDarkMode ? 'text-slate-300' : 'text-[#73829d]'
           }`}
         >
-          Find a track and add it to the queue for the DJ.
+          {isDj
+            ? 'Search for the next track and keep the queue moving.'
+            : 'Find a track and add it to the queue for the DJ.'}
         </p>
 
         <div className="flex items-center gap-3 sm:gap-5">
@@ -146,6 +234,7 @@ export function SearchBar({
               readOnly
               onClick={handleClick}
               onFocus={handleClick}
+              aria-label="Search for songs"
               placeholder="Search for artists, songs, albums..."
               className={`h-full min-w-0 flex-1 cursor-text border-0 bg-transparent text-sm font-semibold tracking-normal outline-none ${
                 isDarkMode
@@ -187,34 +276,90 @@ export function SearchBar({
       </section>
 
       <AlertDialog
-        open={isNoSuitableMicFound}
+        open={isMicrophoneDialogOpen}
         onOpenChange={(open) => {
-          if (!open) dismissMicrophoneIssue();
+          if (!open) closeMicrophoneDialog();
         }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100 text-yellow-700">
-              <AlertCircle className="h-5 w-5" />
+            <div
+              className={`mb-2 flex h-10 w-10 items-center justify-center rounded-full ${
+                isMicrophoneConnected
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-yellow-100 text-yellow-700'
+              }`}
+            >
+              {isMicrophoneConnected ? (
+                <Check className="h-5 w-5" />
+              ) : (
+                <AlertCircle className="h-5 w-5" />
+              )}
             </div>
-            <AlertDialogTitle>No microphone found</AlertDialogTitle>
+            <AlertDialogTitle>
+              {isMicrophoneConnected
+                ? 'Microphone connected'
+                : isNoSuitableMicFound
+                ? 'No microphone found'
+                : 'Microphone unavailable'}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {error ||
+              {isMicrophoneConnected
+                ? `${connectedMicrophoneName} connected.`
+                : error ||
                 'Connect or enable a microphone, then try starting recording again.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {eventId && !isMicrophoneConnected && (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+              <div className="mb-2 flex items-center gap-2 font-semibold text-slate-900">
+                <Smartphone className="h-4 w-4 text-blue-600" />
+                Use a phone as microphone
+              </div>
+              <div className="flex min-w-0 items-center gap-2">
+                <a
+                  href={phoneMicrophoneLink || undefined}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="min-w-0 flex-1 truncate rounded-md bg-white px-3 py-2 text-xs font-medium text-blue-700 ring-1 ring-slate-200"
+                >
+                  {phoneMicrophoneLink || 'Creating link...'}
+                </a>
+                <button
+                  type="button"
+                  onClick={copyPhoneMicrophoneLink}
+                  disabled={!phoneMicrophoneLink}
+                  className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-md bg-blue-600 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-label="Copy phone microphone link"
+                >
+                  {isLinkCopied ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+              {phoneMicrophoneStatus && (
+                <p className="mt-2 text-xs font-medium text-slate-600">
+                  {phoneMicrophoneStatus}
+                </p>
+              )}
+            </div>
+          )}
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={dismissMicrophoneIssue}>
+            <AlertDialogCancel onClick={closeMicrophoneDialog}>
               Close
             </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(event) => {
-                event.preventDefault();
-                void requestMicrophoneAccess();
-              }}
-            >
-              Try Again
-            </AlertDialogAction>
+            {!isMicrophoneConnected && (
+              <AlertDialogAction
+                onClick={(event) => {
+                  event.preventDefault();
+                  void requestMicrophoneAccess();
+                }}
+              >
+                Try Again
+              </AlertDialogAction>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

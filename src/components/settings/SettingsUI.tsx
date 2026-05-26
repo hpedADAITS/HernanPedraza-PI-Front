@@ -79,6 +79,7 @@ export function SettingsSearch({
         type="text"
         value={value}
         onChange={(event) => onChange?.(event.target.value)}
+        aria-label={placeholder}
         placeholder={placeholder}
         className="h-14 w-full rounded-xl border border-white/70 bg-white pl-14 pr-5 text-base text-slate-800 shadow-lg outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-white/40 md:h-16 md:text-lg"
       />
@@ -352,6 +353,7 @@ export function SettingsToggleRow({
         type="checkbox"
         checked={checked}
         onChange={onChange}
+        aria-label={label}
         className="h-5 w-5 flex-shrink-0 accent-[#2878ff]"
       />
     </label>

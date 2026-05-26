@@ -1,13 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
-import { ThumbsUp, ThumbsDown, LogOut, Settings, Plus, Lock } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, LogOut, Settings, Plus, Lock, X } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,  } from '@/components/ui/tooltip';
 import { ANIMATION_DURATION } from '@/constants/animations';
 import { songsAPI, votesAPI, eventsAPI, participantsAPI, clearToken } from '@/services/api';
 import * as socket from '@/services/socket';
@@ -29,10 +24,37 @@ export function ActionButtons({
   showActions = true,
 }: ActionButtonsProps) {
   const isDj = mode === 'dj';
+  const [isQueueHovered, setIsQueueHovered] = useState(false);
+  const queueHoverTimeoutRef = useRef<number | null>(null);
   const [passwordPrompt, setPasswordPrompt] = useState<{
     reason: 'leave' | 'duplicate-login';
     afterSave?: () => void;
   } | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (queueHoverTimeoutRef.current) {
+        window.clearTimeout(queueHoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleQueueHoverChange = (nextHovered: boolean) => {
+    if (queueHoverTimeoutRef.current) {
+      window.clearTimeout(queueHoverTimeoutRef.current);
+      queueHoverTimeoutRef.current = null;
+    }
+
+    if (!nextHovered) {
+      setIsQueueHovered(false);
+      return;
+    }
+
+    queueHoverTimeoutRef.current = window.setTimeout(() => {
+      queueHoverTimeoutRef.current = null;
+      setIsQueueHovered(true);
+    }, 70);
+  };
 
   useEffect(() => {
     if (isDj) return undefined;
@@ -111,38 +133,35 @@ export function ActionButtons({
           <div className="flex w-full max-w-[744px] flex-wrap items-center justify-center gap-4">
             <ActionButton
               icon={Plus}
-              label="Queue a Song"
+              label="Queue a song"
               subtitle="Add to the upcoming list"
               onClick={() =>
                 onNavigate(isDj ? 'dj-song-select' : 'attendee-song-select')
               }
               variant="queue"
+              queueTone={isDj ? 'dj' : 'attendee'}
+              onHoverChange={handleQueueHoverChange}
+            />
+
+            <ActionButton
+              icon={Settings}
+              label="Settings"
+              subtitle="Manage your experience"
+              onClick={() =>
+                onNavigate(isDj ? 'dj-settings' : 'attendee-settings')
+              }
+              variant="settings"
+              iconOnly
             />
 
             <ActionButton
               icon={LogOut}
-              label="Leave Party"
+              label="Leave party"
               subtitle="Disconnect from session"
               onClick={handleLeaveParty}
               variant="leave"
+              collapsed={isQueueHovered}
             />
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <motion.button
-                  type="button"
-                  whileHover={{ y: -1, rotate: 45 }}
-                  whileTap={{ scale: 0.99 }}
-                  onClick={() =>
-                    onNavigate(isDj ? 'dj-settings' : 'attendee-settings')
-                  }
-                  className="flex h-[62px] w-16 items-center justify-center rounded-xl border border-slate-900/10 bg-[linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)] text-[#17213a] shadow-[0_10px_22px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] outline-none transition-all hover:border-slate-900/15 hover:shadow-[0_14px_26px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] focus-visible:ring-4 focus-visible:ring-blue-100 sm:w-16"
-                >
-                  <Settings size={24} strokeWidth={2.1} aria-hidden="true" />
-                </motion.button>
-              </TooltipTrigger>
-              <TooltipContent>Settings</TooltipContent>
-            </Tooltip>
           </div>
         )}
       </div>
@@ -182,6 +201,8 @@ function AttendeePasswordPrompt({
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [saving, setSaving] = useState(false);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const passwordInputRef = useRef<HTMLInputElement | null>(null);
 
   const title =
     reason === 'leave' ? 'Protect your attendee name?' : 'Someone tried your name';
@@ -189,6 +210,44 @@ function AttendeePasswordPrompt({
     reason === 'leave'
       ? 'Set a password before leaving so only you can reuse this nickname later.'
       : 'Add a password now so another device cannot take over your attendee name.';
+
+  useEffect(() => {
+    if (reason !== 'leave') return undefined;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose, reason]);
+
+  useEffect(() => {
+    passwordInputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const dialog = dialogRef.current;
+      if (!dialog || !dialog.contains(event.target as Node)) return;
+
+      if (event.key === 'Tab') {
+        event.preventDefault();
+      }
+
+      event.stopPropagation();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   const handleSave = async () => {
     if (password.length < 8) {
@@ -208,7 +267,11 @@ function AttendeePasswordPrompt({
 
     setSaving(true);
     try {
-      const participantId = participant._id || participant.id;
+      const participantId = participant._id ?? participant.id;
+      if (!participantId) {
+        toast.error('No attendee session found');
+        return;
+      }
       const updated = await participantsAPI.setPassword(participantId, password);
       writeStoredJson('currentParticipant', {
         ...participant,
@@ -231,8 +294,17 @@ function AttendeePasswordPrompt({
       aria-modal="true"
       aria-labelledby="attendee-password-title"
     >
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
-        <div className="flex items-center gap-3">
+      <div ref={dialogRef} className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300"
+          aria-label={reason === 'leave' ? 'Cancel logout' : 'Close dialog'}
+        >
+          <X size={18} aria-hidden="true" />
+        </button>
+
+        <div className="flex items-center gap-3 pr-10">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
             <Lock size={18} />
           </div>
@@ -250,8 +322,10 @@ function AttendeePasswordPrompt({
         <div className="mt-5 space-y-3">
           <input
             type="password"
+            ref={passwordInputRef}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            aria-label="Password"
             placeholder="Password"
             autoComplete="new-password"
             className="h-11 w-full rounded-lg border border-slate-300 px-3 text-sm text-slate-950 outline-none focus:border-slate-900 focus:ring-2 focus:ring-emerald-200"
@@ -260,6 +334,7 @@ function AttendeePasswordPrompt({
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
+            aria-label="Confirm password"
             placeholder="Confirm password"
             autoComplete="new-password"
             className="h-11 w-full rounded-lg border border-slate-300 px-3 text-sm text-slate-950 outline-none focus:border-slate-900 focus:ring-2 focus:ring-emerald-200"
@@ -361,7 +436,6 @@ function VotingButtons() {
     setVoting(true);
     try {
       await votesAPI.castVote(currentSong._id, participantId, value);
-      socket.castVote(eventId, currentSong._id, participantId, value);
       const direction = value === 1 ? '👍' : '👎';
       toast.success(`${direction} ${currentSong.title}`);
     } catch (err: any) {
@@ -449,7 +523,11 @@ interface ActionButtonProps {
   label: string;
   subtitle: string;
   onClick: () => void;
-  variant: 'queue' | 'leave';
+  variant: 'queue' | 'settings' | 'leave';
+  queueTone?: 'attendee' | 'dj';
+  collapsed?: boolean;
+  iconOnly?: boolean;
+  onHoverChange?: (isHovered: boolean) => void;
 }
 
 function ActionButton({
@@ -458,17 +536,28 @@ function ActionButton({
   subtitle,
   onClick,
   variant,
+  queueTone,
+  collapsed,
+  iconOnly,
+  onHoverChange,
 }: ActionButtonProps) {
   const styles = {
     queue:
-      'border-transparent bg-[radial-gradient(circle_at_82%_20%,rgba(98,175,255,0.9),transparent_34%),linear-gradient(135deg,#1e63f4_0%,#2f7cff_52%,#3d91ff_100%)] text-white shadow-[0_12px_24px_rgba(37,99,235,0.35),inset_0_1px_0_rgba(255,255,255,0.28)] focus-visible:ring-blue-100',
+      queueTone === 'dj'
+        ? 'border-transparent bg-[radial-gradient(circle_at_82%_20%,rgba(98,175,255,0.9),transparent_34%),linear-gradient(135deg,#1e63f4_0%,#2f7cff_52%,#3d91ff_100%)] text-white shadow-[0_12px_24px_rgba(37,99,235,0.35),inset_0_1px_0_rgba(255,255,255,0.28)] focus-visible:ring-blue-100'
+        : 'border-transparent bg-[radial-gradient(circle_at_82%_20%,rgba(67,210,170,0.92),transparent_34%),linear-gradient(135deg,#129a73_0%,#1abd88_52%,#31c99b_100%)] text-white shadow-[0_12px_24px_rgba(26,189,136,0.28),inset_0_1px_0_rgba(255,255,255,0.24)] focus-visible:ring-emerald-100',
+    settings:
+      'border-slate-900/10 bg-[linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)] text-[#17213a] shadow-[0_10px_22px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] hover:border-slate-900/15 focus-visible:ring-blue-100',
     leave:
       'border-slate-900/10 bg-[linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)] text-[#ff4f66] shadow-[0_10px_22px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] hover:border-rose-200 focus-visible:ring-rose-100',
   };
-  const expandedWidth =
-    variant === 'queue'
-      ? 'sm:hover:w-[360px] sm:focus-visible:w-[360px]'
-      : 'sm:hover:w-[288px] sm:focus-visible:w-[288px]';
+  const expandedWidth = {
+    queue: 'sm:hover:w-[360px] sm:focus-visible:w-[360px]',
+    settings: 'sm:hover:w-[300px] sm:focus-visible:w-[300px]',
+    leave: 'sm:hover:w-[288px] sm:focus-visible:w-[288px]',
+  }[variant];
+
+  if (collapsed) return null;
 
   return (
     <motion.button
@@ -476,27 +565,47 @@ function ActionButton({
       whileHover={{ y: -1 }}
       whileTap={{ scale: 0.99 }}
       onClick={onClick}
+      onHoverStart={() => onHoverChange?.(true)}
+      onHoverEnd={() => onHoverChange?.(false)}
+      onFocus={() => onHoverChange?.(true)}
+      onBlur={() => onHoverChange?.(false)}
       transition={{ duration: ANIMATION_DURATION.fast }}
-      className={`group relative flex h-[62px] w-16 will-change-[width,transform] items-center justify-center gap-0 overflow-hidden rounded-xl border px-0 font-sans outline-none transition-[width,transform,border-color] duration-150 ease-out focus-visible:ring-4 ${expandedWidth} ${styles[variant]}`}
+      className={`group relative flex h-[62px] w-16 will-change-[width,transform] items-center justify-center gap-0 overflow-hidden rounded-xl border px-0 font-sans outline-none transition-[width,transform,border-color] duration-100 ease-out focus-visible:ring-4 ${iconOnly ? '' : expandedWidth} ${styles[variant]}`}
     >
-      <Icon
-        className="flex-shrink-0"
-        size={variant === 'queue' ? 27 : 24}
-        strokeWidth={2}
-        aria-hidden="true"
-      />
-      <span className="ml-0 flex max-w-0 min-w-0 flex-col items-start overflow-hidden whitespace-nowrap leading-none opacity-0 transition-[max-width,margin-left,opacity] duration-150 ease-out group-hover:ml-5 group-hover:max-w-[220px] group-hover:opacity-100 group-focus-visible:ml-5 group-focus-visible:max-w-[220px] group-focus-visible:opacity-100">
-        <span className="text-[13px] font-extrabold tracking-normal">
-          {label}
-        </span>
-        <span
-          className={`mt-2 truncate text-[11px] font-semibold ${
-            variant === 'leave' ? 'text-rose-400/80' : 'text-white/75'
-          }`}
+      {iconOnly ? (
+        <motion.span
+          className="flex-shrink-0"
+          whileHover={{ rotate: 45 }}
+          transition={{ duration: ANIMATION_DURATION.fast }}
         >
-          {subtitle}
+          <Icon
+            size={variant === 'queue' ? 27 : 24}
+            strokeWidth={2}
+            aria-hidden="true"
+          />
+        </motion.span>
+      ) : (
+        <Icon
+          className="flex-shrink-0"
+          size={variant === 'queue' ? 27 : 24}
+          strokeWidth={2}
+          aria-hidden="true"
+        />
+      )}
+      {!iconOnly && (
+        <span className="ml-0 flex max-w-0 min-w-0 flex-col items-start overflow-hidden whitespace-nowrap leading-none opacity-0 transition-[max-width,margin-left,opacity] duration-100 ease-out group-hover:ml-5 group-hover:max-w-[220px] group-hover:opacity-100 group-focus-visible:ml-5 group-focus-visible:max-w-[220px] group-focus-visible:opacity-100">
+          <span className="text-[13px] font-extrabold tracking-normal">
+            {label}
+          </span>
+          <span
+            className={`mt-2 truncate text-[11px] font-semibold ${
+              variant === 'leave' ? 'text-rose-400/80' : 'text-white/75'
+            }`}
+          >
+            {subtitle}
+          </span>
         </span>
-      </span>
+      )}
     </motion.button>
   );
 }
