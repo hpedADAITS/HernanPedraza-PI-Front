@@ -1,5 +1,13 @@
 import { apiCall } from './client';
 
+function getPublicFrontendOrigin() {
+  if (typeof window === 'undefined') return '';
+
+  return /^https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\])(?::|\/|$)/i.test(window.location.origin)
+    ? ''
+    : window.location.origin;
+}
+
 export const eventsAPI = {
   createEvent: async (name: string, description: string, startsAt: string, eventId?: string) => {
     const data = await apiCall('/events', {
@@ -67,15 +75,25 @@ export const eventsAPI = {
   },
 
   getPhoneMicrophoneLink: async (eventId: string) => {
-    const data = await apiCall(`/events/${eventId}/phone-microphone-link`);
+    const publicOrigin = getPublicFrontendOrigin();
+    const data = await apiCall(
+      `/events/${eventId}/phone-microphone-link${
+        publicOrigin ? `?frontendOrigin=${encodeURIComponent(publicOrigin)}` : ''
+      }`,
+    );
     return data.data.link as string;
   },
 
-  connectPhoneMicrophone: async (eventId: string, deviceName: string) => {
-    const data = await apiCall(`/events/${eventId}/phone-microphone/connect`, {
+  connectPhoneMicrophone: async (eventId: string, deviceName: string, token = '') => {
+    const data = await apiCall(
+      `/events/${eventId}/phone-microphone/connect${
+        token ? `?token=${encodeURIComponent(token)}` : ''
+      }`,
+      {
       method: 'POST',
       body: JSON.stringify({ deviceName }),
-    });
+      },
+    );
     return data.data.microphone;
   },
 };

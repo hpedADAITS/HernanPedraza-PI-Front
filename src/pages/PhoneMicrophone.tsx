@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { Mic, MicOff } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { eventsAPI } from '@/services/api';
@@ -56,6 +56,7 @@ function getPhoneDeviceName() {
 
 export function PhoneMicrophone() {
   const { eventId = '' } = useParams();
+  const [searchParams] = useSearchParams();
   const streamRef = useRef<MediaStream | null>(null);
   const [connectionState, setConnectionState] =
     useState<ConnectionState>('idle');
@@ -70,6 +71,13 @@ export function PhoneMicrophone() {
   const connectMicrophone = async () => {
     if (!eventId) {
       setError('Microphone link is missing the event id.');
+      setConnectionState('failed');
+      return;
+    }
+
+    const token = searchParams.get('token') || '';
+    if (!token) {
+      setError('This microphone link is missing its security token.');
       setConnectionState('failed');
       return;
     }
@@ -93,7 +101,7 @@ export function PhoneMicrophone() {
       });
 
       streamRef.current = stream;
-      await eventsAPI.connectPhoneMicrophone(eventId, getPhoneDeviceName());
+      await eventsAPI.connectPhoneMicrophone(eventId, getPhoneDeviceName(), token);
       setConnectionState('connected');
     } catch (err) {
       stopMicrophone();
