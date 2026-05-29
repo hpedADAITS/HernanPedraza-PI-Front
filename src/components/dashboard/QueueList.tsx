@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { LazyMotion, domAnimation, m, AnimatePresence } from 'motion/react';
 import { clsx } from 'clsx';
 import { Play, X, Clock, UserX, SkipForward, Check } from 'lucide-react';
 import { toast } from 'sonner';
@@ -13,6 +13,16 @@ import { readStoredJson } from '@/utils/storage';
 import type { Song } from '@/types/songs';
 
 type RemovalReason = 'rejected' | 'skipped' | 'played';
+
+function getCurrentDjUserId() {
+  const user = readStoredJson<{ _id?: string; id?: string; role?: string }>('user');
+  if (user?.role?.toLowerCase() !== 'dj') return null;
+  return user._id ?? user.id ?? null;
+}
+
+function isRequestedByDj(song: Song, djUserId: string | null) {
+  return !!djUserId && song.requestedBy?._id === djUserId;
+}
 
 function formatWait(totalSeconds: number): string {
   const safe = Math.max(0, Math.floor(totalSeconds));
@@ -99,13 +109,14 @@ export function QueueList({
     propParticipantId ||
     readStoredJson<{ _id?: string }>('currentParticipant')?._id ||
     null;
+  const djUserId = isDj ? getCurrentDjUserId() : null;
 
   /* Tick every second to refresh per-attendee wait times */
   useEffect(() => {
     if (mode !== 'attendee' || !queueState.nowPlaying) return undefined;
     const id = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(id);
-  }, [mode, queueState.nowPlaying?.songId]);
+  }, [mode, queueState.nowPlaying]);
 
   const removeSong = useCallback(
     (songId: string, reason: RemovalReason = 'played') => {
@@ -385,8 +396,9 @@ export function QueueList({
   }, [sortedSongs, queueState.nowPlaying, mode, tick]);
 
   return (
-    <TooltipProvider>
-      <motion.div
+    <LazyMotion features={domAnimation}>
+      <TooltipProvider>
+      <m.div
         {...SLIDE_UP}
         transition={{ ...SLIDE_UP.transition, delay: 0.15 }}
         layout
@@ -428,14 +440,14 @@ export function QueueList({
           <QueueHeader isDarkMode={isDarkMode} />
         </header>
 
-        <motion.div
+        <m.div
           layout
           transition={{ type: 'spring', stiffness: 380, damping: 42 }}
           className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pb-5 pt-4 sm:px-6 sm:pb-6"
         >
           <AnimatePresence mode="wait">
             {queueState.loading ? (
-              <motion.div
+              <m.div
                 key="loading"
                 layout
                 className={clsx(
@@ -444,9 +456,9 @@ export function QueueList({
                 )}
               >
                 Loading queue…
-              </motion.div>
+              </m.div>
             ) : sortedSongs.length > 0 ? (
-              <motion.div
+              <m.div
                 key="queue-list"
                 layout
                 className="flex flex-col gap-3"
@@ -462,10 +474,13 @@ export function QueueList({
                         key={song._id}
                         song={song}
                         position={song.queuePosition ?? i + 1}
-                        isFirst={i === 0}
+                        context={{
+                          first: i === 0,
+                          mode,
+                          selected: queueState.selectedSongId === song._id,
+                          mine: isMine,
+                        }}
                         primaryColor={primaryColor}
-                        isDj={isDj}
-                        isSelected={queueState.selectedSongId === song._id}
                         onSelect={(id) =>
                           setQueueState((current) => ({
                             ...current,
@@ -477,12 +492,12 @@ export function QueueList({
                         eventId={queueState.resolvedEventId || undefined}
                         isDarkMode={isDarkMode}
                         waitSeconds={wait}
-                        isMine={isMine}
+                        djUserId={djUserId}
                       />
                     );
                   })}
                 </AnimatePresence>
-              </motion.div>
+              </m.div>
             ) : (
               <QueueEmptyState
                 key="empty-state"
@@ -490,9 +505,10 @@ export function QueueList({
               />
             )}
           </AnimatePresence>
-        </motion.div>
-      </motion.div>
-    </TooltipProvider>
+        </m.div>
+      </m.div>
+      </TooltipProvider>
+    </LazyMotion>
   );
 }
 
@@ -546,7 +562,7 @@ function QueueHeader({ isDarkMode }: { isDarkMode: boolean }) {
 
 function QueueEmptyState({ isDarkMode }: { isDarkMode: boolean }) {
   return (
-    <motion.div
+    <m.div
       layout
       className="flex flex-1 items-center justify-center py-8"
       initial={{ opacity: 0, y: 6 }}
@@ -615,39 +631,45 @@ function QueueEmptyState({ isDarkMode }: { isDarkMode: boolean }) {
           Be the first to request a song!
         </p>
       </div>
-    </motion.div>
+    </m.div>
   );
+}
+
+interface QueueItemContext {
+  first: boolean;
+  mode: 'attendee' | 'dj';
+  selected: boolean;
+  mine: boolean;
 }
 
 interface QueueItemProps {
   song: Song;
   position: number;
-  isFirst: boolean;
+  context: QueueItemContext;
   primaryColor: string;
-  isDj: boolean;
-  isSelected: boolean;
   onSelect: (id: string) => void;
   onSongRemoved: (songId: string, reason?: RemovalReason) => void;
   eventId?: string;
   isDarkMode?: boolean;
   waitSeconds?: number;
-  isMine?: boolean;
+  djUserId?: string | null;
 }
 
 function QueueItem({
   song,
   position,
-  isFirst,
+  context,
   primaryColor,
-  isDj,
-  isSelected,
   onSelect,
   onSongRemoved,
   eventId,
   isDarkMode = false,
   waitSeconds,
-  isMine = false,
+  djUserId = null,
 }: QueueItemProps) {
+  const isDj = context.mode === 'dj';
+  const canModerateRequester = !!song.requestedBy?._id && !isRequestedByDj(song, djUserId);
+
   const handleAdminAction = async (action: string, e: React.MouseEvent) => {
     e.stopPropagation();
 
@@ -678,22 +700,26 @@ function QueueItem({
         onSongRemoved(songId, 'rejected');
         toast.success(`Rejected "${song.title}"`);
       } else if (action === 'Cooldown' && eventId) {
-        if (song.requestedBy?._id) {
-          await participantsAPI.setCooldown(
-            song.requestedBy._id,
-            300000,
-            'DJ applied cooldown',
-          );
-          toast.success('User on cooldown');
+        if (!canModerateRequester || !song.requestedBy?._id) {
+          toast.error('Only attendee requests can be moderated');
+          return;
         }
+        await participantsAPI.setCooldown(
+          song.requestedBy._id,
+          300000,
+          'DJ applied cooldown',
+        );
+        toast.success('User on cooldown');
       } else if (action === 'Kick' && eventId) {
-        if (song.requestedBy?._id) {
-          await participantsAPI.kickParticipant(
-            song.requestedBy._id,
-            'Kicked by DJ',
-          );
-          toast.success('User kicked from event');
+        if (!canModerateRequester || !song.requestedBy?._id) {
+          toast.error('Only attendee requests can be moderated');
+          return;
         }
+        await participantsAPI.kickParticipant(
+          song.requestedBy._id,
+          'Kicked by DJ',
+        );
+        toast.success('User kicked from event');
       } else if (action === 'Skip' && eventId) {
         if (!songId) {
           toast.error('Song ID not found');
@@ -715,7 +741,7 @@ function QueueItem({
   };
 
   return (
-    <motion.div
+    <m.div
       layout
       initial={{ opacity: 1, x: 0 }}
       exit={{
@@ -736,7 +762,7 @@ function QueueItem({
       <div
         className={clsx(
           'w-12 h-12 lg:w-10 lg:h-10 rounded-xl shadow-md flex items-center justify-center text-white font-bold text-lg lg:text-base flex-shrink-0',
-          isFirst ? primaryColor : 'bg-slate-400',
+          context.first ? primaryColor : 'bg-slate-400',
         )}
       >
         {position}
@@ -744,8 +770,8 @@ function QueueItem({
 
       {/* Song Info or Admin Controls */}
       <AnimatePresence mode="wait">
-        {isSelected && isDj ? (
-          <motion.div
+        {context.selected && isDj ? (
+          <m.div
             key="admin-controls"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -755,7 +781,7 @@ function QueueItem({
           >
             <Tooltip>
               <TooltipTrigger asChild>
-                <motion.button
+                <m.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={(e) => handleAdminAction('Approve', e)}
@@ -767,13 +793,13 @@ function QueueItem({
                   )}
                 >
                   <Check size={18} />
-                </motion.button>
+                </m.button>
               </TooltipTrigger>
               <TooltipContent>Approve (Add to Queue)</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <motion.button
+                <m.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={(e) => handleAdminAction('Send Now', e)}
@@ -785,13 +811,13 @@ function QueueItem({
                   )}
                 >
                   <Play size={18} />
-                </motion.button>
+                </m.button>
               </TooltipTrigger>
               <TooltipContent>Send Song Now</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <motion.button
+                <m.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={(e) => handleAdminAction('Reject', e)}
@@ -803,31 +829,32 @@ function QueueItem({
                   )}
                 >
                   <X size={18} />
-                </motion.button>
+                </m.button>
               </TooltipTrigger>
               <TooltipContent>Reject Song</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <motion.button
+                <m.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={(e) => handleAdminAction('Cooldown', e)}
+                  disabled={!canModerateRequester}
                   className={clsx(
-                    'p-2 rounded-lg transition-colors',
+                    'p-2 rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-40',
                     isDarkMode
                       ? 'bg-yellow-900/30 hover:bg-yellow-800/40 text-yellow-300'
                       : 'bg-yellow-100 hover:bg-yellow-200 text-yellow-700',
                   )}
                 >
                   <Clock size={18} />
-                </motion.button>
+                </m.button>
               </TooltipTrigger>
               <TooltipContent>Cooldown User</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <motion.button
+                <m.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={(e) => handleAdminAction('Skip', e)}
@@ -839,31 +866,32 @@ function QueueItem({
                   )}
                 >
                   <SkipForward size={18} />
-                </motion.button>
+                </m.button>
               </TooltipTrigger>
               <TooltipContent>Skip Song</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <motion.button
+                <m.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={(e) => handleAdminAction('Kick', e)}
+                  disabled={!canModerateRequester}
                   className={clsx(
-                    'p-2 rounded-lg transition-colors',
+                    'p-2 rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-40',
                     isDarkMode
                       ? 'bg-purple-900/30 hover:bg-purple-800/40 text-purple-300'
                       : 'bg-purple-100 hover:bg-purple-200 text-purple-700',
                   )}
                 >
                   <UserX size={18} />
-                </motion.button>
+                </m.button>
               </TooltipTrigger>
               <TooltipContent>Kick User</TooltipContent>
             </Tooltip>
-          </motion.div>
+          </m.div>
         ) : (
-          <motion.div
+          <m.div
             key="song-info"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -879,7 +907,7 @@ function QueueItem({
                 )}
               >
                 {song.title}
-                {isMine && (
+                {context.mine && (
                   <span
                     className={clsx(
                       'ml-2 text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wider',
@@ -904,7 +932,7 @@ function QueueItem({
                 <span
                   className={clsx(
                     'text-[11px] flex items-center gap-1 mt-0.5',
-                    isMine
+                    context.mine
                       ? isDarkMode
                         ? 'text-emerald-300 font-semibold'
                         : 'text-emerald-700 font-semibold'
@@ -937,10 +965,10 @@ function QueueItem({
                 votes
               </span>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -960,7 +988,7 @@ function FallingQueueCard({
   const isRejected = reason === 'rejected';
 
   return (
-    <motion.div
+    <m.div
       className={clsx(
         'pointer-events-none fixed left-1/2 top-28 z-50 w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 rounded-xl border p-4 shadow-2xl backdrop-blur-xl',
         isDarkMode
@@ -1005,6 +1033,6 @@ function FallingQueueCard({
           </p>
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 }

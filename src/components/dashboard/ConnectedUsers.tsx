@@ -1,5 +1,5 @@
 import React, { useEffect, useReducer } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { LazyMotion, domAnimation, m, AnimatePresence } from 'motion/react';
 import { Crown, Users, Music, Zap, UserX } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,  } from '@/components/ui/tooltip';
@@ -13,9 +13,15 @@ interface ConnectedUser {
   _id: string;
   nickname: string;
   profilePicture?: string | null;
-  userId?: {
-    profilePicture?: string | null;
-  } | null;
+  userId?:
+    | string
+    | {
+        _id?: string;
+        id?: string;
+        profilePicture?: string | null;
+      }
+    | null;
+  role?: string;
   joinedAt: string;
   socketId?: string;
   isPremium?: boolean;
@@ -23,7 +29,23 @@ interface ConnectedUser {
 }
 
 function getParticipantProfilePicture(participant: ConnectedUser) {
-  return participant.profilePicture ?? participant.userId?.profilePicture ?? null;
+  return participant.profilePicture
+    ?? (typeof participant.userId === 'object'
+      ? participant.userId?.profilePicture
+      : null)
+    ?? null;
+}
+
+function participantUserId(participant: ConnectedUser) {
+  if (typeof participant.userId === 'string') return participant.userId;
+  return participant.userId?._id ?? participant.userId?.id ?? null;
+}
+
+function isDjParticipant(participant: ConnectedUser, djParticipantId: string | null) {
+  return participant.role === 'dj'
+    || (!!djParticipantId
+      && (participant._id === djParticipantId
+        || participantUserId(participant) === djParticipantId));
 }
 
 function toCooldownDate(value: unknown): Date | undefined {
@@ -185,6 +207,9 @@ export function ConnectedUsers({
     : usesPreviewParticipants
       ? previewParticipants
       : state.users;
+  const attendeeUsers = isDj
+    ? users.filter((user) => !isDjParticipant(user, participantData?._id ?? null))
+    : users;
   const loading =
     usesPreviewUsers || usesPreviewParticipants ? false : state.loading;
   const selectedParticipantId = state.selectedParticipantId;
@@ -299,11 +324,11 @@ export function ConnectedUsers({
     usesPreviewParticipants,
     usesPreviewUsers,
   ]);
-  const premiumCount = users.filter((user) => user.isPremium).length;
+  const premiumCount = attendeeUsers.filter((user) => user.isPremium).length;
   const connectedCount = isDj
-    ? users.filter((user) => user.socketId).length
-    : users.length;
-  const totalCount = users.length;
+    ? attendeeUsers.filter((user) => user.socketId).length
+    : attendeeUsers.length;
+  const totalCount = attendeeUsers.length;
   const bgColor = isDarkMode
     ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)'
     : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%)';
@@ -318,8 +343,9 @@ export function ConnectedUsers({
   };
 
   return (
-    <TooltipProvider>
-      <motion.div
+    <LazyMotion features={domAnimation}>
+      <TooltipProvider>
+      <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         layout
@@ -351,7 +377,7 @@ export function ConnectedUsers({
           />
         ) : (
           <DjConnectedUsers
-            users={users}
+            users={attendeeUsers}
             loading={loading}
             connectedCount={connectedCount}
             premiumCount={premiumCount}
@@ -366,8 +392,9 @@ export function ConnectedUsers({
             eventId={eventId}
           />
         )}
-      </motion.div>
-    </TooltipProvider>
+      </m.div>
+      </TooltipProvider>
+    </LazyMotion>
   );
 }
 
@@ -435,12 +462,12 @@ function AttendeeConnectedUsers({
       {loading && (
         <div className={`px-6 py-8 text-center ${mutedColor} text-sm`}>
           <div className="flex items-center justify-center gap-2">
-            <motion.div
+            <m.div
               animate={{ rotate: 360 }}
               transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
             >
               <Zap size={16} />
-            </motion.div>
+            </m.div>
                 Loading participants…
           </div>
         </div>
@@ -451,7 +478,7 @@ function AttendeeConnectedUsers({
         <div className="px-6 lg:px-4 py-4 lg:py-3 flex min-h-0 flex-col h-full">
           {/* DJ Section - Centered */}
           {djName && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               className="flex justify-center mb-6 lg:mb-3"
@@ -476,7 +503,7 @@ function AttendeeConnectedUsers({
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           )}
 
           {/* Divider */}
@@ -498,7 +525,7 @@ function AttendeeConnectedUsers({
               <p className="text-sm">{djName ? 'No other attendees yet' : 'No participants'}</p>
             </div>
           ) : (
-            <motion.div layout className="grid grid-cols-2 gap-3 lg:gap-2">
+            <m.div layout className="grid grid-cols-2 gap-3 lg:gap-2">
               <AnimatePresence>
                 {users
                   .sort((a, b) => {
@@ -512,7 +539,7 @@ function AttendeeConnectedUsers({
                     const displayName = isCurrentUser ? 'You' : user.nickname;
 
                     return (
-                      <motion.div
+                      <m.div
                         key={user._id}
                         layout
                         initial={{ opacity: 0, scale: 0.98, y: 6 }}
@@ -586,11 +613,11 @@ function AttendeeConnectedUsers({
                             </span>
                           </div>
                         </div>
-                      </motion.div>
+                      </m.div>
                     );
                   })}
               </AnimatePresence>
-            </motion.div>
+            </m.div>
           )}
         </div>
       )}
@@ -647,11 +674,11 @@ function DjConnectedUsers({
       </div>
 
       {users.length === 0 ? (
-        <motion.div layout className="text-center text-slate-500 py-8">
+        <m.div layout className="text-center text-slate-500 py-8">
           {loading ? 'Loading…' : 'No participants yet'}
-        </motion.div>
+        </m.div>
       ) : (
-        <motion.div layout className="flex flex-col gap-2">
+        <m.div layout className="flex flex-col gap-2">
           <AnimatePresence>
             {users
               .toSorted((a, b) => {
@@ -673,7 +700,7 @@ function DjConnectedUsers({
                 />
               ))}
           </AnimatePresence>
-        </motion.div>
+        </m.div>
       )}
     </>
   );
@@ -727,7 +754,7 @@ function ParticipantItem({
   };
 
   return (
-    <motion.div
+    <m.div
       layout
       exit={{
         opacity: 0,
@@ -749,7 +776,7 @@ function ParticipantItem({
 
         <AnimatePresence mode="wait">
           {isSelected ? (
-            <motion.div
+            <m.div
               key="admin-controls"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -759,7 +786,7 @@ function ParticipantItem({
             >
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <motion.button
+                  <m.button
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={(e) => {
@@ -769,13 +796,13 @@ function ParticipantItem({
                     className="p-2 bg-yellow-100 hover:bg-yellow-200 rounded-lg text-yellow-700 transition-colors"
                   >
                     <Zap size={16} />
-                  </motion.button>
+                  </m.button>
                 </TooltipTrigger>
                 <TooltipContent>Cooldown User</TooltipContent>
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <motion.button
+                  <m.button
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={(e) => {
@@ -785,13 +812,13 @@ function ParticipantItem({
                     className="p-2 bg-red-100 hover:bg-red-200 rounded-lg text-red-700 transition-colors"
                   >
                     <UserX size={16} />
-                  </motion.button>
+                  </m.button>
                 </TooltipTrigger>
                 <TooltipContent>Kick User</TooltipContent>
               </Tooltip>
-            </motion.div>
+            </m.div>
           ) : (
-            <motion.div
+            <m.div
               key="participant-info"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -805,7 +832,7 @@ function ParticipantItem({
               <p className="text-xs text-slate-500">
                 {formatTimeAgo(participant.joinedAt)}
               </p>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>
@@ -821,6 +848,6 @@ function ParticipantItem({
           </div>
         )}
       </div>
-    </motion.div>
+    </m.div>
   );
 }
