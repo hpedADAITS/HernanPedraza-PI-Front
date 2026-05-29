@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import { defineConfig } from 'vite';
-import type { Connect } from 'vite';
+import type { IncomingMessage, ServerResponse } from 'http';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
@@ -21,7 +21,7 @@ const httpsConfig =
       }
     : undefined;
 
-function setLogoCacheHeaders(req: Connect.IncomingMessage, res: Connect.ServerResponse) {
+function setLogoCacheHeaders(req: IncomingMessage, res: ServerResponse) {
   if (!req.url || !logoPngPattern.test(req.url.split('?')[0])) {
     return;
   }

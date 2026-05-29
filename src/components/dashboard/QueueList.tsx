@@ -3,12 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { clsx } from 'clsx';
 import { Play, X, Clock, UserX, SkipForward, Check } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import {  Tooltip,  TooltipContent,  TooltipProvider,TooltipTrigger} from '@/components/ui/tooltip';
 import { THEME_CONFIG } from '@/constants/dashboard';
 import { SLIDE_UP, ANIMATION_DURATION } from '@/constants/animations';
 import { songsAPI, eventsAPI, participantsAPI } from '@/services/api';
@@ -147,10 +142,18 @@ export function QueueList({
           return;
         }
 
-        let resolvedEventId = propEventId || eventData.eventId;
+        let resolvedEventId = propEventId || eventData.eventId || null;
         const eventCode = eventData.eventCode;
 
         if (!resolvedEventId) {
+          if (!eventCode) {
+            setQueueState((current) => ({
+              ...current,
+              loading: false,
+            }));
+            return;
+          }
+
           const event = await eventsAPI.getEventByAccessCode(eventCode);
           if (!event) {
             setQueueState((current) => ({
@@ -162,8 +165,16 @@ export function QueueList({
           resolvedEventId = event._id;
         }
 
+        if (!resolvedEventId) {
+          setQueueState((current) => ({
+            ...current,
+            loading: false,
+          }));
+          return;
+        }
+
         const queue = await songsAPI.getQueue(resolvedEventId);
-        const nextSongs = queue || [];
+        const nextSongs: Song[] = queue || [];
         const playing = nextSongs.find((song) => song.status === 'PLAYING');
 
         setQueueState((current) => ({

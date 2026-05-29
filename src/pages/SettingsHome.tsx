@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { User, Settings as SettingsIcon } from 'lucide-react';
 import { SettingsGrid, SettingsOptionCard, SettingsPageShell, SettingsSearch,  } from '@/components/settings/SettingsUI';
-import type { NavigateToView } from '@/types';
+import type { NavigateToView, View } from '@/types';
 
 interface Props {
   mode: 'attendee' | 'dj';
@@ -12,15 +12,21 @@ interface Props {
 const SETTINGS_SECTIONS = [
   {
     label: 'Account Settings',
-    routeSuffix: 'account-settings',
+    routeSuffix: 'account-settings' as const,
     icon: User,
   },
   {
     label: 'App Settings',
-    routeSuffix: 'app-settings',
+    routeSuffix: 'app-settings' as const,
     icon: SettingsIcon,
   },
 ];
+
+type SettingsRouteSuffix = (typeof SETTINGS_SECTIONS)[number]['routeSuffix'];
+
+function getSettingsView(mode: Props['mode'], suffix: SettingsRouteSuffix): View {
+  return `${mode}-${suffix}`;
+}
 
 export function SettingsHome({ mode, onNavigate }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,7 +53,7 @@ export function SettingsHome({ mode, onNavigate }: Props) {
               key={section.label}
               label={section.label}
               icon={section.icon}
-              onClick={() => onNavigate(`${viewPrefix}-${section.routeSuffix}`)}
+              onClick={() => onNavigate(getSettingsView(mode, section.routeSuffix))}
             />
           ))}
         </SettingsGrid>

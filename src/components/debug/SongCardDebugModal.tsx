@@ -637,7 +637,7 @@ export function SongCardDebugModal() {
       requestedBy: { _id: 'debug-attendee', nickname: 'Debug Attendee' },
     };
 
-    const steps: Array<{
+    const allSteps: Array<{
       key: DebugTrigger;
       label: string;
       run: () => void;
@@ -685,7 +685,8 @@ export function SongCardDebugModal() {
             reason: 'Skipped by DJ',
           }),
       },
-    ].filter((step) => selected[step.key]);
+    ];
+    const steps = allSteps.filter((step) => selected[step.key]);
 
     if (steps.length === 0) {
       toast.info('Select at least one debug trigger');

@@ -59,7 +59,10 @@ export function listenDebugSongEvents(
     if (detail.eventKey) {
       if (seen.has(detail.eventKey)) return;
       seen.add(detail.eventKey);
-      if (seen.size > 80) seen.delete(seen.values().next().value);
+      if (seen.size > 80) {
+        const oldest = seen.values().next().value;
+        if (oldest) seen.delete(oldest);
+      }
     }
     callback(detail);
   };

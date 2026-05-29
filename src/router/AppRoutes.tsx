@@ -94,7 +94,7 @@ export function AppRoutes({
           <div
             className="absolute inset-0"
             aria-hidden={isSongSelection}
-            inert={isSongSelection ? '' : undefined}
+            inert={isSongSelection ? true : undefined}
           >
             <Dashboard
               mode={dashboardWorkspaceMode}

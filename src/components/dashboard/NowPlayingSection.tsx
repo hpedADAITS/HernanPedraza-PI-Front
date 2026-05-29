@@ -267,10 +267,12 @@ export function NowPlayingSection() {
 
   /* Tick every second so progress/elapsed advance smoothly */
   useEffect(() => {
-    if (state.nowPlaying?.status === 'playing' && state.nowPlaying.startedAt) {
+    const startedAt = state.nowPlaying?.startedAt;
+
+    if (state.nowPlaying?.status === 'playing' && startedAt) {
       const updateElapsed = () => {
         setElapsedSeconds(
-          Math.max(0, (Date.now() - state.nowPlaying.startedAt) / 1000),
+          Math.max(0, (Date.now() - startedAt) / 1000),
         );
       };
       updateElapsed();
