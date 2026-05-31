@@ -8,7 +8,7 @@ import {
   DEBUG_EVENT_NAME,
   dispatchDebugSongEvent,
 } from '@/utils/debugSongEvents';
-import { authAPI } from '@/services/api';
+import { apiCall } from '@/services/api/client';
 
 type DebugTrigger = 'queue' | 'playing' | 'rejected' | 'skipped';
 
@@ -234,6 +234,13 @@ function renderAccountsWindow(result: DebugAccountsResult) {
   `;
 }
 
+async function createDebugMockAccounts() {
+  const data = await apiCall('/debug/mock-accounts', {
+    method: 'POST',
+  });
+  return data.data as DebugAccountsResult;
+}
+
 function renderQueueTestWindow(eventId: string) {
   return `
     <h1>Queue Test Page</h1>
@@ -356,6 +363,13 @@ function renderQueueTestWindow(eventId: string) {
           state.queue.find((song) => song._id === id);
 
         const durationOf = (song) => song?.totalDuration ?? song?.duration ?? 0;
+        const escapeHtml = (value) =>
+          String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
 
         const nowPlayingPayload = () => {
           if (!state.nowPlaying) return null;
@@ -525,22 +539,31 @@ function renderQueueTestWindow(eventId: string) {
           return state.nowPlaying ? 'No queued attendee songs' : 'Nothing playing';
         };
 
-        const renderSong = (song, pending) => \`
+        const renderSong = (song, pending) => {
+          const id = escapeHtml(song._id);
+          const title = escapeHtml(song.title);
+          const artist = escapeHtml(song.artist);
+          const status = escapeHtml(song.status);
+          const votes = escapeHtml(song.voteScore);
+          const duration = escapeHtml(durationOf(song) || 'unknown');
+
+          return \`
           <div class="song">
             <div class="row">
               <div>
-                <div class="title">\${song.title}</div>
-                <div class="sub">\${song.artist} | \${song.status} | votes \${song.voteScore} | duration \${durationOf(song) || 'unknown'}s</div>
+                <div class="title">\${title}</div>
+                <div class="sub">\${artist} | \${status} | votes \${votes} | duration \${duration}s</div>
               </div>
             </div>
             <div class="actions">
-              \${pending ? \`<button data-approve="\${song._id}">Approve</button>\` : \`<button data-play="\${song._id}">Recognize now</button>\`}
-              <button class="secondary" data-up="\${song._id}">+1</button>
-              <button class="secondary" data-down="\${song._id}">-1</button>
-              <button class="danger" data-reject="\${song._id}">Reject</button>
+              \${pending ? \`<button data-approve="\${id}">Approve</button>\` : \`<button data-play="\${id}">Recognize now</button>\`}
+              <button class="secondary" data-up="\${id}">+1</button>
+              <button class="secondary" data-down="\${id}">-1</button>
+              <button class="danger" data-reject="\${id}">Reject</button>
             </div>
           </div>
         \`;
+        };
 
         const render = () => {
           document.getElementById('pending').innerHTML =
@@ -720,7 +743,7 @@ export function SongCardDebugModal() {
 
     setCreatingAccounts(true);
     try {
-      const result = await authAPI.createDebugMockAccounts();
+      const result = await createDebugMockAccounts();
       writeDebugWindow(accountWindow, renderAccountsWindow(result));
       toast.success('Debug accounts created and validated');
     } catch (error) {

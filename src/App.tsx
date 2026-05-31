@@ -1,9 +1,17 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Toaster } from 'sonner';
 import { useAppStartup } from '@/hooks/useAppStartup';
-import { SongCardDebugModal } from '@/components/debug/SongCardDebugModal';
 import { AppRoutes } from '@/router/AppRoutes';
 import { useViewNavigation } from '@/router/useViewNavigation';
+
+const DebugModal =
+  import.meta.env.DEV
+    ? lazy(() =>
+        import('@/components/debug/SongCardDebugModal').then((module) => ({
+          default: module.SongCardDebugModal,
+        })),
+      )
+    : null;
 
 export default function App() {
   useAppStartup();
@@ -21,7 +29,11 @@ export default function App() {
         onLogoChange={setLogoWhite}
         onNavigate={navigate}
       />
-      <SongCardDebugModal />
+      {DebugModal ? (
+        <Suspense fallback={null}>
+          <DebugModal />
+        </Suspense>
+      ) : null}
     </div>
   );
 }

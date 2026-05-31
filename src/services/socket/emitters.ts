@@ -29,7 +29,7 @@ export function castVote(
 ) {
   const socket = getSocketInstance();
   if (!socket) throw new Error('Socket not initialized');
-  socket.emit('vote_cast', { eventId, songId, participantId, value });
+  socket.emit('cast_vote', { eventId, songId, participantId, value });
 }
 
 export function removeVote(
@@ -39,7 +39,7 @@ export function removeVote(
 ) {
   const socket = getSocketInstance();
   if (!socket) throw new Error('Socket not initialized');
-  socket.emit('vote_removed', { eventId, songId, participantId });
+  socket.emit('remove_vote', { eventId, songId, participantId });
 }
 
 /* ============ SONGS ============ */
@@ -54,9 +54,8 @@ export function suggestSong(
 ) {
   const socket = getSocketInstance();
   if (!socket) throw new Error('Socket not initialized');
-  socket.emit('song_suggested', {
+  socket.emit('suggest_song', {
     eventId,
-    songId,
     title,
     artist,
     participantId,
@@ -69,7 +68,7 @@ export function approveSong(eventId: string, songId: string) {
   if (!socket) {
     throw new Error('Socket not initialized');
   }
-  socket.emit('song_approved', { eventId, songId });
+  socket.emit('approve_song', { eventId, songId });
 }
 
 export function sendNowSong(
@@ -82,23 +81,21 @@ export function sendNowSong(
   if (!socket) {
     throw new Error('Socket not initialized');
   }
-  socket.emit('song_now_playing', { eventId, songId, title, artist });
+  socket.emit('send_now', { eventId, songId, title, artist });
 }
 
 export function rejectSong(eventId: string, songId: string, reason: string) {
   const socket = getSocketInstance();
   if (!socket) throw new Error('Socket not initialized');
-  socket.emit('song_rejected', { eventId, songId, reason });
+  socket.emit('reject_song', { eventId, songId, reason });
 }
 
 export function skipSong(eventId: string, songId: string, reason: string) {
   const socket = getSocketInstance();
   if (!socket) throw new Error('Socket not initialized');
-  socket.emit('song_skipped', { eventId, songId, reason });
+  socket.emit('skip_song', { eventId, songId, reason });
 }
 
-export function updateQueue(eventId: string, queue: any[]) {
-  const socket = getSocketInstance();
-  if (!socket) throw new Error('Socket not initialized');
-  socket.emit('queue_updated', { eventId, queue });
+export function updateQueue(_eventId: string, _queue: any[]) {
+  throw new Error('Queue updates must come from backend state changes');
 }
