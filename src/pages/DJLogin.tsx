@@ -6,6 +6,7 @@ import { authAPI, eventsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
 import logoWhite from '@/assets/logo_white.png';
 import { writeStoredJson } from '@/utils/storage';
+import { activateSingleUserSession } from '@/services/singleUserSession';
 import type { NavigateToView } from '@/types';
 
 interface Props {
@@ -43,6 +44,7 @@ export function DJLogin({
 
       if (result.user) {
         writeStoredJson('user', result.user);
+        activateSingleUserSession(result.user);
 
         let event;
         const events = await eventsAPI.listEvents();

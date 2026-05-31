@@ -7,6 +7,7 @@ import { participantsAPI, eventsAPI, authAPI } from '@/services/api';
 import * as socket from '@/services/socket';
 import logoWhite from '@/assets/logo_white.png';
 import { writeStoredJson } from '@/utils/storage';
+import { activateSingleUserSession } from '@/services/singleUserSession';
 import { validateNickname } from '@/utils/validation';
 import type { NavigateToView } from '@/types';
 
@@ -244,7 +245,13 @@ export function AttendeeLogin({
         ownerName,
         ownerProfilePicture,
       };
-      writeStoredJson('user', { displayName: state.nickname });
+      const userSession = {
+        _id: authResult.user?.id ?? authResult.user?._id,
+        id: authResult.user?.id ?? authResult.user?._id,
+        displayName: state.nickname,
+      };
+      writeStoredJson('user', userSession);
+      activateSingleUserSession(userSession);
       writeStoredJson('currentEvent', sessionData);
       writeStoredJson('currentParticipant', {
         _id: participant._id || participant.id,

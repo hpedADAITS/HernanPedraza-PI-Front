@@ -13,31 +13,24 @@ import {
 } from '@/services/socket';
 import { eventsAPI } from '@/services/api';
 import {
-  readStoredJson,
-  removeStoredItem,
-  writeStoredJson,
-} from '@/utils/storage';
+  clearStoredEvent,
+  clearStoredParticipant,
+  clearStoredUser,
+  getAuthToken,
+  getStoredEvent,
+  getStoredParticipant,
+  getStoredUser,
+  setStoredEvent,
+  setStoredParticipant,
+} from '@/services/session';
+import {
+  isCurrentUserSessionActive,
+  onCurrentUserSessionReplaced,
+} from '@/services/singleUserSession';
 import { toast } from 'sonner';
+import type { StoredEvent } from '@/services/session';
 
 type DashboardMode = 'attendee' | 'dj';
-
-interface StoredEvent {
-  eventId?: string;
-  ownerName?: string;
-  accessCode?: string;
-  ownerProfilePicture?: string | null;
-}
-
-interface StoredParticipant {
-  _id?: string;
-  nickname?: string;
-  profilePicture?: string | null;
-}
-
-interface StoredUser {
-  displayName?: string;
-  profilePicture?: string | null;
-}
 
 export interface DashboardState {
   userName: string;
@@ -48,40 +41,28 @@ export interface DashboardState {
   eventId: string;
 }
 
-function readStoredEvent() {
-  return readStoredJson<StoredEvent>('currentEvent');
-}
-
-function readStoredParticipant() {
-  return readStoredJson<StoredParticipant>('currentParticipant');
-}
-
-function readStoredUser() {
-  return readStoredJson<StoredUser>('user');
-}
-
 function updateStoredParticipantProfilePicture(newPicture: string) {
-  const participant = readStoredParticipant();
+  const participant = getStoredParticipant();
   if (!participant) return;
 
-  writeStoredJson('currentParticipant', {
+  setStoredParticipant({
     ...participant,
     profilePicture: newPicture,
   });
 }
 
 function updateStoredEventAccessCode(newCode: string) {
-  const eventData = readStoredEvent();
+  const eventData = getStoredEvent();
   if (!eventData) return;
 
-  writeStoredJson('currentEvent', {
+  setStoredEvent({
     ...eventData,
     accessCode: newCode,
   });
 }
 
 function syncStoredEvent(eventData: StoredEvent, updates: Partial<StoredEvent>) {
-  writeStoredJson('currentEvent', {
+  setStoredEvent({
     ...eventData,
     ...updates,
   });
@@ -89,14 +70,22 @@ function syncStoredEvent(eventData: StoredEvent, updates: Partial<StoredEvent>) 
 
 function clearAttendeeEventSession() {
   disconnectSocket();
-  removeStoredItem('currentEvent');
-  removeStoredItem('currentParticipant');
+  clearStoredEvent();
+  clearStoredParticipant();
+}
+
+function clearCurrentSession() {
+  disconnectSocket();
+  localStorage.removeItem('authToken');
+  clearStoredUser();
+  clearStoredEvent();
+  clearStoredParticipant();
 }
 
 export function getInitialDashboardState(): DashboardState {
-  const eventData = readStoredEvent();
-  const participantData = readStoredParticipant();
-  const user = readStoredUser();
+  const eventData = getStoredEvent();
+  const participantData = getStoredParticipant();
+  const user = getStoredUser();
 
   return {
     userName: user?.displayName || participantData?.nickname || 'User',
@@ -153,17 +142,30 @@ export function useDashboardSession({
   }, []);
 
   useEffect(() => {
-    const eventData = readStoredEvent();
-    const participantData = readStoredParticipant();
+    const eventData = getStoredEvent();
+    const participantData = getStoredParticipant();
+    const user = getStoredUser();
 
     if (!eventData || !participantData) {
       navigateAway();
       return;
     }
 
-    const token = localStorage.getItem('authToken');
+    if (!isCurrentUserSessionActive(user)) {
+      clearCurrentSession();
+      toast.info('This account is active in another window. Please log in again here to continue.');
+      navigateAway();
+      return;
+    }
+
+    const stopWatchingSession = onCurrentUserSessionReplaced(user, () => {
+      clearCurrentSession();
+      toast.info('This account was opened in another window. This session has been closed.');
+      navigateAway();
+    });
+
+    const token = getAuthToken();
     const socket = initSocket(token ?? undefined);
-    const user = readStoredUser();
 
     const handleConnect = async () => {
       try {
@@ -309,6 +311,7 @@ export function useDashboardSession({
 
     return () => {
       socket?.off('connect', handleConnect);
+      stopWatchingSession();
       off('access_code_updated', handleAccessCodeUpdated);
       off('event_updated', handleEventUpdated);
       off('song_suggested', handleSongSuggested);

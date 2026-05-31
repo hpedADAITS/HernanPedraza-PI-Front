@@ -41,11 +41,16 @@ function participantUserId(participant: ConnectedUser) {
   return participant.userId?._id ?? participant.userId?.id ?? null;
 }
 
-function isDjParticipant(participant: ConnectedUser, djParticipantId: string | null) {
+function isDjParticipant(
+  participant: ConnectedUser,
+  djParticipantId: string | null,
+  djUserId: string | null,
+) {
+  const userId = participantUserId(participant);
   return participant.role === 'dj'
     || (!!djParticipantId
-      && (participant._id === djParticipantId
-        || participantUserId(participant) === djParticipantId));
+      && (participant._id === djParticipantId || userId === djParticipantId))
+    || (!!djUserId && userId === djUserId);
 }
 
 function toCooldownDate(value: unknown): Date | undefined {
@@ -189,7 +194,8 @@ export function ConnectedUsers({
     ownerName?: string;
     ownerProfilePicture?: string | null;
   }>('currentEvent');
-  const participantData = readStoredJson<{ _id?: string }>('currentParticipant');
+  const participantData = readStoredJson<{ _id?: string; id?: string }>('currentParticipant');
+  const storedUser = readStoredJson<{ _id?: string; id?: string }>('user');
   const eventId = eventData?.eventId || null;
   const usesPreviewUsers = isAttendee && !!previewUsers;
   const usesPreviewParticipants = isDj && !!previewParticipants;
@@ -207,8 +213,10 @@ export function ConnectedUsers({
     : usesPreviewParticipants
       ? previewParticipants
       : state.users;
+  const djParticipantId = participantData?._id ?? participantData?.id ?? null;
+  const djUserId = storedUser?._id ?? storedUser?.id ?? null;
   const attendeeUsers = isDj
-    ? users.filter((user) => !isDjParticipant(user, participantData?._id ?? null))
+    ? users.filter((user) => !isDjParticipant(user, djParticipantId, djUserId))
     : users;
   const loading =
     usesPreviewUsers || usesPreviewParticipants ? false : state.loading;
@@ -249,6 +257,20 @@ export function ConnectedUsers({
     const socket = getSocket();
     if (socket) {
       const handleParticipantJoined = (data: any) => {
+        if (isDj && isDjParticipant(
+          {
+            _id: data.participantId,
+            nickname: data.nickname,
+            joinedAt: data.joinedAt,
+            role: data.role,
+            userId: data.userId,
+          },
+          djParticipantId,
+          djUserId,
+        )) {
+          return;
+        }
+
         dispatch({
           type: 'upsert_user',
           user: {
@@ -319,6 +341,8 @@ export function ConnectedUsers({
     }
   }, [
     eventId,
+    djParticipantId,
+    djUserId,
     isAttendee,
     isDj,
     usesPreviewParticipants,
