@@ -7,11 +7,21 @@ import { activateSingleUserSession } from '@/services/singleUserSession';
 import { validateNickname } from '@/utils/validation';
 import type { NavigateToView } from '@/types';
 
+interface VerifiedEvent {
+  _id?: string;
+  id?: string;
+  ownerName?: string;
+  ownerId?: {
+    displayName?: string;
+    profilePicture?: string | null;
+  } | null;
+}
+
 export interface AttendeeLoginState {
   eventCode: string;
   nickname: string;
   nicknamePassword: string;
-  verifiedEvent: any;
+  verifiedEvent: VerifiedEvent | null;
   showQRScanner: boolean;
 }
 
@@ -19,7 +29,7 @@ type AttendeeLoginAction =
   | { type: 'set_event_code'; value: string }
   | { type: 'set_nickname'; value: string }
   | { type: 'set_nickname_password'; value: string }
-  | { type: 'set_verified_event'; value: any }
+  | { type: 'set_verified_event'; value: VerifiedEvent | null }
   | { type: 'set_show_qr_scanner'; value: boolean };
 
 const INITIAL_STATE: AttendeeLoginState = {

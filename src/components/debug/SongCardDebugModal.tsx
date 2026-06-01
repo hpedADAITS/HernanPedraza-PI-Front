@@ -536,40 +536,61 @@ function renderQueueTestWindow(eventId: string) {
           return state.nowPlaying ? 'No queued attendee songs' : 'Nothing playing';
         };
 
-        const renderSong = (song, pending) => {
-          const id = escapeHtml(song._id);
-          const title = escapeHtml(song.title);
-          const artist = escapeHtml(song.artist);
-          const status = escapeHtml(song.status);
-          const votes = escapeHtml(song.voteScore);
-          const duration = escapeHtml(durationOf(song) || 'unknown');
+        const createButton = (label, dataKey, songId, className) => {
+          const button = document.createElement('button');
+          button.textContent = label;
+          button.dataset[dataKey] = songId;
+          if (className) button.className = className;
+          return button;
+        };
 
-          return \`
-          <div class="song">
-            <div class="row">
-              <div>
-                <div class="title">\${title}</div>
-                <div class="sub">\${artist} | \${status} | votes \${votes} | duration \${duration}s</div>
-              </div>
-            </div>
-            <div class="actions">
-              \${pending ? \`<button data-approve="\${id}">Approve</button>\` : \`<button data-play="\${id}">Recognize now</button>\`}
-              <button class="secondary" data-up="\${id}">+1</button>
-              <button class="secondary" data-down="\${id}">-1</button>
-              <button class="danger" data-reject="\${id}">Reject</button>
-            </div>
-          </div>
-        \`;
+        const renderSong = (song, pending) => {
+          const id = String(song._id);
+          const container = document.createElement('div');
+          container.className = 'song';
+
+          const row = document.createElement('div');
+          row.className = 'row';
+          const text = document.createElement('div');
+          const title = document.createElement('div');
+          title.className = 'title';
+          title.textContent = String(song.title);
+          const sub = document.createElement('div');
+          sub.className = 'sub';
+          sub.textContent = `${song.artist} | ${song.status} | votes ${song.voteScore} | duration ${durationOf(song) || 'unknown'}s`;
+          text.append(title, sub);
+          row.append(text);
+
+          const actions = document.createElement('div');
+          actions.className = 'actions';
+          actions.append(
+            pending ? createButton('Approve', 'approve', id) : createButton('Recognize now', 'play', id),
+            createButton('+1', 'up', id, 'secondary'),
+            createButton('-1', 'down', id, 'secondary'),
+            createButton('Reject', 'reject', id, 'danger'),
+          );
+
+          container.append(row, actions);
+          return container;
+        };
+
+        const renderList = (elementId, songs, emptyLabel, pending) => {
+          const element = document.getElementById(elementId);
+          element.textContent = '';
+          if (!songs.length) {
+            const empty = document.createElement('p');
+            empty.className = 'meta';
+            empty.textContent = emptyLabel;
+            element.append(empty);
+            return;
+          }
+          element.append(...songs.map((song) => renderSong(song, pending)));
         };
 
         const render = () => {
-          document.getElementById('pending').innerHTML =
-            state.pending.map((song) => renderSong(song, true)).join('') || '<p class="meta">No pending songs</p>';
-          document.getElementById('queue').innerHTML =
-            state.queue.filter((song) => song.status !== 'PLAYING').map((song) => renderSong(song, false)).join('') || '<p class="meta">No queued songs</p>';
-          document.getElementById('playing').innerHTML = state.nowPlaying
-            ? renderSong(state.nowPlaying, false)
-            : '<p class="meta">No recognized song</p>';
+          renderList('pending', state.pending, 'No pending songs', true);
+          renderList('queue', state.queue.filter((song) => song.status !== 'PLAYING'), 'No queued songs', false);
+          renderList('playing', state.nowPlaying ? [state.nowPlaying] : [], 'No recognized song', false);
           document.getElementById('wait').textContent = waitLabel();
           document.getElementById('log').textContent = state.log.join('\\n\\n');
         };

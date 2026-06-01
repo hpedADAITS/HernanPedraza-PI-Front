@@ -43,8 +43,8 @@ export function QRCodeModal({
       onAccessCodeChange?.(event.accessCode);
       toast.success('Access code regenerated');
       setShowConfirm(false);
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to regenerate code');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to regenerate code');
     } finally {
       setRegenerating(false);
     }

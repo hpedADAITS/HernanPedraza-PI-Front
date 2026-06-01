@@ -6,6 +6,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ANIMATION_DURATION } from '@/constants/animations';
 import { participantsAPI } from '@/services/api';
 import { getSocket } from '@/services/socket';
+import type {
+  ParticipantCooldownPayload,
+  ParticipantEventPayload,
+  ParticipantPremiumPayload,
+} from '@/services/socket/contracts';
 import { readStoredJson } from '@/utils/storage';
 import { UserAvatar } from '@/components/common';
 
@@ -68,6 +73,25 @@ interface ConnectedUsersProps {
   previewUsers?: ConnectedUser[];
   previewCurrentUserId?: string | null;
   previewParticipants?: ConnectedUser[];
+}
+
+interface ParticipantJoinedPayload extends ParticipantEventPayload {
+  joinedAt: string;
+  nickname: string;
+  profilePicture?: string | null;
+  role?: string;
+  userId?: string | null;
+  isPremium?: boolean;
+}
+
+function formatErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error) return error.message || fallback;
+  if (typeof error === 'string') return error || fallback;
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message) return message;
+  }
+  return fallback;
 }
 
 function formatTimeAgo(joinedAt: string): string {
@@ -245,7 +269,7 @@ export function ConnectedUsers({
         }
 
         dispatch({ type: 'replace_users', users: userList });
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error fetching connected users:', error);
         dispatch({ type: 'replace_users', users: [] });
       }
@@ -256,7 +280,7 @@ export function ConnectedUsers({
     const fallbackRefreshMs = 5 * 60 * 1000;
     const socket = getSocket();
     if (socket) {
-      const handleParticipantJoined = (data: any) => {
+      const handleParticipantJoined = (data: ParticipantJoinedPayload) => {
         if (isDj && isDjParticipant(
           {
             _id: data.participantId,
@@ -284,15 +308,15 @@ export function ConnectedUsers({
         });
       };
 
-      const handleParticipantLeft = (data: any) => {
+      const handleParticipantLeft = (data: ParticipantEventPayload) => {
         dispatch({ type: 'remove_user', participantId: data.participantId });
       };
 
-      const handleParticipantKicked = (data: any) => {
+      const handleParticipantKicked = (data: ParticipantEventPayload) => {
         dispatch({ type: 'remove_user', participantId: data.participantId });
       };
 
-      const handleParticipantCooldown = (data: any) => {
+      const handleParticipantCooldown = (data: ParticipantCooldownPayload) => {
         if (!isDj) return;
         dispatch({
           type: 'set_cooldown',
@@ -301,7 +325,7 @@ export function ConnectedUsers({
         });
       };
 
-      const handleParticipantPremiumUpdated = (data: any) => {
+      const handleParticipantPremiumUpdated = (data: ParticipantPremiumPayload) => {
         if (!isDj) return;
         dispatch({
           type: 'set_premium',
@@ -733,7 +757,7 @@ function DjConnectedUsers({
 interface ParticipantItemProps {
   participant: ConnectedUser;
   isSelected: boolean;
-  onSelect: (id: string) => void;
+  onSelect: (id: string | null) => void;
   onRemove: (id: string) => void;
   eventId: string | null;
 }
@@ -757,9 +781,13 @@ function ParticipantItem({
         );
         await toast.promise(promise, {
           success: `Cooldown applied to "${participant.nickname}"`,
-          error: (err: any) => `Failed to apply cooldown: ${err.message}`,
+          error: (err: unknown) =>
+            `Failed to apply cooldown: ${formatErrorMessage(
+              err,
+              'Unknown error',
+            )}`,
         });
-        onSelect(null as any);
+        onSelect(null);
       } else if (action === 'Kick' && eventId) {
         const promise = participantsAPI.kickParticipant(
           participant._id,
@@ -767,12 +795,13 @@ function ParticipantItem({
         );
         await toast.promise(promise, {
           success: `Kicked "${participant.nickname}"`,
-          error: (err: any) => `Failed to kick: ${err.message}`,
+          error: (err: unknown) =>
+            `Failed to kick: ${formatErrorMessage(err, 'Unknown error')}`,
         });
         onRemove(participant._id);
-        onSelect(null as any);
+        onSelect(null);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`Error executing ${action}:`, error);
     }
   };

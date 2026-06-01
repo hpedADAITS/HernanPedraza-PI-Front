@@ -16,6 +16,29 @@ interface Props {
   onLogoChange?: (white: boolean) => void;
 }
 
+type DJRegisterUser = {
+  _id?: string;
+  id?: string;
+  displayName?: string;
+  email?: string;
+  role?: string;
+  emailRegistered?: boolean;
+  profilePicture?: string | null;
+};
+
+type DJRegisterResponse = {
+  token?: string;
+  authToken?: string;
+  emailVerificationToken?: string;
+  user?: DJRegisterUser;
+};
+
+type RegistrationData = {
+  token: string;
+  userId?: string;
+  profilePicture: string | null;
+};
+
 export function DJRegister({
   onNavigate,
 }: Props) {
@@ -28,7 +51,7 @@ export function DJRegister({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showEventIdModal, setShowEventIdModal] = useState(false);
-  const registrationDataRef = useRef<any>(null);
+  const registrationDataRef = useRef<RegistrationData | null>(null);
   const [debugToken, setDebugToken] = useState<string | undefined>(undefined);
 
   /* Poll for email verification status */
@@ -91,14 +114,19 @@ export function DJRegister({
 
     setLoading(true);
     try {
-      const result = await authAPI.register(
+      const result = (await authAPI.register(
         email,
         password,
         displayName,
         'DJ',
-      );
+      )) as DJRegisterResponse;
 
       if (!result || !result.token) {
+        throw new Error('Failed to create account');
+      }
+
+      const token = result.authToken || result.token;
+      if (!token) {
         throw new Error('Failed to create account');
       }
 
@@ -112,12 +140,15 @@ export function DJRegister({
 
       /* Show email confirmation modal first */
       registrationDataRef.current = {
-        token: result.authToken || result.token,
+        token,
         userId: result.user?._id || result.user?.id,
         profilePicture: result.user?.profilePicture || null,
       };
       const debugTokenToUse = result.emailVerificationToken;
-      if (debugTokenToUse && typeof debugTokenToUse === 'string' && debugTokenToUse.split('.').length === 3) {
+      if (
+        debugTokenToUse &&
+        debugTokenToUse.split('.').length === 3
+      ) {
         setDebugToken(debugTokenToUse);
       }
       setShowEmailModal(true);

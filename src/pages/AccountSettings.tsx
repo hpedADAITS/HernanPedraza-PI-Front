@@ -5,6 +5,7 @@ import { authAPI, clearToken } from '@/services/api';
 import { disconnectSocket, getSocket } from '@/services/socket';
 import { ProfilePictureUpload } from '@/components/common';
 import { SettingsChoiceRow, SettingsDialog, SettingsDialogActions, SettingsDialogButton, SettingsList, SettingsListItem, SettingsPageShell, SettingsSearch, SettingsToggleRow } from '@/components/settings/SettingsUI';
+import { readSettingJson, readSettingString, writeSettingJson, writeSettingString } from '@/features/settings/storage';
 import { readStoredJson, writeStoredJson } from '@/utils/storage';
 import type { NavigateToView } from '@/types';
 
@@ -58,20 +59,16 @@ export function AccountSettings({ mode, onNavigate }: Props) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const storedQuality = localStorage.getItem(
-      'mediaQuality',
-    ) as MediaQuality | null;
+    const storedQuality = readSettingString('mediaQuality') as MediaQuality | null;
     if (
       storedQuality &&
       MEDIA_QUALITY_OPTIONS.some((o) => o.value === storedQuality)
     ) {
       setMediaQuality(storedQuality);
     }
-    const storedSocial = localStorage.getItem('socialPrefs');
+    const storedSocial = readSettingJson<Partial<SocialPrefs>>('socialPrefs');
     if (storedSocial) {
-      try {
-        setSocialPrefs({ ...DEFAULT_SOCIAL_PREFS, ...JSON.parse(storedSocial) });
-      } catch {}
+      setSocialPrefs({ ...DEFAULT_SOCIAL_PREFS, ...storedSocial });
     }
     const user = readStoredJson<{ profilePicture?: string | null }>('user');
     if (user) {
@@ -81,7 +78,7 @@ export function AccountSettings({ mode, onNavigate }: Props) {
 
   const handleSelectMediaQuality = (value: MediaQuality) => {
     setMediaQuality(value);
-    localStorage.setItem('mediaQuality', value);
+    writeSettingString('mediaQuality', value);
     toast.success(`Media quality set to ${value}`);
     setShowMediaQualityModal(false);
   };
@@ -89,7 +86,7 @@ export function AccountSettings({ mode, onNavigate }: Props) {
   const handleToggleSocial = (key: keyof SocialPrefs) => {
     const next = { ...socialPrefs, [key]: !socialPrefs[key] };
     setSocialPrefs(next);
-    localStorage.setItem('socialPrefs', JSON.stringify(next));
+    writeSettingJson('socialPrefs', next);
   };
 
   const handleDisplayName = () => {

@@ -17,6 +17,17 @@ interface ActionButtonsProps {
   showActions?: boolean;
 }
 
+interface AttendeePasswordPromptRequestedPayload {
+  participantId?: string;
+}
+
+interface QueueUpdatedPayload {
+  queue?: CurrentSong[];
+}
+
+const getErrorMessage = (err: unknown, fallback: string) =>
+  err instanceof Error && err.message ? err.message : fallback;
+
 export function ActionButtons({
   mode,
   onNavigate,
@@ -59,10 +70,12 @@ export function ActionButtons({
   useEffect(() => {
     if (isDj) return undefined;
 
-    const handlePasswordPromptRequested = (data: any) => {
+    const handlePasswordPromptRequested = (
+      data: AttendeePasswordPromptRequestedPayload,
+    ) => {
       const participant = readStoredJson<{ _id?: string; id?: string; passwordProtected?: boolean }>('currentParticipant');
       if (!participant) return;
-      if ((participant._id || participant.id) !== data?.participantId) return;
+      if ((participant._id || participant.id) !== data.participantId) return;
       if (participant.passwordProtected) return;
       setPasswordPrompt({ reason: 'duplicate-login' });
     };
@@ -89,8 +102,8 @@ export function ActionButtons({
       if (eventId) {
         try {
           await eventsAPI.endEvent(eventId);
-        } catch (err: any) {
-          toast.error(err?.message || 'Failed to end event');
+        } catch (err: unknown) {
+          toast.error(getErrorMessage(err, 'Failed to end event'));
         }
       }
     } else {
@@ -280,8 +293,8 @@ function AttendeePasswordPrompt({
       });
       toast.success('Attendee name protected');
       await onSaved();
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to set password');
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, 'Failed to set password'));
     } finally {
       setSaving(false);
     }
@@ -389,8 +402,8 @@ function VotingButtons() {
         /* queue fetch failed silently */
       });
 
-    const handleQueueUpdate = (data: any) => {
-      if (data?.queue && data.queue.length > 0) {
+    const handleQueueUpdate = (data: QueueUpdatedPayload) => {
+      if (data.queue && data.queue.length > 0) {
         setCurrentSong(data.queue[0]);
       } else {
         setCurrentSong(null);
@@ -438,8 +451,8 @@ function VotingButtons() {
       await votesAPI.castVote(currentSong._id, participantId, value);
       const direction = value === 1 ? '👍' : '👎';
       toast.success(`${direction} ${currentSong.title}`);
-    } catch (err: any) {
-      toast.error(err?.message || 'Vote failed');
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, 'Vote failed'));
     } finally {
       setVoting(false);
     }

@@ -3,6 +3,7 @@ import { Layout } from '@/components/layout/Layout';
 import { Music2, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { SettingsChoiceRow, SettingsDialog, SettingsDialogActions, SettingsDialogButton, SettingsGrid, SettingsOptionCard, SettingsPageShell, SettingsToggleRow } from '@/components/settings/SettingsUI';
+import { writeSettingJson, writeSettingString } from '@/features/settings/storage';
 import type { NavigateToView } from '@/types';
 
 interface Props {
@@ -31,17 +32,14 @@ export function AppPreferences({ mode, onNavigate }: Props) {
   const [allowSharing, setAllowSharing] = useState(true);
 
   const handleMediaQualitySave = () => {
-    localStorage.setItem('mediaQuality', mediaQuality);
+    writeSettingString('mediaQuality', mediaQuality);
     toast.success(`Media quality set to ${mediaQuality}`);
     setShowMediaQuality(false);
   };
 
   const handleSocialSettingsSave = () => {
-    localStorage.setItem(
-      'allowNotifications',
-      JSON.stringify(allowNotifications),
-    );
-    localStorage.setItem('allowSharing', JSON.stringify(allowSharing));
+    writeSettingJson('allowNotifications', allowNotifications);
+    writeSettingJson('allowSharing', allowSharing);
     toast.success('Social settings updated');
     setShowSocialSettings(false);
   };
