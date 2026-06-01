@@ -557,7 +557,7 @@ function renderQueueTestWindow(eventId: string) {
           title.textContent = String(song.title);
           const sub = document.createElement('div');
           sub.className = 'sub';
-          sub.textContent = `${song.artist} | ${song.status} | votes ${song.voteScore} | duration ${durationOf(song) || 'unknown'}s`;
+          sub.textContent = String(song.artist) + ' | ' + String(song.status) + ' | votes ' + String(song.voteScore) + ' | duration ' + String(durationOf(song) || 'unknown') + 's';
           text.append(title, sub);
           row.append(text);
 

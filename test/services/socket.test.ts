@@ -36,7 +36,7 @@ describe('socket service', () => {
 
     expect(result).toBe(socket);
     expect(getSocket()).toBe(socket);
-    expect(socketIoMock).toHaveBeenCalledWith('http://localhost:5000', {
+    expect(socketIoMock).toHaveBeenCalledWith(undefined, {
       auth: {
         token: 'explicit-token',
       },
@@ -57,7 +57,7 @@ describe('socket service', () => {
     initSocket();
 
     expect(socketIoMock).toHaveBeenCalledWith(
-      'http://localhost:5000',
+      undefined,
       expect.objectContaining({
         auth: {
           token: 'stored-token',

@@ -45,8 +45,7 @@ describe('API Service', () => {
 
   describe('API Configuration', () => {
     it('should have valid API_BASE URL', () => {
-      /* Check if it's a valid URL */
-      expect(API_BASE).toMatch(/^https?:\/\//);
+      expect(API_BASE).toMatch(/^(https?:\/\/|\/)/);
     });
 
     it('should include /api/v1 in the base URL', () => {

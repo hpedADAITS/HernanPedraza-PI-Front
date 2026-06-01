@@ -3,9 +3,7 @@ import { SocketEventName, SocketListener } from './contracts';
 
 // @ts-ignore
 const SOCKET_URL: string | undefined =
-  import.meta.env?.VITE_USE_DEV_PROXY === 'true'
-    ? undefined
-    : import.meta.env?.VITE_API_URL || 'http://localhost:5000';
+  import.meta.env?.VITE_API_URL || undefined;
 
 let socket: Socket | null = null;
 let eventListeners: Map<SocketEventName, SocketListener<SocketEventName>[]> = new Map();
