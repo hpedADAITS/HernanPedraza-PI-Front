@@ -1,21 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  disconnectSocket,
-  getEventListeners,
-  getSocket,
-  initSocket,
-} from '@/services/socket/connection';
-import {
-  approveSong,
-  castVote,
-  joinEvent,
-  sendNowSong,
-} from '@/services/socket/emitters';
-import {
-  off,
-  onParticipantJoined,
-  onSongApproved,
-} from '@/services/socket/listeners';
+import { disconnectSocket, getEventListeners, getSocket, initSocket } from '@/services/socket/connection';
+import { approveSong, castVote, joinEvent, sendNowSong } from '@/services/socket/emitters';
+import { off, onParticipantJoined, onSongApproved } from '@/services/socket/listeners';
 
 const socketIoMock = vi.hoisted(() => vi.fn());
 

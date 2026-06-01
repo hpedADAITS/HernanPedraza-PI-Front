@@ -1,8 +1,4 @@
-import {
-  readStoredJson,
-  removeStoredItem,
-  writeStoredJson,
-} from '@/utils/storage';
+import { readStoredJson, removeStoredItem, writeStoredJson } from '@/utils/storage';
 
 export interface StoredEvent {
   eventId?: string;

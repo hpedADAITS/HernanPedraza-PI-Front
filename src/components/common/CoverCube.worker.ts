@@ -1,11 +1,7 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import type {
-  CoverCubeTextureMessageSource,
-  CoverCubeWorkerMessage,
-  SetCoverCubeTextureOptions,
-} from './coverCubeWorkerMessages';
+import { CoverCubeTextureMessageSource, CoverCubeWorkerMessage, SetCoverCubeTextureOptions } from './coverCubeWorkerMessages';
 import { getTextureTransitionRotation } from './coverCubeRotation';
 
 interface TextureTransitionState {

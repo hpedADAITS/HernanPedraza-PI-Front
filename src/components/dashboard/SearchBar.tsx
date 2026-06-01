@@ -5,7 +5,7 @@ import { SLIDE_UP } from '@/constants/animations';
 import { useMicrophone } from '@/hooks/useMicrophone';
 import { eventsAPI } from '@/services/api';
 import { off, onPhoneMicrophoneConnected } from '@/services/socket';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,  } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import type { View } from '@/types';
 
 interface SearchBarProps {

@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { clsx } from 'clsx';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ProfilePictureUpload, UserAvatar } from '@/components/common';
-import { SettingsDialog, SettingsDialogActions, SettingsDialogButton,  } from '@/components/settings/SettingsUI';
+import { SettingsDialog, SettingsDialogActions, SettingsDialogButton } from '@/components/settings/SettingsUI';
 import { PROFILE_IMAGE, THEME_CONFIG } from '@/constants/dashboard';
 import { SLIDE_IN_LEFT } from '@/constants/animations';
 

@@ -3,29 +3,16 @@ import { LazyMotion, domAnimation, m, AnimatePresence } from 'motion/react';
 import { clsx } from 'clsx';
 import { Play, X, Clock, UserX, SkipForward, Check } from 'lucide-react';
 import { toast } from 'sonner';
-import {  Tooltip,  TooltipContent,  TooltipProvider,TooltipTrigger} from '@/components/ui/tooltip';
+import { Tooltip,  TooltipContent,  TooltipProvider,TooltipTrigger } from '@/components/ui/tooltip';
 import { THEME_CONFIG } from '@/constants/dashboard';
 import { SLIDE_UP, ANIMATION_DURATION } from '@/constants/animations';
 import { songsAPI, eventsAPI, participantsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
-import {
-  normalizeNowPlaying,
-  normalizeQueueUpdated,
-  normalizeSocketSong,
-} from '@/services/socket/normalize';
+import { normalizeNowPlaying, normalizeQueueUpdated, normalizeSocketSong } from '@/services/socket/normalize';
 import { listenDebugSongEvents } from '@/utils/debugSongEvents';
-import {
-  getStoredDjUserId,
-  getStoredEvent,
-  getStoredParticipantId,
-} from '@/services/session';
+import { getStoredDjUserId, getStoredEvent, getStoredParticipantId } from '@/services/session';
 import type { Song } from '@/types/songs';
-import type {
-  NowPlayingEventPayload,
-  QueueUpdatedPayload,
-  SongEventPayload,
-  VotesUpdatedPayload,
-} from '@/services/socket/contracts';
+import type { NowPlayingEventPayload, QueueUpdatedPayload, SongEventPayload, VotesUpdatedPayload } from '@/services/socket/contracts';
 
 type RemovalReason = 'rejected' | 'skipped' | 'played';
 

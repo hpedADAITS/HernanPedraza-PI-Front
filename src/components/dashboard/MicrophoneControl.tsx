@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { AlertCircle, Mic, MicOff } from 'lucide-react';
 import { useMicrophone } from '@/hooks/useMicrophone';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,  } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface MicrophoneControlProps {
   isDj: boolean;

@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import {
-  AttendeeProfileCard,
-  DJProfileCard,
-} from '@/components/dashboard';
+import { AttendeeProfileCard, DJProfileCard } from '@/components/dashboard';
 
 describe('Dashboard profile cards', () => {
   it('renders the DJ saved profile picture when provided', () => {

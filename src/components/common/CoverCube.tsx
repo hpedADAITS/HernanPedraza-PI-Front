@@ -1,9 +1,5 @@
 import React from 'react';
-import type {
-  CoverCubeTextureMessageSource,
-  CoverCubeWorkerMessage,
-  SetCoverCubeTextureOptions,
-} from './coverCubeWorkerMessages';
+import { CoverCubeTextureMessageSource, CoverCubeWorkerMessage, SetCoverCubeTextureOptions } from './coverCubeWorkerMessages';
 
 const spillScale = 1.03;
 const workerUrl = new URL('./CoverCube.worker.ts', import.meta.url);

@@ -3,21 +3,13 @@ import { motion } from 'motion/react';
 import { NowPlaying } from '@/components/common';
 import { NOW_PLAYING } from '@/constants/dashboard';
 import { SCALE_IN } from '@/constants/animations';
-import { initSocket, onSongQueued, onSongNowPlaying, onSongRejected, onSongSkipped, onQueueUpdated, onSongSuggested, off,  } from '@/services/socket';
-import {
-  normalizeNowPlaying,
-  normalizeQueueUpdated,
-  normalizeSocketSong,
-} from '@/services/socket/normalize';
+import { initSocket, onSongQueued, onSongNowPlaying, onSongRejected, onSongSkipped, onQueueUpdated, onSongSuggested, off } from '@/services/socket';
+import { normalizeNowPlaying, normalizeQueueUpdated, normalizeSocketSong } from '@/services/socket/normalize';
 import { songsAPI } from '@/services/api';
 import { listenDebugSongEvents } from '@/utils/debugSongEvents';
 import { getStoredEventId } from '@/services/session';
 import type { Song } from '@/types/songs';
-import type {
-  NowPlayingEventPayload,
-  QueueUpdatedPayload,
-  SongEventPayload,
-} from '@/services/socket/contracts';
+import type { NowPlayingEventPayload, QueueUpdatedPayload, SongEventPayload } from '@/services/socket/contracts';
 
 interface NowPlayingSong {
   id: string;

@@ -1,34 +1,11 @@
 import { useCallback, useEffect, useEffectEvent, useState } from 'react';
 import type { NavigateToView } from '@/types';
-import {
-  disconnectSocket,
-  initSocket,
-  joinEvent,
-  off,
-  on,
-  onAccessCodeUpdated,
-  onEventEnded,
-  onEventUpdated,
-  onSongSuggested,
-} from '@/services/socket';
+import { disconnectSocket, initSocket, joinEvent, off, on, onAccessCodeUpdated, onEventEnded, onEventUpdated, onSongSuggested } from '@/services/socket';
 import { eventsAPI } from '@/services/api';
-import {
-  clearStoredEvent,
-  clearStoredParticipant,
-  clearStoredUser,
-  getAuthToken,
-  getStoredEvent,
-  getStoredParticipant,
-  getStoredUser,
-  setStoredEvent,
-  setStoredParticipant,
-} from '@/services/session';
-import {
-  isCurrentUserSessionActive,
-  onCurrentUserSessionReplaced,
-} from '@/services/singleUserSession';
+import { clearStoredEvent, clearStoredParticipant, clearStoredUser, getAuthToken, getStoredEvent, getStoredParticipant, getStoredUser, setStoredEvent, setStoredParticipant } from '@/services/session';
+import { isCurrentUserSessionActive, onCurrentUserSessionReplaced } from '@/services/singleUserSession';
 import { toast } from 'sonner';
-import type { StoredEvent } from '@/services/session';
+import { StoredEvent } from '@/services/session';
 
 type DashboardMode = 'attendee' | 'dj';
 

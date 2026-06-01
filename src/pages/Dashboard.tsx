@@ -2,15 +2,7 @@ import React, { memo } from 'react';
 import type { PageProps } from '@/types';
 import { Layout } from '@/components/layout/Layout';
 import { Logo } from '@/components/common/Logo';
-import {
-  DJProfileCard,
-  AttendeeProfileCard,
-  QueueList,
-  SearchBar,
-  ActionButtons,
-  NowPlayingSection,
-  ConnectedUsers,
-} from '@/components/dashboard';
+import { DJProfileCard, AttendeeProfileCard, QueueList, SearchBar, ActionButtons, NowPlayingSection, ConnectedUsers } from '@/components/dashboard';
 import { useDashboardSession } from '@/hooks/useDashboardSession';
 import { useDarkMode } from '@/hooks/useDarkMode';
 

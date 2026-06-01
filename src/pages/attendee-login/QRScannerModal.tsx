@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { Camera, X } from 'lucide-react';
-import type { RefObject } from 'react';
+import { RefObject } from 'react';
 
 interface QRScannerModalProps {
   open: boolean;

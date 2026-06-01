@@ -1,5 +1,5 @@
 import { initSocket, getSocketInstance, getEventListeners } from './connection';
-import type { SocketEventName, SocketEventPayloads, SocketListener } from './contracts';
+import { SocketEventName, SocketEventPayloads, SocketListener } from './contracts';
 
 /* ============ EVENT LISTENERS ============ */
 

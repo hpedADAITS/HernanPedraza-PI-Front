@@ -1,9 +1,4 @@
-import type {
-  NormalizedNowPlaying,
-  NowPlayingEventPayload,
-  QueueUpdatedPayload,
-  SongEventPayload,
-} from './contracts';
+import type { NormalizedNowPlaying, NowPlayingEventPayload, QueueUpdatedPayload, SongEventPayload } from './contracts';
 import type { Song, SongStatus } from '@/types/songs';
 
 function getSongId(payload: SongEventPayload) {

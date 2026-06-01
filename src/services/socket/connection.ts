@@ -1,5 +1,5 @@
 import io, { Socket } from 'socket.io-client';
-import type { SocketEventName, SocketListener } from './contracts';
+import { SocketEventName, SocketListener } from './contracts';
 
 // @ts-ignore
 const SOCKET_URL: string | undefined =

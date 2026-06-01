@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
-import type { Socket } from 'socket.io-client';
+import { Socket } from 'socket.io-client';
 import { ConnectedUsers } from '@/components/dashboard/ConnectedUsers';
 import { participantsAPI } from '@/services/api';
 import { getSocket } from '@/services/socket';

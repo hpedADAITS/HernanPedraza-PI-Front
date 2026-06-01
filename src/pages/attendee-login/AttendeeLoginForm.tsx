@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { User, Ticket, ArrowRight, QrCode, Lock } from 'lucide-react';
-import type { AttendeeLoginState } from './useAttendeeLoginController';
+import { AttendeeLoginState } from './useAttendeeLoginController';
 
 interface AttendeeLoginFormProps {
   state: AttendeeLoginState;

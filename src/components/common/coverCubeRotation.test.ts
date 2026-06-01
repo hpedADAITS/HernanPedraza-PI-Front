@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  getPreviousFrontFacingRotation,
-  getTextureTransitionRotation,
-} from './coverCubeRotation';
+import { getPreviousFrontFacingRotation, getTextureTransitionRotation } from './coverCubeRotation';
 
 describe('cover cube texture transition rotation', () => {
   it('returns backward to the previous front-facing Y rotation', () => {

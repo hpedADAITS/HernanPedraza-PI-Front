@@ -4,8 +4,8 @@ import { toast } from 'sonner';
 import { authAPI, clearToken } from '@/services/api';
 import { disconnectSocket, getSocket } from '@/services/socket';
 import { ProfilePictureUpload } from '@/components/common';
-import { SettingsChoiceRow, SettingsDialog, SettingsDialogActions, SettingsDialogButton, SettingsList, SettingsListItem, SettingsPageShell, SettingsSearch, SettingsToggleRow,  } from '@/components/settings/SettingsUI';
-import { readStoredJson, writeStoredJson,  } from '@/utils/storage';
+import { SettingsChoiceRow, SettingsDialog, SettingsDialogActions, SettingsDialogButton, SettingsList, SettingsListItem, SettingsPageShell, SettingsSearch, SettingsToggleRow } from '@/components/settings/SettingsUI';
+import { readStoredJson, writeStoredJson } from '@/utils/storage';
 import type { NavigateToView } from '@/types';
 
 interface Props {

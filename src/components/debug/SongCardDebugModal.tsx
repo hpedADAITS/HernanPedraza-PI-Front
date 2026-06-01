@@ -4,10 +4,7 @@ import { clsx } from 'clsx';
 import { toast } from 'sonner';
 import { isDebugModeEnabled } from '@/utils/debugMode';
 import { readStoredJson } from '@/utils/storage';
-import {
-  DEBUG_EVENT_NAME,
-  dispatchDebugSongEvent,
-} from '@/utils/debugSongEvents';
+import { DEBUG_EVENT_NAME, dispatchDebugSongEvent } from '@/utils/debugSongEvents';
 import { apiCall } from '@/services/api/client';
 
 type DebugTrigger = 'queue' | 'playing' | 'rejected' | 'skipped';
