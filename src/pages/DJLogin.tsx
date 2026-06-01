@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { authAPI, eventsAPI } from '@/services/api';
@@ -45,18 +46,16 @@ export function DJLogin({
         writeStoredJson('user', result.user);
         activateSingleUserSession(result.user);
 
-        let event;
-        const events = await eventsAPI.listEvents();
+        const userId = result.user.id ?? result.user._id;
+        const ownedEvent = await eventsAPI.getMyActiveEvent();
 
-        if (events && events.length > 0) {
-          event = events[0];
-        } else {
-          event = await eventsAPI.createEvent(
+        const event =
+          ownedEvent ??
+          (await eventsAPI.createEvent(
             `${displayName}'s Party`,
             'Auto-created event',
             new Date().toISOString(),
-          );
-        }
+          ));
 
         const eventId = event.id || event._id;
 
@@ -67,7 +66,7 @@ export function DJLogin({
         });
 
         writeStoredJson('currentParticipant', {
-          _id: result.user.id,
+          _id: userId,
           nickname: displayName,
           eventId,
           profilePicture: result.user.profilePicture || null,

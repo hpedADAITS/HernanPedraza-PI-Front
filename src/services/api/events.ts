@@ -22,6 +22,18 @@ export const eventsAPI = {
     return data.data.events;
   },
 
+  getMyActiveEvent: async () => {
+    try {
+      const data = await apiCall('/events/mine/active');
+      return data.data.event;
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Event not found') {
+        return null;
+      }
+      throw error;
+    }
+  },
+
   getEvent: async (eventId: string) => {
     const data = await apiCall(`/events/${eventId}`);
     return data.data.event;

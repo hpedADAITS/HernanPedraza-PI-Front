@@ -1,143 +1,113 @@
 # Frontend flaws audit
 
-This document records the main structural and code-quality flaws found in the React/TypeScript frontend. It is intentionally focused on architecture, component syntax, and maintainability rather than whether the current build passes.
+This document records the main structural and code-quality flaws in the React/TypeScript frontend. It focuses on architecture, boundaries, and maintainability, not whether the current build passes.
 
 ## Executive summary
 
-The frontend is functional, but too much application behavior lives inside route pages and large dashboard components. Many components mix rendering, API calls, socket subscriptions, localStorage/session reads, animation logic, domain normalization, and error handling in the same file. The result is hard to reason about, hard to refactor safely, and easy to regress when changing realtime or session behavior.
+The frontend works, but too much behavior still lives in route pages and large dashboard components. Session reads, socket handling, payload normalization, localStorage migration, error handling, and UI rendering are still too often mixed in the same file. That makes the code hard to reason about, easy to regress, and slow to evolve.
 
-## Highest-risk files
+## Highest-risk surfaces
 
-- `src/components/dashboard/QueueList.tsx` — still a large queue renderer, but the fetch/listener/realtime state now lives in `useQueueRealtime`.
-- `src/components/dashboard/ConnectedUsers.tsx` — large mixed-responsibility participant/admin UI with realtime participant handling and moderation actions.
-- `src/components/dashboard/ActionButtons.tsx` — action/navigation UI mixed with socket-driven behavior and modal/prompt flows.
-- `src/components/dashboard/NowPlayingSection.tsx` — realtime state and display behavior in the component layer.
-- `src/pages/DJRegister.tsx` — large route component with multi-step flow.
+- `src/pages/SongSelection.tsx` - owns both attendee song suggestions and DJ pending-song decisions.
+- `src/components/dashboard/QueueList.tsx` - queue rendering plus realtime state and interaction logic.
+- `src/components/dashboard/ConnectedUsers.tsx` - participant/admin UI mixed with moderation and socket behavior.
+- `src/components/dashboard/ActionButtons.tsx` - navigation, modal flow, and socket-driven actions in one component.
+- `src/components/dashboard/NowPlayingSection.tsx` - display and realtime state are still coupled.
+- `src/pages/DJRegister.tsx` - route-level registration flow remains too large.
+- `src/pages/DJLogin.tsx` - login flow is still too coupled to global event selection.
+- `src/components/debug/SongCardDebugModal.tsx` - debug UI is complex enough to keep bleeding into production patterns.
 
 ## Structural flaws
 
-### 1. Folders are not consistently feature-owned
+### 1. Feature ownership is still blurred
 
-The project has `pages`, `components`, `hooks`, `services`, `utils`, and `types`, but behavior ownership is unclear. Dashboard code is split across `pages`, `components/dashboard`, `hooks`, `services/socket`, `services/session`, and `utils`, yet the feature logic still leaks into components.
+The app has `pages`, `components`, `hooks`, `services`, `utils`, and `types`, but feature boundaries are not consistent. Dashboard logic is split across route pages, dashboard components, socket services, session services, and utilities, with too much orchestration still happening in UI files.
 
-Recommended direction:
+The durable direction is feature ownership by domain, not by file type:
 
-- `src/features/dashboard`
-- `src/features/song-selection`
-- `src/features/realtime`
-- `src/features/session`
-- `src/features/settings`
+- dashboard
+- song-selection
+- realtime
+- session
+- settings
 
-Each feature should own its UI, controller hooks, local types, and adapters where practical.
+Each feature should own its UI, controller hooks, local types, and adapters where that removes duplication or risk.
 
-### 2. Route pages are doing too much
+### 2. Route pages still do too much
 
-Pages should mostly compose route-level layout and feature components. Current route pages often contain business logic and interaction controllers.
+Pages should mostly compose layout and feature shells. Several pages still contain real business logic, flow control, or state orchestration that should live below the route layer.
 
-Examples:
+### 3. Dashboard components act like controllers
 
-- `DJRegister.tsx` owns a complex registration flow directly in the page.
+Many dashboard components still read session state, call APIs, subscribe to sockets, normalize payloads, compute derived state, and render UI in one place. That makes component reuse and testing harder because the side effects are inseparable from rendering.
 
-### 3. Dashboard components are not presentational
+### 4. Realtime boundaries are leaky
 
-Dashboard components are named like UI components but act like feature controllers. They read session data, call APIs, subscribe to sockets, normalize payloads, compute derived state, show toasts, and render UI.
+Normalization exists in `src/services/socket/normalize.ts`, which is the right place, but raw payload compatibility still leaks into UI code in too many spots. Debug song events and production socket events should stay normalized at the boundary, not handled ad hoc in components.
 
-This makes them difficult to test and reuse because rendering cannot be changed independently from side effects.
+### 5. Session and storage boundaries are inconsistent
 
-### 4. Realtime boundaries are still leaky
-
-Socket payload normalization exists in `src/services/socket/normalize.ts`, which is good, but components still handle raw payload compatibility details and use broad payload types in several places.
-
-Examples:
-
-- Debug song events are handled in the same component effects as production socket events.
-
-### 5. Session/localStorage boundaries are inconsistent
-
-Typed session helpers exist in `src/services/session.ts`, but components and pages still read localStorage or storage helpers directly. This spreads identity and persistence assumptions across the UI.
-
-Examples:
-
-- `useDarkMode.ts` and cache code use raw localStorage keys.
-- API client/socket connection still contain direct token fallback logic.
+Typed session access exists in `src/services/session.ts`, but UI code still reaches into storage too directly in places. LocalStorage should remain cache or display state only; identity and permission decisions must stay server-side.
 
 ## Component syntax flaws
 
 ### 1. Large wall-of-JSX components
 
-Several files contain long render trees with deeply nested JSX, long Tailwind strings, inline style objects, animation props, and conditional branches. This makes the visual output possible to tweak, but the code difficult to scan.
+Several files still mix long render trees, conditional branches, gesture logic, and dense Tailwind strings. The result is visually expressive but hard to scan and expensive to change.
 
-Most affected:
+### 2. Mode branching creates two apps in one tree
 
-- `QueueList.tsx`
-- `ConnectedUsers.tsx`
-- `ActionButtons.tsx`
-- `SettingsUI.tsx`
+The attendee and DJ experiences still share components that carry too many behavioral branches. Shared UI is fine; shared controllers with `mode`-driven branching are where complexity accumulates.
 
-### 2. Mode flags create two apps inside one component
+### 3. Styling is embedded instead of composed
 
-`mode: 'attendee' | 'dj'` is passed through many components. Some shared components are reasonable, but many files now carry two behavioral models at once.
+The app still relies heavily on raw Tailwind strings and inline styling inside business components. That keeps changes local, but it also duplicates layout patterns and makes design changes harder to apply consistently.
 
-Better shape:
+### 4. Prop contracts are too wide
 
-- `AttendeeDashboard`
-- `DjDashboard`
-- `AttendeeQueue`
-- `DjQueue`
-- `AttendeeSongSuggestView`
-- `DjSongApprovalView`
-
-Then extract genuinely shared UI pieces underneath.
-
-### 3. Inline styling and embedded CSS are overused
-
-The codebase relies heavily on raw Tailwind strings, inline style objects, and embedded `<style>` blocks inside components. This is especially visible in gesture/animation UI.
-
-This creates noisy components and makes design changes hard to apply consistently.
-
-### 4. Prop lists are too broad
-
-Several components receive many primitive props instead of a narrow view model or smaller composed subcomponents. Long prop lists make component contracts harder to understand and increase churn when data shape changes.
-
-### 5. Defensive `memo` aliases add noise
-
-`Dashboard.tsx` wraps imported components in local `memo()` aliases. Unless profiling proves those wrappers matter, they are mostly noise and do not fix the underlying render causes.
+Some components still receive broad prop lists instead of narrower view models or smaller subcomponents. That increases churn and makes ownership harder to see.
 
 ## TypeScript flaws
 
-### 1. Type suppressions exist in service code
+### 1. Type suppressions are a smell at service boundaries
 
-`@ts-ignore` in API/socket service files is a warning sign. The service boundary should be among the most strongly typed parts of the frontend.
+`@ts-ignore` in API or socket service code should be treated as technical debt. These boundaries should be among the most strictly typed parts of the frontend.
+
+### 2. Socket handlers should stay typed once
+
+New event handlers should use explicit payload types and normalization at the boundary. Avoid spreading `any` or compatibility parsing through components.
 
 ## Design-system flaws
 
-Only a tiny `components/ui` layer exists, while most real UI styling lives in feature components. This means the app has visual styling but not a strong reusable design system.
+The UI layer is still too thin for the amount of repeated dashboard and settings UI. There are repeated card, button, layout, and state patterns, but not enough shared primitives to keep those patterns consistent without copying.
 
 Symptoms:
 
-- Repeated layout/card/button styling.
-- Long Tailwind strings in business components.
-- Inconsistent ownership of animation and visual variants.
-- Harder future redesigns.
+- repeated Tailwind-heavy layout code
+- inconsistent animation and variant ownership
+- duplicated settings and dashboard patterns
+- visual changes requiring edits in multiple feature components
 
-## Routing/navigation flaws
+## Routing and navigation flaws
 
-`AppRoutes.tsx` contains special overlay behavior for keeping Dashboard mounted behind SongSelection. This may be intentional, but it is surprising and duplicates route concerns. It should be documented or moved into an explicit dashboard workspace route/layout.
+`AppRoutes.tsx` still carries special overlay behavior to keep the dashboard mounted behind song selection. That may be intentional, but it is non-obvious route behavior and should stay explicit and documented.
 
 ## Debug tooling flaws
 
-The debug modal is dev-only loaded, which is good. However, debug behavior remains large, complex, and close to production component patterns.
+Debug tooling is correctly dev-only loaded, but it remains close to production component patterns and too complex to be treated as a throwaway surface. It should stay isolated from normal UI behavior and avoid introducing new compatibility habits.
 
-## Recommended refactor order
+## Priorities
 
-1. Replace remaining raw socket/debug `any` handlers with typed payloads and normalization at the boundary.
-2. Reduce mode branching by introducing attendee/DJ-specific feature shells.
-3. Gradually extract repeated Tailwind patterns into shared UI primitives where it removes real duplication.
+1. Keep socket, session, and storage normalization at the boundary.
+2. Split the biggest route-page controllers into feature shells and narrower controllers.
+3. Reduce attendee/DJ branching by extracting separate feature flows where the behavior diverges.
+4. Extract shared UI primitives only where they remove real duplication.
 
-## What not to do
+## Non-goals
 
 - Do not rewrite the whole frontend at once.
-- Do not add abstractions only to make folders look cleaner.
-- Do not move files without reducing responsibilities.
-- Do not trust localStorage/session data for permission decisions; backend remains source of truth.
-- Do not scatter new socket compatibility code into components; normalize once at the boundary.
+- Do not move files just to make the tree look cleaner.
+- Do not add abstractions that only rename the current mess.
+- Do not trust localStorage or session cache for permission decisions.
+- Do not scatter socket compatibility code through components.
+- Do not mix unrelated refactors into a narrow fix.

@@ -4,7 +4,7 @@ import { DJLogin } from '@/pages/DJLogin';
 
 const {
   authLoginMock,
-  listEventsMock,
+  getMyActiveEventMock,
   createEventMock,
   initSocketMock,
   writeStoredJsonMock,
@@ -12,7 +12,7 @@ const {
   toastSuccessMock,
 } = vi.hoisted(() => ({
   authLoginMock: vi.fn(),
-  listEventsMock: vi.fn(),
+  getMyActiveEventMock: vi.fn(),
   createEventMock: vi.fn(),
   initSocketMock: vi.fn(),
   writeStoredJsonMock: vi.fn(),
@@ -25,7 +25,7 @@ vi.mock('@/services/api', () => ({
     login: authLoginMock,
   },
   eventsAPI: {
-    listEvents: listEventsMock,
+    getMyActiveEvent: getMyActiveEventMock,
     createEvent: createEventMock,
   },
 }));
@@ -48,7 +48,7 @@ vi.mock('sonner', () => ({
 describe('DJLogin page', () => {
   beforeEach(() => {
     authLoginMock.mockReset();
-    listEventsMock.mockReset();
+    getMyActiveEventMock.mockReset();
     createEventMock.mockReset();
     initSocketMock.mockReset();
     writeStoredJsonMock.mockReset();
@@ -74,7 +74,7 @@ describe('DJLogin page', () => {
     });
 
     expect(authLoginMock).not.toHaveBeenCalled();
-    expect(listEventsMock).not.toHaveBeenCalled();
+    expect(getMyActiveEventMock).not.toHaveBeenCalled();
     expect(createEventMock).not.toHaveBeenCalled();
     expect(initSocketMock).not.toHaveBeenCalled();
     expect(onNavigate).not.toHaveBeenCalled();
@@ -98,7 +98,7 @@ describe('DJLogin page', () => {
       },
       authToken: 'token',
     });
-    listEventsMock.mockResolvedValue([]);
+    getMyActiveEventMock.mockResolvedValue(null);
     createEventMock.mockResolvedValue({
       id: 'event-1',
       accessCode: 'ABCD',
@@ -121,7 +121,7 @@ describe('DJLogin page', () => {
       'dj@example.com',
       'different-password',
     );
-    expect(listEventsMock).toHaveBeenCalledTimes(1);
+    expect(getMyActiveEventMock).toHaveBeenCalledTimes(1);
     expect(createEventMock).toHaveBeenCalledTimes(1);
     expect(initSocketMock).toHaveBeenCalledWith('token');
     expect(onNavigate).toHaveBeenCalledWith('dj-dashboard');
