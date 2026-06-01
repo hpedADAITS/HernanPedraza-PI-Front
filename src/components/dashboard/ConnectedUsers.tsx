@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ANIMATION_DURATION } from '@/constants/animations';
 import { participantsAPI } from '@/services/api';
+import { getStoredDjUserId } from '@/services/session';
 import { getSocket } from '@/services/socket';
 import type {
   ParticipantCooldownPayload,
@@ -219,7 +220,6 @@ export function ConnectedUsers({
     ownerProfilePicture?: string | null;
   }>('currentEvent');
   const participantData = readStoredJson<{ _id?: string; id?: string }>('currentParticipant');
-  const storedUser = readStoredJson<{ _id?: string; id?: string }>('user');
   const eventId = eventData?.eventId || null;
   const usesPreviewUsers = isAttendee && !!previewUsers;
   const usesPreviewParticipants = isDj && !!previewParticipants;
@@ -237,10 +237,9 @@ export function ConnectedUsers({
     : usesPreviewParticipants
       ? previewParticipants
       : state.users;
-  const djParticipantId = participantData?._id ?? participantData?.id ?? null;
-  const djUserId = storedUser?._id ?? storedUser?.id ?? null;
+  const djIdentityId = getStoredDjUserId();
   const attendeeUsers = isDj
-    ? users.filter((user) => !isDjParticipant(user, djParticipantId, djUserId))
+    ? users.filter((user) => !isDjParticipant(user, djIdentityId, djIdentityId))
     : users;
   const loading =
     usesPreviewUsers || usesPreviewParticipants ? false : state.loading;
@@ -365,8 +364,7 @@ export function ConnectedUsers({
     }
   }, [
     eventId,
-    djParticipantId,
-    djUserId,
+    djIdentityId,
     isAttendee,
     isDj,
     usesPreviewParticipants,

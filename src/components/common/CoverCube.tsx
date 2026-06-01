@@ -161,7 +161,7 @@ export function CoverCube({
 
         messageSource = { kind: 'bitmap', bitmap };
         transferables = [bitmap];
-      } else if (source instanceof ImageBitmap) {
+      } else if (typeof ImageBitmap !== 'undefined' && source instanceof ImageBitmap) {
         messageSource = { kind: 'bitmap', bitmap: source };
         transferables = [source];
       }
