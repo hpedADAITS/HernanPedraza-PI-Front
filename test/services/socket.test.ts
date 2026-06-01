@@ -120,18 +120,19 @@ describe('socket service', () => {
       eventId: 'event-1',
       participantId: 'participant-1',
       nickname: 'Nora',
+      profilePicture: undefined,
     });
-    expect(socket.emit).toHaveBeenCalledWith('vote_cast', {
+    expect(socket.emit).toHaveBeenCalledWith('cast_vote', {
       eventId: 'event-1',
       songId: 'song-1',
       participantId: 'participant-1',
       value: 1,
     });
-    expect(socket.emit).toHaveBeenCalledWith('song_approved', {
+    expect(socket.emit).toHaveBeenCalledWith('approve_song', {
       eventId: 'event-1',
       songId: 'song-1',
     });
-    expect(socket.emit).toHaveBeenCalledWith('song_now_playing', {
+    expect(socket.emit).toHaveBeenCalledWith('send_now', {
       eventId: 'event-1',
       songId: 'song-1',
       title: 'Track',

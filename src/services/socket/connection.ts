@@ -1,4 +1,5 @@
 import io, { Socket } from 'socket.io-client';
+import type { SocketEventName, SocketListener } from './contracts';
 
 // @ts-ignore
 const SOCKET_URL: string | undefined =
@@ -7,7 +8,7 @@ const SOCKET_URL: string | undefined =
     : import.meta.env?.VITE_API_URL || 'http://localhost:5000';
 
 let socket: Socket | null = null;
-let eventListeners: Map<string, Function[]> = new Map();
+let eventListeners: Map<SocketEventName, SocketListener<SocketEventName>[]> = new Map();
 
 function getAuthToken(token?: string) {
   return token || localStorage.getItem('authToken') || undefined;
@@ -30,7 +31,7 @@ function bindLifecycleHandlers(nextSocket: Socket) {
 function rebindStoredListeners(nextSocket: Socket) {
   eventListeners.forEach((listeners, event) => {
     listeners.forEach((listener) => {
-      nextSocket.on(event, listener as (...args: any[]) => void);
+      nextSocket.on(event, listener);
     });
   });
 }
@@ -80,6 +81,6 @@ export function getSocketInstance(): Socket | null {
   return socket;
 }
 
-export function getEventListeners(): Map<string, Function[]> {
+export function getEventListeners(): Map<SocketEventName, SocketListener<SocketEventName>[]> {
   return eventListeners;
 }

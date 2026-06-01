@@ -79,6 +79,7 @@
     "host": "vite --host",
     "build": "vite build",
     "test": "vitest",
+    "test:e2e": "playwright test",
     "test:ui": "vitest --ui",
     "trigger:song-card": "node scripts/trigger-song-card-demo.mjs",
     "format": "prettier --write .",

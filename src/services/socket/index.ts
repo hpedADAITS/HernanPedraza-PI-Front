@@ -1,3 +1,34 @@
 export { initSocket, disconnectSocket, getSocket } from './connection';
-export { joinEvent, leaveEvent, castVote, removeVote, suggestSong, approveSong, sendNowSong, rejectSong, skipSong, updateQueue,  } from './emitters';
-export { on, off, onParticipantJoined, onParticipantLeft, onVotesUpdated, onSongSuggested, onSongApproved, onSongQueued, onSongNowPlaying, onSongRejected, onSongSkipped, onQueueUpdated, onSocketError, onAccessCodeUpdated, onEventUpdated, onEventEnded, onParticipantPremiumUpdated, onAttendeePasswordPromptRequested, onPhoneMicrophoneConnected,  } from './listeners';
+export {
+  joinEvent,
+  leaveEvent,
+  castVote,
+  removeVote,
+  suggestSong,
+  approveSong,
+  sendNowSong,
+  rejectSong,
+  skipSong,
+  updateQueue,
+} from './emitters';
+export {
+  on,
+  off,
+  onParticipantJoined,
+  onParticipantLeft,
+  onVotesUpdated,
+  onSongSuggested,
+  onSongApproved,
+  onSongQueued,
+  onSongNowPlaying,
+  onSongRejected,
+  onSongSkipped,
+  onQueueUpdated,
+  onSocketError,
+  onAccessCodeUpdated,
+  onEventUpdated,
+  onEventEnded,
+  onParticipantPremiumUpdated,
+  onAttendeePasswordPromptRequested,
+  onPhoneMicrophoneConnected,
+} from './listeners';

@@ -48,3 +48,78 @@ export interface NormalizedNowPlaying {
   startedAt: number;
   elapsedTime?: number;
 }
+
+export interface ParticipantEventPayload {
+  eventId?: string;
+  participantId?: string;
+  nickname?: string;
+  profilePicture?: string | null;
+  userId?: string;
+}
+
+export interface ParticipantCooldownPayload {
+  participantId?: string;
+  cooldownUntil?: string | Date;
+  reason?: string;
+}
+
+export interface ParticipantPremiumPayload {
+  participantId?: string;
+  isPremium?: boolean;
+}
+
+export interface AccessCodeUpdatedPayload {
+  eventId?: string;
+  accessCode?: string;
+}
+
+export interface EventUpdatedPayload {
+  event?: unknown;
+  eventId?: string;
+}
+
+export interface EventEndedPayload {
+  eventId?: string;
+  reason?: string;
+}
+
+export interface SocketErrorPayload {
+  message?: string;
+  error?: string;
+}
+
+export interface AttendeePasswordPromptPayload {
+  participantId?: string;
+}
+
+export interface PhoneMicrophoneConnectedPayload {
+  eventId?: string;
+  deviceName?: string;
+}
+
+export interface SocketEventPayloads {
+  participant_joined: ParticipantEventPayload;
+  participant_left: ParticipantEventPayload;
+  participant_kicked: ParticipantEventPayload;
+  participant_cooldown: ParticipantCooldownPayload;
+  participant_cooldown_set: ParticipantCooldownPayload;
+  participant_premium_updated: ParticipantPremiumPayload;
+  votes_updated: VotesUpdatedPayload;
+  song_suggested: SongEventPayload;
+  song_approved: SongEventPayload;
+  song_now_playing: NowPlayingEventPayload;
+  song_rejected: SongEventPayload;
+  song_skipped: SongEventPayload;
+  queue_updated: QueueUpdatedPayload;
+  error: SocketErrorPayload;
+  access_code_updated: AccessCodeUpdatedPayload;
+  event_updated: EventUpdatedPayload;
+  event_ended: EventEndedPayload;
+  attendee_password_prompt_requested: AttendeePasswordPromptPayload;
+  phone_microphone_connected: PhoneMicrophoneConnectedPayload;
+}
+
+export type SocketEventName = keyof SocketEventPayloads;
+export type SocketListener<Event extends SocketEventName> = (
+  data: SocketEventPayloads[Event],
+) => void;
