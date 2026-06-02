@@ -18,12 +18,16 @@ export function Logo({
   variant = 'light',
   useWhite = false,
 }: LogoProps) {
-  const useLogo = useWhite ? logoWhite : logoNormal;
-  const { src } = useAssetCache(useLogo, {
+  const normalLogo = useAssetCache(logoNormal, {
     ttlMs: 7 * 24 * 60 * 60 * 1000,
     cooldownMs: 60000,
-    fallbackSrc: useLogo,
-  });
+    fallbackSrc: logoNormal,
+  }).src;
+  const whiteLogo = useAssetCache(logoWhite, {
+    ttlMs: 7 * 24 * 60 * 60 * 1000,
+    cooldownMs: 60000,
+    fallbackSrc: logoWhite,
+  }).src;
 
   return (
     <div className={clsx('flex items-center justify-center select-none', className)}>
@@ -42,20 +46,22 @@ export function Logo({
               : undefined
           }
         >
-          <m.img
-            key={useLogo}
-            src={src}
-            alt="Sync Rekuest Logo"
-            className={clsx(
-              'block object-contain object-center',
-              size === 'large'
-                ? 'h-full w-full max-w-none'
-                : 'w-full h-full',
-            )}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-          />
+          {[normalLogo, whiteLogo].map((src, index) => (
+            <m.img
+              key={index === 0 ? 'normal-logo' : 'white-logo'}
+              src={src}
+              alt={index === 0 ? 'Sync Rekuest Logo' : ''}
+              aria-hidden={index === 1}
+              className={clsx(
+                'absolute block object-contain object-center transition-opacity duration-200',
+                size === 'large'
+                  ? 'h-full w-full max-w-none'
+                  : 'w-full h-full',
+              )}
+              style={{ opacity: useWhite === (index === 1) ? 1 : 0 }}
+              initial={false}
+            />
+          ))}
         </div>
       </LazyMotion>
     </div>

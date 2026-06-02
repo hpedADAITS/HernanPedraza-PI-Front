@@ -3,8 +3,6 @@ import { motion } from 'motion/react';
 import { Sun, Moon } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useDarkMode } from '@/hooks/useDarkMode';
-import logoAsset from '@/assets/logo_normal.png';
-import logoWhiteAsset from '@/assets/logo_white.png';
 
 interface LayoutProps {
   children: ReactNode;
@@ -35,8 +33,6 @@ export function Layout({
     if (isWhite) return 'text-slate-900';
     return 'text-white';
   };
-
-  const logoSrc = isDarkMode || !isWhite ? logoWhiteAsset : logoAsset;
 
   return (
     <motion.div

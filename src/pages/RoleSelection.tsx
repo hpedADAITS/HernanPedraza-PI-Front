@@ -60,11 +60,21 @@ export function RoleSelection({ onNavigate, logoWhite: isLogoWhite, onLogoChange
           transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
           className="drop-shadow-xl"
         >
-          <img
-            src={isDarkMode ? logoWhite : logoNormal}
-            alt="SyncRequest"
-            className="h-32 w-auto max-w-[86vw] object-contain sm:h-36 md:h-44 lg:h-48"
-          />
+          <div className="relative h-32 w-[min(86vw,21.2rem)] sm:h-36 sm:w-[23.85rem] md:h-44 md:w-[29.15rem] lg:h-48 lg:w-[31.8rem]">
+            <img
+              src={logoNormal}
+              alt="SyncRequest"
+              className="absolute inset-0 h-full w-full object-contain transition-opacity duration-200"
+              style={{ opacity: isDarkMode ? 0 : 1 }}
+            />
+            <img
+              src={logoWhite}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 h-full w-full object-contain transition-opacity duration-200"
+              style={{ opacity: isDarkMode ? 1 : 0 }}
+            />
+          </div>
         </motion.div>
 
         {/* Cards Container */}
