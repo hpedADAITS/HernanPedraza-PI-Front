@@ -12,6 +12,7 @@ import {
   activateSingleUserSession,
   suspendNextSingleUserSessionCheck,
 } from '@/services/singleUserSession';
+import { isDebugModeEnabled } from '@/utils/debugMode';
 import type { NavigateToView } from '@/types';
 
 interface Props {
@@ -148,12 +149,16 @@ export function DJRegister({
         userId: result.user?._id || result.user?.id,
         profilePicture: result.user?.profilePicture || null,
       };
-      const debugTokenToUse = result.emailVerificationToken;
+      const debugTokenToUse = isDebugModeEnabled()
+        ? result.emailVerificationToken
+        : undefined;
       if (
         debugTokenToUse &&
         debugTokenToUse.split('.').length === 3
       ) {
         setDebugToken(debugTokenToUse);
+      } else {
+        setDebugToken(undefined);
       }
       setShowEmailModal(true);
     } catch (error) {

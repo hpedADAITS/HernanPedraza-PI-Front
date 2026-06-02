@@ -7,6 +7,7 @@ import { ProfilePictureUpload } from '@/components/common';
 import { SettingsChoiceRow, SettingsDialog, SettingsDialogActions, SettingsDialogButton, SettingsList, SettingsListItem, SettingsPageShell, SettingsSearch, SettingsToggleRow } from '@/components/settings/SettingsUI';
 import { readSettingJson, readSettingString, writeSettingJson, writeSettingString } from '@/features/settings/storage';
 import { readStoredJson, writeStoredJson } from '@/utils/storage';
+import { isDebugModeEnabled } from '@/utils/debugMode';
 import type { NavigateToView } from '@/types';
 
 interface Props {
@@ -182,13 +183,17 @@ export function AccountSettings({ mode, onNavigate }: Props) {
   };
 
   const debugInfo = getDebugInfo();
+  const isDebug = isDebugModeEnabled();
   const settingsView = mode === 'dj' ? 'dj-settings' : 'attendee-settings';
+  const settingsItems = isDebug
+    ? SETTINGS_ITEMS
+    : SETTINGS_ITEMS.filter((item) => item !== 'Debug / Diagnostics');
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
   const filteredSettingsItems = normalizedSearchQuery
-    ? SETTINGS_ITEMS.filter((item) =>
+    ? settingsItems.filter((item) =>
         item.toLowerCase().includes(normalizedSearchQuery),
       )
-    : SETTINGS_ITEMS;
+    : settingsItems;
 
   return (
     <Layout theme="blue" className="p-6 md:p-12 items-center" showNav={true}>

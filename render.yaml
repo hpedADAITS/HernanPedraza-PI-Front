@@ -9,4 +9,4 @@ services:
       - key: NODE_ENV
         value: production
       - key: VITE_API_URL
-        value: https://sr-backend-im3y.onrender.com
+        value: https://sr-backend-im3y.onrender.com/api/v1

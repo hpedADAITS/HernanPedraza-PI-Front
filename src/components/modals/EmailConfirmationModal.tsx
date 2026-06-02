@@ -100,7 +100,7 @@ export function EmailConfirmationModal({
                 <h3 className="font-semibold text-blue-900 mb-2">What's Next?</h3>
                 {debugToken ? (
                   <div className="text-sm text-blue-800">
-                    <p className="mb-3">🐛 Debug Mode: Verification URL</p>
+                    <p className="mb-3">Debug Mode: Verification URL</p>
                     <button
                       type="button"
                       onClick={async () => {
