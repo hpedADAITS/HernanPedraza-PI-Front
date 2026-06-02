@@ -139,7 +139,7 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
         <DashboardLogo
           useWhite={isDarkMode}
           size="large"
-          className="[&>div]:w-[min(72vw,26rem)] lg:[&>div]:w-[min(42vw,16rem)]"
+          className="[&>div]:w-[min(56vw,18rem)] lg:[&>div]:w-[min(22vw,12rem)]"
         />
       </div>
       <div className="mx-auto mt-6 flex w-full max-w-[1400px] flex-1 min-h-0 flex-col gap-10 lg:mt-3 lg:flex-row lg:gap-8">

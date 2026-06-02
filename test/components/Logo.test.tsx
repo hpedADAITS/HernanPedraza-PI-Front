@@ -31,16 +31,20 @@ describe('Logo Component', () => {
     expect(bgElement).toBeInTheDocument();
   });
 
+  it('should position the image layer relative to the logo box', () => {
+    const { container } = render(<Logo size="large" />);
+    const logoBox = container.querySelector('.relative.overflow-hidden');
+    expect(logoBox).toBeInTheDocument();
+  });
+
   it('should use white logo when useWhite is true', () => {
-    render(<Logo useWhite={true} />);
-    const img = screen.getByAltText('Sync Rekuest Logo') as HTMLImageElement;
-    expect(img.src).toContain('logo_white');
+    const { container } = render(<Logo useWhite={true} />);
+    expect(container.querySelector('img[src*="logo_white"]')).toBeInTheDocument();
   });
 
   it('should use normal logo when useWhite is false', () => {
-    render(<Logo useWhite={false} />);
-    const img = screen.getByAltText('Sync Rekuest Logo') as HTMLImageElement;
-    expect(img.src).toContain('logo_normal');
+    const { container } = render(<Logo useWhite={false} />);
+    expect(container.querySelector('img[src*="logo_normal"]')).toBeInTheDocument();
   });
 
   it('should accept custom className', () => {
