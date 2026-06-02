@@ -16,6 +16,7 @@ declare global {
       source: string | HTMLCanvasElement | ImageBitmap | null,
       options?: SetCoverCubeTextureOptions,
     ) => void;
+    resetCoverCubeTexture?: () => void;
   }
 }
 
@@ -185,11 +186,17 @@ export function CoverCube({
       if (window.setCoverCubeTexture) {
         delete window.setCoverCubeTexture;
       }
+      if (window.resetCoverCubeTexture) {
+        delete window.resetCoverCubeTexture;
+      }
     };
   }, []);
 
   React.useEffect(() => {
     const source = albumArt ?? null;
+    window.resetCoverCubeTexture = () => {
+      window.setCoverCubeTexture?.(source, { frontOnly: true });
+    };
     window.setCoverCubeTexture?.(source, { frontOnly: true });
   }, [albumArt]);
 

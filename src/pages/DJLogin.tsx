@@ -5,7 +5,10 @@ import { toast } from 'sonner';
 import { authAPI, eventsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
 import { writeStoredJson } from '@/utils/storage';
-import { activateSingleUserSession } from '@/services/singleUserSession';
+import {
+  activateSingleUserSession,
+  suspendNextSingleUserSessionCheck,
+} from '@/services/singleUserSession';
 import { LoginPage } from '@/pages/LoginPage';
 import type { NavigateToView } from '@/types';
 
@@ -71,6 +74,10 @@ export function DJLogin({
           eventId,
           profilePicture: result.user.profilePicture || null,
         });
+
+        if (!ownedEvent) {
+          suspendNextSingleUserSessionCheck();
+        }
       }
 
       toast.success(`Welcome back, ${displayName}!`);

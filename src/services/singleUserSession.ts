@@ -1,4 +1,6 @@
 const ACTIVE_SESSION_PREFIX = 'activeUserSession:';
+const SESSION_CHECK_SUSPENSION_KEY = 'singleUserSession:skipNextCheck';
+const SESSION_CHECK_SUSPENSION_TTL_MS = 30000;
 const WINDOW_SESSION_ID = crypto.randomUUID();
 
 type StoredUserIdentity = {
@@ -17,6 +19,23 @@ export function activateSingleUserSession(user: StoredUserIdentity | null | unde
   const key = user ? userSessionKey(user) : null;
   if (!key) return;
   localStorage.setItem(key, WINDOW_SESSION_ID);
+}
+
+export function suspendNextSingleUserSessionCheck() {
+  const expiresAt = String(Date.now() + SESSION_CHECK_SUSPENSION_TTL_MS);
+  sessionStorage.setItem(SESSION_CHECK_SUSPENSION_KEY, expiresAt);
+  localStorage.setItem(SESSION_CHECK_SUSPENSION_KEY, expiresAt);
+}
+
+export function consumeSingleUserSessionCheckSuspension() {
+  const expiresAt = Number(
+    sessionStorage.getItem(SESSION_CHECK_SUSPENSION_KEY) ??
+      localStorage.getItem(SESSION_CHECK_SUSPENSION_KEY) ??
+      0,
+  );
+  sessionStorage.removeItem(SESSION_CHECK_SUSPENSION_KEY);
+  localStorage.removeItem(SESSION_CHECK_SUSPENSION_KEY);
+  return expiresAt > Date.now();
 }
 
 export function isCurrentUserSessionActive(user: StoredUserIdentity | null | undefined) {

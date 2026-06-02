@@ -3,7 +3,12 @@ import type { NavigateToView } from '@/types';
 import { disconnectSocket, initSocket, joinEvent, off, on, onAccessCodeUpdated, onEventEnded, onEventUpdated, onSongSuggested } from '@/services/socket';
 import { eventsAPI } from '@/services/api';
 import { clearStoredEvent, clearStoredParticipant, clearStoredUser, getAuthToken, getStoredEvent, getStoredParticipant, getStoredUser, setStoredEvent, setStoredParticipant } from '@/services/session';
-import { isCurrentUserSessionActive, onCurrentUserSessionReplaced } from '@/services/singleUserSession';
+import {
+  activateSingleUserSession,
+  consumeSingleUserSessionCheckSuspension,
+  isCurrentUserSessionActive,
+  onCurrentUserSessionReplaced,
+} from '@/services/singleUserSession';
 import { toast } from 'sonner';
 import { StoredEvent } from '@/services/session';
 
@@ -128,7 +133,10 @@ export function useDashboardSession({
       return;
     }
 
-    if (!isCurrentUserSessionActive(user)) {
+    const skipSessionCheck = consumeSingleUserSessionCheckSuspension();
+    if (skipSessionCheck) {
+      activateSingleUserSession(user);
+    } else if (!isCurrentUserSessionActive(user)) {
       clearCurrentSession();
       toast.info('This account is active in another window. Please log in again here to continue.');
       navigateAway();

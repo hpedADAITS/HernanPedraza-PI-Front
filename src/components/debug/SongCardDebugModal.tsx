@@ -1,11 +1,20 @@
 import React, { useMemo, useState } from 'react';
-import { Bug, ExternalLink, KeyRound, ListMusic, X } from 'lucide-react';
+import {
+  Box,
+  Bug,
+  ExternalLink,
+  KeyRound,
+  ListMusic,
+  RotateCcw,
+  X,
+} from 'lucide-react';
 import { clsx } from 'clsx';
 import { toast } from 'sonner';
 import { isDebugModeEnabled } from '@/utils/debugMode';
 import { readStoredJson } from '@/utils/storage';
 import { DEBUG_EVENT_NAME, dispatchDebugSongEvent } from '@/utils/debugSongEvents';
 import { apiCall } from '@/services/api/client';
+import debugCubeTextureUrl from '@/assets/debug-cube-texture.png';
 
 type DebugTrigger = 'queue' | 'playing' | 'rejected' | 'skipped';
 
@@ -787,6 +796,26 @@ export function SongCardDebugModal() {
     toast.success('Queue test page opened');
   };
 
+  const triggerCubeTextureRequest = () => {
+    if (!window.setCoverCubeTexture) {
+      toast.error('3D cover cube is not mounted');
+      return;
+    }
+
+    window.setCoverCubeTexture(debugCubeTextureUrl, { frontOnly: true });
+    toast.success('Debug texture request sent');
+  };
+
+  const undoCubeTextureRequest = () => {
+    if (!window.resetCoverCubeTexture) {
+      toast.error('3D cover cube is not mounted');
+      return;
+    }
+
+    window.resetCoverCubeTexture();
+    toast.success('Debug texture request undone');
+  };
+
   return (
     <>
       <button
@@ -859,6 +888,24 @@ export function SongCardDebugModal() {
             </div>
 
             <div className="mt-4 border-t border-slate-200 pt-4">
+              <div className="mb-2 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={triggerCubeTextureRequest}
+                  className="flex items-center justify-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50"
+                >
+                  <Box size={16} />
+                  Trigger request
+                </button>
+                <button
+                  type="button"
+                  onClick={undoCubeTextureRequest}
+                  className="flex items-center justify-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50"
+                >
+                  <RotateCcw size={16} />
+                  Undo request
+                </button>
+              </div>
               <button
                 type="button"
                 onClick={openQueueTestWindow}

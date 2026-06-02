@@ -8,6 +8,10 @@ import { EventIdSetupModal } from '@/components/modals/EventIdSetupModal';
 import { EmailConfirmationModal } from '@/components/modals/EmailConfirmationModal';
 import logoWhite from '@/assets/logo_white.png';
 import { writeStoredJson } from '@/utils/storage';
+import {
+  activateSingleUserSession,
+  suspendNextSingleUserSessionCheck,
+} from '@/services/singleUserSession';
 import type { NavigateToView } from '@/types';
 
 interface Props {
@@ -196,6 +200,8 @@ export function DJRegister({
 
       toast.success(`Welcome, ${displayName}! Your event is ready to go.`);
       socket.initSocket(registrationData.token);
+      activateSingleUserSession({ _id: registrationData.userId, email, displayName });
+      suspendNextSingleUserSessionCheck();
       setShowEventIdModal(false);
       onNavigate('dj-dashboard');
     } catch (error) {
