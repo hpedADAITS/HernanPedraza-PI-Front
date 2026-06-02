@@ -4,9 +4,16 @@ import { removeStoredItem } from '../../utils/storage';
 // @ts-ignore
 const VITE_API_URL = import.meta.env?.VITE_API_URL as string | undefined;
 
-export const API_BASE: string = VITE_API_URL
-  ? `${VITE_API_URL}/api/v1`
-  : '/api/v1';
+function buildApiBase(apiUrl?: string) {
+  if (!apiUrl) {
+    return '/api/v1';
+  }
+
+  const trimmedUrl = apiUrl.replace(/\/+$/, '');
+  return trimmedUrl.endsWith('/api/v1') ? trimmedUrl : `${trimmedUrl}/api/v1`;
+}
+
+export const API_BASE: string = buildApiBase(VITE_API_URL);
 
 let authToken: string | null = null;
 
