@@ -78,6 +78,7 @@
     "dev:debug": "VITE_DEBUG_MODE=true vite",
     "host": "vite --host",
     "build": "vite build",
+    "start": "node server.mjs",
     "test": "vitest",
     "test:e2e": "playwright test",
     "test:ui": "vitest --ui",

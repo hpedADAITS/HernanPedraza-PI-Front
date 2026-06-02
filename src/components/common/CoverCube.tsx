@@ -42,6 +42,7 @@ export function CoverCube({
   const workerRef = React.useRef<Worker | null>(null);
   const requestIdRef = React.useRef(0);
   const pointerDraggingRef = React.useRef(false);
+  const [renderFailed, setRenderFailed] = React.useState(false);
 
   const postWorkerMessage = React.useCallback((message: CoverCubeWorkerMessage) => {
     workerRef.current?.postMessage(message);
@@ -80,6 +81,7 @@ export function CoverCube({
       typeof Worker === 'undefined' ||
       typeof canvas.transferControlToOffscreen !== 'function'
     ) {
+      setRenderFailed(true);
       return;
     }
 
@@ -91,6 +93,11 @@ export function CoverCube({
 
     const worker = new Worker(workerUrl, { type: 'module' });
     workerRef.current = worker;
+    setRenderFailed(false);
+
+    const fail = () => setRenderFailed(true);
+    worker.addEventListener('error', fail);
+    worker.addEventListener('messageerror', fail);
 
     const offscreen = canvas.transferControlToOffscreen();
     worker.postMessage(
@@ -126,6 +133,8 @@ export function CoverCube({
 
     return () => {
       resizeObserver.disconnect();
+      worker.removeEventListener('error', fail);
+      worker.removeEventListener('messageerror', fail);
       worker.postMessage({ type: 'destroy' } satisfies CoverCubeWorkerMessage);
       worker.terminate();
       workerRef.current = null;
@@ -266,12 +275,39 @@ export function CoverCube({
       <canvas
         ref={canvasRef}
         style={{
-          display: 'block',
+          display: renderFailed ? 'none' : 'block',
           inset: 0,
           pointerEvents: 'none',
           position: 'absolute',
         }}
       />
+      {renderFailed && (
+        <div
+          aria-hidden="true"
+          style={{
+            background: `linear-gradient(135deg, ${accentColor}, #141827)`,
+            borderRadius: '18px',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,.25), 0 18px 36px rgba(7,18,36,.22)',
+            inset: '8%',
+            overflow: 'hidden',
+            opacity: 0.92,
+            position: 'absolute',
+          }}
+        >
+          {albumArt && (
+            <img
+              alt=""
+              src={albumArt}
+              style={{
+                display: 'block',
+                height: '100%',
+                objectFit: 'cover',
+                width: '100%',
+              }}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }

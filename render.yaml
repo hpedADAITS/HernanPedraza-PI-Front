@@ -1,8 +1,12 @@
 services:
-  - type: static
+  - type: web
     name: sr-frontend
-    staticPublishPath: ./build
-    buildCommand: npm run build
-    routes:
-      - path: /*
-        destination: /index.html
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VITE_API_URL
+        value: https://syncrekuest-backend.onrender.com
