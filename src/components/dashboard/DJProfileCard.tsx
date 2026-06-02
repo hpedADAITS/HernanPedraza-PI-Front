@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 import { clsx } from 'clsx';
 import { QrCode } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -34,7 +34,7 @@ export function DJProfileCard({
   return (
     <TooltipProvider>
       <>
-        <motion.div
+        <m.div
           {...SLIDE_IN_LEFT}
           className={clsx(
             'rounded-3xl p-6 lg:p-4 shadow-xl text-white relative overflow-hidden',
@@ -72,14 +72,14 @@ export function DJProfileCard({
               {/* QR Code Button */}
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <motion.button
+                  <m.button
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setShowQRModal(true)}
                     className="absolute bottom-0 right-0 w-10 h-10 lg:w-8 lg:h-8 bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg flex items-center justify-center text-white transition-colors border-2 border-white animate-pulse"
                   >
                     <QrCode size={18} />
-                  </motion.button>
+                  </m.button>
                 </TooltipTrigger>
                 <TooltipContent>Generate QR Code</TooltipContent>
               </Tooltip>
@@ -91,7 +91,7 @@ export function DJProfileCard({
               <p className="text-white/80 text-sm font-medium">DJ on SyncRequest</p>
             </div>
           </div>
-        </motion.div>
+        </m.div>
 
         {/* QR Code Modal */}
         <QRCodeModal

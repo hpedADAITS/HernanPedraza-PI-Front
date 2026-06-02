@@ -1,5 +1,5 @@
 import type React from 'react';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 import { Mic2, Music2 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -65,7 +65,7 @@ export function AttendeeSongSuggestView({
   );
 
   return (
-    <motion.form
+    <m.form
       initial={{ y: 20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       onSubmit={onSubmit}
@@ -140,7 +140,7 @@ export function AttendeeSongSuggestView({
           />
         </label>
 
-        <motion.button
+        <m.button
           type="submit"
           disabled={isDisabled}
           whileHover={isDisabled ? undefined : { y: -1 }}
@@ -148,8 +148,8 @@ export function AttendeeSongSuggestView({
           className={buttonClassName}
         >
           {submitting ? 'Submitting…' : 'Suggest Song'}
-        </motion.button>
+        </m.button>
       </div>
-    </motion.form>
+    </m.form>
   );
 }

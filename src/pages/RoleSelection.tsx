@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Layout } from '@/components/layout/Layout';
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import { User, Headphones } from 'lucide-react';
 import { useDarkMode } from '@/hooks/useDarkMode';
 import logoNormal from '@/assets/logo_normal.png';
@@ -74,7 +74,7 @@ export function RoleSelection({
     <Layout theme="white" className="items-center justify-center min-h-screen">
       <div className="flex flex-col items-center gap-12 md:gap-18 -mt-8 scale-90 md:scale-100">
         {/* Logo */}
-        <motion.div
+        <m.div
           initial={{ y: -12, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
@@ -95,12 +95,12 @@ export function RoleSelection({
               style={{ opacity: isDarkMode ? 1 : 0 }}
             />
           </div>
-        </motion.div>
+        </m.div>
 
         {/* Cards Container */}
         <div className="flex flex-col md:flex-row gap-8 md:gap-12">
           {/* Attendee Card */}
-          <motion.button
+          <m.button
             initial={{ x: -16, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{
@@ -132,10 +132,10 @@ export function RoleSelection({
                 />
               </div>
             </div>
-          </motion.button>
+          </m.button>
 
           {/* DJ Card */}
-          <motion.button
+          <m.button
             initial={{ x: 16, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{
@@ -166,14 +166,14 @@ export function RoleSelection({
                 />
               </div>
             </div>
-          </motion.button>
+          </m.button>
         </div>
       </div>
 
       {createPortal(
         <AnimatePresence>
           {expandingCircle && (
-            <motion.div
+            <m.div
               initial={{ scale: 0.35, opacity: 0.9 }}
               animate={{
                 scale: expandingCircle.ready
@@ -188,18 +188,12 @@ export function RoleSelection({
                     : ROLE_LOADING_TRANSITION_DURATION_MS) / 1000,
                 ease: [0.76, 0, 0.24, 1],
               }}
+              className="pointer-events-none fixed z-[9999] h-[200px] w-[200px] rounded-full"
               style={{
-                position: 'fixed',
                 left: expandingCircle.x,
                 top: expandingCircle.y,
-                width: 200,
-                height: 200,
-                borderRadius: '50%',
                 background: expandingCircle.background,
                 transform: 'translate(-50%, -50%)',
-                pointerEvents: 'none',
-                zIndex: 9999,
-                willChange: 'transform',
               }}
             />
           )}

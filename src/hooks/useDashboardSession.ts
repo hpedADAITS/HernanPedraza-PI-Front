@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useEffectEvent, useState } from 'react';
 import type { NavigateToView } from '@/types';
 import { disconnectSocket, initSocket, joinEvent, off, on, onAccessCodeUpdated, onEventEnded, onEventUpdated, onSongSuggested } from '@/services/socket';
-import type { ParticipantUpdatedPayload } from '@/services/socket/contracts';
+import type { AccessCodeUpdatedPayload, EventEndedPayload, EventUpdatedPayload, ParticipantCooldownPayload, ParticipantEventPayload, ParticipantUpdatedPayload, SongEventPayload } from '@/services/socket/contracts';
 import { eventsAPI } from '@/services/api';
 import { clearStoredEvent, clearStoredParticipant, clearStoredUser, getAuthToken, getStoredEvent, getStoredParticipant, getStoredUser, setStoredEvent, setStoredParticipant } from '@/services/session';
 import {
@@ -218,34 +218,32 @@ export function useDashboardSession({
       }
     };
 
-    const handleAccessCodeUpdated = (data: { accessCode: string }) => {
+    const handleAccessCodeUpdated = (data: AccessCodeUpdatedPayload) => {
       if (!data?.accessCode) return;
 
       persistAccessCode(data.accessCode);
       toast.info(`Access code changed to ${data.accessCode}`);
     };
 
-    const handleEventUpdated = (data: { event?: StoredEvent }) => {
+    const handleEventUpdated = (data: EventUpdatedPayload) => {
       const event = data?.event;
-      if (!event) return;
+      if (!event || typeof event !== 'object') return;
 
-      if (event.accessCode) {
-        persistAccessCode(event.accessCode);
+      const eventUpdate = event as Partial<StoredEvent>;
+
+      if (eventUpdate.accessCode) {
+        persistAccessCode(eventUpdate.accessCode);
       }
 
       setDashboardState((current) => ({
         ...current,
-        djName: event.ownerName || current.djName,
+        djName: eventUpdate.ownerName || current.djName,
         djProfilePicture:
-          event.ownerProfilePicture ?? current.djProfilePicture,
+          eventUpdate.ownerProfilePicture ?? current.djProfilePicture,
       }));
     };
 
-    const handleSongSuggested = (data: {
-      participantId?: string;
-      nickname?: string;
-      title?: string;
-    }) => {
+    const handleSongSuggested = (data: SongEventPayload & { nickname?: string; participantId?: string }) => {
       if (!data?.title || data.participantId === participantData._id) return;
 
       toast.info(`${data.nickname || 'Someone'} suggested ${data.title}!`);
@@ -272,7 +270,7 @@ export function useDashboardSession({
       }));
     };
 
-    const handleEventEnded = (data: { cancelled?: boolean; reason?: string }) => {
+    const handleEventEnded = (data: EventEndedPayload & { cancelled?: boolean }) => {
       if (isDj) return;
 
       const message = data?.cancelled
@@ -281,10 +279,7 @@ export function useDashboardSession({
       leaveAttendeeEvent(message);
     };
 
-    const handleParticipantKicked = (data: {
-      participantId?: string;
-      reason?: string;
-    }) => {
+    const handleParticipantKicked = (data: ParticipantEventPayload & { reason?: string }) => {
       if (isDj || data?.participantId !== participantData._id) return;
 
       const message = data.reason
@@ -293,11 +288,7 @@ export function useDashboardSession({
       leaveAttendeeEvent(message);
     };
 
-    const handleParticipantCooldown = (data: {
-      participantId?: string;
-      reason?: string;
-      cooldownUntil?: string;
-    }) => {
+    const handleParticipantCooldown = (data: ParticipantCooldownPayload) => {
       if (isDj || data?.participantId !== participantData._id) return;
 
       const expiresAt = data.cooldownUntil

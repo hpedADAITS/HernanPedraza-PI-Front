@@ -1,3 +1,4 @@
+import type { Socket } from 'socket.io-client';
 import { initSocket, getSocketInstance, getEventListeners } from './connection';
 import { SocketEventName, SocketEventPayloads, SocketListener } from './contracts';
 
@@ -6,6 +7,10 @@ import { SocketEventName, SocketEventPayloads, SocketListener } from './contract
 export function on<Event extends SocketEventName>(event: Event, callback: SocketListener<Event>) {
   const s = getSocketInstance() || initSocket();
   if (!s) return;
+  const untypedSocket = s as Socket<Record<string, never>, Record<string, (...args: unknown[]) => void>> & {
+    on(event: SocketEventName, callback: (...args: unknown[]) => void): void;
+  };
+  const socketCallback = callback as (...args: unknown[]) => void;
 
   const eventListeners = getEventListeners();
 
@@ -20,7 +25,7 @@ export function on<Event extends SocketEventName>(event: Event, callback: Socket
   }
 
   listeners.push(storedCallback);
-  s.on(event, callback);
+  untypedSocket.on(event, socketCallback);
 }
 
 export function off<Event extends SocketEventName>(event: Event, callback?: SocketListener<Event>) {
@@ -31,7 +36,11 @@ export function off<Event extends SocketEventName>(event: Event, callback?: Sock
 
   if (callback) {
     const storedCallback = callback as SocketListener<SocketEventName>;
-    socket.off(event, callback);
+    const untypedSocket = socket as Socket<Record<string, never>, Record<string, (...args: unknown[]) => void>> & {
+      off(event: SocketEventName, callback: (...args: unknown[]) => void): void;
+    };
+    const socketCallback = callback as (...args: unknown[]) => void;
+    untypedSocket.off(event, socketCallback);
     const listeners = eventListeners.get(event);
     if (listeners) {
       const index = listeners.indexOf(storedCallback);

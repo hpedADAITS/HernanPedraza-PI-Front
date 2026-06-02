@@ -1,6 +1,6 @@
 import { useCallback, type KeyboardEvent } from 'react';
 import { Layout } from '@/components/layout/Layout';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 import { Search, ArrowLeft } from 'lucide-react';
 import { useDarkMode } from '@/hooks/useDarkMode';
 import { getStoredEventId, getStoredParticipantId } from '@/services/session';
@@ -55,7 +55,7 @@ export function SongSelection({ mode, onNavigate }: Props) {
     <Layout theme={theme} className="px-5 py-6 md:px-10 md:py-8" showNav={true}>
       <div className="relative mx-auto flex w-full max-w-4xl flex-1 flex-col">
         <div className="absolute left-0 top-0 z-20">
-          <motion.button
+          <m.button
             initial={{ opacity: 0, x: -12 }}
             animate={{ opacity: 1, x: 0 }}
             whileTap={{ scale: 0.98 }}
@@ -65,22 +65,22 @@ export function SongSelection({ mode, onNavigate }: Props) {
           >
             <ArrowLeft size={18} />
             Back
-          </motion.button>
+          </m.button>
         </div>
 
         <div className="mb-8 flex min-h-11 items-center justify-center px-24 md:mb-10">
-          <motion.h1
+          <m.h1
             initial={{ y: -12, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             className="text-center text-2xl font-semibold tracking-normal text-white drop-shadow-sm md:text-4xl"
           >
             {isDj ? 'Pending Requests' : 'Suggest a Song'}
-          </motion.h1>
+          </m.h1>
         </div>
 
         {isDj ? (
           <>
-            <motion.label
+            <m.label
               layoutId="search-bar"
               className="group mx-auto mb-6 mt-2 flex h-[52px] w-full max-w-2xl cursor-text items-center gap-3.5 rounded-xl border border-slate-900/10 bg-white px-[18px] shadow-[0_10px_20px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.95)] md:mb-8 md:mt-4"
             >
@@ -96,7 +96,7 @@ export function SongSelection({ mode, onNavigate }: Props) {
                 placeholder="Search pending songs..."
                 className="h-full min-w-0 flex-1 cursor-text border-0 bg-transparent text-sm font-semibold tracking-normal text-[#14213f] outline-none placeholder:text-[#8b9ab4]"
               />
-            </motion.label>
+            </m.label>
 
             {loading ? (
               <p className="self-center rounded-full bg-white/14 px-4 py-2 text-sm font-medium text-white/80 backdrop-blur-md">
@@ -107,7 +107,7 @@ export function SongSelection({ mode, onNavigate }: Props) {
                 No pending songs
               </p>
             ) : (
-              <motion.div
+              <m.div
                 className="flex w-full flex-col gap-3 pb-6"
                 initial="hidden"
                 animate="show"
@@ -128,7 +128,7 @@ export function SongSelection({ mode, onNavigate }: Props) {
                     song={song}
                   />
                 ))}
-              </motion.div>
+              </m.div>
             )}
           </>
         ) : (

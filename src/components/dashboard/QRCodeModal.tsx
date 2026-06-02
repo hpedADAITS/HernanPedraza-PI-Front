@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useEffectEvent } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import { QRCodeSVG as QRCode } from 'qrcode.react';
 import { Copy, Download, RefreshCw, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -25,7 +25,6 @@ export function QRCodeModal({
   onAccessCodeChange,
 }: QRCodeModalProps) {
   const qrRef = useRef<HTMLDivElement>(null);
-  const [error, setError] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const handleClose = useEffectEvent(() => {
@@ -50,13 +49,7 @@ export function QRCodeModal({
     }
   };
 
-  useEffect(() => {
-    if (!accessCode) {
-      setError('Access code not available');
-    } else {
-      setError('');
-    }
-  }, [accessCode]);
+  const error = accessCode ? '' : 'Access code not available';
 
   useEffect(() => {
     const handleEscKey = (e: KeyboardEvent) => {
@@ -101,7 +94,7 @@ export function QRCodeModal({
     <TooltipProvider>
       <AnimatePresence>
         {isOpen && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -109,7 +102,7 @@ export function QRCodeModal({
             style={{ zIndex: 50 }}
             className="fixed inset-0 flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm"
           >
-            <motion.div
+            <m.div
               initial={{ scale: 0.98, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.98, opacity: 0, y: 10 }}
@@ -125,14 +118,14 @@ export function QRCodeModal({
                     Scan to join this event.
                   </p>
                 </div>
-                <motion.button
+                <m.button
                   whileTap={{ scale: 0.99 }}
                   onClick={onClose}
                   className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl border border-slate-900/10 bg-white text-slate-600 shadow-[0_8px_18px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.95)] transition-colors hover:text-slate-950 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100 sm:h-10 sm:w-10"
                   aria-label="Close QR code modal"
                 >
                   <X size={20} />
-                </motion.button>
+                </m.button>
               </div>
 
               <div className="flex min-h-0 flex-col gap-2.5 px-4 sm:gap-3 sm:px-5">
@@ -141,7 +134,7 @@ export function QRCodeModal({
                     <p className="text-sm font-semibold text-red-700">{error}</p>
                   </div>
                 ) : (
-                  <motion.div
+                  <m.div
                     initial={{ scale: 0.98, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     className="mx-auto grid aspect-square w-[min(48vw,10rem)] place-items-center rounded-[18px] border border-slate-900/10 bg-white p-2.5 shadow-[0_14px_28px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.95)] sm:w-48 sm:p-3"
@@ -154,7 +147,7 @@ export function QRCodeModal({
                       includeMargin={true}
                       className="h-full w-full rounded-lg"
                     />
-                  </motion.div>
+                  </m.div>
                 )}
 
                 <div className="rounded-xl border border-slate-900/10 bg-white px-3 py-2 shadow-[0_10px_20px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.95)] sm:py-2.5">
@@ -167,14 +160,14 @@ export function QRCodeModal({
                     </code>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <motion.button
+                        <m.button
                           whileTap={{ scale: 0.98 }}
                           onClick={handleCopyCode}
                           className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-lg text-[#2878ff] transition-colors hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100 sm:h-9 sm:w-9"
                           aria-label="Copy access code"
                         >
                           <Copy size={18} />
-                        </motion.button>
+                        </m.button>
                       </TooltipTrigger>
                       <TooltipContent>Copy code</TooltipContent>
                     </Tooltip>
@@ -184,7 +177,7 @@ export function QRCodeModal({
 
               <div className="flex flex-col gap-1.5 px-4 pb-4 pt-2 sm:gap-2 sm:px-5 sm:pb-5 sm:pt-3">
                 {isDj && (
-                  <motion.button
+                  <m.button
                     whileHover={{ y: -1 }}
                     whileTap={{ scale: 0.99 }}
                     onClick={() => setShowConfirm(true)}
@@ -196,10 +189,10 @@ export function QRCodeModal({
                       className={regenerating ? 'animate-spin' : undefined}
                     />
                     Regenerate Access Code
-                  </motion.button>
+                  </m.button>
                 )}
                 <div className="flex gap-2">
-                  <motion.button
+                  <m.button
                     whileHover={{ y: -1 }}
                     whileTap={{ scale: 0.99 }}
                     onClick={handleDownloadQR}
@@ -207,19 +200,19 @@ export function QRCodeModal({
                   >
                     <Download size={18} />
                     Download
-                  </motion.button>
-                  <motion.button
+                  </m.button>
+                  <m.button
                     whileHover={{ y: -1 }}
                     whileTap={{ scale: 0.99 }}
                     onClick={onClose}
                     className="flex h-10 flex-1 items-center justify-center rounded-xl border border-slate-900/10 bg-white text-sm font-extrabold text-[#17213a] shadow-[0_10px_20px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.95)] transition-colors hover:bg-slate-50 sm:h-11"
                   >
                     Close
-                  </motion.button>
+                  </m.button>
                 </div>
               </div>
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         )}
       </AnimatePresence>
 

@@ -129,6 +129,8 @@ export function useAttendeeLoginController(onNavigate: NavigateToView) {
       await ensureNicknameAllowed();
 
       const eventId = event._id || event.id;
+      if (!eventId) throw new Error('Invalid event details. Please verify the access code again.');
+
       const { participant, token, user } = await attendeeSessionAPI.joinEvent(
         eventId,
         state.nickname,

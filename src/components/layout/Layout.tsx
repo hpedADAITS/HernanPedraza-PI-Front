@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 import { Sun, Moon } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useDarkMode } from '@/hooks/useDarkMode';
@@ -35,7 +35,7 @@ export function Layout({
   };
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -100,6 +100,6 @@ export function Layout({
           </div>
         </footer>
       )}
-    </motion.div>
+    </m.div>
   );
 }

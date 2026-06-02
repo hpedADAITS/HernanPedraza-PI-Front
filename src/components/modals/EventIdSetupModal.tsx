@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import React, { useEffect, useState } from 'react';
+import { m, AnimatePresence } from 'motion/react';
 import { RefreshCw, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -9,41 +9,31 @@ interface EventIdSetupModalProps {
   displayName: string;
 }
 
+const createRandomEventId = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  return Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+};
+
 export function EventIdSetupModal({
   isOpen,
   onConfirm,
   displayName,
 }: EventIdSetupModalProps) {
   const [eventId, setEventId] = useState('');
-  const [generatedId, setGeneratedId] = useState('');
+  const [generatedId, setGeneratedId] = useState(() => createRandomEventId());
   const [mode, setMode] = useState<'input' | 'generated'>('generated');
   const [loading, setLoading] = useState(false);
 
-  const handleOptionKeyDown = (
-    event: React.KeyboardEvent<HTMLDivElement>,
-    nextMode: 'input' | 'generated',
-  ) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      setMode(nextMode);
-    }
-  };
-
   const generateRandomId = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let id = '';
-    for (let i = 0; i < 8; i++) {
-      id += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    setGeneratedId(id);
+    setGeneratedId(createRandomEventId());
     setMode('generated');
   };
 
-  React.useEffect(() => {
-    if (isOpen) {
-      generateRandomId();
-      setEventId('');
-    }
+  useEffect(() => {
+    if (!isOpen) return;
+    setGeneratedId(createRandomEventId());
+    setMode('generated');
+    setEventId('');
   }, [isOpen]);
 
   const handleConfirm = async () => {
@@ -72,13 +62,13 @@ export function EventIdSetupModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
         >
-          <motion.div
+          <m.div
             initial={{ scale: 0.98, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.98, opacity: 0 }}
@@ -92,8 +82,7 @@ export function EventIdSetupModal({
             </p>
 
             <div className="space-y-4 mb-6">
-              {/* Generated ID Mode */}
-              <motion.div
+              <m.div
                 initial={false}
                 animate={{
                   opacity: mode === 'generated' ? 1 : 0.5,
@@ -101,12 +90,6 @@ export function EventIdSetupModal({
                 }}
               >
                 <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setMode('generated')}
-                  onKeyDown={(event) =>
-                    handleOptionKeyDown(event, 'generated')
-                  }
                   className={`w-full p-4 rounded-xl border-2 transition-all ${
                     mode === 'generated'
                       ? 'border-blue-400 bg-blue-500/10'
@@ -114,12 +97,16 @@ export function EventIdSetupModal({
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="text-left">
+                    <button
+                      type="button"
+                      onClick={() => setMode('generated')}
+                      className="text-left"
+                    >
                       <p className="font-semibold text-white">Generated ID</p>
                       <p className="text-blue-300 font-mono text-lg mt-1">
                         {generatedId}
                       </p>
-                    </div>
+                    </button>
                     <button
                       type="button"
                       onClick={(e) => {
@@ -134,10 +121,9 @@ export function EventIdSetupModal({
                     </button>
                   </div>
                 </div>
-              </motion.div>
+              </m.div>
 
-              {/* Custom ID Mode */}
-              <motion.div
+              <m.div
                 initial={false}
                 animate={{
                   opacity: mode === 'input' ? 1 : 0.5,
@@ -145,17 +131,19 @@ export function EventIdSetupModal({
                 }}
               >
                 <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setMode('input')}
-                  onKeyDown={(event) => handleOptionKeyDown(event, 'input')}
                   className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
                     mode === 'input'
                       ? 'border-blue-400 bg-blue-500/10'
                       : 'border-slate-600 bg-slate-800/30 hover:border-slate-500'
                   }`}
                 >
-                  <p className="font-semibold text-white mb-3">Custom Event ID</p>
+                  <button
+                    type="button"
+                    onClick={() => setMode('input')}
+                    className="font-semibold text-white mb-3 text-left"
+                  >
+                    Custom Event ID
+                  </button>
                   <input
                     type="text"
                     aria-label="Custom event ID"
@@ -172,11 +160,11 @@ export function EventIdSetupModal({
                     Use letters and numbers only, 4-20 characters
                   </p>
                 </div>
-              </motion.div>
+              </m.div>
             </div>
 
             <div className="space-y-3">
-              <motion.button
+              <m.button
                 type="button"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -186,15 +174,15 @@ export function EventIdSetupModal({
               >
                 <Check size={18} />
                 {loading ? 'Creating Event…' : 'Create Event'}
-              </motion.button>
+              </m.button>
               <p className="text-xs text-slate-400 text-center">
                 Your Event ID: <span className="font-mono text-blue-300">
                   {mode === 'generated' ? generatedId : eventId || '---'}
                 </span>
               </p>
             </div>
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

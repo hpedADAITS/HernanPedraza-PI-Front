@@ -130,7 +130,7 @@ export function CoverCube({
       worker.terminate();
       workerRef.current = null;
     };
-  }, [syncCanvasLayout]);
+  }, [accentColor, syncCanvasLayout]);
 
   React.useEffect(() => {
     postWorkerMessage({

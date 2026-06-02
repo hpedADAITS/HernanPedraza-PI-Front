@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { authAPI, eventsAPI } from '@/services/api';
@@ -183,7 +183,7 @@ export function DJLogin({
           </div>
 
           {/* Submit */}
-          <motion.button
+          <m.button
             type="submit"
             whileTap={{ scale: loading ? 1 : 0.99 }}
             disabled={loading}
@@ -204,7 +204,7 @@ export function DJLogin({
                 />
               </>
             )}
-          </motion.button>
+          </m.button>
 
           {/* Hairline divider */}
           <div className="mt-7 pt-5 border-t border-slate-100">

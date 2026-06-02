@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import { Camera, X } from 'lucide-react';
 import { RefObject } from 'react';
 
@@ -18,7 +18,7 @@ export function QRScannerModal({
   return (
     <AnimatePresence>
       {open && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -26,7 +26,7 @@ export function QRScannerModal({
           style={{ zIndex: 99999 }}
           className="fixed inset-0 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4"
         >
-          <motion.div
+          <m.div
             initial={{ scale: 0.97, opacity: 0, y: 12 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.97, opacity: 0, y: 12 }}
@@ -86,8 +86,8 @@ export function QRScannerModal({
                 Cancel
               </button>
             </div>
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

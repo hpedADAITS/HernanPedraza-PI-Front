@@ -1,5 +1,5 @@
 import React, { ReactNode, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import type { LucideIcon } from 'lucide-react';
 import { ArrowLeft, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -23,7 +23,7 @@ export function SettingsPageShell({
   titleClassName,
 }: SettingsPageShellProps) {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="mx-auto mt-8 flex w-full max-w-4xl flex-col items-center"
@@ -40,7 +40,7 @@ export function SettingsPageShell({
       {children}
 
       <div className="fixed bottom-8 right-8 z-50">
-        <motion.button
+        <m.button
           type="button"
           whileHover={hoverMotion}
           whileTap={tapMotion}
@@ -49,9 +49,9 @@ export function SettingsPageShell({
         >
           <ArrowLeft size={18} aria-hidden="true" />
           {backLabel}
-        </motion.button>
+        </m.button>
       </div>
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -116,7 +116,7 @@ export function SettingsOptionCard({
   className,
 }: SettingsOptionCardProps) {
   return (
-    <motion.button
+    <m.button
       type="button"
       whileHover={hoverMotion}
       whileTap={tapMotion}
@@ -151,7 +151,7 @@ export function SettingsOptionCard({
       ) : (
         label
       )}
-    </motion.button>
+    </m.button>
   );
 }
 
@@ -180,7 +180,7 @@ export function SettingsListItem({
   index = 0,
 }: SettingsListItemProps) {
   return (
-    <motion.button
+    <m.button
       type="button"
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
@@ -191,7 +191,7 @@ export function SettingsListItem({
       className="flex h-16 items-center justify-center rounded-xl border border-slate-100 bg-white px-5 text-center text-lg font-medium text-slate-700 shadow-sm transition-all hover:border-slate-200 hover:bg-slate-50 hover:shadow-md md:h-20 md:text-xl"
     >
       {label}
-    </motion.button>
+    </m.button>
   );
 }
 
@@ -222,14 +222,14 @@ export function SettingsDialog({
   return (
     <AnimatePresence>
       {open && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
           className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm"
         >
-          <motion.div
+          <m.div
             role="dialog"
             aria-modal="true"
             aria-label={title}
@@ -262,8 +262,8 @@ export function SettingsDialog({
                 {children}
               </div>
             </div>
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
       )}
     </AnimatePresence>
   );
@@ -301,7 +301,7 @@ export function SettingsDialogButton({
   className,
 }: SettingsDialogButtonProps) {
   return (
-    <motion.button
+    <m.button
       type="button"
       whileTap={tapMotion}
       onClick={onClick}
@@ -315,7 +315,7 @@ export function SettingsDialogButton({
       )}
     >
       {children}
-    </motion.button>
+    </m.button>
   );
 }
 

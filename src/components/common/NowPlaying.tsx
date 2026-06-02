@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 import { CoverCube } from './CoverCube';
 
 type PlayerState =
@@ -169,11 +169,11 @@ export function NowPlaying({
           index % 5
         ],
       })),
-    [celebrateKey],
+    [],
   );
 
   return (
-    <motion.section
+    <m.section
       aria-label={`${config.statusLabel.toLowerCase()} state`}
       data-state={status}
       initial={{ opacity: 0, y: -10 }}
@@ -202,7 +202,7 @@ export function NowPlaying({
           aria-hidden="true"
         >
           {confettiPieces.map((piece) => (
-            <motion.span
+            <m.span
               key={`${celebrateKey}-${piece.id}`}
               className="absolute top-0 h-2 w-1.5 rounded-sm"
               style={{
@@ -265,7 +265,7 @@ export function NowPlaying({
       <div className="absolute bottom-6 left-6 right-6 grid grid-cols-[41px_minmax(0,1fr)_43px] items-center gap-3 text-sm font-semibold text-white/95 sm:left-7 sm:right-7 sm:text-[15px] lg:bottom-5 lg:left-40 lg:text-sm">
         <span>{status === 'playing' ? currentTime : '0:00'}</span>
         <div className="h-2 overflow-hidden rounded-full bg-white/25 shadow-[inset_0_1px_1px_rgba(0,0,0,.16)]">
-          <motion.div
+          <m.div
             initial={{ width: 0 }}
             animate={{ width: `${progressWidth}%` }}
             transition={{ duration: 0.5 }}
@@ -274,6 +274,6 @@ export function NowPlaying({
         </div>
         <span className="text-right">{duration}</span>
       </div>
-    </motion.section>
+    </m.section>
   );
 }

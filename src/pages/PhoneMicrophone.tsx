@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { Mic, MicOff } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
@@ -62,9 +62,13 @@ export function PhoneMicrophone() {
     useState<ConnectionState>('idle');
   const [error, setError] = useState('');
 
-  const stopMicrophone = () => {
+  const stopActiveStream = useCallback(() => {
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
+  }, []);
+
+  const stopMicrophone = () => {
+    stopActiveStream();
     setConnectionState('idle');
   };
 
@@ -111,10 +115,8 @@ export function PhoneMicrophone() {
   };
 
   useEffect(() => {
-    return () => {
-      streamRef.current?.getTracks().forEach((track) => track.stop());
-    };
-  }, []);
+    return stopActiveStream;
+  }, [stopActiveStream]);
 
   const isConnected = connectionState === 'connected';
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AnimatePresence, animate, motion, useMotionValue } from 'motion/react';
+import { AnimatePresence, animate, m, useMotionValue } from 'motion/react';
 import { clsx } from 'clsx';
 import { UserAvatar } from '@/components/common';
 
@@ -24,9 +24,27 @@ const SWIPE_ACTION_THRESHOLD = 110;
 const SWIPE_EXIT_PADDING = 96;
 const DECISION_SIDE_RATIO = 0.34;
 
+function releasePointerCapture(target: HTMLDivElement, pointerId: number) {
+  if (target.hasPointerCapture?.(pointerId)) target.releasePointerCapture(pointerId);
+}
+
+function getSwipeExitX(direction: 'left' | 'right') {
+  if (typeof window === 'undefined') return direction === 'right' ? 420 : -420;
+  const exitDistance = window.innerWidth + SWIPE_EXIT_PADDING;
+  return direction === 'right' ? exitDistance : -exitDistance;
+}
+
+function getReleaseDirection(clientX: number) {
+  if (typeof window === 'undefined') return null;
+  const sideWidth = window.innerWidth * DECISION_SIDE_RATIO;
+  if (clientX <= sideWidth) return 'left';
+  if (clientX >= window.innerWidth - sideWidth) return 'right';
+  return null;
+}
+
 function SwipeBorderGlow() {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -75,7 +93,7 @@ function SwipeBorderGlow() {
         <path className="swipe-border-line glow-strong red" d="M 50 0 L 0 0 L 0 100 L 50 100" />
         <path className="swipe-border-line glow-strong green" d="M 50 0 L 100 0 L 100 100 L 50 100" />
       </svg>
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -112,24 +130,6 @@ export function DjSongCard({ isProcessing, onApprove, onReject, song }: DjSongCa
   const pointerStartRef = React.useRef<{ x: number; y: number } | null>(null);
   const pointerLockRef = React.useRef<'x' | 'y' | null>(null);
   const [showOverlay, setShowOverlay] = useState(false);
-
-  const releasePointerCapture = (target: HTMLDivElement, pointerId: number) => {
-    if (target.hasPointerCapture?.(pointerId)) target.releasePointerCapture(pointerId);
-  };
-
-  const getSwipeExitX = (direction: 'left' | 'right') => {
-    if (typeof window === 'undefined') return direction === 'right' ? 420 : -420;
-    const exitDistance = window.innerWidth + SWIPE_EXIT_PADDING;
-    return direction === 'right' ? exitDistance : -exitDistance;
-  };
-
-  const getReleaseDirection = (clientX: number) => {
-    if (typeof window === 'undefined') return null;
-    const sideWidth = window.innerWidth * DECISION_SIDE_RATIO;
-    if (clientX <= sideWidth) return 'left';
-    if (clientX >= window.innerWidth - sideWidth) return 'right';
-    return null;
-  };
 
   const finishDecision = async (direction: 'left' | 'right') => {
     animate(x, getSwipeExitX(direction), { duration: 0.18, ease: 'linear' });
@@ -213,12 +213,12 @@ export function DjSongCard({ isProcessing, onApprove, onReject, song }: DjSongCa
   };
 
   return (
-    <motion.div variants={{ hidden: { y: 20, opacity: 0 }, show: { y: 0, opacity: 1 } }} className="relative overflow-hidden rounded-2xl">
+    <m.div variants={{ hidden: { y: 20, opacity: 0 }, show: { y: 0, opacity: 1 } }} className="relative overflow-hidden rounded-2xl">
       <AnimatePresence>{showOverlay ? <SwipeBorderGlow /> : null}</AnimatePresence>
       <div aria-hidden="true" className="pointer-events-none invisible rounded-2xl border border-slate-200/80 bg-white p-4 md:p-5">
         <DjSongCardContent song={song} />
       </div>
-      <motion.div
+      <m.div
         style={{ x, touchAction: 'pan-y' }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -234,7 +234,7 @@ export function DjSongCard({ isProcessing, onApprove, onReject, song }: DjSongCa
         )}
       >
         <DjSongCardContent song={song} />
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 }

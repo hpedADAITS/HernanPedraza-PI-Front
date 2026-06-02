@@ -868,7 +868,7 @@ export function SongCardDebugModal() {
       rejected: `debug-reject-${stamp}`,
       skipped: `debug-skip-${stamp}`,
     };
-  }, [open]);
+  }, []);
 
   if (!isDebugModeEnabled()) return null;
 

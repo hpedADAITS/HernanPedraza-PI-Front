@@ -149,7 +149,7 @@ export function useQueueRealtime(mode: 'attendee' | 'dj', eventId?: string) {
         }
 
         const queue = await songsAPI.getQueue(resolvedEventId);
-        const songs = queue || [];
+        const songs: Song[] = queue || [];
         const playing = songs.find((song) => song.status === 'PLAYING');
 
         setState((current) => ({
@@ -224,7 +224,7 @@ export function useQueueRealtime(mode: 'attendee' | 'dj', eventId?: string) {
         let nextSongs = current.songs;
 
         if (data?.songId && data?.voteScore != null) {
-          nextSongs = nextSongs.map((song) => (song._id === data.songId ? { ...song, voteScore: data.voteScore } : song));
+          nextSongs = nextSongs.map((song) => (song._id === data.songId ? { ...song, voteScore: data.voteScore ?? song.voteScore } : song));
         }
 
         const affectedSongs = data?.affectedSongs;

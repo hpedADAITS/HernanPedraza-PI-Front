@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { motion } from 'motion/react';
+import React, { useState } from 'react';
+import { m } from 'motion/react';
 import { clsx } from 'clsx';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ProfilePictureUpload, UserAvatar } from '@/components/common';
@@ -24,13 +24,11 @@ export function AttendeeProfileCard({
   const [showProfilePictureModal, setShowProfilePictureModal] =
     useState(false);
 
-  const subtitle = useMemo(() => {
-    return `Following: DJ ${djName}`;
-  }, [djName]);
+  const subtitle = `Following: DJ ${djName}`;
 
   return (
     <TooltipProvider>
-      <motion.div
+      <m.div
         {...SLIDE_IN_LEFT}
         className={clsx(
           'rounded-3xl p-6 lg:p-4 shadow-xl text-white relative overflow-hidden',
@@ -70,7 +68,7 @@ export function AttendeeProfileCard({
             <p className="text-white/80 text-sm font-medium">{subtitle}</p>
           </div>
         </div>
-      </motion.div>
+      </m.div>
 
       <SettingsDialog
         open={showProfilePictureModal}

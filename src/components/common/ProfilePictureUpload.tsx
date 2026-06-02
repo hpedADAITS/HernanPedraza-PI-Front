@@ -1,9 +1,15 @@
 import React, { useRef, useState, useTransition } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import { Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { authAPI, participantsAPI } from '@/services/api';
 import { readStoredJson, writeStoredJson } from '@/utils/storage';
+
+const PROFILE_PICTURE_SIZE_CLASSES = {
+  sm: 'w-16 h-16',
+  md: 'w-24 h-24',
+  lg: 'w-32 h-32',
+};
 
 interface ProfilePictureUploadProps {
   currentPicture?: string | null;
@@ -23,12 +29,6 @@ export function ProfilePictureUpload({
     currentPicture || null,
   );
   const isBusy = isLoading || isPending;
-
-  const sizeClasses = {
-    sm: 'w-16 h-16',
-    md: 'w-24 h-24',
-    lg: 'w-32 h-32',
-  };
 
   const handleFileSelect = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -129,14 +129,14 @@ export function ProfilePictureUpload({
         disabled={isBusy}
       />
 
-      <motion.button
+      <m.button
         type="button"
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         onClick={handleOpenFilePicker}
         disabled={isBusy}
         aria-label={previewPicture ? 'Change profile picture' : 'Upload profile picture'}
-        className={`relative ${sizeClasses[size]} rounded-full overflow-hidden border-2 border-dashed border-slate-300 hover:border-slate-400 flex items-center justify-center bg-slate-50 transition-all disabled:opacity-50`}
+        className={`relative ${PROFILE_PICTURE_SIZE_CLASSES[size]} rounded-full overflow-hidden border-2 border-dashed border-slate-300 hover:border-slate-400 flex items-center justify-center bg-slate-50 transition-all disabled:opacity-50`}
       >
         {previewPicture ? (
           <>
@@ -167,7 +167,7 @@ export function ProfilePictureUpload({
             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
           </div>
         )}
-      </motion.button>
+      </m.button>
     </div>
   );
 }

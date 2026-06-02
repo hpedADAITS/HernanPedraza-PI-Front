@@ -82,7 +82,6 @@ interface ParticipantJoinedPayload extends ParticipantEventPayload {
   nickname: string;
   profilePicture?: string | null;
   role?: string;
-  userId?: string | null;
   isPremium?: boolean;
 }
 
@@ -263,6 +262,8 @@ export function ConnectedUsers({
   const loading =
     usesPreviewUsers || usesPreviewParticipants ? false : state.loading;
   const selectedParticipantId = state.selectedParticipantId;
+  const djParticipantId = participantData?._id ?? participantData?.id ?? null;
+  const djUserId = djIdentityId;
 
   useEffect(() => {
     if (usesPreviewUsers || usesPreviewParticipants) {
@@ -299,6 +300,8 @@ export function ConnectedUsers({
     const socket = getSocket();
     if (socket) {
       const handleParticipantJoined = (data: ParticipantJoinedPayload) => {
+        if (!data.participantId) return;
+
         if (isDj && isDjParticipant(
           {
             _id: data.participantId,
@@ -389,8 +392,8 @@ export function ConnectedUsers({
     }
   }, [
     eventId,
-    djIdentityId,
-    isAttendee,
+    djParticipantId,
+    djUserId,
     isDj,
     usesPreviewParticipants,
     usesPreviewUsers,

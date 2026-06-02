@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 import { ThumbsUp, ThumbsDown, LogOut, Settings, Plus, Lock, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -8,6 +8,7 @@ import { songsAPI, votesAPI, eventsAPI, participantsAPI, clearToken } from '@/se
 import * as socket from '@/services/socket';
 import { disconnectSocket } from '@/services/socket';
 import { readStoredJson, removeStoredItem, writeStoredJson } from '@/utils/storage';
+import { useTrackedTimeout } from '@/hooks/useTrackedTimeout';
 import type { View } from '@/types';
 
 interface ActionButtonsProps {
@@ -28,6 +29,24 @@ interface QueueUpdatedPayload {
 const getErrorMessage = (err: unknown, fallback: string) =>
   err instanceof Error && err.message ? err.message : fallback;
 
+const isParticipantPasswordProtected = () => {
+  const participant = readStoredJson<{ passwordProtected?: boolean }>('currentParticipant');
+  return Boolean(participant?.passwordProtected);
+};
+
+const VOTE_BUTTON_COLORS = {
+  emerald: {
+    button:
+      'border-emerald-500 bg-emerald-600 text-white hover:border-emerald-600 hover:bg-emerald-700 focus-visible:ring-emerald-200',
+    icon: 'bg-white/15 group-hover:bg-white/20',
+  },
+  red: {
+    button:
+      'border-red-500 bg-red-600 text-white hover:border-red-600 hover:bg-red-700 focus-visible:ring-red-200',
+    icon: 'bg-white/15 group-hover:bg-white/20',
+  },
+};
+
 export function ActionButtons({
   mode,
   onNavigate,
@@ -37,22 +56,15 @@ export function ActionButtons({
   const isDj = mode === 'dj';
   const [isQueueHovered, setIsQueueHovered] = useState(false);
   const queueHoverTimeoutRef = useRef<number | null>(null);
+  const { clearTrackedTimeout, setTrackedTimeout } = useTrackedTimeout();
   const [passwordPrompt, setPasswordPrompt] = useState<{
     reason: 'leave' | 'duplicate-login';
     afterSave?: () => void;
   } | null>(null);
 
-  useEffect(() => {
-    return () => {
-      if (queueHoverTimeoutRef.current) {
-        window.clearTimeout(queueHoverTimeoutRef.current);
-      }
-    };
-  }, []);
-
   const handleQueueHoverChange = (nextHovered: boolean) => {
     if (queueHoverTimeoutRef.current) {
-      window.clearTimeout(queueHoverTimeoutRef.current);
+      clearTrackedTimeout(queueHoverTimeoutRef.current);
       queueHoverTimeoutRef.current = null;
     }
 
@@ -61,7 +73,7 @@ export function ActionButtons({
       return;
     }
 
-    queueHoverTimeoutRef.current = window.setTimeout(() => {
+    queueHoverTimeoutRef.current = setTrackedTimeout(() => {
       queueHoverTimeoutRef.current = null;
       setIsQueueHovered(true);
     }, 70);
@@ -89,11 +101,6 @@ export function ActionButtons({
       );
     };
   }, [isDj]);
-
-  const isParticipantPasswordProtected = () => {
-    const participant = readStoredJson<{ passwordProtected?: boolean }>('currentParticipant');
-    return Boolean(participant?.passwordProtected);
-  };
 
   const finishLeaveParty = async () => {
     if (isDj) {
@@ -493,23 +500,10 @@ function VoteButton({
   onClick,
   disabled,
 }: VoteButtonProps) {
-  const colors = {
-    emerald: {
-      button:
-        'border-emerald-500 bg-emerald-600 text-white hover:border-emerald-600 hover:bg-emerald-700 focus-visible:ring-emerald-200',
-      icon: 'bg-white/15 group-hover:bg-white/20',
-    },
-    red: {
-      button:
-        'border-red-500 bg-red-600 text-white hover:border-red-600 hover:bg-red-700 focus-visible:ring-red-200',
-      icon: 'bg-white/15 group-hover:bg-white/20',
-    },
-  };
-
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <motion.button
+        <m.button
           type="button"
           aria-label={label}
           whileHover={disabled ? undefined : { y: -1, scale: 1.01 }}
@@ -517,14 +511,14 @@ function VoteButton({
           onClick={onClick}
           disabled={disabled}
           transition={{ duration: ANIMATION_DURATION.fast }}
-          className={`group flex h-16 w-16 items-center justify-center rounded-full border shadow-[0_12px_28px_rgba(15,23,42,0.16)] outline-none transition-all focus-visible:ring-4 md:h-[72px] md:w-[72px] lg:h-14 lg:w-14 ${colors[color].button} ${disabled ? 'cursor-not-allowed opacity-45 grayscale' : ''}`}
+          className={`group flex h-16 w-16 items-center justify-center rounded-full border shadow-[0_12px_28px_rgba(15,23,42,0.16)] outline-none transition-all focus-visible:ring-4 md:h-[72px] md:w-[72px] lg:h-14 lg:w-14 ${VOTE_BUTTON_COLORS[color].button} ${disabled ? 'cursor-not-allowed opacity-45 grayscale' : ''}`}
         >
           <span
-            className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors md:h-12 md:w-12 lg:h-10 lg:w-10 ${colors[color].icon}`}
+            className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors md:h-12 md:w-12 lg:h-10 lg:w-10 ${VOTE_BUTTON_COLORS[color].icon}`}
           >
             <Icon size={28} strokeWidth={2.4} />
           </span>
-        </motion.button>
+        </m.button>
       </TooltipTrigger>
       <TooltipContent>{label}</TooltipContent>
     </Tooltip>
@@ -573,7 +567,7 @@ function ActionButton({
   if (collapsed) return null;
 
   return (
-    <motion.button
+    <m.button
       type="button"
       whileHover={{ y: -1 }}
       whileTap={{ scale: 0.99 }}
@@ -586,7 +580,7 @@ function ActionButton({
       className={`group relative flex h-[62px] w-16 will-change-[width,transform] items-center justify-center gap-0 overflow-hidden rounded-xl border px-0 font-sans outline-none transition-[width,transform,border-color] duration-100 ease-out focus-visible:ring-4 ${iconOnly ? '' : expandedWidth} ${styles[variant]}`}
     >
       {iconOnly ? (
-        <motion.span
+        <m.span
           className="flex-shrink-0"
           whileHover={{ rotate: 45 }}
           transition={{ duration: ANIMATION_DURATION.fast }}
@@ -596,7 +590,7 @@ function ActionButton({
             strokeWidth={2}
             aria-hidden="true"
           />
-        </motion.span>
+        </m.span>
       ) : (
         <Icon
           className="flex-shrink-0"
@@ -619,6 +613,6 @@ function ActionButton({
           </span>
         </span>
       )}
-    </motion.button>
+    </m.button>
   );
 }

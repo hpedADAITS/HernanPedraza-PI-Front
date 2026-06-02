@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import React, { useEffect, useRef, useState } from 'react';
+import { m, AnimatePresence } from 'motion/react';
 import { Mail, Check, Clock, AlertCircle, ArrowRight } from 'lucide-react';
 
 interface EmailConfirmationModalProps {
@@ -17,35 +17,40 @@ export function EmailConfirmationModal({
   onContinue,
   debugToken,
 }: EmailConfirmationModalProps) {
+  const wasOpen = useRef(isOpen);
   const [status, setStatus] = useState<'sending' | 'sent' | 'timeout'>('sending');
   const debugVerificationUrl = debugToken
     ? `${window.location.origin}/?verifyEmailToken=${encodeURIComponent(debugToken)}`
     : '';
 
-  useEffect(() => {
-    if (isOpen) {
-      setStatus('sending');
-      /* Simulate email sending with a timeout */
-      const timer = setTimeout(() => {
-        setStatus('sent');
-      }, 2000);
+  if (isOpen !== wasOpen.current) {
+    wasOpen.current = isOpen;
+    if (isOpen) setStatus('sending');
+  }
 
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen]);
+  useEffect(() => {
+    if (!isOpen || status !== 'sending') return;
+
+    /* Simulate email sending with a timeout */
+    const timer = setTimeout(() => {
+      setStatus('sent');
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [isOpen, status]);
 
 
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
         >
-          <motion.div
+          <m.div
             initial={{ scale: 0.98, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.98, opacity: 0 }}
@@ -54,31 +59,31 @@ export function EmailConfirmationModal({
             {/* Header Icon */}
             <div className="flex justify-center mb-6">
             {status === 'sending' ? (
-              <motion.div
+              <m.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
                 className="p-3 bg-blue-100 rounded-full"
               >
                 <Clock size={24} className="text-blue-600" />
-              </motion.div>
+              </m.div>
             ) : status === 'sent' ? (
-              <motion.div
+              <m.div
                 initial={{ scale: 0.98, opacity: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', stiffness: 260, damping: 32 }}
                 className="p-3 bg-green-100 rounded-full"
               >
                 <Check size={24} className="text-green-600" />
-              </motion.div>
+              </m.div>
             ) : (
-              <motion.div
+              <m.div
                 initial={{ scale: 0.98, opacity: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', stiffness: 260, damping: 32 }}
                 className="p-3 bg-yellow-100 rounded-full"
               >
                 <AlertCircle size={24} className="text-yellow-600" />
-                </motion.div>
+                </m.div>
               )}
             </div>
 
@@ -99,7 +104,7 @@ export function EmailConfirmationModal({
             </p>
 
             {/* Email Display */}
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
@@ -116,11 +121,11 @@ export function EmailConfirmationModal({
                   </p>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
 
             {/* Info Box */}
              {status === 'sent' && (
-               <motion.div
+               <m.div
                  initial={{ opacity: 0 }}
                  animate={{ opacity: 1 }}
                  transition={{ delay: 0.4 }}
@@ -156,18 +161,18 @@ export function EmailConfirmationModal({
                      <li>✓ You'll be redirected back to complete event setup</li>
                    </ul>
                  )}
-               </motion.div>
+               </m.div>
              )}
 
             {/* Loading Indicator */}
             {status === 'sending' && (
-              <motion.div
+              <m.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className="flex justify-center gap-1 mb-6"
               >
                 {['left', 'center', 'right'].map((dot, i) => (
-                  <motion.div
+                  <m.div
                     key={dot}
                     animate={{ opacity: [0.3, 1, 0.3] }}
                     transition={{
@@ -178,13 +183,13 @@ export function EmailConfirmationModal({
                     className="w-2 h-2 bg-blue-600 rounded-full"
                   />
                 ))}
-              </motion.div>
+              </m.div>
             )}
 
 
 
             {/* Footer Message */}
-            <motion.p
+            <m.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
@@ -193,9 +198,9 @@ export function EmailConfirmationModal({
               {status === 'sending'
                 ? 'This should only take a moment…'
                 : `Hi ${displayName}, we'll see you in a moment!`}
-            </motion.p>
-          </motion.div>
-        </motion.div>
+            </m.p>
+          </m.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

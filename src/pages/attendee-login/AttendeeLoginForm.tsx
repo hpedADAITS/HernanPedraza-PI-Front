@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import { User, Ticket, ArrowRight, QrCode, Lock } from 'lucide-react';
 import { AttendeeLoginState } from './useAttendeeLoginController';
 
@@ -14,7 +14,7 @@ interface AttendeeLoginFormProps {
 
 function SubmitButton({ loading, label }: { loading: boolean; label: string }) {
   return (
-    <motion.button
+    <m.button
       type="submit"
       whileTap={{ scale: loading ? 1 : 0.99 }}
       disabled={loading}
@@ -35,7 +35,7 @@ function SubmitButton({ loading, label }: { loading: boolean; label: string }) {
           />
         </>
       )}
-    </motion.button>
+    </m.button>
   );
 }
 
@@ -51,7 +51,7 @@ export function AttendeeLoginForm({
   return (
     <AnimatePresence mode="wait" initial={false}>
       {!isAccessCodeVerified ? (
-        <motion.div
+        <m.div
           key="access-code-step"
           initial={{ x: -36, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -127,9 +127,9 @@ export function AttendeeLoginForm({
           <div className="mt-6">
             <SubmitButton loading={loading} label="Continue" />
           </div>
-        </motion.div>
+        </m.div>
       ) : (
-        <motion.div
+        <m.div
           key="password-step"
           initial={{ x: 48, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -162,7 +162,7 @@ export function AttendeeLoginForm({
           </div>
 
           <SubmitButton loading={loading} label="Join event" />
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

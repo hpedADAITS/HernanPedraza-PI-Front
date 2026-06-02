@@ -110,14 +110,12 @@ export function useAssetCache(
   useEffect(() => {
     loadAttemptRef.current += 1;
     loadAsset();
+    const abortController = abortControllerRef.current;
 
     return () => {
-      /* Cancel in-flight requests */
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
+      abortController?.abort();
     };
-  }, [assetUrl, loadAsset]);
+  }, [loadAsset]);
 
   const refetch = useCallback(async () => {
     cacheManager.delete(cacheKey);

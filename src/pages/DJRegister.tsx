@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 import { User, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { authAPI, eventsAPI } from '@/services/api';
@@ -220,7 +220,7 @@ export function DJRegister({
       }}
     >
       {/* Top-left back chip */}
-      <motion.button
+      <m.button
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.05, duration: 0.3 }}
@@ -231,11 +231,11 @@ export function DJRegister({
       >
         <ArrowLeft size={14} strokeWidth={2.25} />
         Back
-      </motion.button>
+      </m.button>
 
       {/* Main */}
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center gap-6 px-5 py-10 sm:gap-8 sm:py-14">
-        <motion.div
+        <m.div
           initial={{ y: -12, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
@@ -246,9 +246,9 @@ export function DJRegister({
             alt="SyncRequest"
             className="h-28 w-auto max-w-[86vw] object-contain sm:h-32 md:h-40 lg:h-44"
           />
-        </motion.div>
+        </m.div>
 
-        <motion.form
+        <m.form
           onSubmit={handleRegister}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -393,7 +393,7 @@ export function DJRegister({
           </div>
 
           {/* Submit */}
-          <motion.button
+          <m.button
             type="submit"
             whileTap={{ scale: loading ? 1 : 0.99 }}
             disabled={loading}
@@ -414,7 +414,7 @@ export function DJRegister({
                 />
               </>
             )}
-          </motion.button>
+          </m.button>
 
           {/* Hairline divider */}
           <div className="mt-7 pt-5 border-t border-slate-100">
@@ -429,7 +429,7 @@ export function DJRegister({
               </button>
             </p>
           </div>
-        </motion.form>
+        </m.form>
       </div>
 
       {/* Email Confirmation Modal */}

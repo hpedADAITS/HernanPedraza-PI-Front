@@ -1,5 +1,5 @@
-import React, { useEffect, useReducer, useRef, useState } from 'react';
-import { motion } from 'motion/react';
+import React, { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { m } from 'motion/react';
 import { NowPlaying } from '@/components/common';
 import { NOW_PLAYING } from '@/constants/dashboard';
 import { SCALE_IN } from '@/constants/animations';
@@ -8,6 +8,7 @@ import { normalizeNowPlaying, normalizeQueueUpdated, normalizeSocketSong } from 
 import { songsAPI } from '@/services/api';
 import { listenDebugSongEvents } from '@/utils/debugSongEvents';
 import { getStoredEventId } from '@/services/session';
+import { useTrackedTimeout } from '@/hooks/useTrackedTimeout';
 import type { Song } from '@/types/songs';
 import type { NowPlayingEventPayload, QueueUpdatedPayload, SongEventPayload } from '@/services/socket/contracts';
 
@@ -229,29 +230,32 @@ export function NowPlayingSection() {
   });
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const tempStatusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
+  const tempStatusTimeoutRef = useRef<number | null>(null);
+  const { clearTrackedTimeout, setTrackedTimeout } = useTrackedTimeout();
   const eventId = getStoredEventId();
 
-  const showTemporaryStatus = (
-    payload: SongEventPayload,
-    status: 'rejected' | 'skipped',
-    fallbackArtist: string,
-  ) => {
-    if (tempStatusTimeoutRef.current) {
-      clearTimeout(tempStatusTimeoutRef.current);
-    }
-    dispatch({
-      type: 'song_status',
-      payload,
-      status,
-      fallbackArtist,
-    });
-    tempStatusTimeoutRef.current = setTimeout(() => {
-      dispatch({ type: 'clear_temp_status' });
-    }, 2000);
-  };
+  const showTemporaryStatus = useCallback(
+    (
+      payload: SongEventPayload,
+      status: 'rejected' | 'skipped',
+      fallbackArtist: string,
+    ) => {
+      if (tempStatusTimeoutRef.current) {
+        clearTrackedTimeout(tempStatusTimeoutRef.current);
+      }
+      dispatch({
+        type: 'song_status',
+        payload,
+        status,
+        fallbackArtist,
+      });
+      tempStatusTimeoutRef.current = setTrackedTimeout(() => {
+        dispatch({ type: 'clear_temp_status' });
+        tempStatusTimeoutRef.current = null;
+      }, 2000);
+    },
+    [clearTrackedTimeout, setTrackedTimeout],
+  );
 
   /* Tick every second so progress/elapsed advance smoothly */
   useEffect(() => {
@@ -272,14 +276,6 @@ export function NowPlayingSection() {
     setElapsedSeconds(0);
     return undefined;
   }, [state.nowPlaying?.id, state.nowPlaying?.status, state.nowPlaying?.startedAt]);
-
-  useEffect(() => {
-    return () => {
-      if (tempStatusTimeoutRef.current) {
-        clearTimeout(tempStatusTimeoutRef.current);
-      }
-    };
-  }, []);
 
   useEffect(() => {
     if (!eventId) return;
@@ -367,7 +363,7 @@ export function NowPlayingSection() {
       off('queue_updated', handleQueueUpdated);
       stopDebugEvents();
     };
-  }, [eventId]);
+  }, [eventId, showTemporaryStatus]);
 
   /* Compute live elapsed/progress when playing */
   const queuedPreview = sortQueueSongs(state.queue).find(
@@ -396,12 +392,12 @@ export function NowPlayingSection() {
   }
 
   return (
-    <motion.div
+    <m.div
       {...SCALE_IN}
       transition={{ ...SCALE_IN.transition, delay: 0.25 }}
       className="flex w-full items-center justify-center"
     >
-      <motion.div
+      <m.div
         className="w-full"
         key={`${display.id}-${display.status}`}
         initial={{ opacity: 0, scale: 0.98 }}
@@ -449,7 +445,7 @@ export function NowPlayingSection() {
           attentionKey={state.attentionKey}
           celebrateKey={state.celebrateKey}
         />
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 }

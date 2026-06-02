@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 import { AlertCircle, Check, Copy, Mic, MicOff, Search, Smartphone } from 'lucide-react';
 import { SLIDE_UP } from '@/constants/animations';
 import { useMicrophone } from '@/hooks/useMicrophone';
+import { useTrackedTimeout } from '@/hooks/useTrackedTimeout';
 import { eventsAPI } from '@/services/api';
 import { off, onPhoneMicrophoneConnected } from '@/services/socket';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -26,6 +27,7 @@ export function SearchBar({
   const [connectedMicrophoneName, setConnectedMicrophoneName] = useState('');
   const [isLinkCopied, setIsLinkCopied] = useState(false);
   const connectedMicrophoneTimeoutRef = useRef<number | null>(null);
+  const { clearTrackedTimeout, setTrackedTimeout } = useTrackedTimeout();
   const {
     isListening,
     isAccessDenied,
@@ -83,13 +85,13 @@ export function SearchBar({
 
   const closeMicrophoneDialog = useCallback(() => {
     if (connectedMicrophoneTimeoutRef.current) {
-      window.clearTimeout(connectedMicrophoneTimeoutRef.current);
+      clearTrackedTimeout(connectedMicrophoneTimeoutRef.current);
       connectedMicrophoneTimeoutRef.current = null;
     }
 
     setConnectedMicrophoneName('');
     dismissMicrophoneIssue();
-  }, [dismissMicrophoneIssue]);
+  }, [clearTrackedTimeout, dismissMicrophoneIssue]);
 
   useEffect(() => {
     if (isAccessDenied) {
@@ -113,10 +115,10 @@ export function SearchBar({
       dismissMicrophoneIssue();
 
       if (connectedMicrophoneTimeoutRef.current) {
-        window.clearTimeout(connectedMicrophoneTimeoutRef.current);
+        clearTrackedTimeout(connectedMicrophoneTimeoutRef.current);
       }
 
-      connectedMicrophoneTimeoutRef.current = window.setTimeout(() => {
+      connectedMicrophoneTimeoutRef.current = setTrackedTimeout(() => {
         setConnectedMicrophoneName('');
         connectedMicrophoneTimeoutRef.current = null;
       }, 1200);
@@ -127,15 +129,13 @@ export function SearchBar({
     return () => {
       off('phone_microphone_connected', handlePhoneMicrophoneConnected);
     };
-  }, [dismissMicrophoneIssue, eventId, isDj]);
-
-  useEffect(() => {
-    return () => {
-      if (connectedMicrophoneTimeoutRef.current) {
-        window.clearTimeout(connectedMicrophoneTimeoutRef.current);
-      }
-    };
-  }, []);
+  }, [
+    clearTrackedTimeout,
+    dismissMicrophoneIssue,
+    eventId,
+    isDj,
+    setTrackedTimeout,
+  ]);
 
   const isMicrophoneDialogOpen = isAccessDenied || Boolean(connectedMicrophoneName);
   const isMicrophoneConnected = Boolean(connectedMicrophoneName);
@@ -213,7 +213,7 @@ export function SearchBar({
         </p>
 
         <div className="flex items-center gap-3 sm:gap-5">
-          <motion.label
+          <m.label
             layoutId="search-bar"
             {...SLIDE_UP}
             transition={{ ...SLIDE_UP.transition, delay: 0.2 }}
@@ -242,7 +242,7 @@ export function SearchBar({
                   : 'text-[#14213f] placeholder:text-[#8b9ab4]'
               }`}
             />
-          </motion.label>
+          </m.label>
 
           {isDj && (
             <button
