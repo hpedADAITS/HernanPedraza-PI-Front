@@ -48,6 +48,7 @@ export function initSocket(token?: string) {
   }
 
   socket = io(SOCKET_URL, {
+    transports: ['websocket'],
     auth: {
       token: authToken,
     },
