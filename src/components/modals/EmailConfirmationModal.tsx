@@ -1,12 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { m, AnimatePresence } from 'motion/react';
-import { Mail, Check, Clock, AlertCircle, ArrowRight } from 'lucide-react';
+import { Mail, Check, Clock } from 'lucide-react';
 
 interface EmailConfirmationModalProps {
   isOpen: boolean;
   email: string;
   displayName: string;
-  onContinue: () => void;
   debugToken?: string;
 }
 
@@ -14,32 +13,19 @@ export function EmailConfirmationModal({
   isOpen,
   email,
   displayName,
-  onContinue,
   debugToken,
 }: EmailConfirmationModalProps) {
-  const wasOpen = useRef(isOpen);
-  const [status, setStatus] = useState<'sending' | 'sent' | 'timeout'>('sending');
+  const [status, setStatus] = useState<'sending' | 'sent'>('sending');
   const debugVerificationUrl = debugToken
     ? `${window.location.origin}/?verifyEmailToken=${encodeURIComponent(debugToken)}`
     : '';
 
-  if (isOpen !== wasOpen.current) {
-    wasOpen.current = isOpen;
-    if (isOpen) setStatus('sending');
-  }
-
   useEffect(() => {
-    if (!isOpen || status !== 'sending') return;
-
-    /* Simulate email sending with a timeout */
-    const timer = setTimeout(() => {
-      setStatus('sent');
-    }, 2000);
-
+    if (!isOpen) return;
+    setStatus('sending');
+    const timer = setTimeout(() => setStatus('sent'), 2000);
     return () => clearTimeout(timer);
-  }, [isOpen, status]);
-
-
+  }, [isOpen]);
 
   return (
     <AnimatePresence>
@@ -56,54 +42,36 @@ export function EmailConfirmationModal({
             exit={{ scale: 0.98, opacity: 0 }}
             className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl p-8 max-w-md w-full mx-4 border border-slate-200"
           >
-            {/* Header Icon */}
             <div className="flex justify-center mb-6">
-            {status === 'sending' ? (
-              <m.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                className="p-3 bg-blue-100 rounded-full"
-              >
-                <Clock size={24} className="text-blue-600" />
-              </m.div>
-            ) : status === 'sent' ? (
-              <m.div
-                initial={{ scale: 0.98, opacity: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring', stiffness: 260, damping: 32 }}
-                className="p-3 bg-green-100 rounded-full"
-              >
-                <Check size={24} className="text-green-600" />
-              </m.div>
-            ) : (
-              <m.div
-                initial={{ scale: 0.98, opacity: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring', stiffness: 260, damping: 32 }}
-                className="p-3 bg-yellow-100 rounded-full"
-              >
-                <AlertCircle size={24} className="text-yellow-600" />
+              {status === 'sending' ? (
+                <m.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                  className="p-3 bg-blue-100 rounded-full"
+                >
+                  <Clock size={24} className="text-blue-600" />
+                </m.div>
+              ) : (
+                <m.div
+                  initial={{ scale: 0.98, opacity: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 260, damping: 32 }}
+                  className="p-3 bg-green-100 rounded-full"
+                >
+                  <Check size={24} className="text-green-600" />
                 </m.div>
               )}
             </div>
 
-            {/* Title & Description */}
-              <h2 className="text-2xl font-semibold text-slate-900 text-center mb-2">
-                {status === 'sending'
-                  ? 'Sending Welcome Email'
-                  : status === 'sent'
-                  ? 'Email Sent!'
-                  : 'Email Delivery'}
+            <h2 className="text-2xl font-semibold text-slate-900 text-center mb-2">
+              {status === 'sending' ? 'Sending Welcome Email' : 'Email Sent!'}
             </h2>
             <p className="text-slate-600 text-center text-sm mb-6">
               {status === 'sending'
                 ? `We're sending a welcome message to ${email}`
-                : status === 'sent'
-                  ? `Welcome email sent to ${email}! Check your inbox for important information.`
-                  : 'We had trouble sending the email, but your account is ready to use.'}
+                : `Welcome email sent to ${email}! Check your inbox for important information.`}
             </p>
 
-            {/* Email Display */}
             <m.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -123,48 +91,46 @@ export function EmailConfirmationModal({
               </div>
             </m.div>
 
-            {/* Info Box */}
-             {status === 'sent' && (
-               <m.div
-                 initial={{ opacity: 0 }}
-                 animate={{ opacity: 1 }}
-                 transition={{ delay: 0.4 }}
-                 className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6"
-               >
-                 <h3 className="font-semibold text-blue-900 mb-2">What's Next?</h3>
-                 {debugToken ? (
-                   <div className="text-sm text-blue-800">
-                     <p className="mb-3">🐛 Debug Mode: Verification URL</p>
-                     <button
-                       type="button"
-                       onClick={async () => {
-                         try {
-                           await navigator.clipboard.writeText(
-                             debugVerificationUrl,
-                           );
-                           alert('URL copied to clipboard!');
-                         } catch (err) {
-                           console.error('Failed to copy:', err);
-                           alert('Failed to copy URL');
-                         }
-                       }}
-                       className="block w-full bg-white p-2 rounded border border-blue-300 break-all text-left text-xs font-mono mb-2 cursor-pointer hover:bg-blue-100"
-                     >
-                       <code>{debugVerificationUrl}</code>
-                     </button>
-                     <p className="text-xs text-blue-700">Click to copy and paste in browser</p>
-                   </div>
-                 ) : (
-                   <ul className="text-sm text-blue-800 space-y-1">
-                     <li>✓ Check your email inbox</li>
-                     <li>✓ Click the "Verify Email & Continue" button in the email</li>
-                     <li>✓ You'll be redirected back to complete event setup</li>
-                   </ul>
-                 )}
-               </m.div>
-             )}
+            {status === 'sent' && (
+              <m.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6"
+              >
+                <h3 className="font-semibold text-blue-900 mb-2">What's Next?</h3>
+                {debugToken ? (
+                  <div className="text-sm text-blue-800">
+                    <p className="mb-3">🐛 Debug Mode: Verification URL</p>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(
+                            debugVerificationUrl,
+                          );
+                          alert('URL copied to clipboard!');
+                        } catch (err) {
+                          console.error('Failed to copy:', err);
+                          alert('Failed to copy URL');
+                        }
+                      }}
+                      className="block w-full bg-white p-2 rounded border border-blue-300 break-all text-left text-xs font-mono mb-2 cursor-pointer hover:bg-blue-100"
+                    >
+                      <code>{debugVerificationUrl}</code>
+                    </button>
+                    <p className="text-xs text-blue-700">Click to copy and paste in browser</p>
+                  </div>
+                ) : (
+                  <ul className="text-sm text-blue-800 space-y-1">
+                    <li>✓ Check your email inbox</li>
+                    <li>✓ Click the "Verify Email & Continue" button in the email</li>
+                    <li>✓ You'll be redirected back to complete event setup</li>
+                  </ul>
+                )}
+              </m.div>
+            )}
 
-            {/* Loading Indicator */}
             {status === 'sending' && (
               <m.div
                 initial={{ opacity: 0 }}
@@ -186,9 +152,6 @@ export function EmailConfirmationModal({
               </m.div>
             )}
 
-
-
-            {/* Footer Message */}
             <m.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

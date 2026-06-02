@@ -437,10 +437,6 @@ export function DJRegister({
          isOpen={showEmailModal}
          email={email}
          displayName={displayName}
-       onContinue={() => {
-         /* This is now only used for error recovery */
-         /* Normal flow: email link verification auto-proceeds */
-       }}
        debugToken={debugToken}
       />
 
