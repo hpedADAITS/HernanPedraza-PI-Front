@@ -6,6 +6,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useDarkMode } from '@/hooks/useDarkMode';
 import { getStoredEventId, getStoredParticipantId } from '@/services/session';
 import type { NavigateToView } from '@/types';
+import { DjRequestReviewDialog } from '@/features/song-selection/DjRequestReviewDialog';
 import { AttendeeSongSuggestView } from '@/features/song-selection/AttendeeSongSuggestView';
 import { DjSongCard } from '@/features/song-selection/DjSongCard';
 import { RecognitionTrackUploadDialog } from '@/features/song-selection/RecognitionTrackUploadDialog';
@@ -29,11 +30,13 @@ export function SongSelection({ mode, onNavigate }: Props) {
   }, [isDj, onNavigate]);
 
   const {
+    closeReviewSong,
     filteredSongs,
     handleApprove,
     handleReject,
     loading,
     processingSongId,
+    reviewSong,
     searchTerm,
     setSearchTerm,
   } = usePendingSongs(eventId, isDj);
@@ -123,6 +126,13 @@ export function SongSelection({ mode, onNavigate }: Props) {
               eventId={eventId}
               open={recognitionUploadOpen}
               onClose={() => setRecognitionUploadOpen(false)}
+            />
+            <DjRequestReviewDialog
+              isProcessing={!!reviewSong && processingSongId === reviewSong._id}
+              onApprove={() => reviewSong ? handleApprove(reviewSong._id) : Promise.resolve(false)}
+              onClose={closeReviewSong}
+              onReject={() => reviewSong ? handleReject(reviewSong._id) : Promise.resolve(false)}
+              song={reviewSong}
             />
 
             {loading ? (

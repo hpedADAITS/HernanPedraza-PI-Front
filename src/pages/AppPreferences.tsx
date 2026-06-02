@@ -4,6 +4,7 @@ import { Music2, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { SettingsChoiceRow, SettingsDialog, SettingsDialogActions, SettingsDialogButton, SettingsGrid, SettingsOptionCard, SettingsPageShell, SettingsToggleRow } from '@/components/settings/SettingsUI';
 import { writeSettingJson, writeSettingString } from '@/features/settings/storage';
+import { t } from '@/i18n';
 import type { NavigateToView } from '@/types';
 
 interface Props {
@@ -33,31 +34,31 @@ export function AppPreferences({ mode, onNavigate }: Props) {
 
   const handleMediaQualitySave = () => {
     writeSettingString('mediaQuality', mediaQuality);
-    toast.success(`Media quality set to ${mediaQuality}`);
+    toast.success(t('Media quality set to {quality}', { quality: t(mediaQuality) }));
     setShowMediaQuality(false);
   };
 
   const handleSocialSettingsSave = () => {
     writeSettingJson('allowNotifications', allowNotifications);
     writeSettingJson('allowSharing', allowSharing);
-    toast.success('Social settings updated');
+    toast.success(t('Social settings updated'));
     setShowSocialSettings(false);
   };
 
   return (
     <Layout theme="blue" className="p-6 md:p-12 items-center" showNav={true}>
       <SettingsPageShell
-        title="App Settings"
+        title={t('App Settings')}
         onBack={() =>
           onNavigate(mode === 'dj' ? 'dj-settings' : 'attendee-settings')
         }
-        backLabel="Cancel"
+        backLabel={t('Cancel')}
       >
         <SettingsGrid className="mt-32 md:mt-36">
           {APP_SETTINGS_OPTIONS.map((option) => (
             <SettingsOptionCard
               key={option.label}
-              label={option.label}
+              label={t(option.label)}
               icon={option.icon}
               onClick={() => {
                 if (option.onClickKey === 'mediaQuality') {
@@ -73,7 +74,7 @@ export function AppPreferences({ mode, onNavigate }: Props) {
 
       <SettingsDialog
         open={showMediaQuality}
-        title="Media Quality"
+        title={t('Media Quality')}
         onClose={() => setShowMediaQuality(false)}
       >
         <div className="mb-6 flex flex-col gap-2">
@@ -83,49 +84,49 @@ export function AppPreferences({ mode, onNavigate }: Props) {
               selected={mediaQuality === quality}
               onClick={() => setMediaQuality(quality)}
             >
-              <span className="capitalize">{quality}</span>
+              <span className="capitalize">{t(quality)}</span>
             </SettingsChoiceRow>
           ))}
         </div>
         <SettingsDialogActions>
           <SettingsDialogButton onClick={() => setShowMediaQuality(false)}>
-            Cancel
+            {t('Cancel')}
           </SettingsDialogButton>
           <SettingsDialogButton
             onClick={handleMediaQualitySave}
             variant="primary"
           >
-            Save
+            {t('Save')}
           </SettingsDialogButton>
         </SettingsDialogActions>
       </SettingsDialog>
 
       <SettingsDialog
         open={showSocialSettings}
-        title="Social Settings"
+        title={t('Social Settings')}
         onClose={() => setShowSocialSettings(false)}
       >
         <div className="mb-6 flex flex-col gap-3">
           <SettingsToggleRow
-            label="Allow notifications"
+            label={t('Allow notifications')}
             checked={allowNotifications}
             onChange={() => setAllowNotifications((value) => !value)}
           />
           <SettingsToggleRow
-            label="Allow sharing"
+            label={t('Allow sharing')}
             checked={allowSharing}
             onChange={() => setAllowSharing((value) => !value)}
           />
         </div>
         <SettingsDialogActions>
           <SettingsDialogButton onClick={() => setShowSocialSettings(false)}>
-            Cancel
+            {t('Cancel')}
           </SettingsDialogButton>
           <SettingsDialogButton
             onClick={handleSocialSettingsSave}
             variant="primary"
           >
-            Save
+            {t('Save')}
           </SettingsDialogButton>
         </SettingsDialogActions>
       </SettingsDialog>

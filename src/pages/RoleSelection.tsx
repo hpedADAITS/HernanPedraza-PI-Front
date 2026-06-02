@@ -6,6 +6,7 @@ import { User, Headphones } from 'lucide-react';
 import { useDarkMode } from '@/hooks/useDarkMode';
 import logoNormal from '@/assets/logo_normal.png';
 import logoWhite from '@/assets/logo_white.png';
+import { t } from '@/i18n';
 import type { NavigateToView } from '@/types';
 
 interface Props {
@@ -122,7 +123,7 @@ export function RoleSelection({
             <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-150" />
 
             <div className="relative h-full flex flex-col items-center justify-center gap-8 p-6 text-white">
-              <h2 className="text-3xl font-normal tracking-wide">Attendee</h2>
+              <h2 className="text-3xl font-normal tracking-wide">{t('Attendee')}</h2>
               <div className="w-32 h-32 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm shadow-inner border border-white/30">
                 <User
                   size={80}

@@ -1,6 +1,7 @@
 import { m, AnimatePresence } from 'motion/react';
 import { Camera, X } from 'lucide-react';
 import { RefObject } from 'react';
+import { t } from '@/i18n';
 
 interface QRScannerModalProps {
   open: boolean;
@@ -38,13 +39,13 @@ export function QRScannerModal({
               <div className="flex items-center gap-2.5">
                 <Camera size={16} className="text-slate-700" />
                 <h2 className="text-[14px] font-semibold tracking-tight text-slate-900">
-                  Scan event QR
+                  {t('Scan event QR')}
                 </h2>
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                aria-label="Close"
+                aria-label={t('Close')}
                 className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
               >
                 <X size={16} strokeWidth={2.25} />
@@ -57,10 +58,10 @@ export function QRScannerModal({
                   ref={videoRef}
                   autoPlay
                   playsInline
-                  aria-label="Live QR code scanner preview"
+                  aria-label={t('Live QR code scanner preview')}
                   className="w-full h-full object-cover"
                 >
-                  <track kind="captions" label="No audio captions available" />
+                  <track kind="captions" label={t('No audio captions available')} />
                 </video>
                 <canvas ref={canvasRef} style={{ display: 'none' }} />
 
@@ -73,7 +74,7 @@ export function QRScannerModal({
               </div>
 
               <p className="text-[12.5px] text-slate-500 leading-relaxed text-center">
-                Position the QR code within the frame. Make sure it's well-lit and clearly visible.
+                {t("Position the QR code within the frame. Make sure it's well-lit and clearly visible.")}
               </p>
             </div>
 
@@ -83,7 +84,7 @@ export function QRScannerModal({
                 onClick={onClose}
                 className="w-full h-10 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-900 text-[13.5px] font-medium transition-colors"
               >
-                Cancel
+                {t('Cancel')}
               </button>
             </div>
           </m.div>

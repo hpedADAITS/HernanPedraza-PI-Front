@@ -1,6 +1,7 @@
 import { m, AnimatePresence } from 'motion/react';
 import { User, Ticket, ArrowRight, QrCode, Lock } from 'lucide-react';
 import { AttendeeLoginState } from './useAttendeeLoginController';
+import { t } from '@/i18n';
 
 interface AttendeeLoginFormProps {
   state: AttendeeLoginState;
@@ -23,7 +24,7 @@ function SubmitButton({ loading, label }: { loading: boolean; label: string }) {
       {loading ? (
         <>
           <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-          {label === 'Continue' ? 'Checking...' : 'Joining...'}
+          {label === t('Continue') ? t('Checking...') : t('Joining...')}
         </>
       ) : (
         <>
@@ -59,10 +60,10 @@ export function AttendeeLoginForm({
           transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
         >
           <h1 className="text-[26px] leading-[1.15] font-semibold tracking-[-0.015em] text-slate-900">
-            Join the event
+            {t('Join the event')}
           </h1>
           <p className="mt-2 text-[14px] leading-relaxed text-slate-500">
-            Enter the event code to start sending song requests.
+            {t('Enter the event code to start sending song requests.')}
           </p>
 
           <div className="mt-7 space-y-6">
@@ -71,7 +72,7 @@ export function AttendeeLoginForm({
                 htmlFor="att-nickname"
                 className="block text-[12px] font-medium text-slate-700 mb-1.5"
               >
-                Nickname
+                {t('Nickname')}
               </label>
               <div className="group relative flex items-stretch h-11 rounded-lg bg-white ring-1 ring-inset ring-slate-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-900 focus-within:shadow-[0_0_0_4px_rgba(5,150,105,0.22)] transition-shadow duration-150">
                 <div className="flex items-center justify-center w-11 text-slate-400 group-focus-within:text-slate-900 border-r border-slate-200 transition-colors">
@@ -80,8 +81,8 @@ export function AttendeeLoginForm({
                 <input
                   id="att-nickname"
                   type="text"
-                  aria-label="Nickname"
-                  placeholder="Pick a name to display"
+                  aria-label={t('Nickname')}
+                  placeholder={t('Pick a name to display')}
                   value={state.nickname}
                   onChange={(event) => onNicknameChange(event.target.value)}
                   required
@@ -95,7 +96,7 @@ export function AttendeeLoginForm({
                 htmlFor="att-code"
                 className="block text-[12px] font-medium text-slate-700 mb-1.5"
               >
-                Access Code
+                {t('Access Code')}
               </label>
               <div className="group relative flex items-stretch h-11 rounded-lg bg-white ring-1 ring-inset ring-slate-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-900 focus-within:shadow-[0_0_0_4px_rgba(5,150,105,0.22)] transition-shadow duration-150">
                 <div className="flex items-center justify-center w-11 text-slate-400 group-focus-within:text-slate-900 border-r border-slate-200 transition-colors">
@@ -104,8 +105,8 @@ export function AttendeeLoginForm({
                 <input
                   id="att-code"
                   type="text"
-                  aria-label="Access code"
-                  placeholder="Scan QR or enter code"
+                  aria-label={t('Access code')}
+                  placeholder={t('Scan QR or enter code')}
                   value={state.eventCode}
                   onChange={(event) => onEventCodeChange(event.target.value)}
                   required
@@ -114,8 +115,8 @@ export function AttendeeLoginForm({
                 <button
                   type="button"
                   onClick={onOpenScanner}
-                  aria-label="Scan QR code"
-                  title="Scan QR code"
+                  aria-label={t('Scan QR code')}
+                  title={t('Scan QR code')}
                   className="flex items-center justify-center w-11 text-slate-400 hover:text-slate-700 border-l border-slate-200 transition-colors"
                 >
                   <QrCode size={16} strokeWidth={2} />
@@ -125,7 +126,7 @@ export function AttendeeLoginForm({
           </div>
 
           <div className="mt-6">
-            <SubmitButton loading={loading} label="Continue" />
+            <SubmitButton loading={loading} label={t('Continue')} />
           </div>
         </m.div>
       ) : (
@@ -142,7 +143,7 @@ export function AttendeeLoginForm({
               htmlFor="att-password"
               className="block text-[12px] font-medium text-slate-700 mb-1.5"
             >
-              Name password
+              {t('Name password')}
             </label>
             <div className="group relative flex items-stretch h-11 rounded-lg bg-white ring-1 ring-inset ring-slate-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-900 focus-within:shadow-[0_0_0_4px_rgba(5,150,105,0.22)] transition-shadow duration-150">
               <div className="flex items-center justify-center w-11 text-slate-400 group-focus-within:text-slate-900 border-r border-slate-200 transition-colors">
@@ -151,8 +152,8 @@ export function AttendeeLoginForm({
               <input
                 id="att-password"
                 type="password"
-                aria-label="Name password"
-                placeholder="Only if you protected this name"
+                aria-label={t('Name password')}
+                placeholder={t('Only if you protected this name')}
                 value={state.nicknamePassword}
                 onChange={(event) => onNicknamePasswordChange(event.target.value)}
                 autoComplete="current-password"
@@ -161,7 +162,7 @@ export function AttendeeLoginForm({
             </div>
           </div>
 
-          <SubmitButton loading={loading} label="Join event" />
+          <SubmitButton loading={loading} label={t('Join event')} />
         </m.div>
       )}
     </AnimatePresence>

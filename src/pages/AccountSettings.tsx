@@ -9,6 +9,7 @@ import { SettingsChoiceRow, SettingsDialog, SettingsDialogActions, SettingsDialo
 import { readSettingJson, readSettingString, writeSettingJson, writeSettingString } from '@/features/settings/storage';
 import { readStoredJson, writeStoredJson } from '@/utils/storage';
 import { isDebugModeEnabled } from '@/utils/debugMode';
+import { t } from '@/i18n';
 import type { NavigateToView } from '@/types';
 
 interface Props {
@@ -38,13 +39,13 @@ const DEFAULT_SOCIAL_PREFS: SocialPrefs = {
 };
 
 const SETTINGS_ITEMS = [
-  'Profile Picture',
-  'Display Name Visibility',
-  'Media Quality',
-  'Social Settings',
-  'Debug / Diagnostics',
-  'Sign Out',
-];
+  { id: 'profilePicture', label: 'Profile Picture' },
+  { id: 'displayName', label: 'Display Name Visibility' },
+  { id: 'mediaQuality', label: 'Media Quality' },
+  { id: 'socialSettings', label: 'Social Settings' },
+  { id: 'debug', label: 'Debug / Diagnostics' },
+  { id: 'signOut', label: 'Sign Out' },
+] as const;
 
 export function AccountSettings({ mode, onNavigate }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -82,7 +83,7 @@ export function AccountSettings({ mode, onNavigate }: Props) {
   const handleSelectMediaQuality = (value: MediaQuality) => {
     setMediaQuality(value);
     writeSettingString('mediaQuality', value);
-    toast.success(`Media quality set to ${value}`);
+    toast.success(t('Media quality set to {quality}', { quality: t(value) }));
     setShowMediaQualityModal(false);
   };
 
@@ -102,7 +103,7 @@ export function AccountSettings({ mode, onNavigate }: Props) {
 
   const handleSaveDisplayName = async () => {
     if (!newDisplayName.trim() || newDisplayName.trim().length < 2) {
-      toast.error('Display name must be at least 2 characters');
+      toast.error(t('Display name must be at least 2 characters'));
       return;
     }
     setLoading(true);
@@ -126,13 +127,13 @@ export function AccountSettings({ mode, onNavigate }: Props) {
           nickname: displayName,
         });
       }
-      toast.success('Display name updated');
+      toast.success(t('Display name updated'));
       setShowNameModal(false);
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : 'Failed to update display name',
+          : t('Failed to update display name'),
       );
     } finally {
       setLoading(false);
@@ -154,7 +155,7 @@ export function AccountSettings({ mode, onNavigate }: Props) {
 
     clearToken();
     disconnectSocket();
-    toast.success('Signed out');
+    toast.success(t('Signed out'));
     onNavigate('role-selection');
   };
 
@@ -181,7 +182,7 @@ export function AccountSettings({ mode, onNavigate }: Props) {
       clearToken();
     }
     disconnectSocket();
-    toast.success('Signed out');
+    toast.success(t('Signed out'));
     onNavigate('role-selection');
   };
 
@@ -189,31 +190,31 @@ export function AccountSettings({ mode, onNavigate }: Props) {
     const hasToken = !!localStorage.getItem('authToken');
     const eventData = readStoredJson<{ eventId?: string }>('currentEvent');
     const participantData = readStoredJson<{ _id?: string }>('currentParticipant');
-    const eventId = eventData?.eventId || 'None';
-    const participantId = participantData?._id || 'None';
+    const eventId = eventData?.eventId || t('None');
+    const participantId = participantData?._id || t('None');
     const socketConnected = getSocket()?.connected || false;
 
     return { hasToken, eventId, participantId, socketConnected };
   };
 
-  const handleItemClick = (item: string) => {
+  const handleItemClick = (item: (typeof SETTINGS_ITEMS)[number]['id']) => {
     switch (item) {
-      case 'Profile Picture':
+      case 'profilePicture':
         setShowProfilePictureModal(true);
         break;
-      case 'Display Name Visibility':
+      case 'displayName':
         handleDisplayName();
         break;
-      case 'Media Quality':
+      case 'mediaQuality':
         setShowMediaQualityModal(true);
         break;
-      case 'Social Settings':
+      case 'socialSettings':
         setShowSocialModal(true);
         break;
-      case 'Debug / Diagnostics':
+      case 'debug':
         setShowDebugModal(true);
         break;
-      case 'Sign Out':
+      case 'signOut':
         handleSignOut();
         break;
     }
@@ -224,100 +225,100 @@ export function AccountSettings({ mode, onNavigate }: Props) {
   const settingsView = mode === 'dj' ? 'dj-settings' : 'attendee-settings';
   const settingsItems = isDebug
     ? SETTINGS_ITEMS
-    : SETTINGS_ITEMS.filter((item) => item !== 'Debug / Diagnostics');
+    : SETTINGS_ITEMS.filter((item) => item.id !== 'debug');
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
   const filteredSettingsItems = normalizedSearchQuery
     ? settingsItems.filter((item) =>
-        item.toLowerCase().includes(normalizedSearchQuery),
+        t(item.label).toLowerCase().includes(normalizedSearchQuery),
       )
     : settingsItems;
 
   return (
     <Layout theme="blue" className="p-6 md:p-12 items-center" showNav={true}>
       <SettingsPageShell
-        title="Account Settings"
+        title={t('Account Settings')}
         onBack={() => onNavigate(settingsView)}
-        backLabel="Cancel"
+        backLabel={t('Cancel')}
       >
         <SettingsSearch value={searchQuery} onChange={setSearchQuery} />
 
         <SettingsList>
           {filteredSettingsItems.map((item, index) => (
             <SettingsListItem
-              key={item}
-              label={item}
+              key={item.id}
+              label={t(item.label)}
               index={index}
-              onClick={() => handleItemClick(item)}
+              onClick={() => handleItemClick(item.id)}
             />
           ))}
         </SettingsList>
 
         {filteredSettingsItems.length === 0 && (
           <p className="mt-8 text-center text-base font-medium text-slate-700">
-            No settings match your search.
+            {t('No settings match your search.')}
           </p>
         )}
       </SettingsPageShell>
 
       <SettingsDialog
         open={showNameModal}
-        title="Change Display Name"
+        title={t('Change Display Name')}
         onClose={() => setShowNameModal(false)}
       >
         <input
           type="text"
           value={newDisplayName}
           onChange={(event) => setNewDisplayName(event.target.value)}
-          aria-label="New display name"
-          placeholder="New display name"
+          aria-label={t('New display name')}
+          placeholder={t('New display name')}
           className="h-12 w-full rounded-lg border border-slate-200 px-4 text-base text-slate-700 outline-none focus:ring-4 focus:ring-blue-100"
         />
         <SettingsDialogActions>
           <SettingsDialogButton onClick={() => setShowNameModal(false)}>
-            Cancel
+            {t('Cancel')}
           </SettingsDialogButton>
           <SettingsDialogButton
             onClick={handleSaveDisplayName}
             disabled={loading}
             variant="primary"
           >
-            {loading ? 'Saving…' : 'Save'}
+            {loading ? t('Saving…') : t('Save')}
           </SettingsDialogButton>
         </SettingsDialogActions>
       </SettingsDialog>
 
       <SettingsDialog
         open={showDebugModal}
-        title="Debug Info"
+        title={t('Debug Info')}
         onClose={() => setShowDebugModal(false)}
       >
         <div className="space-y-3 text-sm font-mono">
           <div className="flex justify-between gap-4">
-            <span className="text-slate-500">Auth Token:</span>
+            <span className="text-slate-500">{t('Auth Token')}:</span>
             <span className={debugInfo.hasToken ? 'text-green-600' : 'text-red-500'}>
-              {debugInfo.hasToken ? 'Present' : 'Missing'}
+              {debugInfo.hasToken ? t('Present') : t('Missing')}
             </span>
           </div>
           <div className="flex justify-between gap-4">
-            <span className="text-slate-500">Event ID:</span>
+            <span className="text-slate-500">{t('Event ID')}:</span>
             <span className="max-w-[180px] truncate text-slate-700">
               {debugInfo.eventId}
             </span>
           </div>
           <div className="flex justify-between gap-4">
-            <span className="text-slate-500">Participant ID:</span>
+            <span className="text-slate-500">{t('Participant ID')}:</span>
             <span className="max-w-[180px] truncate text-slate-700">
               {debugInfo.participantId}
             </span>
           </div>
           <div className="flex justify-between gap-4">
-            <span className="text-slate-500">Socket:</span>
+            <span className="text-slate-500">{t('Socket')}:</span>
             <span
               className={
                 debugInfo.socketConnected ? 'text-green-600' : 'text-red-500'
               }
             >
-              {debugInfo.socketConnected ? 'Connected' : 'Disconnected'}
+              {debugInfo.socketConnected ? t('Connected') : t('Disconnected')}
             </span>
           </div>
         </div>
@@ -326,14 +327,14 @@ export function AccountSettings({ mode, onNavigate }: Props) {
             onClick={() => setShowDebugModal(false)}
             className="w-full flex-none"
           >
-            Close
+            {t('Close')}
           </SettingsDialogButton>
         </SettingsDialogActions>
       </SettingsDialog>
 
       <SettingsDialog
         open={showMediaQualityModal}
-        title="Media Quality"
+        title={t('Media Quality')}
         onClose={() => setShowMediaQualityModal(false)}
       >
         <div className="flex flex-col gap-2">
@@ -343,7 +344,7 @@ export function AccountSettings({ mode, onNavigate }: Props) {
               selected={mediaQuality === option.value}
               onClick={() => handleSelectMediaQuality(option.value)}
             >
-              {option.label}
+              {t(option.label)}
             </SettingsChoiceRow>
           ))}
         </div>
@@ -351,7 +352,7 @@ export function AccountSettings({ mode, onNavigate }: Props) {
 
       <SettingsDialog
         open={showSocialModal}
-        title="Social Settings"
+        title={t('Social Settings')}
         onClose={() => setShowSocialModal(false)}
       >
         <div className="flex flex-col gap-3">
@@ -364,7 +365,7 @@ export function AccountSettings({ mode, onNavigate }: Props) {
           ).map(([key, label]) => (
             <SettingsToggleRow
               key={key}
-              label={label}
+              label={t(label)}
               checked={socialPrefs[key]}
               onChange={() => handleToggleSocial(key)}
             />
@@ -375,14 +376,14 @@ export function AccountSettings({ mode, onNavigate }: Props) {
             onClick={() => setShowSocialModal(false)}
             className="w-full flex-none"
           >
-            Done
+            {t('Done')}
           </SettingsDialogButton>
         </SettingsDialogActions>
       </SettingsDialog>
 
       <SettingsDialog
         open={showProfilePictureModal}
-        title="Profile Picture"
+        title={t('Profile Picture')}
         onClose={() => setShowProfilePictureModal(false)}
       >
         <div className="mb-6 flex justify-center">
@@ -400,7 +401,7 @@ export function AccountSettings({ mode, onNavigate }: Props) {
             onClick={() => setShowProfilePictureModal(false)}
             className="w-full flex-none"
           >
-            Done
+            {t('Done')}
           </SettingsDialogButton>
         </SettingsDialogActions>
       </SettingsDialog>
@@ -414,7 +415,7 @@ export function AccountSettings({ mode, onNavigate }: Props) {
             try {
               await finishAttendeeSignOutWithoutSavedProfile();
             } catch (error) {
-              toast.error(error instanceof Error ? error.message : 'Failed to sign out');
+              toast.error(error instanceof Error ? error.message : t('Failed to sign out'));
             }
           }}
           onSaved={async () => {
@@ -422,7 +423,7 @@ export function AccountSettings({ mode, onNavigate }: Props) {
             try {
               await finishAttendeeSignOut();
             } catch (error) {
-              toast.error(error instanceof Error ? error.message : 'Failed to sign out');
+              toast.error(error instanceof Error ? error.message : t('Failed to sign out'));
             }
           }}
         />

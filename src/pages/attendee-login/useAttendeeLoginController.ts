@@ -6,6 +6,7 @@ import { writeStoredJson } from '@/utils/storage';
 import { activateSingleUserSession } from '@/services/singleUserSession';
 import { queueFirstTimeTutorial } from '@/components/modals/FirstTimeTutorialModal';
 import { validateNickname } from '@/utils/validation';
+import { t } from '@/i18n';
 import type { NavigateToView } from '@/types';
 
 interface VerifiedEvent {
@@ -90,7 +91,7 @@ export function useAttendeeLoginController(onNavigate: NavigateToView) {
 
   const ensureNicknameAllowed = async () => {
     const result = validateNickname(state.nickname.trim());
-    if (!result.valid) throw new Error(result.message || 'Invalid nickname');
+    if (!result.valid) throw new Error(result.message || t('Invalid nickname'));
     await participantsAPI.validateNickname(state.nickname.trim());
   };
 
@@ -98,14 +99,14 @@ export function useAttendeeLoginController(onNavigate: NavigateToView) {
     setLoading(true);
     try {
       if (!state.eventCode.trim() || !state.nickname.trim()) {
-        throw new Error('Please enter both event code and nickname');
+        throw new Error(t('Please enter both event code and nickname'));
       }
 
       await ensureNicknameAllowed();
       const event = await eventsAPI.getEventByAccessCode(state.eventCode);
       if (!event) {
         throw new Error(
-          'Invalid access code. Please check the code and try again, or ask the DJ to share a new QR code.',
+          t('Invalid access code. Please check the code and try again, or ask the DJ to share a new QR code.'),
         );
       }
 
@@ -114,7 +115,7 @@ export function useAttendeeLoginController(onNavigate: NavigateToView) {
       toast.error(
         error instanceof Error
           ? error.message
-          : 'Invalid access code. Please check the code and try again.',
+          : t('Invalid access code. Please check the code and try again.'),
       );
     } finally {
       setLoading(false);
@@ -125,12 +126,12 @@ export function useAttendeeLoginController(onNavigate: NavigateToView) {
     setLoading(true);
     try {
       const event = state.verifiedEvent;
-      if (!event) throw new Error('Please enter a valid access code first');
+      if (!event) throw new Error(t('Please enter a valid access code first'));
 
       await ensureNicknameAllowed();
 
       const eventId = event._id || event.id;
-      if (!eventId) throw new Error('Invalid event details. Please verify the access code again.');
+      if (!eventId) throw new Error(t('Invalid event details. Please verify the access code again.'));
 
       const { participant, token, user } = await attendeeSessionAPI.joinEvent(
         eventId,
@@ -138,7 +139,7 @@ export function useAttendeeLoginController(onNavigate: NavigateToView) {
         null,
         state.nicknamePassword || undefined,
       );
-      if (!participant || !token || !user) throw new Error('Failed to join event');
+      if (!participant || !token || !user) throw new Error(t('Failed to join event'));
 
       const userId = user.id ?? user._id;
       const userSession = { _id: userId, id: userId, displayName: state.nickname };
@@ -162,12 +163,12 @@ export function useAttendeeLoginController(onNavigate: NavigateToView) {
         passwordProtected: Boolean(participant.passwordProtected),
       });
 
-      toast.success('Joined event successfully!');
+      toast.success(t('Joined event successfully!'));
       socket.initSocket(token);
       queueFirstTimeTutorial('attendee');
       onNavigate('attendee-dashboard');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to join event';
+      const message = error instanceof Error ? error.message : t('Failed to join event');
       if (message === 'Participant has been banned from this event') {
         onNavigate('banned');
         return;

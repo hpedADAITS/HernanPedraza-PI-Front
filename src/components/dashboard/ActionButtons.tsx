@@ -10,6 +10,7 @@ import { disconnectSocket } from '@/services/socket';
 import { readStoredJson, removeStoredItem } from '@/utils/storage';
 import { useTrackedTimeout } from '@/hooks/useTrackedTimeout';
 import { AttendeePasswordPrompt } from './AttendeeSavePrompt';
+import { t } from '@/i18n';
 import type { View } from '@/types';
 
 interface ActionButtonsProps {
@@ -112,7 +113,7 @@ export function ActionButtons({
         try {
           await eventsAPI.endEvent(eventId);
         } catch (err: unknown) {
-          toast.error(getErrorMessage(err, 'Failed to end event'));
+          toast.error(getErrorMessage(err, t('Failed to end event')));
         }
       }
     } else {
@@ -144,7 +145,7 @@ export function ActionButtons({
         await authAPI.updateProfilePicture({ profilePicture: null });
         await participantsAPI.updateProfile(participantId, { profilePicture: null });
       } catch (err: unknown) {
-        toast.error(getErrorMessage(err, 'Failed to remove profile picture'));
+        toast.error(getErrorMessage(err, t('Failed to remove profile picture')));
         return;
       }
     }
@@ -174,8 +175,8 @@ export function ActionButtons({
           <div className="flex w-full max-w-[744px] flex-wrap items-center justify-center gap-4">
             <ActionButton
               icon={Plus}
-              label="Queue a song"
-              subtitle="Add to the upcoming list"
+              label={t('Queue a song')}
+              subtitle={t('Add to the upcoming list')}
               onClick={() =>
                 onNavigate(isDj ? 'dj-song-select' : 'attendee-song-select')
               }
@@ -186,8 +187,8 @@ export function ActionButtons({
 
             <ActionButton
               icon={Settings}
-              label="Settings"
-              subtitle="Manage your experience"
+              label={t('Settings')}
+              subtitle={t('Manage your experience')}
               onClick={() =>
                 onNavigate(isDj ? 'dj-settings' : 'attendee-settings')
               }
@@ -197,8 +198,8 @@ export function ActionButtons({
 
             <ActionButton
               icon={LogOut}
-              label="Leave party"
-              subtitle="Disconnect from session"
+              label={t('Leave party')}
+              subtitle={t('Disconnect from session')}
               onClick={handleLeaveParty}
               variant="leave"
               collapsed={isQueueHovered}
@@ -277,7 +278,7 @@ function VotingButtons() {
 
   const handleVote = async (value: 1 | -1) => {
     if (!currentSong) {
-      toast.info('No song playing');
+      toast.info(t('No song playing'));
       return;
     }
     if (voting) return;
@@ -285,14 +286,14 @@ function VotingButtons() {
     const event = readStoredJson<{ eventId?: string; _id?: string; id?: string }>('currentEvent');
     const participant = readStoredJson<{ _id?: string; id?: string }>('currentParticipant');
     if (!event || !participant) {
-      toast.error('Session data missing');
+      toast.error(t('Session data missing'));
       return;
     }
 
     const eventId = event.eventId || event._id || event.id;
     const participantId = participant._id || participant.id;
     if (!eventId || !participantId) {
-      toast.error('Session data missing');
+      toast.error(t('Session data missing'));
       return;
     }
 
@@ -302,7 +303,7 @@ function VotingButtons() {
       const direction = value === 1 ? '👍' : '👎';
       toast.success(`${direction} ${currentSong.title}`);
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, 'Vote failed'));
+      toast.error(getErrorMessage(err, t('Vote failed')));
     } finally {
       setVoting(false);
     }
@@ -313,14 +314,14 @@ function VotingButtons() {
       <VoteButton
         icon={ThumbsUp}
         color="emerald"
-        label="Vote Up"
+        label={t('Vote Up')}
         onClick={() => handleVote(1)}
         disabled={!currentSong || voting}
       />
       <VoteButton
         icon={ThumbsDown}
         color="red"
-        label="Vote Down"
+        label={t('Vote Down')}
         onClick={() => handleVote(-1)}
         disabled={!currentSong || voting}
       />

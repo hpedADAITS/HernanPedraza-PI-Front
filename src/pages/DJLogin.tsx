@@ -11,6 +11,7 @@ import {
 } from '@/services/singleUserSession';
 import { LoginPage } from '@/pages/LoginPage';
 import { queueFirstTimeTutorial } from '@/components/modals/FirstTimeTutorialModal';
+import { t } from '@/i18n';
 import type { NavigateToView } from '@/types';
 
 interface Props {
@@ -34,7 +35,7 @@ export function DJLogin({
     const normalizedPassword = password.trim().toLowerCase();
 
     if (normalizedEmail && normalizedEmail === normalizedPassword) {
-      const message = 'Your password cannot be the same as your email address.';
+      const message = t('Your password cannot be the same as your email address.');
       setError(message);
       toast.error(message);
       return;
@@ -82,11 +83,11 @@ export function DJLogin({
         }
       }
 
-      toast.success(`Welcome back, ${displayName}!`);
+      toast.success(t('Welcome back, {name}!', { name: displayName }));
       socket.initSocket(result.authToken);
       onNavigate('dj-dashboard');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Login failed');
+      toast.error(error instanceof Error ? error.message : t('Login failed'));
     } finally {
       setLoading(false);
     }
@@ -102,10 +103,10 @@ export function DJLogin({
 
           {/* Headline */}
           <h1 className="text-[26px] leading-[1.15] font-semibold tracking-[-0.015em] text-slate-900">
-            Welcome back
+            {t('Welcome back')}
           </h1>
           <p className="mt-2 text-[14px] leading-relaxed text-slate-500">
-            Sign in to manage your events and requests.
+            {t('Sign in to manage your events and requests.')}
           </p>
 
           {/* Inputs */}
@@ -115,7 +116,7 @@ export function DJLogin({
                 htmlFor="dj-email"
                 className="block text-[12px] font-medium text-slate-700 mb-1.5"
               >
-                Email
+                {t('Email')}
               </label>
               <div className="group relative flex items-stretch h-11 rounded-lg bg-white ring-1 ring-inset ring-slate-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-900 focus-within:shadow-[0_0_0_4px_rgba(37,99,235,0.22)] transition-shadow duration-150">
                 <div className="flex items-center justify-center w-11 text-slate-400 group-focus-within:text-slate-900 border-r border-slate-200 transition-colors">
@@ -124,7 +125,7 @@ export function DJLogin({
                 <input
                   id="dj-email"
                   type="email"
-                  aria-label="Email"
+                  aria-label={t('Email')}
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => {
@@ -143,7 +144,7 @@ export function DJLogin({
                 htmlFor="dj-password"
                 className="block text-[12px] font-medium text-slate-700 mb-1.5"
               >
-                Password
+                {t('Password')}
               </label>
               <div className="group relative flex items-stretch h-11 rounded-lg bg-white ring-1 ring-inset ring-slate-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-900 focus-within:shadow-[0_0_0_4px_rgba(37,99,235,0.22)] transition-shadow duration-150">
                 <div className="flex items-center justify-center w-11 text-slate-400 group-focus-within:text-slate-900 border-r border-slate-200 transition-colors">
@@ -152,8 +153,8 @@ export function DJLogin({
                 <input
                   id="dj-password"
                   type={showPassword ? 'text' : 'password'}
-                  aria-label="Password"
-                  placeholder="Enter your password"
+                  aria-label={t('Password')}
+                  placeholder={t('Enter your password')}
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
@@ -166,7 +167,7 @@ export function DJLogin({
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? t('Hide password') : t('Show password')}
                   className="flex items-center justify-center w-11 text-slate-400 hover:text-slate-700 transition-colors"
                 >
                   {showPassword ? (
@@ -194,11 +195,11 @@ export function DJLogin({
             {loading ? (
               <>
                 <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                Signing in…
+                {t('Signing in…')}
               </>
             ) : (
               <>
-                Sign in
+                {t('Sign in')}
                 <ArrowRight
                   size={15}
                   strokeWidth={2.5}
@@ -211,13 +212,13 @@ export function DJLogin({
           {/* Hairline divider */}
           <div className="mt-7 pt-5 border-t border-slate-100">
             <p className="text-center text-[13px] text-slate-500">
-              New to SyncRequest?{' '}
+              {t('New to SyncRequest?')}{' '}
               <button
                 type="button"
                 onClick={() => onNavigate('dj-register')}
                 className="font-medium text-slate-900 hover:underline underline-offset-2"
               >
-                Create an account
+                {t('Create an account')}
               </button>
             </p>
           </div>

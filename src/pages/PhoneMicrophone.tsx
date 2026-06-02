@@ -5,6 +5,7 @@ import { Layout } from '@/components/layout/Layout';
 import { eventsAPI } from '@/services/api';
 import { startAudioMatchStream } from '@/services/audio/micStream';
 import { disconnectSocket, initSocket } from '@/services/socket/connection';
+import { t } from '@/i18n';
 
 type ConnectionState = 'idle' | 'connecting' | 'connected' | 'failed';
 
@@ -14,11 +15,11 @@ function canRequestMicrophone() {
 
 function getMicrophoneSupportError() {
   if (window.isSecureContext === false) {
-    return 'Microphone access requires HTTPS on phones. Use an HTTPS URL, or localhost during development.';
+    return t('Microphone access requires HTTPS on phones. Use an HTTPS URL, or localhost during development.');
   }
 
   if (!canRequestMicrophone()) {
-    return 'Microphone access is not available in this browser.';
+    return t('Microphone access is not available in this browser.');
   }
 
   return null;
@@ -28,30 +29,30 @@ function getMicrophoneErrorMessage(error: unknown) {
   if (!(error instanceof DOMException)) {
     return error instanceof Error
       ? error.message
-      : 'Unable to connect this phone microphone.';
+      : t('Unable to connect this phone microphone.');
   }
 
   if (['NotAllowedError', 'PermissionDeniedError', 'SecurityError'].includes(error.name)) {
-    return 'Microphone permission was blocked. Allow microphone access in the browser and try again.';
+    return t('Microphone permission was blocked. Allow microphone access in the browser and try again.');
   }
 
   if (['NotFoundError', 'DevicesNotFoundError', 'OverconstrainedError'].includes(error.name)) {
-    return 'No microphone was found on this phone.';
+    return t('No microphone was found on this phone.');
   }
 
   if (error.name === 'NotReadableError') {
-    return 'The microphone is already in use by another app or browser tab.';
+    return t('The microphone is already in use by another app or browser tab.');
   }
 
-  return error.message || 'Unable to connect this phone microphone.';
+  return error.message || t('Unable to connect this phone microphone.');
 }
 
 function getPhoneDeviceName() {
   const platform = navigator.userAgent.includes('iPhone')
-    ? 'iPhone microphone'
+    ? t('iPhone microphone')
     : navigator.userAgent.includes('Android')
-      ? 'Android microphone'
-      : 'Phone microphone';
+      ? t('Android microphone')
+      : t('Phone microphone');
 
   return platform;
 }
@@ -81,14 +82,14 @@ export function PhoneMicrophone() {
 
   const connectMicrophone = async () => {
     if (!eventId) {
-      setError('Microphone link is missing the event id.');
+      setError(t('Microphone link is missing the event id.'));
       setConnectionState('failed');
       return;
     }
 
     const token = searchParams.get('token') || '';
     if (!token) {
-      setError('This microphone link is missing its security token.');
+      setError(t('This microphone link is missing its security token.'));
       setConnectionState('failed');
       return;
     }
@@ -150,11 +151,10 @@ export function PhoneMicrophone() {
         </div>
 
         <h1 className="text-3xl font-black tracking-normal text-slate-950">
-          Phone microphone
+          {t('Phone microphone')}
         </h1>
         <p className="mt-3 text-sm font-medium leading-6 text-slate-600">
-          Connect this phone so the DJ dashboard can see it as the active remote
-          microphone.
+          {t('Connect this phone so the DJ dashboard can see it as the active remote microphone.')}
         </p>
 
         <button
@@ -168,15 +168,15 @@ export function PhoneMicrophone() {
           } disabled:cursor-not-allowed disabled:opacity-60`}
         >
           {connectionState === 'connecting'
-            ? 'Connecting...'
+            ? t('Connecting...')
             : isConnected
-              ? 'Disconnect phone mic'
-              : 'Connect phone mic'}
+              ? t('Disconnect phone mic')
+              : t('Connect phone mic')}
         </button>
 
         {connectionState === 'connected' && (
           <p className="mt-4 rounded-lg bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
-            {bestMatch || 'Connected. Listening for a reference-track match.'}
+            {bestMatch || t('Connected. Listening for a reference-track match.')}
           </p>
         )}
 

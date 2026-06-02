@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import jsQR from 'jsqr';
 import { toast } from 'sonner';
+import { t } from '@/i18n';
 
 interface UseQrScannerOptions {
   enabled: boolean;
@@ -47,7 +48,7 @@ export function useQrScanner({ enabled, onCode, onClose }: UseQrScannerOptions) 
         );
         if (code) {
           onCode(code);
-          toast.success('Event code scanned!');
+          toast.success(t('Event code scanned!'));
           return;
         }
       } catch {
@@ -67,7 +68,7 @@ export function useQrScanner({ enabled, onCode, onClose }: UseQrScannerOptions) 
           videoRef.current.onloadedmetadata = scan;
         }
       } catch {
-        toast.error('Unable to access camera. Please check permissions.');
+        toast.error(t('Unable to access camera. Please check permissions.'));
         onClose();
       }
     };

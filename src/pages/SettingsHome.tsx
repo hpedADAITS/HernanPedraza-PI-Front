@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { User, Settings as SettingsIcon } from 'lucide-react';
 import { SettingsGrid, SettingsOptionCard, SettingsPageShell, SettingsSearch } from '@/components/settings/SettingsUI';
+import { t } from '@/i18n';
 import type { NavigateToView, View } from '@/types';
 
 interface Props {
@@ -34,16 +35,16 @@ export function SettingsHome({ mode, onNavigate }: Props) {
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
   const filteredSections = normalizedSearchQuery
     ? SETTINGS_SECTIONS.filter((section) =>
-        section.label.toLowerCase().includes(normalizedSearchQuery),
+        t(section.label).toLowerCase().includes(normalizedSearchQuery),
       )
     : SETTINGS_SECTIONS;
 
   return (
     <Layout theme="blue" className="p-6 md:p-12 items-center" showNav={true}>
       <SettingsPageShell
-        title="Settings"
+        title={t('Settings')}
         onBack={() => onNavigate(`${viewPrefix}-dashboard`)}
-        backLabel="Cancel"
+        backLabel={t('Cancel')}
       >
         <SettingsSearch value={searchQuery} onChange={setSearchQuery} />
 
@@ -51,7 +52,7 @@ export function SettingsHome({ mode, onNavigate }: Props) {
           {filteredSections.map((section) => (
             <SettingsOptionCard
               key={section.label}
-              label={section.label}
+              label={t(section.label)}
               icon={section.icon}
               onClick={() => onNavigate(getSettingsView(mode, section.routeSuffix))}
             />
@@ -60,7 +61,7 @@ export function SettingsHome({ mode, onNavigate }: Props) {
 
         {filteredSections.length === 0 && (
           <p className="mt-8 text-center text-base font-medium text-white">
-            No settings match your search.
+            {t('No settings match your search.')}
           </p>
         )}
       </SettingsPageShell>

@@ -3,6 +3,7 @@ import { m, AnimatePresence } from 'motion/react';
 import type { LucideIcon } from 'lucide-react';
 import { ArrowLeft, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { t } from '@/i18n';
 
 const tapMotion = { scale: 0.99 };
 const hoverMotion = { scale: 1.01 };
@@ -18,7 +19,7 @@ interface SettingsPageShellProps {
 export function SettingsPageShell({
   title,
   children,
-  backLabel = 'Back',
+  backLabel = t('Back'),
   onBack,
   titleClassName,
 }: SettingsPageShellProps) {
@@ -65,7 +66,7 @@ interface SettingsSearchProps {
 export function SettingsSearch({
   value,
   onChange,
-  placeholder = 'Search settings...',
+  placeholder = t('Search settings...'),
   className,
 }: SettingsSearchProps) {
   return (
@@ -249,14 +250,14 @@ export function SettingsDialog({
                   {title}
                 </h2>
                 <p className="mt-1 text-xs font-bold leading-snug text-[#73829d]">
-                  Manage this setting for your current session.
+                  {t('Manage this setting for your current session.')}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={onClose}
                 className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl border border-slate-900/10 bg-white text-slate-600 shadow-[0_8px_18px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.95)] transition-colors hover:text-slate-950 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100 sm:h-10 sm:w-10"
-                aria-label={`Close ${title}`}
+                aria-label={t('Close {title}', { title })}
               >
                 <X size={20} aria-hidden="true" />
               </button>

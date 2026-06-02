@@ -1,6 +1,7 @@
 import React from 'react';
 import { LazyMotion, domAnimation, m } from 'motion/react';
 import { AlertCircle } from 'lucide-react';
+import { t } from '@/i18n';
 import type { NavigateToView } from '@/types';
 
 interface Props {
@@ -31,9 +32,9 @@ export function Banned({ onNavigate }: Props) {
           >
             <AlertCircle size={64} className="text-red-400" strokeWidth={1.5} />
           </m.div>
-          <h1 className="text-2xl font-semibold mb-3 text-red-400">Banned</h1>
+          <h1 className="text-2xl font-semibold mb-3 text-red-400">{t('Banned')}</h1>
           <p className="text-slate-300 mb-6">
-            This account cannot join the event.
+            {t('This account cannot join the event.')}
           </p>
           <m.button
             whileHover={{ scale: 1.02 }}
@@ -47,7 +48,7 @@ export function Banned({ onNavigate }: Props) {
             }}
             className="inline-block px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
           >
-            Back to Home
+            {t('Back to Home')}
           </m.button>
         </m.div>
       </LazyMotion>

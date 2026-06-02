@@ -4,6 +4,7 @@ import { CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import { authAPI } from '@/services/api';
 import { toast } from 'sonner';
 import { writeStoredJson } from '@/utils/storage';
+import { t } from '@/i18n';
 import type { NavigateToView } from '@/types';
 
 function AutoCloseWindow({ delay = 500 }: { delay?: number }) {
@@ -34,7 +35,7 @@ export function VerifyEmail({ onNavigate }: Props) {
 
       if (!URLtoken) {
         setStatus('error');
-        setMessage('No verification token provided');
+        setMessage(t('No verification token provided'));
         return;
       }
 
@@ -43,7 +44,7 @@ export function VerifyEmail({ onNavigate }: Props) {
 
         if (response.data?.user && response.data.user.emailRegistered) {
           setStatus('success');
-          setMessage('Email verified! Closing this window…');
+          setMessage(t('Email verified! Closing this window…'));
 
           /* Update localStorage with verified status */
           const userData = {
@@ -59,9 +60,9 @@ export function VerifyEmail({ onNavigate }: Props) {
         setMessage(
           error instanceof Error
             ? error.message
-            : 'Failed to verify email. Link may have expired.',
+            : t('Failed to verify email. Link may have expired.'),
         );
-        toast.error('Email verification failed');
+        toast.error(t('Email verification failed'));
       }
     };
 
@@ -92,9 +93,9 @@ export function VerifyEmail({ onNavigate }: Props) {
             >
               <Loader size={48} className="text-blue-400" strokeWidth={2} />
             </m.div>
-            <h1 className="text-2xl font-semibold mb-3">Verifying Email</h1>
+            <h1 className="text-2xl font-semibold mb-3">{t('Verifying Email')}</h1>
             <p className="text-slate-300">
-              Please wait while we verify your email…
+              {t('Please wait while we verify your email…')}
             </p>
           </>
         )}
@@ -115,7 +116,7 @@ export function VerifyEmail({ onNavigate }: Props) {
               />
             </m.div>
             <h1 className="text-2xl font-semibold mb-3 text-green-400">
-              Email Verified!
+              {t('Email Verified!')}
             </h1>
             <p className="text-slate-300">{message}</p>
           </>
@@ -136,7 +137,7 @@ export function VerifyEmail({ onNavigate }: Props) {
               />
             </m.div>
             <h1 className="text-2xl font-semibold mb-3 text-red-400">
-              Verification Failed
+              {t('Verification Failed')}
             </h1>
             <p className="text-slate-300 mb-6">{message}</p>
             <m.button
@@ -151,7 +152,7 @@ export function VerifyEmail({ onNavigate }: Props) {
               }}
               className="inline-block px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
             >
-              Back to Registration
+              {t('Back to Registration')}
             </m.button>
           </>
         )}

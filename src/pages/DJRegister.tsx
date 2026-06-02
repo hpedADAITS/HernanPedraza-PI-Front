@@ -9,6 +9,7 @@ import { EmailConfirmationModal } from '@/components/modals/EmailConfirmationMod
 import { queueFirstTimeTutorial } from '@/components/modals/FirstTimeTutorialModal';
 import logoWhite from '@/assets/logo_white.png';
 import { writeStoredJson } from '@/utils/storage';
+import { t } from '@/i18n';
 import {
   activateSingleUserSession,
   suspendNextSingleUserSessionCheck,
@@ -88,23 +89,23 @@ export function DJRegister({
       !confirmPassword.trim() ||
       !displayName.trim()
     ) {
-      toast.error('All fields are required');
+      toast.error(t('All fields are required'));
       return false;
     }
 
     if (password.length < 8) {
-      toast.error('Password must be at least 8 characters');
+      toast.error(t('Password must be at least 8 characters'));
       return false;
     }
 
     if (password !== confirmPassword) {
-      toast.error('Passwords do not match');
+      toast.error(t('Passwords do not match'));
       return false;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      toast.error('Please enter a valid email address');
+      toast.error(t('Please enter a valid email address'));
       return false;
     }
 
@@ -128,12 +129,12 @@ export function DJRegister({
       )) as DJRegisterResponse;
 
       if (!result || !result.token) {
-        throw new Error('Failed to create account');
+        throw new Error(t('Failed to create account'));
       }
 
       const token = result.authToken || result.token;
       if (!token) {
-        throw new Error('Failed to create account');
+        throw new Error(t('Failed to create account'));
       }
 
       writeStoredJson('user', {
@@ -164,7 +165,7 @@ export function DJRegister({
       setShowEmailModal(true);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'Registration failed',
+        error instanceof Error ? error.message : t('Registration failed'),
       );
     } finally {
       setLoading(false);
@@ -177,7 +178,7 @@ export function DJRegister({
     try {
       const registrationData = registrationDataRef.current;
       if (!registrationData) {
-        throw new Error('Registration data missing');
+        throw new Error(t('Registration data missing'));
       }
 
       const event = await eventsAPI.createEvent(
@@ -204,7 +205,7 @@ export function DJRegister({
         profilePicture: registrationData.profilePicture || null,
       });
 
-      toast.success(`Welcome, ${displayName}! Your event is ready to go.`);
+      toast.success(t('Welcome, {name}! Your event is ready to go.', { name: displayName }));
       socket.initSocket(registrationData.token);
       activateSingleUserSession({ _id: registrationData.userId, email, displayName });
       suspendNextSingleUserSessionCheck();
@@ -213,7 +214,7 @@ export function DJRegister({
       onNavigate('dj-dashboard');
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'Failed to create event',
+        error instanceof Error ? error.message : t('Failed to create event'),
       );
     }
   };
@@ -237,7 +238,7 @@ export function DJRegister({
         className="absolute top-6 left-6 md:top-8 md:left-8 z-50 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium text-white/70 hover:text-white bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 backdrop-blur-md transition-colors"
       >
         <ArrowLeft size={14} strokeWidth={2.25} />
-        Back
+        {t('Back')}
       </m.button>
 
       {/* Main */}
@@ -264,10 +265,10 @@ export function DJRegister({
         >
           {/* Headline */}
           <h1 className="text-[26px] leading-[1.15] font-semibold tracking-[-0.015em] text-slate-900">
-            Create your account
+            {t('Create your account')}
           </h1>
           <p className="mt-2 text-[14px] leading-relaxed text-slate-500">
-            Set up your DJ profile to start hosting events.
+            {t('Set up your DJ profile to start hosting events.')}
           </p>
 
           {/* Inputs */}
@@ -277,7 +278,7 @@ export function DJRegister({
                 htmlFor="dj-name"
                 className="block text-[12px] font-medium text-slate-700 mb-1.5"
               >
-                DJ name
+                {t('DJ name')}
               </label>
               <div className="group relative flex items-stretch h-11 rounded-lg bg-white ring-1 ring-inset ring-slate-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-900 focus-within:shadow-[0_0_0_4px_rgba(37,99,235,0.22)] transition-shadow duration-150">
                 <div className="flex items-center justify-center w-11 text-slate-400 group-focus-within:text-slate-900 border-r border-slate-200 transition-colors">
@@ -286,8 +287,8 @@ export function DJRegister({
                 <input
                   id="dj-name"
                   type="text"
-                  aria-label="DJ name"
-                  placeholder="Your stage name"
+                  aria-label={t('DJ name')}
+                  placeholder={t('Your stage name')}
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   required
@@ -302,7 +303,7 @@ export function DJRegister({
                 htmlFor="dj-email"
                 className="block text-[12px] font-medium text-slate-700 mb-1.5"
               >
-                Email
+                {t('Email')}
               </label>
               <div className="group relative flex items-stretch h-11 rounded-lg bg-white ring-1 ring-inset ring-slate-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-900 focus-within:shadow-[0_0_0_4px_rgba(37,99,235,0.22)] transition-shadow duration-150">
                 <div className="flex items-center justify-center w-11 text-slate-400 group-focus-within:text-slate-900 border-r border-slate-200 transition-colors">
@@ -311,7 +312,7 @@ export function DJRegister({
                 <input
                   id="dj-email"
                   type="email"
-                  aria-label="Email"
+                  aria-label={t('Email')}
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -327,7 +328,7 @@ export function DJRegister({
                 htmlFor="dj-password"
                 className="block text-[12px] font-medium text-slate-700 mb-1.5"
               >
-                Password
+                {t('Password')}
               </label>
               <div className="group relative flex items-stretch h-11 rounded-lg bg-white ring-1 ring-inset ring-slate-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-900 focus-within:shadow-[0_0_0_4px_rgba(37,99,235,0.22)] transition-shadow duration-150">
                 <div className="flex items-center justify-center w-11 text-slate-400 group-focus-within:text-slate-900 border-r border-slate-200 transition-colors">
@@ -336,8 +337,8 @@ export function DJRegister({
                 <input
                   id="dj-password"
                   type={showPassword ? 'text' : 'password'}
-                  aria-label="Password"
-                  placeholder="At least 6 characters"
+                  aria-label={t('Password')}
+                  placeholder={t('At least 6 characters')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -347,7 +348,7 @@ export function DJRegister({
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? t('Hide password') : t('Show password')}
                   className="flex items-center justify-center w-11 text-slate-400 hover:text-slate-700 transition-colors"
                 >
                   {showPassword ? (
@@ -364,7 +365,7 @@ export function DJRegister({
                 htmlFor="dj-confirm-password"
                 className="block text-[12px] font-medium text-slate-700 mb-1.5"
               >
-                Confirm password
+                {t('Confirm password')}
               </label>
               <div className="group relative flex items-stretch h-11 rounded-lg bg-white ring-1 ring-inset ring-slate-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-900 focus-within:shadow-[0_0_0_4px_rgba(37,99,235,0.22)] transition-shadow duration-150">
                 <div className="flex items-center justify-center w-11 text-slate-400 group-focus-within:text-slate-900 border-r border-slate-200 transition-colors">
@@ -373,8 +374,8 @@ export function DJRegister({
                 <input
                   id="dj-confirm-password"
                   type={showConfirmPassword ? 'text' : 'password'}
-                  aria-label="Confirm password"
-                  placeholder="Re-enter your password"
+                  aria-label={t('Confirm password')}
+                  placeholder={t('Re-enter your password')}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
@@ -385,7 +386,7 @@ export function DJRegister({
                   type="button"
                   onClick={() => setShowConfirmPassword((v) => !v)}
                   aria-label={
-                    showConfirmPassword ? 'Hide password' : 'Show password'
+                    showConfirmPassword ? t('Hide password') : t('Show password')
                   }
                   className="flex items-center justify-center w-11 text-slate-400 hover:text-slate-700 transition-colors"
                 >
@@ -409,11 +410,11 @@ export function DJRegister({
             {loading ? (
               <>
                 <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                Creating account…
+                {t('Creating account…')}
               </>
             ) : (
               <>
-                Create account
+                {t('Create account')}
                 <ArrowRight
                   size={15}
                   strokeWidth={2.5}
@@ -426,13 +427,13 @@ export function DJRegister({
           {/* Hairline divider */}
           <div className="mt-7 pt-5 border-t border-slate-100">
             <p className="text-center text-[13px] text-slate-500">
-              Already have an account?{' '}
+              {t('Already have an account?')}{' '}
               <button
                 type="button"
                 onClick={() => onNavigate('dj-login')}
                 className="font-medium text-slate-900 hover:underline underline-offset-2"
               >
-                Sign in
+                {t('Sign in')}
               </button>
             </p>
           </div>
