@@ -14,26 +14,37 @@ const createRandomEventId = () => {
   return Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
 };
 
+type EventIdSetupState = {
+  eventId: string;
+  generatedId: string;
+  mode: 'input' | 'generated';
+};
+
+const getInitialEventIdSetupState = (): EventIdSetupState => ({
+  eventId: '',
+  generatedId: createRandomEventId(),
+  mode: 'generated',
+});
+
 export function EventIdSetupModal({
   isOpen,
   onConfirm,
   displayName,
 }: EventIdSetupModalProps) {
-  const [eventId, setEventId] = useState('');
-  const [generatedId, setGeneratedId] = useState(() => createRandomEventId());
-  const [mode, setMode] = useState<'input' | 'generated'>('generated');
+  const [{ eventId, generatedId, mode }, setSetupState] = useState(getInitialEventIdSetupState);
   const [loading, setLoading] = useState(false);
 
   const generateRandomId = () => {
-    setGeneratedId(createRandomEventId());
-    setMode('generated');
+    setSetupState((current) => ({
+      ...current,
+      generatedId: createRandomEventId(),
+      mode: 'generated',
+    }));
   };
 
   useEffect(() => {
     if (!isOpen) return;
-    setGeneratedId(createRandomEventId());
-    setMode('generated');
-    setEventId('');
+    setSetupState(getInitialEventIdSetupState());
   }, [isOpen]);
 
   const handleConfirm = async () => {
@@ -99,7 +110,7 @@ export function EventIdSetupModal({
                   <div className="flex items-center justify-between">
                     <button
                       type="button"
-                      onClick={() => setMode('generated')}
+                      onClick={() => setSetupState((current) => ({ ...current, mode: 'generated' }))}
                       className="text-left"
                     >
                       <p className="font-semibold text-white">Generated ID</p>
@@ -139,7 +150,7 @@ export function EventIdSetupModal({
                 >
                   <button
                     type="button"
-                    onClick={() => setMode('input')}
+                    onClick={() => setSetupState((current) => ({ ...current, mode: 'input' }))}
                     className="font-semibold text-white mb-3 text-left"
                   >
                     Custom Event ID
@@ -150,7 +161,10 @@ export function EventIdSetupModal({
                     placeholder="e.g., DJPARTY2024"
                     value={eventId}
                     onChange={(e) =>
-                      setEventId(e.target.value.toUpperCase().slice(0, 20))
+                      setSetupState((current) => ({
+                        ...current,
+                        eventId: e.target.value.toUpperCase().slice(0, 20),
+                      }))
                     }
                     onClick={(e) => e.stopPropagation()}
                     className="w-full bg-slate-700/50 text-white placeholder-slate-400 rounded-lg px-3 py-2 border border-slate-600 focus:border-blue-400 focus:outline-none"

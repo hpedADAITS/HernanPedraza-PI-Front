@@ -22,7 +22,6 @@ export function EmailConfirmationModal({
 
   useEffect(() => {
     if (!isOpen) return;
-    setStatus('sending');
     const timer = setTimeout(() => setStatus('sent'), 2000);
     return () => clearTimeout(timer);
   }, [isOpen]);

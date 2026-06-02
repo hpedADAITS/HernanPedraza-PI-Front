@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useEffectEvent, useRef } from 'react';
 import { m } from 'motion/react';
 import { ThumbsUp, ThumbsDown, LogOut, Settings, Plus, Lock, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -221,8 +221,11 @@ function AttendeePasswordPrompt({
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [saving, setSaving] = useState(false);
-  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const dialogRef = useRef<HTMLDialogElement | null>(null);
   const passwordInputRef = useRef<HTMLInputElement | null>(null);
+  const closePrompt = useEffectEvent(() => {
+    onClose();
+  });
 
   const title =
     reason === 'leave' ? 'Protect your attendee name?' : 'Someone tried your name';
@@ -232,12 +235,22 @@ function AttendeePasswordPrompt({
       : 'Add a password now so another device cannot take over your attendee name.';
 
   useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return undefined;
+
+    dialog.showModal();
+    return () => {
+      dialog.close();
+    };
+  }, []);
+
+  useEffect(() => {
     if (reason !== 'leave') return undefined;
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        onClose();
+        closePrompt();
       }
     };
 
@@ -245,28 +258,10 @@ function AttendeePasswordPrompt({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [onClose, reason]);
+  }, [reason]);
 
   useEffect(() => {
     passwordInputRef.current?.focus();
-  }, []);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const dialog = dialogRef.current;
-      if (!dialog || !dialog.contains(event.target as Node)) return;
-
-      if (event.key === 'Tab') {
-        event.preventDefault();
-      }
-
-      event.stopPropagation();
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
   }, []);
 
   const handleSave = async () => {
@@ -308,13 +303,12 @@ function AttendeePasswordPrompt({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/60 px-4 backdrop-blur-sm"
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
+      className="fixed inset-0 z-[9999] m-auto w-full max-w-sm rounded-2xl bg-transparent p-0 backdrop:bg-slate-950/60 backdrop:backdrop-blur-sm"
       aria-labelledby="attendee-password-title"
     >
-      <div ref={dialogRef} className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+      <div className="relative rounded-2xl bg-white p-6 shadow-2xl">
         <button
           type="button"
           onClick={onClose}
@@ -379,7 +373,7 @@ function AttendeePasswordPrompt({
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }
 

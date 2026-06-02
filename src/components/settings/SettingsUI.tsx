@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect } from 'react';
+import React, { ReactNode, useEffect, useEffectEvent } from 'react';
 import { m, AnimatePresence } from 'motion/react';
 import type { LucideIcon } from 'lucide-react';
 import { ArrowLeft, Search, X } from 'lucide-react';
@@ -208,16 +208,20 @@ export function SettingsDialog({
   onClose,
   children,
 }: SettingsDialogProps) {
+  const closeDialog = useEffectEvent(() => {
+    onClose();
+  });
+
   useEffect(() => {
     if (!open) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') closeDialog();
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, onClose]);
+  }, [open]);
 
   return (
     <AnimatePresence>

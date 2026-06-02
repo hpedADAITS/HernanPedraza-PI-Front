@@ -24,7 +24,7 @@ export function SearchBar({
 }: SearchBarProps) {
   const [phoneMicrophoneLink, setPhoneMicrophoneLink] = useState('');
   const [phoneMicrophoneStatus, setPhoneMicrophoneStatus] = useState('');
-  const [connectedMicrophoneName, setConnectedMicrophoneName] = useState('');
+  const [connectedMicrophone, setConnectedMicrophone] = useState({ name: '', status: '' });
   const [isLinkCopied, setIsLinkCopied] = useState(false);
   const connectedMicrophoneTimeoutRef = useRef<number | null>(null);
   const { clearTrackedTimeout, setTrackedTimeout } = useTrackedTimeout();
@@ -89,7 +89,7 @@ export function SearchBar({
       connectedMicrophoneTimeoutRef.current = null;
     }
 
-    setConnectedMicrophoneName('');
+    setConnectedMicrophone({ name: '', status: '' });
     dismissMicrophoneIssue();
   }, [clearTrackedTimeout, dismissMicrophoneIssue]);
 
@@ -110,8 +110,10 @@ export function SearchBar({
       if (connectedEventId !== eventId) return;
 
       const deviceName = data.microphone?.deviceName || 'Phone microphone';
-      setPhoneMicrophoneStatus(`${deviceName} connected`);
-      setConnectedMicrophoneName(deviceName);
+      setConnectedMicrophone({
+        name: deviceName,
+        status: `${deviceName} connected`,
+      });
       dismissMicrophoneIssue();
 
       if (connectedMicrophoneTimeoutRef.current) {
@@ -119,7 +121,7 @@ export function SearchBar({
       }
 
       connectedMicrophoneTimeoutRef.current = setTrackedTimeout(() => {
-        setConnectedMicrophoneName('');
+        setConnectedMicrophone((current) => ({ ...current, name: '' }));
         connectedMicrophoneTimeoutRef.current = null;
       }, 1200);
     };
@@ -137,8 +139,9 @@ export function SearchBar({
     setTrackedTimeout,
   ]);
 
-  const isMicrophoneDialogOpen = isAccessDenied || Boolean(connectedMicrophoneName);
-  const isMicrophoneConnected = Boolean(connectedMicrophoneName);
+  const isMicrophoneDialogOpen = isAccessDenied || Boolean(connectedMicrophone.name);
+  const isMicrophoneConnected = Boolean(connectedMicrophone.name);
+  const microphoneStatus = connectedMicrophone.status || phoneMicrophoneStatus;
 
   return (
     <>
@@ -305,7 +308,7 @@ export function SearchBar({
             </AlertDialogTitle>
             <AlertDialogDescription>
               {isMicrophoneConnected
-                ? `${connectedMicrophoneName} connected.`
+                ? `${connectedMicrophone.name} connected.`
                 : error ||
                 'Connect or enable a microphone, then try starting recording again.'}
             </AlertDialogDescription>
@@ -339,9 +342,9 @@ export function SearchBar({
                   )}
                 </button>
               </div>
-              {phoneMicrophoneStatus && (
+              {microphoneStatus && (
                 <p className="mt-2 text-xs font-medium text-slate-600">
-                  {phoneMicrophoneStatus}
+                  {microphoneStatus}
                 </p>
               )}
             </div>
