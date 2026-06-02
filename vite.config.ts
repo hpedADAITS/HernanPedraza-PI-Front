@@ -76,6 +76,7 @@ export default defineConfig({
     https: httpsConfig,
     hmr: {
       host: '127.0.0.1',
+      protocol: httpsConfig ? 'wss' : 'ws',
     },
     proxy: {
       '/api': {
