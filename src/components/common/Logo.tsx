@@ -34,7 +34,7 @@ export function Logo({
       <LazyMotion features={domAnimation}>
         <div
           className={clsx(
-            'flex items-center justify-center overflow-hidden rounded-lg transition-colors',
+            'relative flex items-center justify-center overflow-hidden rounded-lg transition-colors',
             size === 'large'
               ? 'w-[min(86vw,34rem)]'
               : 'w-32 h-32',

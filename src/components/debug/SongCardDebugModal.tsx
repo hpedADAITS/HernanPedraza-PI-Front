@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { isDebugModeEnabled } from '@/utils/debugMode';
 import { readStoredJson } from '@/utils/storage';
 import { DEBUG_EVENT_NAME, dispatchDebugSongEvent } from '@/utils/debugSongEvents';
-import { apiCall } from '@/services/api/client';
+import { API_BASE, apiCall } from '@/services/api/client';
 import debugCubeTextureUrl from '@/assets/debug-cube-texture.png';
 
 type DebugTrigger = 'queue' | 'playing' | 'rejected' | 'skipped';
@@ -232,11 +232,239 @@ function renderAccountsWindow(result: DebugAccountsResult) {
                   <dd>${escapeHtml(account.token)}</dd>
                 </div>
               </dl>
+              <button
+                type="button"
+                class="open-dashboard"
+                data-role="${escapeHtml(account.role)}"
+                data-email="${escapeHtml(account.email)}"
+                data-password="${escapeHtml(account.password)}"
+              >
+                Open ${escapeHtml(account.role)} dashboard
+              </button>
             </section>
           `,
         )
         .join('')}
     </div>
+    <p class="meta status-line" id="status"></p>
+    <script>
+      (() => {
+        const apiBase = ${JSON.stringify(API_BASE)};
+        const result = ${JSON.stringify(result)};
+        const status = document.getElementById('status');
+        const storageKeys = {
+          user: 'user:v1',
+          currentEvent: 'currentEvent:v1',
+          currentParticipant: 'currentParticipant:v1',
+        };
+
+        const setStatus = (message) => {
+          if (status) status.textContent = message;
+        };
+
+        const setStoredJson = (key, value) => {
+          const serialized = JSON.stringify(value);
+          localStorage.setItem(storageKeys[key], serialized);
+          localStorage.removeItem(key);
+        };
+
+        const setWindowSession = (targetWindow, userId) => {
+          const windowSessionId = crypto.randomUUID();
+          targetWindow.sessionStorage.setItem('singleUserSession:windowId', windowSessionId);
+          localStorage.setItem('activeUserSession:' + userId, windowSessionId);
+        };
+
+        const request = async (endpoint, options = {}) => {
+          const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+          const token = localStorage.getItem('authToken');
+          if (token) headers.Authorization = 'Bearer ' + token;
+
+          const response = await fetch(apiBase + endpoint, {
+            ...options,
+            headers,
+          });
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data?.error?.message || 'API Error');
+          }
+
+          return data;
+        };
+
+        const openDjDashboard = async (button, account, popup) => {
+          setStatus('Opening DJ dashboard...');
+          const login = await request('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ email: account.email, password: account.password }),
+          });
+          const token = login?.data?.token || login?.data?.authToken;
+          const user = login?.data?.user;
+          if (!token || !user) throw new Error('Failed to sign in');
+
+          localStorage.setItem('authToken', token);
+
+          const activeEvent = await request('/events/mine/active');
+          const event =
+            activeEvent?.data?.event ||
+            (await request('/events', {
+              method: 'POST',
+              body: JSON.stringify({
+                name: (user.displayName || 'DJ') + "'s Party",
+                description: 'Auto-created event',
+                startsAt: new Date().toISOString(),
+              }),
+            }))?.data?.event;
+
+          if (!event) throw new Error('Failed to load DJ event');
+
+          const eventId = event.id || event._id;
+          const userId = user.id || user._id;
+          setStoredJson('user', user);
+          setStoredJson('currentEvent', {
+            accessCode: event.accessCode,
+            eventCode: event.accessCode,
+            eventId,
+            ownerName: user.displayName || 'DJ',
+            ownerProfilePicture: user.profilePicture || null,
+          });
+          setStoredJson('currentParticipant', {
+            _id: userId,
+            nickname: user.displayName || 'DJ',
+            eventId,
+            profilePicture: user.profilePicture || null,
+          });
+          if (popup) {
+            setWindowSession(popup, userId || account.email);
+            popup.location.replace('/dj/dashboard');
+          }
+        };
+
+        const openAttendeeDashboard = async (button, account, popup) => {
+          if (!result.attendeeLogin || !result.event) {
+            throw new Error('Missing attendee login data');
+          }
+
+          setStatus('Opening attendee dashboard...');
+          const verified = await request('/events/access/' + encodeURIComponent(result.attendeeLogin.accessCode));
+          const event = verified?.data?.event;
+          if (!event) throw new Error('Failed to verify attendee event');
+
+          const eventId = event._id || event.id;
+          const join = await request('/attendee-session/events/' + encodeURIComponent(eventId) + '/join', {
+            method: 'POST',
+            body: JSON.stringify({
+              nickname: result.attendeeLogin.nickname,
+              profilePicture: null,
+              ...(result.attendeeLogin.password ? { password: result.attendeeLogin.password } : {}),
+            }),
+          });
+
+          const participant = join?.data?.participant;
+          const token = join?.data?.token;
+          const user = join?.data?.user;
+          if (!participant || !token || !user) throw new Error('Failed to join attendee dashboard');
+
+          const userId = user.id || user._id || participant._id || participant.id;
+          localStorage.setItem('authToken', token);
+          setStoredJson('user', {
+            ...user,
+            id: userId,
+            _id: userId,
+            displayName: result.attendeeLogin.nickname,
+            role: user.role || 'ATTENDEE',
+          });
+          setStoredJson('currentEvent', {
+            nickname: result.attendeeLogin.nickname,
+            accessCode: result.attendeeLogin.accessCode,
+            eventCode: result.attendeeLogin.accessCode,
+            eventId,
+            participantId: participant._id || participant.id,
+            joinedAt: new Date().toISOString(),
+            ownerName: event.ownerId?.displayName || event.ownerName || 'En evento de DJ:',
+            ownerProfilePicture: event.ownerId?.profilePicture || null,
+          });
+          setStoredJson('currentParticipant', {
+            _id: participant._id || participant.id,
+            nickname: result.attendeeLogin.nickname,
+            eventId,
+            profilePicture: participant.profilePicture || null,
+            passwordProtected: Boolean(participant.passwordProtected),
+          });
+          if (popup) {
+            setWindowSession(popup, userId || account.email);
+            popup.location.replace('/attendee/dashboard');
+          }
+        };
+
+        document.addEventListener('click', async (event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLElement)) return;
+          if (!target.classList.contains('open-dashboard')) return;
+
+          const button = target;
+          if (button.disabled) return;
+
+          const card = button.closest('.card');
+          const role = button.dataset.role || '';
+          const email = button.dataset.email || '';
+          const password = button.dataset.password || '';
+          const popup = window.open('', '_blank');
+          if (!popup) {
+            setStatus('Allow popups to open the dashboard window');
+            return;
+          }
+
+          popup.document.open();
+          popup.document.write('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Opening dashboard</title><style>body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f8fafc;color:#0f172a;display:grid;place-items:center;min-height:100vh}p{margin:0;font-size:14px;color:#475569}</style></head><body><p>Opening dashboard...</p></body></html>');
+          popup.document.close();
+
+          button.disabled = true;
+          try {
+            if (role === 'DJ') {
+              await openDjDashboard(button, { email, password }, popup);
+            } else if (role === 'ATTENDEE') {
+              await openAttendeeDashboard(button, { email, password }, popup);
+            } else {
+              throw new Error('Unsupported role: ' + role);
+            }
+            button.disabled = false;
+          } catch (error) {
+            button.disabled = false;
+            try {
+              popup.close();
+            } catch {}
+            setStatus(error instanceof Error ? error.message : 'Failed to open dashboard');
+            if (card) card.classList.add('error');
+          }
+        });
+      })();
+    </script>
+    <style>
+      .open-dashboard {
+        width: 100%;
+        margin-top: 14px;
+        border: 1px solid #0f172a;
+        border-radius: 8px;
+        background: #0f172a;
+        color: white;
+        padding: 10px 12px;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .open-dashboard:disabled {
+        cursor: wait;
+        opacity: 0.6;
+      }
+      .status-line {
+        min-height: 1.2em;
+        margin-top: 12px;
+      }
+      .card.error {
+        border-color: #ef4444;
+      }
+    </style>
   `;
 }
 
