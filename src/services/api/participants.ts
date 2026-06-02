@@ -41,6 +41,17 @@ export const participantsAPI = {
     return data.data.participant;
   },
 
+  updateProfile: async (
+    participantId: string,
+    updates: { nickname?: string; profilePicture?: string | null },
+  ) => {
+    const data = await apiCall(`/participants/${participantId}/profile`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+    return data.data.participant;
+  },
+
   getParticipant: async (participantId: string) => {
     const data = await apiCall(`/participants/${participantId}`);
     return data.data.participant;

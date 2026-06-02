@@ -110,6 +110,10 @@ export function onParticipantPremiumUpdated(callback: Listener<'participant_prem
   on('participant_premium_updated', callback);
 }
 
+export function onParticipantUpdated(callback: Listener<'participant_updated'>) {
+  on('participant_updated', callback);
+}
+
 export function onAttendeePasswordPromptRequested(callback: Listener<'attendee_password_prompt_requested'>) {
   on('attendee_password_prompt_requested', callback);
 }

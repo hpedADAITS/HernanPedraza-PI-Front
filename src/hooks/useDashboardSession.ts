@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useEffectEvent, useState } from 'react';
 import type { NavigateToView } from '@/types';
 import { disconnectSocket, initSocket, joinEvent, off, on, onAccessCodeUpdated, onEventEnded, onEventUpdated, onSongSuggested } from '@/services/socket';
+import type { ParticipantUpdatedPayload } from '@/services/socket/contracts';
 import { eventsAPI } from '@/services/api';
 import { clearStoredEvent, clearStoredParticipant, clearStoredUser, getAuthToken, getStoredEvent, getStoredParticipant, getStoredUser, setStoredEvent, setStoredParticipant } from '@/services/session';
 import {
@@ -30,6 +31,19 @@ function updateStoredParticipantProfilePicture(newPicture: string) {
   setStoredParticipant({
     ...participant,
     profilePicture: newPicture,
+  });
+}
+
+function syncStoredParticipantProfile(updates: {
+  nickname?: string;
+  profilePicture?: string | null;
+}) {
+  const participant = getStoredParticipant();
+  if (!participant) return;
+
+  setStoredParticipant({
+    ...participant,
+    ...updates,
   });
 }
 
@@ -237,6 +251,27 @@ export function useDashboardSession({
       toast.info(`${data.nickname || 'Someone'} suggested ${data.title}!`);
     };
 
+    const handleParticipantUpdated = (data: ParticipantUpdatedPayload) => {
+      if (!data.participantId || data.participantId !== participantData._id) {
+        return;
+      }
+
+      syncStoredParticipantProfile({
+        ...(data.nickname !== undefined ? { nickname: data.nickname } : {}),
+        ...(data.profilePicture !== undefined
+          ? { profilePicture: data.profilePicture }
+          : {}),
+      });
+      setDashboardState((current) => ({
+        ...current,
+        userName: data.nickname ?? current.userName,
+        profilePicture:
+          data.profilePicture === undefined
+            ? current.profilePicture
+            : data.profilePicture,
+      }));
+    };
+
     const handleEventEnded = (data: { cancelled?: boolean; reason?: string }) => {
       if (isDj) return;
 
@@ -285,6 +320,7 @@ export function useDashboardSession({
     onAccessCodeUpdated(handleAccessCodeUpdated);
     onEventUpdated(handleEventUpdated);
     onSongSuggested(handleSongSuggested);
+    on('participant_updated', handleParticipantUpdated);
     onEventEnded(handleEventEnded);
     on('participant_kicked', handleParticipantKicked);
     on('participant_cooldown', handleParticipantCooldown);
@@ -300,6 +336,7 @@ export function useDashboardSession({
       off('access_code_updated', handleAccessCodeUpdated);
       off('event_updated', handleEventUpdated);
       off('song_suggested', handleSongSuggested);
+      off('participant_updated', handleParticipantUpdated);
       off('event_ended', handleEventEnded);
       off('participant_kicked', handleParticipantKicked);
       off('participant_cooldown', handleParticipantCooldown);

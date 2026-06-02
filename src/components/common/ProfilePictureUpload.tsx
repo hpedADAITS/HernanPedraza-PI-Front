@@ -2,7 +2,7 @@ import React, { useRef, useState, useTransition } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { authAPI } from '@/services/api';
+import { authAPI, participantsAPI } from '@/services/api';
 import { readStoredJson, writeStoredJson } from '@/utils/storage';
 
 interface ProfilePictureUploadProps {
@@ -59,7 +59,7 @@ export function ProfilePictureUpload({
 
         /* Send to backend */
         try {
-          const response = await authAPI.updateProfilePicture({
+          await authAPI.updateProfilePicture({
             profilePicture: base64String,
           });
 
@@ -73,11 +73,18 @@ export function ProfilePictureUpload({
           }
 
           const participant = readStoredJson<
-            { profilePicture?: string | null } & Record<string, unknown>
+            { _id?: string; id?: string; profilePicture?: string | null } & Record<string, unknown>
           >('currentParticipant');
+          const participantId = participant?._id || participant?.id;
+          const updatedParticipant = participantId
+            ? await participantsAPI.updateProfile(participantId, {
+                profilePicture: base64String,
+              })
+            : null;
           if (participant) {
             writeStoredJson('currentParticipant', {
               ...participant,
+              ...(updatedParticipant || {}),
               profilePicture: base64String,
             });
           }

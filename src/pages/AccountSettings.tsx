@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { toast } from 'sonner';
-import { authAPI, clearToken } from '@/services/api';
+import { authAPI, clearToken, participantsAPI } from '@/services/api';
 import { disconnectSocket, getSocket } from '@/services/socket';
 import { ProfilePictureUpload } from '@/components/common';
 import { SettingsChoiceRow, SettingsDialog, SettingsDialogActions, SettingsDialogButton, SettingsList, SettingsListItem, SettingsPageShell, SettingsSearch, SettingsToggleRow } from '@/components/settings/SettingsUI';
@@ -104,12 +104,25 @@ export function AccountSettings({ mode, onNavigate }: Props) {
     }
     setLoading(true);
     try {
-      await authAPI.updateProfile({ displayName: newDisplayName.trim() });
+      const displayName = newDisplayName.trim();
+      await authAPI.updateProfile({ displayName });
       const user = readStoredJson<{ displayName?: string }>('user') || {};
       writeStoredJson('user', {
         ...user,
-        displayName: newDisplayName.trim(),
+        displayName,
       });
+      const participant = readStoredJson<{ _id?: string; id?: string } & Record<string, unknown>>('currentParticipant');
+      const participantId = participant?._id || participant?.id;
+      if (participantId) {
+        const updatedParticipant = await participantsAPI.updateProfile(participantId, {
+          nickname: displayName,
+        });
+        writeStoredJson('currentParticipant', {
+          ...participant,
+          ...updatedParticipant,
+          nickname: displayName,
+        });
+      }
       toast.success('Display name updated');
       setShowNameModal(false);
     } catch (error) {

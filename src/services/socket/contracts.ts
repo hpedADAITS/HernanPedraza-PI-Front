@@ -68,6 +68,11 @@ export interface ParticipantPremiumPayload {
   isPremium?: boolean;
 }
 
+export interface ParticipantUpdatedPayload extends ParticipantEventPayload {
+  nickname?: string;
+  profilePicture?: string | null;
+}
+
 export interface AccessCodeUpdatedPayload {
   eventId?: string;
   accessCode?: string;
@@ -104,6 +109,9 @@ export interface SocketEventPayloads {
   participant_cooldown: ParticipantCooldownPayload;
   participant_cooldown_set: ParticipantCooldownPayload;
   participant_premium_updated: ParticipantPremiumPayload;
+  participant_updated: ParticipantUpdatedPayload;
+  participant_renamed: ParticipantUpdatedPayload;
+  participant_profile_changed: ParticipantUpdatedPayload;
   votes_updated: VotesUpdatedPayload;
   song_suggested: SongEventPayload;
   song_approved: SongEventPayload;

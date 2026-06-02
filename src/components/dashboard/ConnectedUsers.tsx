@@ -11,6 +11,7 @@ import type {
   ParticipantCooldownPayload,
   ParticipantEventPayload,
   ParticipantPremiumPayload,
+  ParticipantUpdatedPayload,
 } from '@/services/socket/contracts';
 import { readStoredJson } from '@/utils/storage';
 import { UserAvatar } from '@/components/common';
@@ -115,6 +116,7 @@ type ConnectedUsersAction =
   | { type: 'replace_users'; users: ConnectedUser[] }
   | { type: 'upsert_user'; user: ConnectedUser }
   | { type: 'remove_user'; participantId?: string }
+  | { type: 'update_user'; update: ParticipantUpdatedPayload }
   | { type: 'set_cooldown'; participantId?: string; cooldownUntil?: string | Date }
   | { type: 'set_premium'; participantId?: string; isPremium?: boolean }
   | { type: 'select_participant'; participantId: string | null };
@@ -155,6 +157,23 @@ function connectedUsersReducer(
           state.selectedParticipantId === action.participantId
             ? null
             : state.selectedParticipantId,
+      };
+    case 'update_user':
+      if (!action.update.participantId) return state;
+      return {
+        ...state,
+        users: state.users.map((user) =>
+          user._id === action.update.participantId
+            ? {
+                ...user,
+                nickname: action.update.nickname ?? user.nickname,
+                profilePicture:
+                  action.update.profilePicture === undefined
+                    ? user.profilePicture
+                    : action.update.profilePicture,
+              }
+            : user,
+        ),
       };
     case 'set_cooldown':
       if (!action.participantId) {
@@ -333,9 +352,14 @@ export function ConnectedUsers({
         });
       };
 
+      const handleParticipantUpdated = (data: ParticipantUpdatedPayload) => {
+        dispatch({ type: 'update_user', update: data });
+      };
+
       socket.on('participant_joined', handleParticipantJoined);
       socket.on('participant_left', handleParticipantLeft);
       socket.on('participant_kicked', handleParticipantKicked);
+      socket.on('participant_updated', handleParticipantUpdated);
       if (isDj) {
         socket.on('participant_cooldown', handleParticipantCooldown);
         socket.on('participant_premium_updated', handleParticipantPremiumUpdated);
@@ -348,6 +372,7 @@ export function ConnectedUsers({
         socket.off('participant_joined', handleParticipantJoined);
         socket.off('participant_left', handleParticipantLeft);
         socket.off('participant_kicked', handleParticipantKicked);
+        socket.off('participant_updated', handleParticipantUpdated);
         if (isDj) {
           socket.off('participant_cooldown', handleParticipantCooldown);
           socket.off(

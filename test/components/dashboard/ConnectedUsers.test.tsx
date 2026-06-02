@@ -171,6 +171,37 @@ describe('Connected Users dashboard UI', () => {
     expect(screen.getByText('2 members')).toBeInTheDocument();
   });
 
+  it('updates attendee names and avatars over the socket', async () => {
+    const socket = createSocketMock();
+    mockGetSocket.mockReturnValue(socket as Socket);
+    mockParticipantsAPI.listEventParticipants.mockResolvedValue([
+      {
+        _id: 'attendee-1',
+        nickname: 'Alex',
+        profilePicture: 'data:image/png;base64,old-picture',
+        joinedAt: '2026-05-21T10:00:00.000Z',
+        socketId: 'socket-1',
+      },
+    ]);
+
+    render(<ConnectedUsers mode="attendee" />);
+
+    expect(await screen.findByText('Alex')).toBeInTheDocument();
+
+    socket.emitEvent('participant_updated', {
+      participantId: 'attendee-1',
+      nickname: 'Avery',
+      profilePicture: 'data:image/png;base64,new-picture',
+    });
+
+    expect(await screen.findByText('Avery')).toBeInTheDocument();
+    expect(screen.queryByText('Alex')).not.toBeInTheDocument();
+    expect(screen.getByAltText('Avery profile')).toHaveAttribute(
+      'src',
+      'data:image/png;base64,new-picture',
+    );
+  });
+
   it('keeps attendee-only DJ identity section out of DJ mode', async () => {
     mockParticipantsAPI.listEventParticipants.mockResolvedValue([]);
 
