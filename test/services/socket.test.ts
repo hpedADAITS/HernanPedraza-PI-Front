@@ -37,6 +37,7 @@ describe('socket service', () => {
     expect(result).toBe(socket);
     expect(getSocket()).toBe(socket);
     expect(socketIoMock).toHaveBeenCalledWith(undefined, {
+      transports: ['websocket'],
       auth: {
         token: 'explicit-token',
       },
