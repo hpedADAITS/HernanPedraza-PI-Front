@@ -1,4 +1,13 @@
-<p align="center"><img src="docs/logo.png" alt="SyncRekuest logo" width="180" /></p>
+<div align="center" style="max-width:320px; margin:0 auto;">
+  <a align="center" href="https://sr-backend.onrender.com/" target="_blank" rel="noopener noreferrer">
+    <img align="center"
+      alt="SyncRekuest Logo"
+      src="docs/logo.png"
+      style="display:block; width:100%; height:auto;"
+    />
+  </a>
+</div>
+&nbsp;
 <h1 align="center">SyncRekuest Frontend</h1>
 
 React + TypeScript client for DJ events, attendee song requests, realtime queues, and mobile-friendly participation.
