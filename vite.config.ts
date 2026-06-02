@@ -65,6 +65,9 @@ export default defineConfig({
     target: 'esnext',
     outDir: 'build',
   },
+  optimizeDeps: {
+    include: ['@ffmpeg/ffmpeg', '@ffmpeg/util'],
+  },
   server: {
     host: '127.0.0.1',
     port: 5173,
@@ -73,7 +76,6 @@ export default defineConfig({
     https: httpsConfig,
     hmr: {
       host: '127.0.0.1',
-      port: 5173,
     },
     proxy: {
       '/api': {

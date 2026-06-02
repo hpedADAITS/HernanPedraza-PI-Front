@@ -91,6 +91,7 @@ export function DJProfileCard({
               <p className="text-white/80 text-sm font-medium">DJ on SyncRequest</p>
             </div>
           </div>
+
         </m.div>
 
         {/* QR Code Modal */}
@@ -127,6 +128,7 @@ export function DJProfileCard({
             </SettingsDialogButton>
           </SettingsDialogActions>
         </SettingsDialog>
+
       </>
     </TooltipProvider>
   );

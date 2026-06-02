@@ -24,6 +24,13 @@ export function loadToken() {
   }
 }
 
+function getToken() {
+  if (typeof window !== 'undefined') {
+    authToken = localStorage.getItem('authToken');
+  }
+  return authToken;
+}
+
 /* Store token in localStorage */
 export function saveToken(token: string) {
   authToken = token;
@@ -51,8 +58,9 @@ export async function apiCall(endpoint: string, options: RequestInit = {}) {
   };
 
   /* Add auth token if available */
-  if (authToken) {
-    headers.Authorization = `Bearer ${authToken}`;
+  const token = getToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
   }
 
   const response = await fetch(`${API_BASE}${endpoint}`, {

@@ -1,12 +1,14 @@
-import { useCallback, type KeyboardEvent } from 'react';
+import { useCallback, useState, type KeyboardEvent } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { m } from 'motion/react';
-import { Search, ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ListPlus, Search } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useDarkMode } from '@/hooks/useDarkMode';
 import { getStoredEventId, getStoredParticipantId } from '@/services/session';
 import type { NavigateToView } from '@/types';
 import { AttendeeSongSuggestView } from '@/features/song-selection/AttendeeSongSuggestView';
 import { DjSongCard } from '@/features/song-selection/DjSongCard';
+import { RecognitionTrackUploadDialog } from '@/features/song-selection/RecognitionTrackUploadDialog';
 import { usePendingSongs } from '@/features/song-selection/usePendingSongs';
 import { useSongSuggestionForm } from '@/features/song-selection/useSongSuggestionForm';
 
@@ -21,6 +23,7 @@ export function SongSelection({ mode, onNavigate }: Props) {
   const [isDarkMode] = useDarkMode();
   const eventId = getStoredEventId();
   const participantId = getStoredParticipantId();
+  const [recognitionUploadOpen, setRecognitionUploadOpen] = useState(false);
   const navigateBack = useCallback(() => {
     onNavigate(isDj ? 'dj-dashboard' : 'attendee-dashboard');
   }, [isDj, onNavigate]);
@@ -80,23 +83,47 @@ export function SongSelection({ mode, onNavigate }: Props) {
 
         {isDj ? (
           <>
-            <m.label
-              layoutId="search-bar"
-              className="group mx-auto mb-6 mt-2 flex h-[52px] w-full max-w-2xl cursor-text items-center gap-3.5 rounded-xl border border-slate-900/10 bg-white px-[18px] shadow-[0_10px_20px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.95)] md:mb-8 md:mt-4"
-            >
-              <Search
-                aria-hidden="true"
-                className="h-5 w-5 flex-shrink-0 text-[#526990] transition-colors group-hover:text-[#2878ff]"
-              />
-              <input
-                type="search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                aria-label="Search pending songs"
-                placeholder="Search pending songs..."
-                className="h-full min-w-0 flex-1 cursor-text border-0 bg-transparent text-sm font-semibold tracking-normal text-[#14213f] outline-none placeholder:text-[#8b9ab4]"
-              />
-            </m.label>
+            <div className="mx-auto mb-6 mt-2 flex w-full max-w-2xl items-center gap-3 md:mb-8 md:mt-4">
+              <m.label
+                layoutId="search-bar"
+                className="group flex h-[52px] min-w-0 flex-1 cursor-text items-center gap-3.5 rounded-xl border border-slate-900/10 bg-white px-[18px] shadow-[0_10px_20px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.95)]"
+              >
+                <Search
+                  aria-hidden="true"
+                  className="h-5 w-5 flex-shrink-0 text-[#526990] transition-colors group-hover:text-[#2878ff]"
+                />
+                <input
+                  type="search"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  aria-label="Search pending songs"
+                  placeholder="Search pending songs..."
+                  className="h-full min-w-0 flex-1 cursor-text border-0 bg-transparent text-sm font-semibold tracking-normal text-[#14213f] outline-none placeholder:text-[#8b9ab4]"
+                />
+              </m.label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <m.button
+                      type="button"
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setRecognitionUploadOpen(true)}
+                      className="grid h-[52px] w-[52px] flex-shrink-0 place-items-center rounded-xl border border-slate-900/10 bg-white text-[#2878ff] shadow-[0_10px_20px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.95)] transition-colors hover:bg-blue-50"
+                      aria-label="Upload recognition track"
+                    >
+                      <ListPlus size={22} />
+                    </m.button>
+                  </TooltipTrigger>
+                  <TooltipContent>Upload recognition track</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
+            <RecognitionTrackUploadDialog
+              eventId={eventId}
+              open={recognitionUploadOpen}
+              onClose={() => setRecognitionUploadOpen(false)}
+            />
 
             {loading ? (
               <p className="self-center rounded-full bg-white/14 px-4 py-2 text-sm font-medium text-white/80 backdrop-blur-md">

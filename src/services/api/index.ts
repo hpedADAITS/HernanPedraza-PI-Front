@@ -2,6 +2,7 @@ export { API_BASE, loadToken, saveToken, clearToken, checkHealth,  } from './cli
 export { authAPI } from './auth';
 export { attendeeSessionAPI } from './attendeeSession';
 export { eventsAPI } from './events';
+export { audioTracksAPI } from './audioTracks';
 export { participantsAPI } from './participants';
 export { songsAPI } from './songs';
 export { votesAPI } from './votes';

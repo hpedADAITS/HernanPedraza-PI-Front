@@ -119,7 +119,40 @@ async function createLiveEvent() {
 
   await api(`/events/${event.id}/start`, { method: 'POST' }, registered.token);
 
-  return { event, djToken: registered.token };
+  return { event, djToken: registered.token, user: registered.user };
+}
+
+async function setDjSession(page, { event, token, user }) {
+  await page.evaluate(
+    ({ event, token, user }) => {
+      const eventId = event.id || event._id;
+      const userId = user.id || user._id;
+      const windowSessionId =
+        sessionStorage.getItem('singleUserSession:windowId') || crypto.randomUUID();
+      sessionStorage.setItem('singleUserSession:windowId', windowSessionId);
+      localStorage.setItem(`activeUserSession:${userId}`, windowSessionId);
+      localStorage.setItem('authToken', token);
+      localStorage.setItem('user:v1', JSON.stringify(user));
+      localStorage.setItem(
+        'currentEvent:v1',
+        JSON.stringify({
+          accessCode: event.accessCode,
+          eventId,
+          ownerName: user.displayName || 'DJ',
+        }),
+      );
+      localStorage.setItem(
+        'currentParticipant:v1',
+        JSON.stringify({
+          _id: userId,
+          nickname: user.displayName || 'DJ',
+          eventId,
+          profilePicture: user.profilePicture || null,
+        }),
+      );
+    },
+    { event, token, user },
+  );
 }
 
 test.beforeAll(async () => {
@@ -200,4 +233,65 @@ test('attendee joins a real live event and suggests a song through the UI', asyn
     const pending = await api(`/songs/${event.id}/pending`, {}, djToken).then((data) => data.pending);
     return pending.some((song) => song.title === songTitle && song.artist === 'Browser Artist');
   }).toBe(true);
+});
+
+test('DJ uploads a recognition track after localStorage token changes', async ({ page }) => {
+  const owner = await createLiveEvent();
+  const other = await createLiveEvent();
+  const fixture = path.resolve(
+    frontDir,
+    '..',
+    'audio-recognition-service-node/data/recording1.wav',
+  );
+
+  await page.addInitScript(
+    ({ event, token, user }) => {
+      const eventId = event.id || event._id;
+      const userId = user.id || user._id;
+      const windowSessionId =
+        sessionStorage.getItem('singleUserSession:windowId') || crypto.randomUUID();
+      sessionStorage.setItem('singleUserSession:windowId', windowSessionId);
+      localStorage.setItem(`activeUserSession:${userId}`, windowSessionId);
+      localStorage.setItem('authToken', token);
+      localStorage.setItem('user:v1', JSON.stringify(user));
+      localStorage.setItem(
+        'currentEvent:v1',
+        JSON.stringify({
+          accessCode: event.accessCode,
+          eventId,
+          ownerName: user.displayName || 'DJ',
+        }),
+      );
+      localStorage.setItem(
+        'currentParticipant:v1',
+        JSON.stringify({
+          _id: userId,
+          nickname: user.displayName || 'DJ',
+          eventId,
+          profilePicture: user.profilePicture || null,
+        }),
+      );
+    },
+    { event: owner.event, token: other.djToken, user: owner.user },
+  );
+
+  const uploadResponse = page.waitForResponse((response) =>
+    response.url().includes(`/api/v1/events/${owner.event.id}/audio-tracks`) &&
+    response.request().method() === 'POST',
+  );
+
+  await page.goto(`${frontendUrl}/dj/songs`);
+  await setDjSession(page, {
+    event: owner.event,
+    token: owner.djToken,
+    user: owner.user,
+  });
+  await page.getByRole('button', { name: 'Upload recognition track' }).click();
+  await page.getByLabel('Title').fill('Browser Fingerprint');
+  await page.getByLabel('Artist').fill('Browser Artist');
+  await page.locator('input[type="file"]').setInputFiles(fixture);
+  await page.getByRole('button', { name: 'Fingerprint Track' }).click();
+
+  expect((await uploadResponse).status()).toBe(201);
+  await expect(page.getByText('Fingerprinted Browser Fingerprint')).toBeVisible();
 });

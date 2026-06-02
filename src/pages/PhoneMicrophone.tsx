@@ -3,6 +3,8 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { Mic, MicOff } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { eventsAPI } from '@/services/api';
+import { startAudioMatchStream } from '@/services/audio/micStream';
+import { disconnectSocket, initSocket } from '@/services/socket/connection';
 
 type ConnectionState = 'idle' | 'connecting' | 'connected' | 'failed';
 
@@ -58,13 +60,18 @@ export function PhoneMicrophone() {
   const { eventId = '' } = useParams();
   const [searchParams] = useSearchParams();
   const streamRef = useRef<MediaStream | null>(null);
+  const stopAudioMatchRef = useRef<null | (() => void)>(null);
   const [connectionState, setConnectionState] =
     useState<ConnectionState>('idle');
   const [error, setError] = useState('');
+  const [bestMatch, setBestMatch] = useState('');
 
   const stopActiveStream = useCallback(() => {
+    stopAudioMatchRef.current?.();
+    stopAudioMatchRef.current = null;
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
+    disconnectSocket();
   }, []);
 
   const stopMicrophone = () => {
@@ -106,6 +113,17 @@ export function PhoneMicrophone() {
 
       streamRef.current = stream;
       await eventsAPI.connectPhoneMicrophone(eventId, getPhoneDeviceName(), token);
+      const socket = initSocket(token);
+      socket.on('audio_match_update', (payload) => {
+        const match = payload?.matches?.[0];
+        setBestMatch(match ? `${match.title} - ${match.artist} (${match.score})` : '');
+      });
+      stopAudioMatchRef.current = await startAudioMatchStream({
+        eventId,
+        stream,
+        socket,
+        onError: (streamError) => setError(streamError.message),
+      });
       setConnectionState('connected');
     } catch (err) {
       stopMicrophone();
@@ -158,7 +176,7 @@ export function PhoneMicrophone() {
 
         {connectionState === 'connected' && (
           <p className="mt-4 rounded-lg bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
-            Connected. Keep this page open while using the phone microphone.
+            {bestMatch || 'Connected. Listening for a reference-track match.'}
           </p>
         )}
 

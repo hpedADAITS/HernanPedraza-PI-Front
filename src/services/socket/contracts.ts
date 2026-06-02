@@ -102,6 +102,17 @@ export interface PhoneMicrophoneConnectedPayload {
   deviceName?: string;
 }
 
+export interface AudioMatchUpdatePayload {
+  eventId?: string;
+  matches?: Array<{
+    trackId: string;
+    title: string;
+    artist: string;
+    offset: number;
+    score: number;
+  }>;
+}
+
 export interface SocketEventPayloads {
   participant_joined: ParticipantEventPayload;
   participant_left: ParticipantEventPayload;
@@ -126,6 +137,7 @@ export interface SocketEventPayloads {
   event_ended: EventEndedPayload;
   attendee_password_prompt_requested: AttendeePasswordPromptPayload;
   phone_microphone_connected: PhoneMicrophoneConnectedPayload;
+  audio_match_update: AudioMatchUpdatePayload;
 }
 
 export type SocketEventName = keyof SocketEventPayloads;
