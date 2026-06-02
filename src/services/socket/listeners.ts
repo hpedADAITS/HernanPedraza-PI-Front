@@ -115,6 +115,10 @@ export function onEventEnded(callback: Listener<'event_ended'>) {
   on('event_ended', callback);
 }
 
+export function onParticipantBanned(callback: Listener<'participant_banned'>) {
+  on('participant_banned', callback);
+}
+
 export function onParticipantPremiumUpdated(callback: Listener<'participant_premium_updated'>) {
   on('participant_premium_updated', callback);
 }

@@ -106,6 +106,7 @@ export interface SocketEventPayloads {
   participant_joined: ParticipantEventPayload;
   participant_left: ParticipantEventPayload;
   participant_kicked: ParticipantEventPayload;
+  participant_banned: ParticipantEventPayload;
   participant_cooldown: ParticipantCooldownPayload;
   participant_cooldown_set: ParticipantCooldownPayload;
   participant_premium_updated: ParticipantPremiumPayload;

@@ -14,6 +14,7 @@ export type View =
   | 'dj-account-settings'
   | 'dj-app-settings'
   | 'dj-phone-microphone'
+  | 'banned'
   | 'verify-email';
 
 export type NavigateToView = (view: View) => void;

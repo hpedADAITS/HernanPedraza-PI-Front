@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useEffectEvent, useState } from 'react';
 import type { NavigateToView } from '@/types';
-import { disconnectSocket, initSocket, joinEvent, off, on, onAccessCodeUpdated, onEventEnded, onEventUpdated, onSongSuggested } from '@/services/socket';
+import { disconnectSocket, initSocket, joinEvent, off, on, onAccessCodeUpdated, onEventEnded, onEventUpdated, onParticipantBanned, onSongSuggested } from '@/services/socket';
 import type { AccessCodeUpdatedPayload, EventEndedPayload, EventUpdatedPayload, ParticipantCooldownPayload, ParticipantEventPayload, ParticipantUpdatedPayload, SongEventPayload } from '@/services/socket/contracts';
 import { eventsAPI } from '@/services/api';
 import { clearStoredEvent, clearStoredParticipant, clearStoredUser, getAuthToken, getStoredEvent, getStoredParticipant, getStoredUser, setStoredEvent, setStoredParticipant } from '@/services/session';
@@ -118,6 +118,14 @@ export function useDashboardSession({
     toast.info(message);
     clearAttendeeEventSession();
     onNavigate('attendee-login');
+  });
+
+  const banAttendee = useEffectEvent((message: string) => {
+    if (isDj) return;
+
+    toast.error(message);
+    clearAttendeeEventSession();
+    onNavigate('banned');
   });
 
   const handleProfilePictureChange = useCallback((newPicture: string) => {
@@ -308,6 +316,15 @@ export function useDashboardSession({
       );
     };
 
+    const handleParticipantBanned = (data: ParticipantEventPayload & { reason?: string }) => {
+      if (isDj || data?.participantId !== participantData._id) return;
+
+      const message = data.reason
+        ? `You were banned from the event: ${data.reason}`
+        : 'You were banned from the event';
+      banAttendee(message);
+    };
+
     onAccessCodeUpdated(handleAccessCodeUpdated);
     onEventUpdated(handleEventUpdated);
     onSongSuggested(handleSongSuggested);
@@ -315,6 +332,7 @@ export function useDashboardSession({
     onEventEnded(handleEventEnded);
     on('participant_kicked', handleParticipantKicked);
     on('participant_cooldown', handleParticipantCooldown);
+    onParticipantBanned(handleParticipantBanned);
 
     if (socket?.connected) {
       void handleConnect();
@@ -331,6 +349,7 @@ export function useDashboardSession({
       off('event_ended', handleEventEnded);
       off('participant_kicked', handleParticipantKicked);
       off('participant_cooldown', handleParticipantCooldown);
+      off('participant_banned', handleParticipantBanned);
     };
   }, [isDj, persistAccessCode]);
 

@@ -16,6 +16,7 @@ export const viewPaths: Record<View, string> = {
   'dj-account-settings': '/dj/settings/account',
   'dj-app-settings': '/dj/settings/app',
   'dj-phone-microphone': '/dj/microphone',
+  banned: '/banned',
   'verify-email': '/verify-email',
 };
 

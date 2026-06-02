@@ -28,6 +28,7 @@ export {
   onAccessCodeUpdated,
   onEventUpdated,
   onEventEnded,
+  onParticipantBanned,
   onParticipantPremiumUpdated,
   onAttendeePasswordPromptRequested,
   onPhoneMicrophoneConnected,

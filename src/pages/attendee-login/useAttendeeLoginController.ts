@@ -165,7 +165,12 @@ export function useAttendeeLoginController(onNavigate: NavigateToView) {
       socket.initSocket(token);
       onNavigate('attendee-dashboard');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to join event');
+      const message = error instanceof Error ? error.message : 'Failed to join event';
+      if (message === 'Participant has been banned from this event') {
+        onNavigate('banned');
+        return;
+      }
+      toast.error(message);
     } finally {
       setLoading(false);
     }

@@ -49,6 +49,11 @@ const VerifyEmail = lazy(() =>
     default: module.VerifyEmail,
   })),
 );
+const Banned = lazy(() =>
+  import('@/pages/Banned').then((module) => ({
+    default: module.Banned,
+  })),
+);
 const PhoneMicrophone = lazy(() =>
   import('@/pages/PhoneMicrophone').then((module) => ({
     default: module.PhoneMicrophone,
@@ -206,6 +211,7 @@ export function AppRoutes({
             path="/verify-email/:token"
             element={<VerifyEmail onNavigate={onNavigate} />}
           />
+          <Route path="/banned" element={<Banned onNavigate={onNavigate} />} />
           <Route path="/dj/microphone/:eventId" element={<PhoneMicrophone />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
