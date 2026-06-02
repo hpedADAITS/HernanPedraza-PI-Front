@@ -12,9 +12,14 @@ interface Props {
   onNavigate: NavigateToView;
   logoWhite: boolean;
   onLogoChange: (white: boolean) => void;
+  onPrepareLogin?: (role: Role) => Promise<unknown> | unknown;
 }
 
-const ROLE_TRANSITION_DURATION_MS = 650;
+type Role = 'attendee' | 'dj';
+
+const ROLE_READY_TRANSITION_DURATION_MS = 420;
+const ROLE_LOADING_TRANSITION_DURATION_MS = 1800;
+const ROLE_LOADING_SCALE = 12;
 const ROLE_TRANSITION_SCALE = 60;
 const ROLE_BACKGROUNDS = {
   attendee:
@@ -22,16 +27,23 @@ const ROLE_BACKGROUNDS = {
   dj: 'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(255,255,255,0.10) 0%, transparent 60%), linear-gradient(180deg, #1e3a8a 0%, #0c1e4a 100%)',
 } as const;
 
-export function RoleSelection({ onNavigate, logoWhite: isLogoWhite, onLogoChange }: Props) {
+export function RoleSelection({
+  onNavigate,
+  logoWhite: isLogoWhite,
+  onLogoChange,
+  onPrepareLogin,
+}: Props) {
   const [isDarkMode] = useDarkMode();
   const [expandingCircle, setExpandingCircle] = useState<{
+    role: Role;
     x: number;
     y: number;
     background: string;
+    ready: boolean;
   } | null>(null);
 
   const handleRoleClick = (
-    role: 'attendee' | 'dj',
+    role: Role,
     event: React.MouseEvent<HTMLButtonElement>,
   ) => {
     if (expandingCircle) return;
@@ -41,13 +53,21 @@ export function RoleSelection({ onNavigate, logoWhite: isLogoWhite, onLogoChange
     const y = rect.top + rect.height / 2;
     const background = ROLE_BACKGROUNDS[role];
 
-    setExpandingCircle({ x, y, background });
+    setExpandingCircle({ role, x, y, background, ready: false });
 
-    setTimeout(() => {
-      onLogoChange(true);
-      onNavigate(role === 'attendee' ? 'attendee-login' : 'dj-login');
-      setExpandingCircle(null);
-    }, ROLE_TRANSITION_DURATION_MS);
+    void Promise.resolve(onPrepareLogin?.(role))
+      .catch(() => undefined)
+      .then(() => {
+        setExpandingCircle((circle) =>
+          circle?.role === role ? { ...circle, ready: true } : circle,
+        );
+
+        window.setTimeout(() => {
+          onLogoChange(true);
+          setExpandingCircle(null);
+          onNavigate(role === 'attendee' ? 'attendee-login' : 'dj-login');
+        }, ROLE_READY_TRANSITION_DURATION_MS);
+      });
   };
 
   return (
@@ -155,9 +175,17 @@ export function RoleSelection({ onNavigate, logoWhite: isLogoWhite, onLogoChange
           {expandingCircle && (
             <motion.div
               initial={{ scale: 0.35, opacity: 0.9 }}
-              animate={{ scale: ROLE_TRANSITION_SCALE, opacity: 1 }}
+              animate={{
+                scale: expandingCircle.ready
+                  ? ROLE_TRANSITION_SCALE
+                  : ROLE_LOADING_SCALE,
+                opacity: 1,
+              }}
               transition={{
-                duration: ROLE_TRANSITION_DURATION_MS / 1000,
+                duration:
+                  (expandingCircle.ready
+                    ? ROLE_READY_TRANSITION_DURATION_MS
+                    : ROLE_LOADING_TRANSITION_DURATION_MS) / 1000,
                 ease: [0.76, 0, 0.24, 1],
               }}
               style={{

@@ -8,14 +8,14 @@ const RoleSelection = lazy(() =>
     default: module.RoleSelection,
   })),
 );
-const AttendeeLogin = lazy(() =>
+const loadAttendeeLogin = () =>
   import('@/pages/AttendeeLogin').then((module) => ({
     default: module.AttendeeLogin,
-  })),
-);
-const DJLogin = lazy(() =>
-  import('@/pages/DJLogin').then((module) => ({ default: module.DJLogin })),
-);
+  }));
+const loadDJLogin = () =>
+  import('@/pages/DJLogin').then((module) => ({ default: module.DJLogin }));
+const AttendeeLogin = lazy(loadAttendeeLogin);
+const DJLogin = lazy(loadDJLogin);
 const DJRegister = lazy(() =>
   import('@/pages/DJRegister').then((module) => ({
     default: module.DJRegister,
@@ -63,10 +63,7 @@ interface AppRoutesProps {
 }
 
 function getDashboardWorkspaceMode(pathname: string): 'attendee' | 'dj' | null {
-  if (
-    pathname === '/attendee/dashboard' ||
-    pathname === '/attendee/songs'
-  ) {
+  if (pathname === '/attendee/dashboard' || pathname === '/attendee/songs') {
     return 'attendee';
   }
 
@@ -96,10 +93,7 @@ export function AppRoutes({
             aria-hidden={isSongSelection}
             inert={isSongSelection ? true : undefined}
           >
-            <Dashboard
-              mode={dashboardWorkspaceMode}
-              onNavigate={onNavigate}
-            />
+            <Dashboard mode={dashboardWorkspaceMode} onNavigate={onNavigate} />
           </div>
 
           {isSongSelection && (
@@ -126,6 +120,9 @@ export function AppRoutes({
                 onNavigate={onNavigate}
                 logoWhite={logoWhite}
                 onLogoChange={onLogoChange}
+                onPrepareLogin={(role) =>
+                  role === 'attendee' ? loadAttendeeLogin() : loadDJLogin()
+                }
               />
             }
           />
@@ -181,7 +178,9 @@ export function AppRoutes({
           />
           <Route
             path="/attendee/settings/account"
-            element={<AccountSettings mode="attendee" onNavigate={onNavigate} />}
+            element={
+              <AccountSettings mode="attendee" onNavigate={onNavigate} />
+            }
           />
           <Route
             path="/attendee/settings/app"
@@ -207,10 +206,7 @@ export function AppRoutes({
             path="/verify-email/:token"
             element={<VerifyEmail onNavigate={onNavigate} />}
           />
-          <Route
-            path="/dj/microphone/:eventId"
-            element={<PhoneMicrophone />}
-          />
+          <Route path="/dj/microphone/:eventId" element={<PhoneMicrophone />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

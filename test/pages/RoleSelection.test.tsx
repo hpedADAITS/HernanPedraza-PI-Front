@@ -22,12 +22,14 @@ describe('RoleSelection page', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: /attendee/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /attendee/i }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^dj$/i })).toBeInTheDocument();
     expect(screen.getByAltText('SyncRequest')).toBeInTheDocument();
   });
 
-  it('navigates to attendee login after choosing Attendee', () => {
+  it('navigates to attendee login once it is ready', async () => {
     const onNavigate = vi.fn();
     const onLogoChange = vi.fn();
 
@@ -43,15 +45,19 @@ describe('RoleSelection page', () => {
 
     expect(onNavigate).not.toHaveBeenCalled();
 
+    await act(async () => {
+      await Promise.resolve();
+    });
+
     act(() => {
-      vi.advanceTimersByTime(650);
+      vi.advanceTimersByTime(420);
     });
 
     expect(onLogoChange).toHaveBeenCalledWith(true);
     expect(onNavigate).toHaveBeenCalledWith('attendee-login');
   });
 
-  it('navigates to DJ login after choosing DJ', () => {
+  it('navigates to DJ login once it is ready', async () => {
     const onNavigate = vi.fn();
     const onLogoChange = vi.fn();
 
@@ -65,11 +71,54 @@ describe('RoleSelection page', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /^dj$/i }));
 
+    await act(async () => {
+      await Promise.resolve();
+    });
+
     act(() => {
-      vi.advanceTimersByTime(650);
+      vi.advanceTimersByTime(420);
     });
 
     expect(onLogoChange).toHaveBeenCalledWith(true);
     expect(onNavigate).toHaveBeenCalledWith('dj-login');
+  });
+
+  it('keeps expanding while the selected login page is loading', async () => {
+    const onNavigate = vi.fn();
+    const onLogoChange = vi.fn();
+    let resolveLogin = () => {};
+
+    render(
+      <RoleSelection
+        onNavigate={onNavigate}
+        logoWhite={false}
+        onLogoChange={onLogoChange}
+        onPrepareLogin={() =>
+          new Promise<void>((resolve) => {
+            resolveLogin = resolve;
+          })
+        }
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /attendee/i }));
+
+    act(() => {
+      vi.advanceTimersByTime(1800);
+    });
+
+    expect(onNavigate).not.toHaveBeenCalled();
+
+    await act(async () => {
+      resolveLogin();
+      await Promise.resolve();
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(420);
+    });
+
+    expect(onLogoChange).toHaveBeenCalledWith(true);
+    expect(onNavigate).toHaveBeenCalledWith('attendee-login');
   });
 });
