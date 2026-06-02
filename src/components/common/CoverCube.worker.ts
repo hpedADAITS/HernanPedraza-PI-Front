@@ -74,6 +74,9 @@ let materials: THREE.MeshPhysicalMaterial[] = [];
 let animationFrameId = 0;
 const ownedTextures = new Set<THREE.Texture>();
 const materialOwnsMap = [false, false, false, false, false, false];
+const cubeRenderOrder = 0;
+const fadeRenderOrder = 1;
+const glareRenderOrder = 2;
 
 function hexToRgb(hex: string) {
   const normalized = hex.replace('#', '');
@@ -640,6 +643,7 @@ function initScene(message: Extract<CoverCubeWorkerMessage, { type: 'init' }>) {
     new RoundedBoxGeometry(1.87, 1.87, 1.87, 40, 0.19),
     materials,
   );
+  cube.renderOrder = cubeRenderOrder;
   scene.add(cube);
 
   frontGlare = new THREE.Mesh(
@@ -654,6 +658,7 @@ function initScene(message: Extract<CoverCubeWorkerMessage, { type: 'init' }>) {
   );
   frontGlare.position.set(0, 0.48, 1.035);
   frontGlare.rotation.z = -0.42;
+  frontGlare.renderOrder = glareRenderOrder;
   cube.add(frontGlare);
 
   secondGlare = new THREE.Mesh(
@@ -668,6 +673,7 @@ function initScene(message: Extract<CoverCubeWorkerMessage, { type: 'init' }>) {
   );
   secondGlare.position.set(-0.16, -0.28, 1.04);
   secondGlare.rotation.z = -0.42;
+  secondGlare.renderOrder = glareRenderOrder;
   cube.add(secondGlare);
 
   fadeMaterial = new THREE.MeshBasicMaterial({
@@ -681,6 +687,7 @@ function initScene(message: Extract<CoverCubeWorkerMessage, { type: 'init' }>) {
     fadeMaterial,
   );
   fadeFront.position.set(0, 0, 0.955);
+  fadeFront.renderOrder = fadeRenderOrder;
   fadeFront.visible = false;
   cube.add(fadeFront);
 
