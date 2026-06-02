@@ -122,6 +122,28 @@ async function createLiveEvent() {
   return { event, djToken: registered.token, user: registered.user };
 }
 
+function tinyWav() {
+  const sampleRate = 8000;
+  const frames = 800;
+  const dataBytes = frames * 2;
+  const buffer = Buffer.alloc(44 + dataBytes);
+
+  buffer.write('RIFF', 0);
+  buffer.writeUInt32LE(36 + dataBytes, 4);
+  buffer.write('WAVEfmt ', 8);
+  buffer.writeUInt32LE(16, 16);
+  buffer.writeUInt16LE(1, 20);
+  buffer.writeUInt16LE(1, 22);
+  buffer.writeUInt32LE(sampleRate, 24);
+  buffer.writeUInt32LE(sampleRate * 2, 28);
+  buffer.writeUInt16LE(2, 32);
+  buffer.writeUInt16LE(16, 34);
+  buffer.write('data', 36);
+  buffer.writeUInt32LE(dataBytes, 40);
+
+  return buffer;
+}
+
 async function setDjSession(page, { event, token, user }) {
   await page.evaluate(
     ({ event, token, user }) => {
@@ -238,11 +260,6 @@ test('attendee joins a real live event and suggests a song through the UI', asyn
 test('DJ uploads a recognition track after localStorage token changes', async ({ page }) => {
   const owner = await createLiveEvent();
   const other = await createLiveEvent();
-  const fixture = path.resolve(
-    frontDir,
-    '..',
-    'audio-recognition-service-node/data/recording1.wav',
-  );
 
   await page.addInitScript(
     ({ event, token, user }) => {
@@ -278,6 +295,7 @@ test('DJ uploads a recognition track after localStorage token changes', async ({
   const uploadResponse = page.waitForResponse((response) =>
     response.url().includes(`/api/v1/events/${owner.event.id}/audio-tracks`) &&
     response.request().method() === 'POST',
+    { timeout: 20_000 },
   );
 
   await page.goto(`${frontendUrl}/dj/songs`);
@@ -289,7 +307,11 @@ test('DJ uploads a recognition track after localStorage token changes', async ({
   await page.getByRole('button', { name: 'Upload recognition track' }).click();
   await page.getByLabel('Title').fill('Browser Fingerprint');
   await page.getByLabel('Artist').fill('Browser Artist');
-  await page.locator('input[type="file"]').setInputFiles(fixture);
+  await page.locator('input[type="file"]').setInputFiles({
+    name: 'tiny.wav',
+    mimeType: 'audio/wav',
+    buffer: tinyWav(),
+  });
   await page.getByRole('button', { name: 'Fingerprint Track' }).click();
 
   expect((await uploadResponse).status()).toBe(201);

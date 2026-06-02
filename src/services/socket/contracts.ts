@@ -12,6 +12,7 @@ export interface SongEventPayload {
   duration?: number;
   queuePosition?: number;
   requestedBy?: Song['requestedBy'];
+  recognitionMatch?: Song['recognitionMatch'];
   eventId?: string;
   reason?: string;
   playingStartedAt?: string;
@@ -108,6 +109,7 @@ export interface AudioMatchUpdatePayload {
     trackId: string;
     title: string;
     artist: string;
+    coverUrl?: string | null;
     offset: number;
     score: number;
   }>;

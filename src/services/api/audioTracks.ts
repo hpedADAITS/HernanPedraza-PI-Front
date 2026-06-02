@@ -5,6 +5,7 @@ export interface AudioTrack {
   id: string;
   title: string;
   artist: string;
+  coverUrl: string | null;
   duration: number;
   sampleRate: number;
   pointsCount: number;
@@ -26,10 +27,17 @@ async function authedFetch(endpoint: string, options: RequestInit = {}) {
 }
 
 export const audioTracksAPI = {
-  uploadTrack: async (eventId: string, file: File, title: string, artist: string) => {
+  uploadTrack: async (
+    eventId: string,
+    file: File,
+    title: string,
+    artist: string,
+    coverUrl?: string,
+  ) => {
     const body = new FormData();
     body.append('title', title);
     body.append('artist', artist);
+    if (coverUrl?.trim()) body.append('coverUrl', coverUrl.trim());
     body.append('audio', file);
     const data = await authedFetch(`/events/${eventId}/audio-tracks`, {
       method: 'POST',

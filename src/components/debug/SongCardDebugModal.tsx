@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import {
   Box,
   Bug,
+  Database,
   ExternalLink,
   KeyRound,
   ListMusic,
@@ -49,6 +50,15 @@ interface DebugAccountsResult {
     participantId: string;
   };
   accounts: DebugAccount[];
+}
+
+interface AudioFingerprintStats {
+  tracks: number;
+  fingerprintedSongs: number;
+  indexedSongs: number;
+  fingerprintPoints: number;
+  fingerprintHashes: number;
+  countedAt: string;
 }
 
 function wait(ms: number) {
@@ -475,6 +485,11 @@ async function createDebugMockAccounts() {
   return data.data as DebugAccountsResult;
 }
 
+async function getAudioFingerprintStats() {
+  const data = await apiCall('/debug/audio-fingerprint-stats');
+  return data.data as AudioFingerprintStats;
+}
+
 function renderQueueTestWindow(eventId: string) {
   return `
     <h1>Queue Test Page</h1>
@@ -854,6 +869,9 @@ export function SongCardDebugModal() {
   const [open, setOpen] = useState(false);
   const [running, setRunning] = useState(false);
   const [creatingAccounts, setCreatingAccounts] = useState(false);
+  const [loadingFingerprintStats, setLoadingFingerprintStats] = useState(false);
+  const [fingerprintStats, setFingerprintStats] =
+    useState<AudioFingerprintStats | null>(null);
   const [selected, setSelected] = useState<Record<DebugTrigger, boolean>>({
     queue: true,
     playing: true,
@@ -1015,6 +1033,18 @@ export function SongCardDebugModal() {
     }
   };
 
+  const loadAudioFingerprintStats = async () => {
+    setLoadingFingerprintStats(true);
+    try {
+      setFingerprintStats(await getAudioFingerprintStats());
+      toast.success('Audio fingerprint counts loaded');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to load counts');
+    } finally {
+      setLoadingFingerprintStats(false);
+    }
+  };
+
   const openQueueTestWindow = () => {
     setOpen(false);
     const queueWindow = window.open('', '_blank');
@@ -1165,6 +1195,56 @@ export function SongCardDebugModal() {
                 {creatingAccounts ? 'Creating accounts...' : 'Create mock accounts'}
                 <ExternalLink size={15} />
               </button>
+              <button
+                type="button"
+                onClick={loadAudioFingerprintStats}
+                disabled={loadingFingerprintStats}
+                className={clsx(
+                  'flex w-full items-center justify-center gap-2 rounded border border-slate-300 px-3 py-2 text-sm font-semibold',
+                  loadingFingerprintStats
+                    ? 'cursor-wait bg-slate-100 text-slate-400'
+                    : 'bg-white text-slate-900 hover:bg-slate-50',
+                )}
+              >
+                <Database size={16} />
+                {loadingFingerprintStats
+                  ? 'Counting fingerprints...'
+                  : 'Count audio fingerprints'}
+              </button>
+              {fingerprintStats && (
+                <dl className="mt-2 grid grid-cols-2 gap-2 rounded border border-slate-200 bg-slate-50 p-2 text-xs">
+                  <div>
+                    <dt className="text-slate-500">Tracks</dt>
+                    <dd className="font-semibold">
+                      {fingerprintStats.tracks.toLocaleString()}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-500">Fingerprinted</dt>
+                    <dd className="font-semibold">
+                      {fingerprintStats.fingerprintedSongs.toLocaleString()}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-500">Indexed</dt>
+                    <dd className="font-semibold">
+                      {fingerprintStats.indexedSongs.toLocaleString()}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-500">Hashes</dt>
+                    <dd className="font-semibold">
+                      {fingerprintStats.fingerprintHashes.toLocaleString()}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-500">Points</dt>
+                    <dd className="font-semibold">
+                      {fingerprintStats.fingerprintPoints.toLocaleString()}
+                    </dd>
+                  </div>
+                </dl>
+              )}
             </div>
           </div>
         </div>

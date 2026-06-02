@@ -19,6 +19,14 @@ export interface Song {
   approvedAt?: string;
   playingStartedAt?: string;
   requestedBy?: { _id: string; nickname: string; profilePicture?: string | null } | null;
+  recognitionMatch?: {
+    trackId: string;
+    title: string;
+    artist: string;
+    coverUrl?: string | null;
+    score: number;
+    matchedOn: 'title' | 'artist' | 'title_artist';
+  } | null;
   eventId?: string;
   createdAt?: string;
 }

@@ -24,6 +24,7 @@ export function RecognitionTrackUploadDialog({
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
+  const [coverUrl, setCoverUrl] = useState('');
 
   const close = () => {
     if (!busy) onClose();
@@ -47,11 +48,13 @@ export function RecognitionTrackUploadDialog({
         wav,
         title.trim(),
         artist.trim(),
+        coverUrl.trim(),
       );
       toast.success(`Fingerprinted ${track.title}`);
       setFile(null);
       setTitle('');
       setArtist('');
+      setCoverUrl('');
       onClose();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Audio upload failed');
@@ -79,6 +82,16 @@ export function RecognitionTrackUploadDialog({
             onChange={(event) => setArtist(event.target.value)}
             className="mt-1 h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"
             disabled={busy}
+          />
+        </label>
+        <label className="block text-sm font-semibold text-slate-700">
+          Cover URL
+          <input
+            value={coverUrl}
+            onChange={(event) => setCoverUrl(event.target.value)}
+            className="mt-1 h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"
+            disabled={busy}
+            placeholder="https://..."
           />
         </label>
         <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-slate-300 p-4 text-sm font-semibold text-slate-700">

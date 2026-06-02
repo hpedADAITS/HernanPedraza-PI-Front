@@ -17,6 +17,7 @@ type DebugSongPayload = {
   voteScore?: number;
   status?: string;
   requestedBy?: PendingSong['requestedBy'];
+  recognitionMatch?: PendingSong['recognitionMatch'];
   eventId?: string;
 };
 
@@ -53,6 +54,7 @@ export function usePendingSongs(eventId: string | null, isDj: boolean) {
             voteScore: payload.voteScore || 0,
             status: payload.status || 'PENDING',
             requestedBy: payload.requestedBy || null,
+            recognitionMatch: payload.recognitionMatch || null,
             eventId: payload.eventId || eventId || '',
           },
         ];

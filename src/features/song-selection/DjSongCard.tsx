@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { AnimatePresence, animate, m, useMotionValue } from 'motion/react';
 import { clsx } from 'clsx';
+import { Disc3, Sparkles } from 'lucide-react';
 import { UserAvatar } from '@/components/common';
+import type { Song } from '@/types/songs';
 
 export interface SongSelectionSong {
   _id: string;
@@ -10,6 +12,7 @@ export interface SongSelectionSong {
   voteScore: number;
   status: string;
   requestedBy: { _id: string; nickname: string; profilePicture?: string | null } | null;
+  recognitionMatch?: Song['recognitionMatch'];
   eventId: string;
 }
 
@@ -98,29 +101,53 @@ function SwipeBorderGlow() {
 }
 
 function DjSongCardContent({ song }: { song: SongSelectionSong }) {
-  return (
-    <div className="relative z-10 flex items-center gap-3 md:gap-4">
-      <UserAvatar
-        name={song.requestedBy?.nickname || '?'}
-        imageAlt={`${song.requestedBy?.nickname || 'Unknown'} profile`}
-        className="h-11 w-11 flex-shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-800 shadow-sm md:h-12 md:w-12"
-        fallbackClassName="flex items-center justify-center text-base font-semibold text-white"
-      />
+  const match = song.recognitionMatch;
 
-      <div className="flex-1 min-w-0 flex flex-col">
-        <h3 className="truncate text-base font-semibold text-slate-900 md:text-lg">{song.title}</h3>
-        <p className="truncate text-sm font-medium text-slate-500">{song.artist}</p>
-        <p className="mt-1 flex items-center gap-1.5 truncate text-xs font-medium text-slate-400">
-          <UserAvatar
-            name={song.requestedBy?.nickname || 'Unknown'}
-            profilePicture={song.requestedBy?.profilePicture || null}
-            imageAlt={`${song.requestedBy?.nickname || 'Unknown'} profile`}
-            className="h-4 w-4 flex-shrink-0 overflow-hidden rounded-full border border-slate-300 bg-slate-200 shadow-sm"
-            fallbackClassName="flex h-full w-full items-center justify-center bg-slate-700 text-[9px] font-semibold text-white"
-          />
-          {song.requestedBy?.nickname || 'Unknown'}
-        </p>
+  return (
+    <div className="relative z-10 space-y-3">
+      <div className="flex items-center gap-3 md:gap-4">
+        <UserAvatar
+          name={song.requestedBy?.nickname || '?'}
+          imageAlt={`${song.requestedBy?.nickname || 'Unknown'} profile`}
+          className="h-11 w-11 flex-shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-800 shadow-sm md:h-12 md:w-12"
+          fallbackClassName="flex items-center justify-center text-base font-semibold text-white"
+        />
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <h3 className="truncate text-base font-semibold text-slate-900 md:text-lg">{song.title}</h3>
+          <p className="truncate text-sm font-medium text-slate-500">{song.artist}</p>
+          <p className="mt-1 flex items-center gap-1.5 truncate text-xs font-medium text-slate-400">
+            <UserAvatar
+              name={song.requestedBy?.nickname || 'Unknown'}
+              profilePicture={song.requestedBy?.profilePicture || null}
+              imageAlt={`${song.requestedBy?.nickname || 'Unknown'} profile`}
+              className="h-4 w-4 flex-shrink-0 overflow-hidden rounded-full border border-slate-300 bg-slate-200 shadow-sm"
+              fallbackClassName="flex h-full w-full items-center justify-center bg-slate-700 text-[9px] font-semibold text-white"
+            />
+            {song.requestedBy?.nickname || 'Unknown'}
+          </p>
+        </div>
       </div>
+
+      {match ? (
+        <div className="flex items-center gap-3 rounded-xl border border-sky-200 bg-sky-50/85 p-2.5 shadow-inner">
+          <div className="grid h-12 w-12 flex-shrink-0 place-items-center overflow-hidden rounded-lg bg-sky-100 text-sky-700">
+            {match.coverUrl ? (
+              <img src={match.coverUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
+            ) : (
+              <Disc3 size={22} />
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-sky-700">
+              <Sparkles size={12} />
+              Fingerprint match {Math.round(match.score * 100)}%
+            </p>
+            <p className="truncate text-sm font-semibold text-slate-900">{match.title}</p>
+            <p className="truncate text-xs font-medium text-slate-500">{match.artist}</p>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

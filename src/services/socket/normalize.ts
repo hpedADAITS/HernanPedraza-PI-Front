@@ -29,6 +29,7 @@ export function normalizeSocketSong(
     totalDuration: duration,
     queuePosition: payload.queuePosition,
     requestedBy: payload.requestedBy || null,
+    recognitionMatch: payload.recognitionMatch || null,
     eventId: payload.eventId || fallbackEventId || undefined,
     playingStartedAt: payload.playingStartedAt ?? payload.startedPlayingAt,
   };

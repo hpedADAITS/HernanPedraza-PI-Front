@@ -108,8 +108,8 @@ const stateConfig: Record<
   },
   idle: {
     statusLabel: 'NO SONG PLAYING',
-    subtitle: 'Waiting for the next request',
-    badge: 'Idle',
+    subtitle: 'Approve requests into the queue, then choose the next song to play',
+    badge: 'Queue controls playback',
     color: '#94a3b8',
     background:
       'radial-gradient(circle at 16% 48%, rgba(148, 163, 184, .18), transparent 34%), radial-gradient(circle at 85% 40%, rgba(71, 85, 105, .28), transparent 38%), linear-gradient(135deg, #111827 0%, #273244 48%, #475569 100%)',

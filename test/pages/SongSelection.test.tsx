@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { SongSelection } from '@/pages/SongSelection';
+import { NowPlaying } from '@/components/common/NowPlaying';
 
 const {
   getPendingSongsMock,
@@ -135,6 +136,43 @@ describe('SongSelection attendee request form', () => {
     await waitFor(() => {
       expect(approveSongMock).toHaveBeenCalledWith('event-1', 'song-1');
     });
+  });
+
+  it('shows fingerprint matches on DJ pending song cards', async () => {
+    localStorage.setItem('currentEvent', JSON.stringify({ eventId: 'event-1' }));
+    getPendingSongsMock.mockResolvedValue([
+      {
+        _id: 'song-1',
+        title: 'Midnight Cty',
+        artist: 'M83',
+        voteScore: 0,
+        status: 'pending',
+        requestedBy: { _id: 'user-1', nickname: 'Taylor' },
+        recognitionMatch: {
+          trackId: 'track-1',
+          title: 'Midnight City',
+          artist: 'M83',
+          coverUrl: 'https://example.com/cover.jpg',
+          score: 0.93,
+          matchedOn: 'title_artist',
+        },
+        eventId: 'event-1',
+      },
+    ]);
+
+    render(<SongSelection mode="dj" onNavigate={vi.fn()} />);
+
+    expect(await screen.findAllByText('Fingerprint match 93%')).toHaveLength(2);
+    expect(screen.getAllByText('Midnight City')).toHaveLength(2);
+  });
+
+  it('explains queue playback when no song is playing', () => {
+    render(<NowPlaying status="idle" />);
+
+    expect(
+      screen.getByText('Approve requests into the queue, then choose the next song to play'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Queue controls playback')).toBeInTheDocument();
   });
 
   it('lets DJs reject a held song by releasing on the left side of the viewport', async () => {
