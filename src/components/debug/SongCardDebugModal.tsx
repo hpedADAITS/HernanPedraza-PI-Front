@@ -652,6 +652,7 @@ export function SongCardDebugModal() {
   };
 
   const runSelected = async () => {
+    setOpen(false);
     const eventId = getEventId();
     const playSong = {
       _id: ids.play,
@@ -757,6 +758,7 @@ export function SongCardDebugModal() {
   };
 
   const openMockAccountsWindow = async () => {
+    setOpen(false);
     const accountWindow = window.open('', '_blank');
     if (!accountWindow) {
       toast.error('Allow popups to open the debug accounts window');
@@ -786,6 +788,7 @@ export function SongCardDebugModal() {
   };
 
   const openQueueTestWindow = () => {
+    setOpen(false);
     const queueWindow = window.open('', '_blank');
     if (!queueWindow) {
       toast.error('Allow popups to open the queue test window');
@@ -797,6 +800,7 @@ export function SongCardDebugModal() {
   };
 
   const triggerCubeTextureRequest = () => {
+    setOpen(false);
     if (!window.setCoverCubeTexture) {
       toast.error('3D cover cube is not mounted');
       return;
@@ -807,6 +811,7 @@ export function SongCardDebugModal() {
   };
 
   const undoCubeTextureRequest = () => {
+    setOpen(false);
     if (!window.resetCoverCubeTexture) {
       toast.error('3D cover cube is not mounted');
       return;
@@ -818,6 +823,26 @@ export function SongCardDebugModal() {
 
   return (
     <>
+      <div className="fixed bottom-4 right-16 z-[1200] flex gap-2">
+        <button
+          type="button"
+          onClick={triggerCubeTextureRequest}
+          className="flex h-11 items-center justify-center gap-2 rounded-full bg-slate-950 px-4 text-sm font-semibold text-white shadow-xl hover:bg-slate-800"
+          aria-label="Trigger debug cube texture request"
+        >
+          <Box size={16} />
+          Trigger
+        </button>
+        <button
+          type="button"
+          onClick={undoCubeTextureRequest}
+          className="flex h-11 items-center justify-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-slate-950 shadow-xl ring-1 ring-slate-300 hover:bg-slate-50"
+          aria-label="Undo debug cube texture request"
+        >
+          <RotateCcw size={16} />
+          Undo
+        </button>
+      </div>
       <button
         type="button"
         onClick={() => setOpen(true)}
@@ -888,24 +913,6 @@ export function SongCardDebugModal() {
             </div>
 
             <div className="mt-4 border-t border-slate-200 pt-4">
-              <div className="mb-2 grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={triggerCubeTextureRequest}
-                  className="flex items-center justify-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50"
-                >
-                  <Box size={16} />
-                  Trigger request
-                </button>
-                <button
-                  type="button"
-                  onClick={undoCubeTextureRequest}
-                  className="flex items-center justify-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50"
-                >
-                  <RotateCcw size={16} />
-                  Undo request
-                </button>
-              </div>
               <button
                 type="button"
                 onClick={openQueueTestWindow}

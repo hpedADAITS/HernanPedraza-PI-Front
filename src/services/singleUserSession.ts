@@ -1,7 +1,11 @@
 const ACTIVE_SESSION_PREFIX = 'activeUserSession:';
+const WINDOW_SESSION_KEY = 'singleUserSession:windowId';
 const SESSION_CHECK_SUSPENSION_KEY = 'singleUserSession:skipNextCheck';
 const SESSION_CHECK_SUSPENSION_TTL_MS = 30000;
-const WINDOW_SESSION_ID = crypto.randomUUID();
+const WINDOW_SESSION_ID =
+  sessionStorage.getItem(WINDOW_SESSION_KEY) ?? crypto.randomUUID();
+
+sessionStorage.setItem(WINDOW_SESSION_KEY, WINDOW_SESSION_ID);
 
 type StoredUserIdentity = {
   _id?: string;
