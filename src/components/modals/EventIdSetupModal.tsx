@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { m, AnimatePresence } from 'motion/react';
 import { RefreshCw, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { t } from '@/i18n';
 
 interface EventIdSetupModalProps {
   isOpen: boolean;
@@ -51,12 +52,12 @@ export function EventIdSetupModal({
     const finalEventId = mode === 'generated' ? generatedId : eventId.trim();
 
     if (!finalEventId) {
-      toast.error('Please enter or generate an Event ID');
+      toast.error(t('Please enter or generate an Event ID'));
       return;
     }
 
     if (finalEventId.length < 4 || finalEventId.length > 20) {
-      toast.error('Event ID must be between 4 and 20 characters');
+      toast.error(t('Event ID must be between 4 and 20 characters'));
       return;
     }
 
@@ -64,7 +65,7 @@ export function EventIdSetupModal({
     try {
       onConfirm(finalEventId);
     } catch (error) {
-      toast.error('Failed to create event');
+      toast.error(t('Failed to create event'));
     } finally {
       setLoading(false);
     }
@@ -86,10 +87,10 @@ export function EventIdSetupModal({
             className="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 rounded-2xl p-8 max-w-md w-full mx-4 border border-blue-500/30"
           >
             <h2 className="text-2xl font-bold text-white mb-2">
-              Create Your Event ID
+              {t('Create Your Event ID')}
             </h2>
             <p className="text-blue-200 text-sm mb-6">
-              Attendees will use this to join your event. You can customize it or use a generated one. 
+              {t('Attendees will use this to join your event. You can customize it or use a generated one.')}
             </p>
 
             <div className="space-y-4 mb-6">
@@ -113,7 +114,7 @@ export function EventIdSetupModal({
                       onClick={() => setSetupState((current) => ({ ...current, mode: 'generated' }))}
                       className="text-left"
                     >
-                      <p className="font-semibold text-white">Generated ID</p>
+                      <p className="font-semibold text-white">{t('Generated ID')}</p>
                       <p className="text-blue-300 font-mono text-lg mt-1">
                         {generatedId}
                       </p>
@@ -124,9 +125,9 @@ export function EventIdSetupModal({
                         e.stopPropagation();
                         generateRandomId();
                       }}
-                      aria-label="Generate a new event ID"
+                      aria-label={t('Generate a new event ID')}
                       className="p-2 hover:bg-blue-500/20 rounded-lg transition"
-                      title="Generate new ID"
+                      title={t('Generate new ID')}
                     >
                       <RefreshCw size={18} className="text-blue-400" />
                     </button>
@@ -153,12 +154,12 @@ export function EventIdSetupModal({
                     onClick={() => setSetupState((current) => ({ ...current, mode: 'input' }))}
                     className="font-semibold text-white mb-3 text-left"
                   >
-                    Custom Event ID
+                    {t('Custom Event ID')}
                   </button>
                   <input
                     type="text"
-                    aria-label="Custom event ID"
-                    placeholder="e.g., DJPARTY2024"
+                    aria-label={t('Custom event ID')}
+                    placeholder={t('e.g., DJPARTY2024')}
                     value={eventId}
                     onChange={(e) =>
                       setSetupState((current) => ({
@@ -171,7 +172,7 @@ export function EventIdSetupModal({
                     maxLength={20}
                   />
                   <p className="text-xs text-slate-400 mt-2">
-                    Use letters and numbers only, 4-20 characters
+                    {t('Use letters and numbers only, 4-20 characters')}
                   </p>
                 </div>
               </m.div>
@@ -187,10 +188,10 @@ export function EventIdSetupModal({
                 className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold py-3 rounded-xl hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 transition flex items-center justify-center gap-2"
               >
                 <Check size={18} />
-                {loading ? 'Creating Event…' : 'Create Event'}
+                {loading ? t('Creating Event…') : t('Create Event')}
               </m.button>
               <p className="text-xs text-slate-400 text-center">
-                Your Event ID: <span className="font-mono text-blue-300">
+                {t('Your Event ID')}: <span className="font-mono text-blue-300">
                   {mode === 'generated' ? generatedId : eventId || '---'}
                 </span>
               </p>

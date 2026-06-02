@@ -4,6 +4,7 @@ import { Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { authAPI, participantsAPI } from '@/services/api';
 import { readStoredJson, writeStoredJson } from '@/utils/storage';
+import { t } from '@/i18n';
 
 const PROFILE_PICTURE_SIZE_CLASSES = {
   sm: 'w-16 h-16',
@@ -38,13 +39,13 @@ export function ProfilePictureUpload({
 
     /* Validate file type */
     if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
+      toast.error(t('Please select an image file'));
       return;
     }
 
     /* Validate file size (5MB max) */
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image must be less than 5MB');
+      toast.error(t('Image must be less than 5MB'));
       return;
     }
 
@@ -89,7 +90,7 @@ export function ProfilePictureUpload({
             });
           }
 
-          toast.success('Profile picture updated');
+          toast.success(t('Profile picture updated'));
           onPictureUpdated?.(base64String);
         } catch (error) {
           startTransition(() => {
@@ -98,7 +99,7 @@ export function ProfilePictureUpload({
           toast.error(
             error instanceof Error
               ? error.message
-              : 'Failed to update profile picture',
+              : t('Failed to update profile picture'),
           );
         }
       };
@@ -122,7 +123,7 @@ export function ProfilePictureUpload({
       <input
         ref={fileInputRef}
         type="file"
-        aria-label="Upload profile picture"
+        aria-label={t('Upload profile picture')}
         accept="image/*"
         onChange={handleFileSelect}
         className="hidden"
@@ -135,14 +136,14 @@ export function ProfilePictureUpload({
         whileTap={{ scale: 0.98 }}
         onClick={handleOpenFilePicker}
         disabled={isBusy}
-        aria-label={previewPicture ? 'Change profile picture' : 'Upload profile picture'}
+        aria-label={previewPicture ? t('Change profile picture') : t('Upload profile picture')}
         className={`relative ${PROFILE_PICTURE_SIZE_CLASSES[size]} rounded-full overflow-hidden border-2 border-dashed border-slate-300 hover:border-slate-400 flex items-center justify-center bg-slate-50 transition-all disabled:opacity-50`}
       >
         {previewPicture ? (
           <>
             <img
               src={previewPicture}
-              alt="Profile"
+              alt={t('Profile')}
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-black/0 hover:bg-black/20 flex items-center justify-center transition-all">
@@ -158,7 +159,7 @@ export function ProfilePictureUpload({
               size={size === 'sm' ? 16 : size === 'md' ? 20 : 24}
               className="text-slate-400 mb-1"
             />
-            <span className="text-xs text-slate-400">Upload</span>
+            <span className="text-xs text-slate-400">{t('Upload')}</span>
           </div>
         )}
 

@@ -8,6 +8,7 @@ import {
 } from '@/components/settings/SettingsUI';
 import { audioTracksAPI, eventsAPI } from '@/services/api';
 import { toBrowserWav } from '@/services/audio/ffmpegWav';
+import { t } from '@/i18n';
 
 interface RecognitionTrackUploadDialogProps {
   eventId: string | null;
@@ -32,7 +33,7 @@ export function RecognitionTrackUploadDialog({
 
   const upload = async () => {
     if (!eventId || !file || !title.trim() || !artist.trim()) {
-      toast.error('Select audio and enter title and artist');
+      toast.error(t('Select audio and enter title and artist'));
       return;
     }
 
@@ -50,24 +51,24 @@ export function RecognitionTrackUploadDialog({
         artist.trim(),
         coverUrl.trim(),
       );
-      toast.success(`Fingerprinted ${track.title}`);
+      toast.success(t('Fingerprinted {title}', { title: track.title }));
       setFile(null);
       setTitle('');
       setArtist('');
       setCoverUrl('');
       onClose();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Audio upload failed');
+      toast.error(error instanceof Error ? error.message : t('Audio upload failed'));
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <SettingsDialog open={open} title="Recognition Track" onClose={close}>
+    <SettingsDialog open={open} title={t('Recognition Track')} onClose={close}>
       <div className="space-y-4">
         <label className="block text-sm font-semibold text-slate-700">
-          Title
+          {t('Title')}
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
@@ -76,7 +77,7 @@ export function RecognitionTrackUploadDialog({
           />
         </label>
         <label className="block text-sm font-semibold text-slate-700">
-          Artist
+          {t('Artist')}
           <input
             value={artist}
             onChange={(event) => setArtist(event.target.value)}
@@ -85,7 +86,7 @@ export function RecognitionTrackUploadDialog({
           />
         </label>
         <label className="block text-sm font-semibold text-slate-700">
-          Cover URL
+          {t('Cover URL')}
           <input
             value={coverUrl}
             onChange={(event) => setCoverUrl(event.target.value)}
@@ -96,7 +97,7 @@ export function RecognitionTrackUploadDialog({
         </label>
         <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-slate-300 p-4 text-sm font-semibold text-slate-700">
           <Upload size={18} />
-          <span>{file ? file.name : 'Choose MP3 or WAV'}</span>
+          <span>{file ? file.name : t('Choose MP3 or WAV')}</span>
           <input
             type="file"
             accept="audio/mpeg,audio/mp3,audio/wav,audio/x-wav,.mp3,.wav"
@@ -116,7 +117,7 @@ export function RecognitionTrackUploadDialog({
           disabled={busy}
           className="w-full flex-none"
         >
-          {busy ? 'Processing...' : 'Fingerprint Track'}
+          {busy ? t('Processing...') : t('Fingerprint Track')}
         </SettingsDialogButton>
       </SettingsDialogActions>
     </SettingsDialog>

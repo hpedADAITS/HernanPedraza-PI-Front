@@ -1,14 +1,16 @@
-import type { MouseEvent } from 'react';
+import { useState, type MouseEvent } from 'react';
 import { LazyMotion, domAnimation, m, AnimatePresence } from 'motion/react';
 import { clsx } from 'clsx';
 import { Play, X, Clock, UserX, SkipForward, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { THEME_CONFIG } from '@/constants/dashboard';
+import { COOLDOWN_OPTIONS, DEFAULT_COOLDOWN_MS, formatCooldownDuration } from '@/constants/cooldowns';
 import { SLIDE_UP, ANIMATION_DURATION } from '@/constants/animations';
 import { participantsAPI, songsAPI } from '@/services/api';
 import { getStoredDjUserId, getStoredParticipantId } from '@/services/session';
 import { useQueueRealtime, type RemovalReason } from '@/features/dashboard/useQueueRealtime';
+import { t } from '@/i18n';
 import type { Song } from '@/types/songs';
 
 function isRequestedByDj(song: Song, djUserId: string | null) {
@@ -321,6 +323,7 @@ function QueueItem({
   djUserId = null,
 }: QueueItemProps) {
   const isDj = context.mode === 'dj';
+  const [cooldownMs, setCooldownMs] = useState(DEFAULT_COOLDOWN_MS);
   const canModerateRequester = !!song.requestedBy?._id && !isRequestedByDj(song, djUserId);
 
   const handleAdminAction = async (action: string, e: MouseEvent) => {
@@ -331,65 +334,65 @@ function QueueItem({
 
       if (action === 'Approve' && eventId) {
         if (!songId) {
-          toast.error('Song ID not found');
+          toast.error(t('Song ID not found'));
           return;
         }
         await songsAPI.approveSong(eventId, songId);
-        toast.success(`Queued "${song.title}"`);
+        toast.success(t('Queued "{title}"', { title: song.title }));
       } else if (action === 'Send Now' && eventId) {
         if (!songId) {
-          toast.error('Song ID not found');
+          toast.error(t('Song ID not found'));
           return;
         }
         await songsAPI.sendNow(eventId, songId);
         onSongRemoved(songId);
-        toast.success(`Now playing "${song.title}"`);
+        toast.success(t('Now playing "{title}"', { title: song.title }));
       } else if (action === 'Reject' && eventId) {
         if (!songId) {
-          toast.error('Song ID not found');
+          toast.error(t('Song ID not found'));
           return;
         }
         await songsAPI.rejectSong(eventId, songId, 'Rejected by DJ');
         onSongRemoved(songId, 'rejected');
-        toast.success(`Rejected "${song.title}"`);
+        toast.success(t('Rejected "{title}"', { title: song.title }));
       } else if (action === 'Cooldown' && eventId) {
         if (!canModerateRequester || !song.requestedBy?._id) {
-          toast.error('Only attendee requests can be moderated');
+          toast.error(t('Only attendee requests can be moderated'));
           return;
         }
         await participantsAPI.setCooldown(
           song.requestedBy._id,
-          300000,
+          cooldownMs,
           'DJ applied cooldown',
         );
-        toast.success('User on cooldown');
+        toast.success(t('User on cooldown for {duration}', { duration: formatCooldownDuration(cooldownMs) }));
       } else if (action === 'Kick' && eventId) {
         if (!canModerateRequester || !song.requestedBy?._id) {
-          toast.error('Only attendee requests can be moderated');
+          toast.error(t('Only attendee requests can be moderated'));
           return;
         }
         await participantsAPI.kickParticipant(
           song.requestedBy._id,
           'Kicked by DJ',
         );
-        toast.success('User kicked from event');
+        toast.success(t('User kicked from event'));
       } else if (action === 'Skip' && eventId) {
         if (!songId) {
-          toast.error('Song ID not found');
+          toast.error(t('Song ID not found'));
           return;
         }
         await songsAPI.skipSong(eventId, songId, 'Skipped by DJ');
         onSongRemoved(songId, 'skipped');
-        toast.success(`Skipped "${song.title}"`);
+        toast.success(t('Skipped "{title}"', { title: song.title }));
       } else {
         console.error(
           `[ERROR] Action "${action}" failed - eventId: ${eventId}, songId: ${songId}`,
         );
-        toast.error('Invalid action or missing event ID');
+        toast.error(t('Invalid action or missing event ID'));
       }
     } catch (error) {
       console.error('Admin action failed:', error);
-      toast.error(`Failed to ${action.toLowerCase()}`);
+      toast.error(t('Failed to {action}', { action: t(action.toLowerCase()) }));
     }
   };
 
@@ -432,6 +435,25 @@ function QueueItem({
             transition={{ duration: 0.2 }}
             className="flex-1 flex items-center gap-2"
           >
+            <select
+              value={cooldownMs}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => setCooldownMs(Number(e.target.value))}
+              disabled={!canModerateRequester}
+              className={clsx(
+                'h-9 rounded-lg border px-2 text-xs font-bold outline-none disabled:cursor-not-allowed disabled:opacity-40',
+                isDarkMode
+                  ? 'border-yellow-800/40 bg-slate-900 text-yellow-300'
+                  : 'border-yellow-200 bg-white text-yellow-800',
+              )}
+              aria-label={t('Cooldown duration')}
+            >
+              {COOLDOWN_OPTIONS.map((option) => (
+                <option key={option.valueMs} value={option.valueMs}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
             <Tooltip>
               <TooltipTrigger asChild>
                 <m.button
@@ -448,7 +470,7 @@ function QueueItem({
                   <Check size={18} />
                 </m.button>
               </TooltipTrigger>
-              <TooltipContent>Approve (Add to Queue)</TooltipContent>
+              <TooltipContent>{t('Approve (Add to Queue)')}</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -466,7 +488,7 @@ function QueueItem({
                   <Play size={18} />
                 </m.button>
               </TooltipTrigger>
-              <TooltipContent>Send Song Now</TooltipContent>
+              <TooltipContent>{t('Send Song Now')}</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -484,7 +506,7 @@ function QueueItem({
                   <X size={18} />
                 </m.button>
               </TooltipTrigger>
-              <TooltipContent>Reject Song</TooltipContent>
+              <TooltipContent>{t('Reject Song')}</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -503,7 +525,7 @@ function QueueItem({
                   <Clock size={18} />
                 </m.button>
               </TooltipTrigger>
-              <TooltipContent>Cooldown User</TooltipContent>
+              <TooltipContent>{t('Cooldown User')}</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -521,7 +543,7 @@ function QueueItem({
                   <SkipForward size={18} />
                 </m.button>
               </TooltipTrigger>
-              <TooltipContent>Skip Song</TooltipContent>
+              <TooltipContent>{t('Skip Song')}</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -540,7 +562,7 @@ function QueueItem({
                   <UserX size={18} />
                 </m.button>
               </TooltipTrigger>
-              <TooltipContent>Kick User</TooltipContent>
+              <TooltipContent>{t('Kick User')}</TooltipContent>
             </Tooltip>
           </m.div>
         ) : (

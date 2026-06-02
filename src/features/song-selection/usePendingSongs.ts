@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { songsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
 import { listenDebugSongEvents } from '@/utils/debugSongEvents';
+import { t } from '@/i18n';
 import type { SongEventPayload } from '@/services/socket/contracts';
 import type { SongSelectionSong } from '@/features/song-selection/DjSongCard';
 
@@ -86,7 +87,7 @@ export function usePendingSongs(eventId: string | null, isDj: boolean) {
     try {
       setSyncedPendingSongs(await songsAPI.getPendingSongs(eventId));
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Failed to load pending songs'));
+      toast.error(getErrorMessage(error, t('Failed to load pending songs')));
     } finally {
       setLoading(false);
     }
@@ -155,10 +156,10 @@ export function usePendingSongs(eventId: string | null, isDj: boolean) {
         await songsAPI.approveSong(eventId, songId);
         setSyncedPendingSongs((current) => current.filter((song) => song._id !== songId));
         setReviewSongIds((current) => current.filter((id) => id !== songId));
-        toast.success('Song approved');
+        toast.success(t('Song approved'));
         return true;
       } catch (error) {
-        toast.error(getErrorMessage(error, 'Failed to approve song'));
+        toast.error(getErrorMessage(error, t('Failed to approve song')));
         return false;
       } finally {
         setProcessingSongId(null);
@@ -175,10 +176,10 @@ export function usePendingSongs(eventId: string | null, isDj: boolean) {
         await songsAPI.rejectSong(eventId, songId, 'Rejected by DJ');
         setSyncedPendingSongs((current) => current.filter((song) => song._id !== songId));
         setReviewSongIds((current) => current.filter((id) => id !== songId));
-        toast.success('Song rejected');
+        toast.success(t('Song rejected'));
         return true;
       } catch (error) {
-        toast.error(getErrorMessage(error, 'Failed to reject song'));
+        toast.error(getErrorMessage(error, t('Failed to reject song')));
         return false;
       } finally {
         setProcessingSongId(null);

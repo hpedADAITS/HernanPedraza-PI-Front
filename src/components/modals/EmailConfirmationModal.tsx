@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { m, AnimatePresence } from 'motion/react';
 import { Mail, Check, Clock } from 'lucide-react';
+import { t } from '@/i18n';
 
 interface EmailConfirmationModalProps {
   isOpen: boolean;
@@ -63,12 +64,12 @@ export function EmailConfirmationModal({
             </div>
 
             <h2 className="text-2xl font-semibold text-slate-900 text-center mb-2">
-              {status === 'sending' ? 'Sending Welcome Email' : 'Email Sent!'}
+              {status === 'sending' ? t('Sending Welcome Email') : t('Email Sent!')}
             </h2>
             <p className="text-slate-600 text-center text-sm mb-6">
               {status === 'sending'
-                ? `We're sending a welcome message to ${email}`
-                : `Welcome email sent to ${email}! Check your inbox for important information.`}
+                ? t("We're sending a welcome message to {email}", { email })
+                : t('Welcome email sent to {email}! Check your inbox for important information.', { email })}
             </p>
 
             <m.div
@@ -82,7 +83,7 @@ export function EmailConfirmationModal({
                   <Mail size={18} className="text-blue-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-slate-500 mb-1">Welcome Email</p>
+                  <p className="text-xs text-slate-500 mb-1">{t('Welcome Email')}</p>
                   <p className="text-sm font-medium text-slate-900 break-all">
                     {email}
                   </p>
@@ -97,10 +98,10 @@ export function EmailConfirmationModal({
                 transition={{ delay: 0.4 }}
                 className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6"
               >
-                <h3 className="font-semibold text-blue-900 mb-2">What's Next?</h3>
+                <h3 className="font-semibold text-blue-900 mb-2">{t("What's Next?")}</h3>
                 {debugToken ? (
                   <div className="text-sm text-blue-800">
-                    <p className="mb-3">Debug Mode: Verification URL</p>
+                    <p className="mb-3">{t('Debug Mode: Verification URL')}</p>
                     <button
                       type="button"
                       onClick={async () => {
@@ -108,23 +109,23 @@ export function EmailConfirmationModal({
                           await navigator.clipboard.writeText(
                             debugVerificationUrl,
                           );
-                          alert('URL copied to clipboard!');
+                          alert(t('URL copied to clipboard!'));
                         } catch (err) {
                           console.error('Failed to copy:', err);
-                          alert('Failed to copy URL');
+                          alert(t('Failed to copy URL'));
                         }
                       }}
                       className="block w-full bg-white p-2 rounded border border-blue-300 break-all text-left text-xs font-mono mb-2 cursor-pointer hover:bg-blue-100"
                     >
                       <code>{debugVerificationUrl}</code>
                     </button>
-                    <p className="text-xs text-blue-700">Click to copy and paste in browser</p>
+                    <p className="text-xs text-blue-700">{t('Click to copy and paste in browser')}</p>
                   </div>
                 ) : (
                   <ul className="text-sm text-blue-800 space-y-1">
-                    <li>✓ Check your email inbox</li>
-                    <li>✓ Click the "Verify Email & Continue" button in the email</li>
-                    <li>✓ You'll be redirected back to complete event setup</li>
+                    <li>{t('Check your email inbox')}</li>
+                    <li>{t('Click the "Verify Email & Continue" button in the email')}</li>
+                    <li>{t("You'll be redirected back to complete event setup")}</li>
                   </ul>
                 )}
               </m.div>
@@ -158,8 +159,8 @@ export function EmailConfirmationModal({
               className="text-xs text-slate-500 text-center mt-4"
             >
               {status === 'sending'
-                ? 'This should only take a moment…'
-                : `Hi ${displayName}, we'll see you in a moment!`}
+                ? t('This should only take a moment…')
+                : t("Hi {name}, we'll see you in a moment!", { name: displayName })}
             </m.p>
           </m.div>
         </m.div>

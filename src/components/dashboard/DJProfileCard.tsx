@@ -8,6 +8,7 @@ import { SettingsDialog, SettingsDialogActions, SettingsDialogButton } from '@/c
 import { PROFILE_IMAGE, THEME_CONFIG } from '@/constants/dashboard';
 import { SLIDE_IN_LEFT } from '@/constants/animations';
 import { QRCodeModal } from './QRCodeModal';
+import { t } from '@/i18n';
 
 interface DJProfileCardProps {
   userName: string;
@@ -52,7 +53,7 @@ export function DJProfileCard({
                 type="button"
                 onClick={() => setShowProfilePictureModal(true)}
                 className="block rounded-2xl outline-none focus-visible:ring-4 focus-visible:ring-white/40"
-                aria-label="Upload profile picture"
+                aria-label={t('Upload profile picture')}
               >
                 <UserAvatar
                   name={userName}
@@ -62,7 +63,7 @@ export function DJProfileCard({
                   fallbackContent={
                     <img
                       src={PROFILE_IMAGE}
-                      alt="Profile"
+                      alt={t('Profile')}
                       className="h-full w-full object-cover"
                     />
                   }
@@ -81,14 +82,14 @@ export function DJProfileCard({
                     <QrCode size={18} />
                   </m.button>
                 </TooltipTrigger>
-                <TooltipContent>Generate QR Code</TooltipContent>
+                <TooltipContent>{t('Generate QR Code')}</TooltipContent>
               </Tooltip>
             </div>
 
             {/* User Info */}
             <div>
               <h2 className="text-2xl lg:text-xl font-semibold">{userName}</h2>
-              <p className="text-white/80 text-sm font-medium">DJ on SyncRequest</p>
+              <p className="text-white/80 text-sm font-medium">{t('DJ on SyncRequest')}</p>
             </div>
           </div>
 
@@ -106,7 +107,7 @@ export function DJProfileCard({
 
         <SettingsDialog
           open={showProfilePictureModal}
-          title="Profile Picture"
+          title={t('Profile Picture')}
           onClose={() => setShowProfilePictureModal(false)}
         >
           <div className="mb-6 flex justify-center">
@@ -124,7 +125,7 @@ export function DJProfileCard({
               onClick={() => setShowProfilePictureModal(false)}
               className="w-full flex-none"
             >
-              Done
+              {t('Done')}
             </SettingsDialogButton>
           </SettingsDialogActions>
         </SettingsDialog>

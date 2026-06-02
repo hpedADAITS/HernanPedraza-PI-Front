@@ -12,6 +12,7 @@ import {
 } from '@/services/singleUserSession';
 import { toast } from 'sonner';
 import { StoredEvent } from '@/services/session';
+import { t } from '@/i18n';
 
 type DashboardMode = 'attendee' | 'dj';
 
@@ -37,6 +38,8 @@ function updateStoredParticipantProfilePicture(newPicture: string) {
 function syncStoredParticipantProfile(updates: {
   nickname?: string;
   profilePicture?: string | null;
+  cooldownUntil?: string | Date | null;
+  cooldownReason?: string | null;
 }) {
   const participant = getStoredParticipant();
   if (!participant) return;
@@ -160,14 +163,14 @@ export function useDashboardSession({
       activateSingleUserSession(user);
     } else if (!isCurrentUserSessionActive(user)) {
       clearCurrentSession();
-      toast.info('This account is active in another window. Please log in again here to continue.');
+      toast.info(t('This account is active in another window. Please log in again here to continue.'));
       navigateAway();
       return;
     }
 
     const stopWatchingSession = onCurrentUserSessionReplaced(user, () => {
       clearCurrentSession();
-      toast.info('This account was opened in another window. This session has been closed.');
+      toast.info(t('This account was opened in another window. This session has been closed.'));
       navigateAway();
     });
 
@@ -177,7 +180,7 @@ export function useDashboardSession({
     const handleConnect = async () => {
       try {
         if (!eventData.eventId || !participantData._id) {
-          throw new Error('Session data is incomplete');
+          throw new Error(t('Session data is incomplete'));
         }
 
         setDashboardState((current) => ({
@@ -230,7 +233,7 @@ export function useDashboardSession({
       if (!data?.accessCode) return;
 
       persistAccessCode(data.accessCode);
-      toast.info(`Access code changed to ${data.accessCode}`);
+      toast.info(t('Access code changed to {code}', { code: data.accessCode }));
     };
 
     const handleEventUpdated = (data: EventUpdatedPayload) => {
@@ -254,7 +257,10 @@ export function useDashboardSession({
     const handleSongSuggested = (data: SongEventPayload & { nickname?: string; participantId?: string }) => {
       if (!data?.title || data.participantId === participantData._id) return;
 
-      toast.info(`${data.nickname || 'Someone'} suggested ${data.title}!`);
+      toast.info(t('{name} suggested {title}!', {
+        name: data.nickname || t('Someone'),
+        title: data.title,
+      }));
     };
 
     const handleParticipantUpdated = (data: ParticipantUpdatedPayload) => {
@@ -282,8 +288,10 @@ export function useDashboardSession({
       if (isDj) return;
 
       const message = data?.cancelled
-        ? `Event cancelled${data.reason ? `: ${data.reason}` : ''}`
-        : 'The DJ ended the event';
+        ? data.reason
+          ? t('Event cancelled: {reason}', { reason: data.reason })
+          : t('Event cancelled')
+        : t('The DJ ended the event');
       leaveAttendeeEvent(message);
     };
 
@@ -291,8 +299,8 @@ export function useDashboardSession({
       if (isDj || data?.participantId !== participantData._id) return;
 
       const message = data.reason
-        ? `You were removed from the event: ${data.reason}`
-        : 'You were removed from the event';
+        ? t('You were removed from the event: {reason}', { reason: data.reason })
+        : t('You were removed from the event');
       leaveAttendeeEvent(message);
     };
 
@@ -304,15 +312,23 @@ export function useDashboardSession({
         : null;
       const untilMessage =
         expiresAt && !Number.isNaN(expiresAt.getTime())
-          ? ` until ${expiresAt.toLocaleTimeString([], {
+          ? t(' until {time}', { time: expiresAt.toLocaleTimeString([], {
               hour: '2-digit',
               minute: '2-digit',
-            })}`
+            }) })
           : '';
-      const reasonMessage = data.reason ? ` Reason: ${data.reason}.` : '';
+      const reasonMessage = data.reason ? t(' Reason: {reason}.', { reason: data.reason }) : '';
+
+      syncStoredParticipantProfile({
+        cooldownUntil: data.cooldownUntil ?? null,
+        cooldownReason: data.reason ?? null,
+      });
 
       toast.info(
-        `You are on cooldown${untilMessage}. Requests and votes are disabled.${reasonMessage}`,
+        t('You are on cooldown{until}. Song requests are disabled.{reason}', {
+          until: untilMessage,
+          reason: reasonMessage,
+        }),
       );
     };
 
@@ -320,8 +336,8 @@ export function useDashboardSession({
       if (isDj || data?.participantId !== participantData._id) return;
 
       const message = data.reason
-        ? `You were banned from the event: ${data.reason}`
-        : 'You were banned from the event';
+        ? t('You were banned from the event: {reason}', { reason: data.reason })
+        : t('You were banned from the event');
       banAttendee(message);
     };
 

@@ -5,6 +5,7 @@ import * as socket from '@/services/socket';
 import { normalizeNowPlaying, normalizeQueueUpdated, normalizeSocketSong } from '@/services/socket/normalize';
 import { getStoredEvent } from '@/services/session';
 import { listenDebugSongEvents } from '@/utils/debugSongEvents';
+import { t } from '@/i18n';
 import type { Song } from '@/types/songs';
 import type { NowPlayingEventPayload, QueueUpdatedPayload, SongEventPayload, VotesUpdatedPayload } from '@/services/socket/contracts';
 
@@ -168,7 +169,7 @@ export function useQueueRealtime(mode: 'attendee' | 'dj', eventId?: string) {
         }));
       } catch (error) {
         console.error('Error fetching queue:', error);
-        toast.error('Failed to load queue');
+        toast.error(t('Failed to load queue'));
         setState((current) => ({ ...current, loading: false }));
       }
     };

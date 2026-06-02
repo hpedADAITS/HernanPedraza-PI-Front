@@ -6,6 +6,7 @@ import { ProfilePictureUpload, UserAvatar } from '@/components/common';
 import { SettingsDialog, SettingsDialogActions, SettingsDialogButton } from '@/components/settings/SettingsUI';
 import { PROFILE_IMAGE, THEME_CONFIG } from '@/constants/dashboard';
 import { SLIDE_IN_LEFT } from '@/constants/animations';
+import { t } from '@/i18n';
 
 interface AttendeeProfileCardProps {
   userName: string;
@@ -24,7 +25,7 @@ export function AttendeeProfileCard({
   const [showProfilePictureModal, setShowProfilePictureModal] =
     useState(false);
 
-  const subtitle = `Following: DJ ${djName}`;
+  const subtitle = t('Following: DJ {name}', { name: djName });
 
   return (
     <TooltipProvider>
@@ -45,7 +46,7 @@ export function AttendeeProfileCard({
             type="button"
             onClick={() => setShowProfilePictureModal(true)}
             className="block rounded-2xl outline-none focus-visible:ring-4 focus-visible:ring-white/40"
-            aria-label="Upload profile picture"
+            aria-label={t('Upload profile picture')}
           >
             <UserAvatar
               name={userName}
@@ -55,7 +56,7 @@ export function AttendeeProfileCard({
               fallbackContent={
                 <img
                   src={PROFILE_IMAGE}
-                  alt="Profile"
+                  alt={t('Profile')}
                   className="h-full w-full object-cover"
                 />
               }
@@ -72,7 +73,7 @@ export function AttendeeProfileCard({
 
       <SettingsDialog
         open={showProfilePictureModal}
-        title="Profile Picture"
+        title={t('Profile Picture')}
         onClose={() => setShowProfilePictureModal(false)}
       >
         <div className="mb-6 flex justify-center">
@@ -90,7 +91,7 @@ export function AttendeeProfileCard({
             onClick={() => setShowProfilePictureModal(false)}
             className="w-full flex-none"
           >
-            Done
+            {t('Done')}
           </SettingsDialogButton>
         </SettingsDialogActions>
       </SettingsDialog>

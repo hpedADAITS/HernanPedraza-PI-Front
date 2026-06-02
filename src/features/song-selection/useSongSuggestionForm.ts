@@ -1,6 +1,7 @@
 import { useCallback, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { songsAPI } from '@/services/api';
+import { t } from '@/i18n';
 
 type SuggestionSuccess = () => void;
 
@@ -30,10 +31,10 @@ export function useSongSuggestionForm(
           title.trim(),
           artist.trim(),
         );
-        toast.success(`"${song.title}" suggested`);
+        toast.success(t('"{title}" suggested', { title: song.title }));
         onSuccess();
       } catch (error) {
-        toast.error(getErrorMessage(error, 'Failed to suggest song'));
+        toast.error(getErrorMessage(error, t('Failed to suggest song')));
       } finally {
         setSubmitting(false);
       }

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { SongSelection } from '@/pages/SongSelection';
 import { NowPlaying } from '@/components/common/NowPlaying';
 
@@ -164,6 +164,153 @@ describe('SongSelection attendee request form', () => {
 
     expect(await screen.findAllByText('Fingerprint match 93%')).toHaveLength(2);
     expect(screen.getAllByText('Midnight City')).toHaveLength(2);
+  });
+
+  it('opens a review modal for a new realtime attendee request with no DB match', async () => {
+    localStorage.setItem('currentEvent', JSON.stringify({ eventId: 'event-1' }));
+    getPendingSongsMock.mockResolvedValue([]);
+
+    render(<SongSelection mode="dj" onNavigate={vi.fn()} />);
+
+    await waitFor(() => expect(onSongSuggestedMock).toHaveBeenCalled());
+    act(() => {
+      onSongSuggestedMock.mock.calls[0][0]({
+        songId: 'song-1',
+        title: 'Unknown request',
+        artist: 'Local artist',
+        requestedBy: { _id: 'user-1', nickname: 'Taylor' },
+        eventId: 'event-1',
+      });
+    });
+
+    const dialog = await screen.findByRole('dialog', {
+      name: /review request unknown request/i,
+    });
+
+    expect(within(dialog).getByText('Unknown request')).toBeInTheDocument();
+    expect(within(dialog).getByText('Local artist')).toBeInTheDocument();
+    expect(within(dialog).getByText('Taylor')).toBeInTheDocument();
+    expect(within(dialog).getByText('No DB fingerprint match found.')).toBeInTheDocument();
+  });
+
+  it('shows DB fingerprint match details in the realtime request modal', async () => {
+    localStorage.setItem('currentEvent', JSON.stringify({ eventId: 'event-1' }));
+    getPendingSongsMock.mockResolvedValue([]);
+
+    render(<SongSelection mode="dj" onNavigate={vi.fn()} />);
+
+    await waitFor(() => expect(onSongSuggestedMock).toHaveBeenCalled());
+    act(() => {
+      onSongSuggestedMock.mock.calls[0][0]({
+        songId: 'song-1',
+        title: 'Midnight Cty',
+        artist: 'M83',
+        requestedBy: { _id: 'user-1', nickname: 'Taylor' },
+        recognitionMatch: {
+          trackId: 'track-1',
+          title: 'Midnight City',
+          artist: 'M83',
+          score: 0.93,
+          matchedOn: 'title_artist',
+        },
+        eventId: 'event-1',
+      });
+    });
+
+    const dialog = await screen.findByRole('dialog', {
+      name: /review request midnight cty/i,
+    });
+
+    expect(within(dialog).getByText('DB fingerprint match 93%')).toBeInTheDocument();
+    expect(within(dialog).getByText('Midnight City')).toBeInTheDocument();
+    expect(within(dialog).getAllByText('M83').length).toBeGreaterThan(0);
+  });
+
+  it('closes the realtime request modal without removing the pending song', async () => {
+    localStorage.setItem('currentEvent', JSON.stringify({ eventId: 'event-1' }));
+    getPendingSongsMock.mockResolvedValue([]);
+
+    render(<SongSelection mode="dj" onNavigate={vi.fn()} />);
+
+    await waitFor(() => expect(onSongSuggestedMock).toHaveBeenCalled());
+    act(() => {
+      onSongSuggestedMock.mock.calls[0][0]({
+        songId: 'song-1',
+        title: 'Keep pending',
+        artist: 'Modal test',
+        requestedBy: { _id: 'user-1', nickname: 'Taylor' },
+        eventId: 'event-1',
+      });
+    });
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Close request review' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: /review request keep pending/i })).not.toBeInTheDocument();
+    });
+    expect(
+      screen.getByRole('button', {
+        name: /decide keep pending\. swipe right to approve or left to reject\./i,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('approves a realtime request from the modal and removes it', async () => {
+    localStorage.setItem('currentEvent', JSON.stringify({ eventId: 'event-1' }));
+    getPendingSongsMock.mockResolvedValue([]);
+    approveSongMock.mockResolvedValue(undefined);
+
+    render(<SongSelection mode="dj" onNavigate={vi.fn()} />);
+
+    await waitFor(() => expect(onSongSuggestedMock).toHaveBeenCalled());
+    act(() => {
+      onSongSuggestedMock.mock.calls[0][0]({
+        songId: 'song-1',
+        title: 'Approve me',
+        artist: 'Modal test',
+        requestedBy: { _id: 'user-1', nickname: 'Taylor' },
+        eventId: 'event-1',
+      });
+    });
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Approve to queue' }));
+
+    await waitFor(() => {
+      expect(approveSongMock).toHaveBeenCalledWith('event-1', 'song-1');
+    });
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: /review request approve me/i })).not.toBeInTheDocument();
+    });
+    expect(screen.queryByText('Approve me')).not.toBeInTheDocument();
+  });
+
+  it('denies a realtime request from the modal and removes it', async () => {
+    localStorage.setItem('currentEvent', JSON.stringify({ eventId: 'event-1' }));
+    getPendingSongsMock.mockResolvedValue([]);
+    rejectSongMock.mockResolvedValue(undefined);
+
+    render(<SongSelection mode="dj" onNavigate={vi.fn()} />);
+
+    await waitFor(() => expect(onSongSuggestedMock).toHaveBeenCalled());
+    act(() => {
+      onSongSuggestedMock.mock.calls[0][0]({
+        songId: 'song-1',
+        title: 'Deny me',
+        artist: 'Modal test',
+        requestedBy: { _id: 'user-1', nickname: 'Taylor' },
+        eventId: 'event-1',
+      });
+    });
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Deny' }));
+
+    await waitFor(() => {
+      expect(rejectSongMock).toHaveBeenCalledWith('event-1', 'song-1', 'Rejected by DJ');
+    });
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: /review request deny me/i })).not.toBeInTheDocument();
+    });
+    expect(screen.queryByText('Deny me')).not.toBeInTheDocument();
   });
 
   it('explains queue playback when no song is playing', () => {

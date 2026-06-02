@@ -9,6 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { t } from '@/i18n';
 
 type TutorialRole = 'attendee' | 'dj';
 
@@ -61,8 +62,8 @@ export function FirstTimeTutorialModal({ role }: { role: TutorialRole }) {
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogContent className="max-w-[calc(100%-2rem)] gap-5 rounded-lg p-5 sm:max-w-md sm:p-6">
         <AlertDialogHeader>
-          <AlertDialogTitle>{tutorial.title}</AlertDialogTitle>
-          <AlertDialogDescription>{tutorial.description}</AlertDialogDescription>
+          <AlertDialogTitle>{t(tutorial.title)}</AlertDialogTitle>
+          <AlertDialogDescription>{t(tutorial.description)}</AlertDialogDescription>
         </AlertDialogHeader>
 
         <div className="grid gap-3">
@@ -71,13 +72,13 @@ export function FirstTimeTutorialModal({ role }: { role: TutorialRole }) {
               <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-950">
                 <Icon size={16} strokeWidth={2.3} />
               </span>
-              <p className="text-sm leading-6 text-slate-700 dark:text-slate-200">{text}</p>
+              <p className="text-sm leading-6 text-slate-700 dark:text-slate-200">{t(text)}</p>
             </div>
           ))}
         </div>
 
         <AlertDialogFooter>
-          <AlertDialogAction>Start</AlertDialogAction>
+          <AlertDialogAction>{t('Start')}</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

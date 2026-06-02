@@ -6,12 +6,15 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useDarkMode } from '@/hooks/useDarkMode';
 import { getStoredEventId, getStoredParticipantId } from '@/services/session';
 import type { NavigateToView } from '@/types';
+import { AttendeeCooldownOverlay } from '@/components/dashboard/AttendeeCooldownOverlay';
 import { DjRequestReviewDialog } from '@/features/song-selection/DjRequestReviewDialog';
 import { AttendeeSongSuggestView } from '@/features/song-selection/AttendeeSongSuggestView';
 import { DjSongCard } from '@/features/song-selection/DjSongCard';
 import { RecognitionTrackUploadDialog } from '@/features/song-selection/RecognitionTrackUploadDialog';
 import { usePendingSongs } from '@/features/song-selection/usePendingSongs';
+import { useParticipantCooldown } from '@/hooks/useParticipantCooldown';
 import { useSongSuggestionForm } from '@/features/song-selection/useSongSuggestionForm';
+import { t } from '@/i18n';
 
 interface Props {
   mode: 'attendee' | 'dj';
@@ -24,6 +27,7 @@ export function SongSelection({ mode, onNavigate }: Props) {
   const [isDarkMode] = useDarkMode();
   const eventId = getStoredEventId();
   const participantId = getStoredParticipantId();
+  const { isCoolingDown, remainingMs } = useParticipantCooldown(participantId, !isDj);
   const [recognitionUploadOpen, setRecognitionUploadOpen] = useState(false);
   const navigateBack = useCallback(() => {
     onNavigate(isDj ? 'dj-dashboard' : 'attendee-dashboard');
@@ -70,7 +74,7 @@ export function SongSelection({ mode, onNavigate }: Props) {
             className="flex h-11 items-center gap-2 rounded-full border border-white/55 bg-white/16 px-4 text-sm font-semibold text-white shadow-lg shadow-slate-950/10 backdrop-blur-md transition-colors hover:bg-white/24"
           >
             <ArrowLeft size={18} />
-            Back
+            {t('Back')}
           </m.button>
         </div>
 
@@ -80,7 +84,7 @@ export function SongSelection({ mode, onNavigate }: Props) {
             animate={{ y: 0, opacity: 1 }}
             className="text-center text-2xl font-semibold tracking-normal text-white drop-shadow-sm md:text-4xl"
           >
-            {isDj ? 'Pending Requests' : 'Suggest a Song'}
+            {isDj ? t('Pending Requests') : t('Suggest a Song')}
           </m.h1>
         </div>
 
@@ -99,8 +103,8 @@ export function SongSelection({ mode, onNavigate }: Props) {
                   type="search"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  aria-label="Search pending songs"
-                  placeholder="Search pending songs..."
+                  aria-label={t('Search pending songs')}
+                  placeholder={t('Search pending songs...')}
                   className="h-full min-w-0 flex-1 cursor-text border-0 bg-transparent text-sm font-semibold tracking-normal text-[#14213f] outline-none placeholder:text-[#8b9ab4]"
                 />
               </m.label>
@@ -112,12 +116,12 @@ export function SongSelection({ mode, onNavigate }: Props) {
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setRecognitionUploadOpen(true)}
                       className="grid h-[52px] w-[52px] flex-shrink-0 place-items-center rounded-xl border border-slate-900/10 bg-white text-[#2878ff] shadow-[0_10px_20px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.95)] transition-colors hover:bg-blue-50"
-                      aria-label="Upload recognition track"
+                      aria-label={t('Upload recognition track')}
                     >
                       <ListPlus size={22} />
                     </m.button>
                   </TooltipTrigger>
-                  <TooltipContent>Upload recognition track</TooltipContent>
+                  <TooltipContent>{t('Upload recognition track')}</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>
@@ -137,11 +141,11 @@ export function SongSelection({ mode, onNavigate }: Props) {
 
             {loading ? (
               <p className="self-center rounded-full bg-white/14 px-4 py-2 text-sm font-medium text-white/80 backdrop-blur-md">
-                Loading…
+                {t('Loading…')}
               </p>
             ) : filteredSongs.length === 0 ? (
               <p className="self-center rounded-full bg-white/14 px-4 py-2 text-sm font-medium text-white/80 backdrop-blur-md">
-                No pending songs
+                {t('No pending songs')}
               </p>
             ) : (
               <m.div
@@ -179,6 +183,7 @@ export function SongSelection({ mode, onNavigate }: Props) {
             title={title}
           />
         )}
+        {!isDj && isCoolingDown && <AttendeeCooldownOverlay remainingMs={remainingMs} />}
       </div>
     </Layout>
   );

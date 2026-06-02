@@ -1,10 +1,11 @@
-import React, { useEffect, useReducer } from 'react';
+import React, { useEffect, useReducer, useState } from 'react';
 import { LazyMotion, domAnimation, m, AnimatePresence } from 'motion/react';
 import { Crown, Users, Music, Zap, UserX } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ANIMATION_DURATION } from '@/constants/animations';
 import { participantsAPI } from '@/services/api';
+import { COOLDOWN_OPTIONS, DEFAULT_COOLDOWN_MS, formatCooldownDuration } from '@/constants/cooldowns';
 import { getStoredDjUserId } from '@/services/session';
 import { getSocket } from '@/services/socket';
 import type {
@@ -15,6 +16,7 @@ import type {
 } from '@/services/socket/contracts';
 import { readStoredJson } from '@/utils/storage';
 import { UserAvatar } from '@/components/common';
+import { t } from '@/i18n';
 
 interface ConnectedUser {
   _id: string;
@@ -637,7 +639,7 @@ function AttendeeConnectedUsers({
                                   getParticipantProfilePicture(user)
                                 : getParticipantProfilePicture(user)
                             }
-                            imageAlt={`${displayName} profile`}
+                            imageAlt={t('{name} profile', { name: displayName })}
                             className="w-10 h-10 lg:w-8 lg:h-8 rounded-full overflow-hidden shadow-md"
                             fallbackClassName={`flex items-center justify-center text-white font-bold text-sm ${
                               isCurrentUser
@@ -660,7 +662,7 @@ function AttendeeConnectedUsers({
                                 size={13}
                                 className="flex-shrink-0 text-amber-400"
                                 fill="currentColor"
-                                aria-label="Priority attendee"
+                                aria-label={t('Priority attendee')}
                               />
                             )}
                           </div>
@@ -683,7 +685,7 @@ function AttendeeConnectedUsers({
                                     : 'text-emerald-600'
                               }`}
                             >
-                              {isCurrentUser ? 'You' : 'Online'}
+                              {isCurrentUser ? t('You') : t('Online')}
                             </span>
                           </div>
                         </div>
@@ -725,7 +727,7 @@ function DjConnectedUsers({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Users size={24} className="text-slate-700" />
-          <h3 className="text-lg font-bold text-slate-800">Connected Users</h3>
+          <h3 className="text-lg font-bold text-slate-800">{t('Connected Users')}</h3>
         </div>
         <div className="bg-emerald-100 rounded-full px-3 py-1">
           <p className="text-sm font-semibold text-emerald-700">
@@ -736,12 +738,12 @@ function DjConnectedUsers({
 
       <div className="grid grid-cols-2 gap-3 lg:gap-2">
         <div className="bg-slate-50 rounded-xl p-3 lg:p-2">
-          <p className="text-xs text-slate-600 mb-1">Total</p>
+          <p className="text-xs text-slate-600 mb-1">{t('Total')}</p>
           <p className="text-xl font-bold text-slate-800">{users.length}</p>
         </div>
         <div className="bg-amber-50 rounded-xl p-3 lg:p-2">
           <p className="text-xs text-slate-600 mb-1 flex items-center gap-1">
-            <Crown size={14} /> Premium (Priority) Queue
+            <Crown size={14} /> {t('Premium (Priority) Queue')}
           </p>
           <p className="text-xl font-bold text-amber-700">{premiumCount}</p>
         </div>
@@ -749,7 +751,7 @@ function DjConnectedUsers({
 
       {users.length === 0 ? (
         <m.div layout className="text-center text-slate-500 py-8">
-          {loading ? 'Loading…' : 'No participants yet'}
+          {loading ? t('Loading…') : t('No participants yet')}
         </m.div>
       ) : (
         <m.div layout className="flex flex-col gap-2">
@@ -795,6 +797,8 @@ function ParticipantItem({
   onRemove,
   eventId,
 }: ParticipantItemProps) {
+  const [cooldownMs, setCooldownMs] = useState(DEFAULT_COOLDOWN_MS);
+
   const handleAdminAction = async (action: string, e: React.MouseEvent) => {
     e.stopPropagation();
 
@@ -802,16 +806,18 @@ function ParticipantItem({
       if (action === 'Cooldown' && eventId) {
         const promise = participantsAPI.setCooldown(
           participant._id,
-          5 * 60 * 1000,
+          cooldownMs,
           'DJ cooldown',
         );
         await toast.promise(promise, {
-          success: `Cooldown applied to "${participant.nickname}"`,
+          success: t('Cooldown applied to "{name}" for {duration}', {
+            name: participant.nickname,
+            duration: formatCooldownDuration(cooldownMs),
+          }),
           error: (err: unknown) =>
-            `Failed to apply cooldown: ${formatErrorMessage(
-              err,
-              'Unknown error',
-            )}`,
+            t('Failed to apply cooldown: {error}', {
+              error: formatErrorMessage(err, t('Unknown error')),
+            }),
         });
         onSelect(null);
       } else if (action === 'Kick' && eventId) {
@@ -820,9 +826,9 @@ function ParticipantItem({
           'Kicked by DJ',
         );
         await toast.promise(promise, {
-          success: `Kicked "${participant.nickname}"`,
+          success: t('Kicked "{name}"', { name: participant.nickname }),
           error: (err: unknown) =>
-            `Failed to kick: ${formatErrorMessage(err, 'Unknown error')}`,
+            t('Failed to kick: {error}', { error: formatErrorMessage(err, t('Unknown error')) }),
         });
         onRemove(participant._id);
         onSelect(null);
@@ -848,7 +854,7 @@ function ParticipantItem({
         <UserAvatar
           name={participant.nickname}
           profilePicture={getParticipantProfilePicture(participant)}
-          imageAlt={`${participant.nickname} profile`}
+          imageAlt={t('{name} profile', { name: participant.nickname })}
           className="w-10 h-10 lg:w-9 lg:h-9 rounded-full overflow-hidden flex-shrink-0"
           fallbackClassName="bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center text-white font-bold text-sm"
         />
@@ -863,6 +869,19 @@ function ParticipantItem({
               transition={{ duration: 0.2 }}
               className="flex items-center gap-2"
             >
+              <select
+                value={cooldownMs}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => setCooldownMs(Number(e.target.value))}
+                className="h-8 rounded-lg border border-yellow-200 bg-white px-2 text-xs font-bold text-yellow-800 outline-none"
+                aria-label={t('Cooldown duration')}
+              >
+                {COOLDOWN_OPTIONS.map((option) => (
+                  <option key={option.valueMs} value={option.valueMs}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <m.button
@@ -877,7 +896,7 @@ function ParticipantItem({
                     <Zap size={16} />
                   </m.button>
                 </TooltipTrigger>
-                <TooltipContent>Cooldown User</TooltipContent>
+                <TooltipContent>{t('Cooldown User')}</TooltipContent>
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -893,7 +912,7 @@ function ParticipantItem({
                     <UserX size={16} />
                   </m.button>
                 </TooltipTrigger>
-                <TooltipContent>Kick User</TooltipContent>
+                <TooltipContent>{t('Kick User')}</TooltipContent>
               </Tooltip>
             </m.div>
           ) : (
@@ -923,7 +942,7 @@ function ParticipantItem({
         {participant.socketId && (
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span className="text-xs text-emerald-600 font-medium">Online</span>
+            <span className="text-xs text-emerald-600 font-medium">{t('Online')}</span>
           </div>
         )}
       </div>

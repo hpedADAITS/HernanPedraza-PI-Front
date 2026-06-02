@@ -15,6 +15,8 @@ export interface StoredParticipant {
   eventId?: string;
   profilePicture?: string | null;
   passwordProtected?: boolean;
+  cooldownUntil?: string | Date | null;
+  cooldownReason?: string | null;
 }
 
 export interface StoredUser {

@@ -3,6 +3,7 @@ import { Lock, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { authAPI, participantsAPI } from '@/services/api';
 import { readStoredJson, writeStoredJson } from '@/utils/storage';
+import { t } from '@/i18n';
 
 interface AttendeePasswordPromptProps {
   reason: 'leave' | 'duplicate-login';
@@ -37,11 +38,11 @@ export function AttendeePasswordPrompt({
   const closePrompt = useEffectEvent(onClose);
 
   const title =
-    reason === 'leave' ? 'Save your attendee account?' : 'Someone tried your name';
+    reason === 'leave' ? t('Save your attendee account?') : t('Someone tried your name');
   const message =
     reason === 'leave'
-      ? 'Save it so your nickname and profile picture are available next time.'
-      : 'Add a password now so another device cannot take over your attendee name.';
+      ? t('Save it so your nickname and profile picture are available next time.')
+      : t('Add a password now so another device cannot take over your attendee name.');
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -75,17 +76,17 @@ export function AttendeePasswordPrompt({
 
   const handleSave = async () => {
     if (!passwordProtected && password.length < 8) {
-      toast.error('Password must be at least 8 characters');
+      toast.error(t('Password must be at least 8 characters'));
       return;
     }
     if (!passwordProtected && password !== confirmPassword) {
-      toast.error('Passwords do not match');
+      toast.error(t('Passwords do not match'));
       return;
     }
 
     const storedParticipant = readStoredJson<{ _id?: string; id?: string }>('currentParticipant');
     if (!storedParticipant) {
-      toast.error('No attendee session found');
+      toast.error(t('No attendee session found'));
       return;
     }
 
@@ -93,7 +94,7 @@ export function AttendeePasswordPrompt({
     try {
       const participantId = storedParticipant._id ?? storedParticipant.id;
       if (!participantId) {
-        toast.error('No attendee session found');
+        toast.error(t('No attendee session found'));
         return;
       }
 
@@ -115,10 +116,10 @@ export function AttendeePasswordPrompt({
             ? null
             : updated.profilePicture ?? participant?.profilePicture ?? null,
       });
-      toast.success('Attendee account saved');
+      toast.success(t('Attendee account saved'));
       await onSaved();
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, 'Failed to save account'));
+      toast.error(getErrorMessage(err, t('Failed to save account')));
     } finally {
       setSaving(false);
     }
@@ -135,7 +136,7 @@ export function AttendeePasswordPrompt({
           type="button"
           onClick={onClose}
           className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300"
-          aria-label={reason === 'leave' ? 'Cancel logout' : 'Close dialog'}
+          aria-label={reason === 'leave' ? t('Cancel logout') : t('Close dialog')}
         >
           <X size={18} aria-hidden="true" />
         </button>
@@ -160,8 +161,8 @@ export function AttendeePasswordPrompt({
                 ref={passwordInputRef}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                aria-label="Password"
-                placeholder="Password"
+                aria-label={t('Password')}
+                placeholder={t('Password')}
                 autoComplete="new-password"
                 className="h-11 w-full rounded-lg border border-slate-300 px-3 text-sm text-slate-950 outline-none focus:border-slate-900 focus:ring-2 focus:ring-emerald-200"
               />
@@ -169,8 +170,8 @@ export function AttendeePasswordPrompt({
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                aria-label="Confirm password"
-                placeholder="Confirm password"
+                aria-label={t('Confirm password')}
+                placeholder={t('Confirm password')}
                 autoComplete="new-password"
                 className="h-11 w-full rounded-lg border border-slate-300 px-3 text-sm text-slate-950 outline-none focus:border-slate-900 focus:ring-2 focus:ring-emerald-200"
               />
@@ -184,7 +185,7 @@ export function AttendeePasswordPrompt({
                 onChange={(e) => setSaveProfilePicture(e.target.checked)}
                 className="h-4 w-4 rounded border-slate-300"
               />
-              Save my profile picture for next time
+              {t('Save my profile picture for next time')}
             </label>
           )}
         </div>
@@ -195,7 +196,7 @@ export function AttendeePasswordPrompt({
             onClick={reason === 'leave' ? onSkip : onClose}
             className="h-10 rounded-lg px-4 text-sm font-medium text-slate-700 hover:bg-slate-100"
           >
-            {reason === 'leave' ? 'Leave without saving' : 'Not now'}
+            {reason === 'leave' ? t('Leave without saving') : t('Not now')}
           </button>
           <button
             type="button"
@@ -203,7 +204,7 @@ export function AttendeePasswordPrompt({
             disabled={saving}
             className="h-10 rounded-lg bg-slate-900 px-4 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {saving ? 'Saving...' : passwordProtected ? 'Save and log out' : 'Set password and log out'}
+            {saving ? t('Saving...') : passwordProtected ? t('Save and log out') : t('Set password and log out')}
           </button>
         </div>
       </div>

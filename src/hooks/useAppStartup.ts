@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { API_BASE, checkHealth, loadToken } from '@/services/api';
 import { isDebugModeEnabled } from '@/utils/debugMode';
+import { t } from '@/i18n';
 
 export function useAppStartup() {
   useEffect(() => {
@@ -17,7 +18,7 @@ export function useAppStartup() {
       if (health.database) {
         return;
       } else {
-        toast.error(`Failed to connect to ${API_BASE}`);
+        toast.error(t('Failed to connect to {target}', { target: API_BASE }));
       }
     };
     checkDatabaseConnection();

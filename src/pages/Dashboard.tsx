@@ -6,6 +6,9 @@ import { DJProfileCard, AttendeeProfileCard, QueueList, SearchBar, ActionButtons
 import { useDashboardSession } from '@/hooks/useDashboardSession';
 import { useDarkMode } from '@/hooks/useDarkMode';
 import { FirstTimeTutorialModal } from '@/components/modals/FirstTimeTutorialModal';
+import { AttendeeCooldownOverlay } from '@/components/dashboard/AttendeeCooldownOverlay';
+import { getStoredParticipantId } from '@/services/session';
+import { useParticipantCooldown } from '@/hooks/useParticipantCooldown';
 
 interface DashboardProps extends PageProps {
   mode: 'attendee' | 'dj';
@@ -129,6 +132,11 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
       mode,
       onNavigate,
     });
+  const participantId = getStoredParticipantId();
+  const { isCoolingDown, remainingMs } = useParticipantCooldown(
+    participantId,
+    !isDj,
+  );
 
   return (
     <Layout
@@ -169,6 +177,7 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
         />
       </div>
       <FirstTimeTutorialModal role={mode} />
+      {!isDj && isCoolingDown && <AttendeeCooldownOverlay remainingMs={remainingMs} />}
     </Layout>
   );
 }

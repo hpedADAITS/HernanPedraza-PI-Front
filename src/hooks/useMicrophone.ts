@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
+import { t } from '@/i18n';
 
 interface UseMicrophoneReturn {
   isListening: boolean;
@@ -73,7 +74,7 @@ export function useMicrophone(isDj: boolean): UseMicrophoneReturn {
   const requestMicrophoneAccess = useCallback(async () => {
     /* Only DJ role can request microphone access */
     if (!canAccessMicrophone) {
-      const msg = 'Only DJs can access the microphone';
+      const msg = t('Only DJs can access the microphone');
       setError(msg);
       toast.error(msg);
       setMicrophoneIssue('permission-denied');
@@ -83,7 +84,7 @@ export function useMicrophone(isDj: boolean): UseMicrophoneReturn {
     /* Check browser support */
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       const msg =
-        'Microphone access is not supported in your browser. Please use Chrome, Firefox, or Edge.';
+        t('Microphone access is not supported in your browser. Please use Chrome, Firefox, or Edge.');
       setError(msg);
       toast.error(msg);
       setMicrophoneIssue('not-supported');
@@ -97,7 +98,7 @@ export function useMicrophone(isDj: boolean): UseMicrophoneReturn {
       const permissionState = await checkMicrophonePermission();
       if (permissionState === 'denied') {
         const msg =
-          'Microphone permission is blocked. Enable microphone access in your browser settings and try again.';
+          t('Microphone permission is blocked. Enable microphone access in your browser settings and try again.');
         setError(msg);
         setMicrophoneIssue('permission-denied');
         toast.error(msg);
@@ -107,7 +108,7 @@ export function useMicrophone(isDj: boolean): UseMicrophoneReturn {
       const hasMicrophone = await hasAudioInputDevice();
       if (!hasMicrophone) {
         const msg =
-          'No suitable microphone was found. Connect or enable a microphone, then try again.';
+          t('No suitable microphone was found. Connect or enable a microphone, then try again.');
         setError(msg);
         setMicrophoneIssue('not-found');
         return;
@@ -126,7 +127,7 @@ export function useMicrophone(isDj: boolean): UseMicrophoneReturn {
       setStream(mediaStream);
       setIsListening(true);
       setMicrophoneIssue(null);
-      toast.success('Microphone access granted');
+      toast.success(t('Microphone access granted'));
     } catch (err) {
       const issue =
         err instanceof DOMException &&
@@ -142,10 +143,10 @@ export function useMicrophone(isDj: boolean): UseMicrophoneReturn {
             : 'request-failed';
       const errorMsg =
         issue === 'not-found'
-          ? 'No suitable microphone was found. Connect or enable a microphone, then try again.'
+          ? t('No suitable microphone was found. Connect or enable a microphone, then try again.')
           : err instanceof DOMException
-          ? `Microphone access denied: ${err.message}`
-          : 'Failed to access microphone';
+          ? t('Microphone access denied: {message}', { message: err.message })
+          : t('Failed to access microphone');
 
       setError(errorMsg);
       setMicrophoneIssue(issue);

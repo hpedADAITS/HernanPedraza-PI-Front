@@ -2,6 +2,7 @@ import type React from 'react';
 import { m } from 'motion/react';
 import { Mic2, Music2 } from 'lucide-react';
 import { clsx } from 'clsx';
+import { t } from '@/i18n';
 
 interface AttendeeSongSuggestViewProps {
   artist: string;
@@ -109,8 +110,8 @@ export function AttendeeSongSuggestView({
       </div>
 
       <div className="relative z-10 mb-5">
-        <h2 className={titleClassName}>Request a track</h2>
-        <p className={helperClassName}>Add a song suggestion to the DJ queue.</p>
+        <h2 className={titleClassName}>{t('Request a track')}</h2>
+        <p className={helperClassName}>{t('Add a song suggestion to the DJ queue.')}</p>
       </div>
 
       <div className="relative z-10 flex flex-col gap-4">
@@ -120,8 +121,8 @@ export function AttendeeSongSuggestView({
             type="text"
             value={title}
             onChange={(event) => onTitleChange(event.target.value)}
-            aria-label="Song title"
-            placeholder="Song title"
+            aria-label={t('Song title')}
+            placeholder={t('Song title')}
             required
             className={inputClassName}
           />
@@ -133,8 +134,8 @@ export function AttendeeSongSuggestView({
             type="text"
             value={artist}
             onChange={(event) => onArtistChange(event.target.value)}
-            aria-label="Artist"
-            placeholder="Artist"
+            aria-label={t('Artist')}
+            placeholder={t('Artist')}
             required
             className={inputClassName}
           />
@@ -147,7 +148,7 @@ export function AttendeeSongSuggestView({
           whileTap={isDisabled ? undefined : { scale: 0.98 }}
           className={buttonClassName}
         >
-          {submitting ? 'Submitting…' : 'Suggest Song'}
+          {submitting ? t('Submitting…') : t('Suggest Song')}
         </m.button>
       </div>
     </m.form>

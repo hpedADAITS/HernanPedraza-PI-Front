@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { eventsAPI } from '@/services/api/events';
+import { t } from '@/i18n';
 
 interface QRCodeModalProps {
   isOpen: boolean;
@@ -33,23 +34,23 @@ export function QRCodeModal({
 
   const handleRegenerate = async () => {
     if (!eventId) {
-      toast.error('Event ID missing');
+      toast.error(t('Event ID missing'));
       return;
     }
     setRegenerating(true);
     try {
       const event = await eventsAPI.regenerateAccessCode(eventId);
       onAccessCodeChange?.(event.accessCode);
-      toast.success('Access code regenerated');
+      toast.success(t('Access code regenerated'));
       setShowConfirm(false);
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Failed to regenerate code');
+      toast.error(err instanceof Error ? err.message : t('Failed to regenerate code'));
     } finally {
       setRegenerating(false);
     }
   };
 
-  const error = accessCode ? '' : 'Access code not available';
+  const error = accessCode ? '' : t('Access code not available');
 
   useEffect(() => {
     const handleEscKey = (e: KeyboardEvent) => {
@@ -69,13 +70,13 @@ export function QRCodeModal({
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(accessCode);
-    toast.success('Access code copied!');
+    toast.success(t('Access code copied!'));
   };
 
   const handleDownloadQR = () => {
     const svg = qrRef.current?.querySelector('svg');
     if (!svg) {
-      toast.error('QR code is not ready');
+      toast.error(t('QR code is not ready'));
       return;
     }
 
@@ -87,7 +88,7 @@ export function QRCodeModal({
     link.download = `event-qr-${accessCode}.svg`;
     link.click();
     URL.revokeObjectURL(url);
-    toast.success('QR code downloaded!');
+    toast.success(t('QR code downloaded!'));
   };
 
   return (
@@ -112,17 +113,17 @@ export function QRCodeModal({
               <div className="flex items-center justify-between px-4 pb-2.5 pt-4 sm:px-5 sm:pb-3 sm:pt-5">
                 <div>
                   <h2 className="text-[19px] font-black leading-tight tracking-normal text-[#101c3a] sm:text-[22px]">
-                    Event QR Code
+                    {t('Event QR Code')}
                   </h2>
                   <p className="mt-1 text-xs font-bold leading-snug text-[#73829d]">
-                    Scan to join this event.
+                    {t('Scan to join this event.')}
                   </p>
                 </div>
                 <m.button
                   whileTap={{ scale: 0.99 }}
                   onClick={onClose}
                   className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl border border-slate-900/10 bg-white text-slate-600 shadow-[0_8px_18px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.95)] transition-colors hover:text-slate-950 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100 sm:h-10 sm:w-10"
-                  aria-label="Close QR code modal"
+                  aria-label={t('Close QR code modal')}
                 >
                   <X size={20} />
                 </m.button>
@@ -152,7 +153,7 @@ export function QRCodeModal({
 
                 <div className="rounded-xl border border-slate-900/10 bg-white px-3 py-2 shadow-[0_10px_20px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.95)] sm:py-2.5">
                   <p className="mb-1 text-[10px] font-extrabold uppercase tracking-normal text-[#73829d]">
-                    Access Code
+                    {t('Access Code')}
                   </p>
                   <div className="flex items-center justify-between gap-2">
                     <code className="min-w-0 flex-1 truncate text-base font-black tracking-[0.16em] text-[#101c3a] sm:text-lg">
@@ -164,12 +165,12 @@ export function QRCodeModal({
                           whileTap={{ scale: 0.98 }}
                           onClick={handleCopyCode}
                           className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-lg text-[#2878ff] transition-colors hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100 sm:h-9 sm:w-9"
-                          aria-label="Copy access code"
+                          aria-label={t('Copy access code')}
                         >
                           <Copy size={18} />
                         </m.button>
                       </TooltipTrigger>
-                      <TooltipContent>Copy code</TooltipContent>
+                      <TooltipContent>{t('Copy code')}</TooltipContent>
                     </Tooltip>
                   </div>
                 </div>
@@ -188,7 +189,7 @@ export function QRCodeModal({
                       size={17}
                       className={regenerating ? 'animate-spin' : undefined}
                     />
-                    Regenerate Access Code
+                    {t('Regenerate Access Code')}
                   </m.button>
                 )}
                 <div className="flex gap-2">
@@ -199,7 +200,7 @@ export function QRCodeModal({
                     className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-[#2878ff] text-sm font-extrabold text-white shadow-[0_10px_20px_rgba(40,120,255,0.22)] transition-colors hover:bg-[#1f66dc] sm:h-11"
                   >
                     <Download size={18} />
-                    Download
+                    {t('Download')}
                   </m.button>
                   <m.button
                     whileHover={{ y: -1 }}
@@ -207,7 +208,7 @@ export function QRCodeModal({
                     onClick={onClose}
                     className="flex h-10 flex-1 items-center justify-center rounded-xl border border-slate-900/10 bg-white text-sm font-extrabold text-[#17213a] shadow-[0_10px_20px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.95)] transition-colors hover:bg-slate-50 sm:h-11"
                   >
-                    Close
+                    {t('Close')}
                   </m.button>
                 </div>
               </div>
@@ -219,16 +220,13 @@ export function QRCodeModal({
       <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Regenerate access code?</AlertDialogTitle>
+            <AlertDialogTitle>{t('Regenerate access code?')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This is a dangerous action. The current access code will stop
-              working immediately. All connected attendees will be notified of
-              the new code, and anyone trying to join with the old code will
-              fail. This cannot be undone.
+              {t('This is a dangerous action. The current access code will stop working immediately. All connected attendees will be notified of the new code, and anyone trying to join with the old code will fail. This cannot be undone.')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={regenerating}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={regenerating}>{t('Cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
@@ -237,7 +235,7 @@ export function QRCodeModal({
               disabled={regenerating}
               className="bg-red-600 hover:bg-red-700"
             >
-              {regenerating ? 'Regenerating...' : 'Yes, regenerate'}
+              {regenerating ? t('Regenerating...') : t('Yes, regenerate')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
