@@ -48,6 +48,7 @@ export interface NormalizedNowPlaying {
   totalDuration?: number;
   startedAt: number;
   elapsedTime?: number;
+  albumArt?: string | null;
 }
 
 export interface ParticipantEventPayload {

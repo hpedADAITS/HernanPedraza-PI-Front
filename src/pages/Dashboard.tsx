@@ -5,6 +5,7 @@ import { Logo } from '@/components/common/Logo';
 import { DJProfileCard, AttendeeProfileCard, QueueList, SearchBar, ActionButtons, NowPlayingSection, ConnectedUsers } from '@/components/dashboard';
 import { useDashboardSession } from '@/hooks/useDashboardSession';
 import { useDarkMode } from '@/hooks/useDarkMode';
+import { FirstTimeTutorialModal } from '@/components/modals/FirstTimeTutorialModal';
 
 interface DashboardProps extends PageProps {
   mode: 'attendee' | 'dj';
@@ -167,6 +168,7 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
           onNavigate={onNavigate}
         />
       </div>
+      <FirstTimeTutorialModal role={mode} />
     </Layout>
   );
 }

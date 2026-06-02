@@ -6,6 +6,7 @@ import { authAPI, eventsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
 import { EventIdSetupModal } from '@/components/modals/EventIdSetupModal';
 import { EmailConfirmationModal } from '@/components/modals/EmailConfirmationModal';
+import { queueFirstTimeTutorial } from '@/components/modals/FirstTimeTutorialModal';
 import logoWhite from '@/assets/logo_white.png';
 import { writeStoredJson } from '@/utils/storage';
 import {
@@ -208,6 +209,7 @@ export function DJRegister({
       activateSingleUserSession({ _id: registrationData.userId, email, displayName });
       suspendNextSingleUserSessionCheck();
       setShowEventIdModal(false);
+      queueFirstTimeTutorial('dj');
       onNavigate('dj-dashboard');
     } catch (error) {
       toast.error(

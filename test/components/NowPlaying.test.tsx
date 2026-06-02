@@ -26,7 +26,7 @@ describe('NowPlaying', () => {
     if (status === 'idle') {
       expect(screen.getByText('No song playing')).toBeInTheDocument();
       expect(
-        screen.getByText('Waiting for the next request'),
+        screen.getByText('Approve requests into the queue, then choose the next song to play'),
       ).toBeInTheDocument();
       return;
     }

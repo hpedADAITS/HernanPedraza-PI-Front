@@ -1,14 +1,15 @@
-import React, { useState, useEffect, useEffectEvent, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { m } from 'motion/react';
-import { ThumbsUp, ThumbsDown, LogOut, Settings, Plus, Lock, X } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, LogOut, Settings, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ANIMATION_DURATION } from '@/constants/animations';
-import { songsAPI, votesAPI, eventsAPI, participantsAPI, clearToken } from '@/services/api';
+import { songsAPI, votesAPI, eventsAPI, participantsAPI, authAPI, clearToken } from '@/services/api';
 import * as socket from '@/services/socket';
 import { disconnectSocket } from '@/services/socket';
-import { readStoredJson, removeStoredItem, writeStoredJson } from '@/utils/storage';
+import { readStoredJson, removeStoredItem } from '@/utils/storage';
 import { useTrackedTimeout } from '@/hooks/useTrackedTimeout';
+import { AttendeePasswordPrompt } from './AttendeeSavePrompt';
 import type { View } from '@/types';
 
 interface ActionButtonsProps {
@@ -29,9 +30,9 @@ interface QueueUpdatedPayload {
 const getErrorMessage = (err: unknown, fallback: string) =>
   err instanceof Error && err.message ? err.message : fallback;
 
-const isParticipantPasswordProtected = () => {
-  const participant = readStoredJson<{ passwordProtected?: boolean }>('currentParticipant');
-  return Boolean(participant?.passwordProtected);
+const getCurrentParticipantId = () => {
+  const participant = readStoredJson<{ _id?: string; id?: string }>('currentParticipant');
+  return participant?._id || participant?.id || null;
 };
 
 const VOTE_BUTTON_COLORS = {
@@ -60,6 +61,7 @@ export function ActionButtons({
   const [passwordPrompt, setPasswordPrompt] = useState<{
     reason: 'leave' | 'duplicate-login';
     afterSave?: () => void;
+    afterSkip?: () => void;
   } | null>(null);
 
   const handleQueueHoverChange = (nextHovered: boolean) => {
@@ -135,9 +137,28 @@ export function ActionButtons({
     onNavigate(isDj ? 'dj-login' : 'attendee-login');
   };
 
+  const finishAttendeeLeaveWithoutSavedProfile = async () => {
+    const participantId = getCurrentParticipantId();
+    if (participantId) {
+      try {
+        await authAPI.updateProfilePicture({ profilePicture: null });
+        await participantsAPI.updateProfile(participantId, { profilePicture: null });
+      } catch (err: unknown) {
+        toast.error(getErrorMessage(err, 'Failed to remove profile picture'));
+        return;
+      }
+    }
+
+    await finishLeaveParty();
+  };
+
   const handleLeaveParty = async () => {
-    if (!isDj && !isParticipantPasswordProtected()) {
-      setPasswordPrompt({ reason: 'leave', afterSave: finishLeaveParty });
+    if (!isDj) {
+      setPasswordPrompt({
+        reason: 'leave',
+        afterSave: finishLeaveParty,
+        afterSkip: finishAttendeeLeaveWithoutSavedProfile,
+      });
       return;
     }
 
@@ -190,9 +211,9 @@ export function ActionButtons({
           reason={passwordPrompt.reason}
           onClose={() => setPasswordPrompt(null)}
           onSkip={async () => {
-            const afterSave = passwordPrompt.afterSave;
+            const afterSkip = passwordPrompt.afterSkip;
             setPasswordPrompt(null);
-            if (afterSave) await afterSave();
+            if (afterSkip) await afterSkip();
           }}
           onSaved={async () => {
             const afterSave = passwordPrompt.afterSave;
@@ -202,178 +223,6 @@ export function ActionButtons({
         />
       )}
     </TooltipProvider>
-  );
-}
-
-interface AttendeePasswordPromptProps {
-  reason: 'leave' | 'duplicate-login';
-  onClose: () => void;
-  onSkip: () => void | Promise<void>;
-  onSaved: () => void | Promise<void>;
-}
-
-function AttendeePasswordPrompt({
-  reason,
-  onClose,
-  onSkip,
-  onSaved,
-}: AttendeePasswordPromptProps) {
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [saving, setSaving] = useState(false);
-  const dialogRef = useRef<HTMLDialogElement | null>(null);
-  const passwordInputRef = useRef<HTMLInputElement | null>(null);
-  const closePrompt = useEffectEvent(() => {
-    onClose();
-  });
-
-  const title =
-    reason === 'leave' ? 'Protect your attendee name?' : 'Someone tried your name';
-  const message =
-    reason === 'leave'
-      ? 'Set a password before leaving so only you can reuse this nickname later.'
-      : 'Add a password now so another device cannot take over your attendee name.';
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return undefined;
-
-    dialog.showModal();
-    return () => {
-      dialog.close();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (reason !== 'leave') return undefined;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        closePrompt();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [reason]);
-
-  useEffect(() => {
-    passwordInputRef.current?.focus();
-  }, []);
-
-  const handleSave = async () => {
-    if (password.length < 8) {
-      toast.error('Password must be at least 8 characters');
-      return;
-    }
-    if (password !== confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
-    }
-
-    const participant = readStoredJson<{ _id?: string; id?: string }>('currentParticipant');
-    if (!participant) {
-      toast.error('No attendee session found');
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const participantId = participant._id ?? participant.id;
-      if (!participantId) {
-        toast.error('No attendee session found');
-        return;
-      }
-      const updated = await participantsAPI.setPassword(participantId, password);
-      writeStoredJson('currentParticipant', {
-        ...participant,
-        ...updated,
-        passwordProtected: true,
-      });
-      toast.success('Attendee name protected');
-      await onSaved();
-    } catch (err: unknown) {
-      toast.error(getErrorMessage(err, 'Failed to set password'));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <dialog
-      ref={dialogRef}
-      className="fixed inset-0 z-[9999] m-auto w-full max-w-sm rounded-2xl bg-transparent p-0 backdrop:bg-slate-950/60 backdrop:backdrop-blur-sm"
-      aria-labelledby="attendee-password-title"
-    >
-      <div className="relative rounded-2xl bg-white p-6 shadow-2xl">
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300"
-          aria-label={reason === 'leave' ? 'Cancel logout' : 'Close dialog'}
-        >
-          <X size={18} aria-hidden="true" />
-        </button>
-
-        <div className="flex items-center gap-3 pr-10">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-            <Lock size={18} />
-          </div>
-          <div>
-            <h2
-              id="attendee-password-title"
-              className="text-base font-semibold text-slate-950"
-            >
-              {title}
-            </h2>
-            <p className="mt-1 text-sm leading-5 text-slate-600">{message}</p>
-          </div>
-        </div>
-
-        <div className="mt-5 space-y-3">
-          <input
-            type="password"
-            ref={passwordInputRef}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            aria-label="Password"
-            placeholder="Password"
-            autoComplete="new-password"
-            className="h-11 w-full rounded-lg border border-slate-300 px-3 text-sm text-slate-950 outline-none focus:border-slate-900 focus:ring-2 focus:ring-emerald-200"
-          />
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            aria-label="Confirm password"
-            placeholder="Confirm password"
-            autoComplete="new-password"
-            className="h-11 w-full rounded-lg border border-slate-300 px-3 text-sm text-slate-950 outline-none focus:border-slate-900 focus:ring-2 focus:ring-emerald-200"
-          />
-        </div>
-
-        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            onClick={reason === 'leave' ? onSkip : onClose}
-            className="h-10 rounded-lg px-4 text-sm font-medium text-slate-700 hover:bg-slate-100"
-          >
-            {reason === 'leave' ? 'Leave without password' : 'Not now'}
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className="h-10 rounded-lg bg-slate-900 px-4 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-          {saving ? 'Saving…' : 'Set password'}
-          </button>
-        </div>
-      </div>
-    </dialog>
   );
 }
 

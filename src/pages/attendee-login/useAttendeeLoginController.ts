@@ -4,6 +4,7 @@ import { attendeeSessionAPI, participantsAPI, eventsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
 import { writeStoredJson } from '@/utils/storage';
 import { activateSingleUserSession } from '@/services/singleUserSession';
+import { queueFirstTimeTutorial } from '@/components/modals/FirstTimeTutorialModal';
 import { validateNickname } from '@/utils/validation';
 import type { NavigateToView } from '@/types';
 
@@ -163,6 +164,7 @@ export function useAttendeeLoginController(onNavigate: NavigateToView) {
 
       toast.success('Joined event successfully!');
       socket.initSocket(token);
+      queueFirstTimeTutorial('attendee');
       onNavigate('attendee-dashboard');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to join event';

@@ -10,6 +10,7 @@ import {
   suspendNextSingleUserSessionCheck,
 } from '@/services/singleUserSession';
 import { LoginPage } from '@/pages/LoginPage';
+import { queueFirstTimeTutorial } from '@/components/modals/FirstTimeTutorialModal';
 import type { NavigateToView } from '@/types';
 
 interface Props {
@@ -77,6 +78,7 @@ export function DJLogin({
 
         if (!ownedEvent) {
           suspendNextSingleUserSessionCheck();
+          queueFirstTimeTutorial('dj');
         }
       }
 

@@ -56,6 +56,7 @@ export function normalizeNowPlaying(
         ? new Date(payload.startedPlayingAt).getTime()
         : Date.now() - (payload.elapsedTime || 0) * 1000,
     elapsedTime: payload.elapsedTime,
+    albumArt: payload.recognitionMatch?.coverUrl || null,
   };
 }
 

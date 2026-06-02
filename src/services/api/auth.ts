@@ -52,7 +52,7 @@ export const authAPI = {
     return data.data.user;
   },
 
-  updateProfilePicture: async (updates: { profilePicture: string }) => {
+  updateProfilePicture: async (updates: { profilePicture: string | null }) => {
     const data = await apiCall('/auth/me/picture', {
       method: 'PATCH',
       body: JSON.stringify(updates),

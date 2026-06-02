@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { toast } from 'sonner';
 import { authAPI, clearToken, participantsAPI } from '@/services/api';
-import { disconnectSocket, getSocket } from '@/services/socket';
+import { disconnectSocket, getSocket, leaveEvent } from '@/services/socket';
 import { ProfilePictureUpload } from '@/components/common';
+import { AttendeePasswordPrompt } from '@/components/dashboard/AttendeeSavePrompt';
 import { SettingsChoiceRow, SettingsDialog, SettingsDialogActions, SettingsDialogButton, SettingsList, SettingsListItem, SettingsPageShell, SettingsSearch, SettingsToggleRow } from '@/components/settings/SettingsUI';
 import { readSettingJson, readSettingString, writeSettingJson, writeSettingString } from '@/features/settings/storage';
 import { readStoredJson, writeStoredJson } from '@/utils/storage';
@@ -57,6 +58,7 @@ export function AccountSettings({ mode, onNavigate }: Props) {
   const [socialPrefs, setSocialPrefs] =
     useState<SocialPrefs>(DEFAULT_SOCIAL_PREFS);
   const [currentProfilePicture, setCurrentProfilePicture] = useState<string | null>(null);
+  const [showAttendeeSavePrompt, setShowAttendeeSavePrompt] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -137,7 +139,42 @@ export function AccountSettings({ mode, onNavigate }: Props) {
     }
   };
 
+  const finishAttendeeSignOut = async () => {
+    const event = readStoredJson<{ eventId?: string; _id?: string; id?: string }>('currentEvent');
+    const participant = readStoredJson<{ _id?: string; id?: string }>('currentParticipant');
+    const eventId = event?.eventId || event?._id || event?.id;
+    const participantId = participant?._id || participant?.id;
+
+    if (eventId && participantId) {
+      try {
+        leaveEvent(eventId, participantId);
+      } catch {}
+      await participantsAPI.leaveEvent(participantId);
+    }
+
+    clearToken();
+    disconnectSocket();
+    toast.success('Signed out');
+    onNavigate('role-selection');
+  };
+
+  const finishAttendeeSignOutWithoutSavedProfile = async () => {
+    const participant = readStoredJson<{ _id?: string; id?: string }>('currentParticipant');
+    const participantId = participant?._id || participant?.id;
+    if (participantId) {
+      await authAPI.updateProfilePicture({ profilePicture: null });
+      await participantsAPI.updateProfile(participantId, { profilePicture: null });
+    }
+
+    await finishAttendeeSignOut();
+  };
+
   const handleSignOut = async () => {
+    if (mode === 'attendee') {
+      setShowAttendeeSavePrompt(true);
+      return;
+    }
+
     try {
       await authAPI.logout();
     } catch {
@@ -367,6 +404,29 @@ export function AccountSettings({ mode, onNavigate }: Props) {
           </SettingsDialogButton>
         </SettingsDialogActions>
       </SettingsDialog>
+
+      {showAttendeeSavePrompt && (
+        <AttendeePasswordPrompt
+          reason="leave"
+          onClose={() => setShowAttendeeSavePrompt(false)}
+          onSkip={async () => {
+            setShowAttendeeSavePrompt(false);
+            try {
+              await finishAttendeeSignOutWithoutSavedProfile();
+            } catch (error) {
+              toast.error(error instanceof Error ? error.message : 'Failed to sign out');
+            }
+          }}
+          onSaved={async () => {
+            setShowAttendeeSavePrompt(false);
+            try {
+              await finishAttendeeSignOut();
+            } catch (error) {
+              toast.error(error instanceof Error ? error.message : 'Failed to sign out');
+            }
+          }}
+        />
+      )}
     </Layout>
   );
 }

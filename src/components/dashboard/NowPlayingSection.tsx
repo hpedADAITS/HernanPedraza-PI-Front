@@ -22,6 +22,7 @@ interface NowPlayingSong {
   duration?: string;
   durationSec?: number;
   startedAt?: number;
+  albumArt?: string | null;
 }
 
 function formatWait(totalSeconds: number): string {
@@ -59,6 +60,7 @@ function toPlayerSong(song: Song): NowPlayingSong {
     currentTime: '0:00',
     duration: duration ? formatTime(duration) : undefined,
     durationSec: duration,
+    albumArt: song.recognitionMatch?.coverUrl || null,
     startedAt: song.playingStartedAt
       ? new Date(song.playingStartedAt).getTime()
       : undefined,
@@ -144,6 +146,7 @@ function nowPlayingSectionReducer(
             : undefined,
           durationSec: nowPlaying.totalDuration,
           startedAt: nowPlaying.startedAt,
+          albumArt: nowPlaying.albumArt,
         },
         queue: state.queue.filter((song) => song._id !== nowPlaying.songId),
         celebrateKey: state.celebrateKey + 1,
@@ -196,6 +199,7 @@ function nowPlayingSectionReducer(
                 : undefined,
               durationSec: data.nowPlaying.totalDuration,
               startedAt: data.nowPlaying.startedAt,
+              albumArt: data.nowPlaying.albumArt,
             }
           : state.nowPlaying;
 
@@ -412,6 +416,7 @@ export function NowPlayingSection() {
           progress={display.progress}
           currentTime={display.currentTime}
           duration={display.duration}
+          albumArt={display.albumArt || undefined}
           waitLabel={
             display.status === 'queued'
               ? (() => {
