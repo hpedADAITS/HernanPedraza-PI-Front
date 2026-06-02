@@ -23,14 +23,17 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 /* Mock socket.io-client */
+const socketIoMock = vi.fn(() => ({
+  on: vi.fn(),
+  emit: vi.fn(),
+  off: vi.fn(),
+  disconnect: vi.fn(),
+  connect: vi.fn(),
+}));
+
 vi.mock('socket.io-client', () => ({
-  io: vi.fn(() => ({
-    on: vi.fn(),
-    emit: vi.fn(),
-    off: vi.fn(),
-    disconnect: vi.fn(),
-    connect: vi.fn(),
-  })),
+  default: socketIoMock,
+  io: socketIoMock,
 }));
 
 /* Suppress console warnings in tests */
