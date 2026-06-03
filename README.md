@@ -10,7 +10,7 @@
 &nbsp;
 <h1 align="center">SyncRekuest Frontend</h1>
 
-React + TypeScript client for DJ events, attendee song requests, realtime queues, and mobile-friendly participation.
+Non commercial Student proyect combining React + TypeScript client for DJ events, attendee song requests, realtime queues, and mobile-friendly participation.
 
 ## Overview
 
