@@ -30,6 +30,7 @@ interface DashboardLeftColumnProps {
   mode: 'attendee' | 'dj';
   onAccessCodeChange: (newCode: string) => void;
   onProfilePictureChange: (newPicture: string) => void;
+  participantId: string | null;
   profilePicture?: string | null;
   userName: string;
 }
@@ -43,6 +44,7 @@ const DashboardLeftColumn = memo(function DashboardLeftColumn({
   mode,
   onAccessCodeChange,
   onProfilePictureChange,
+  participantId,
   profilePicture,
   userName,
 }: DashboardLeftColumnProps) {
@@ -69,7 +71,12 @@ const DashboardLeftColumn = memo(function DashboardLeftColumn({
         mode={mode}
         showVoting={false}
       />
-      <DashboardQueueList mode={mode} isDarkMode={isDarkMode} />
+      <DashboardQueueList
+        mode={mode}
+        eventId={eventId}
+        participantId={participantId || undefined}
+        isDarkMode={isDarkMode}
+      />
     </div>
   );
 });
@@ -156,6 +163,7 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
           mode={mode}
           onAccessCodeChange={persistAccessCode}
           onProfilePictureChange={handleProfilePictureChange}
+          participantId={participantId}
           profilePicture={dashboardState.profilePicture}
           userName={dashboardState.userName}
         />
