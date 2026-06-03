@@ -92,6 +92,10 @@ function storedUserId(user: StoredUser | null | undefined) {
   return user?._id ?? user?.id ?? null;
 }
 
+function participantEventId(participant: StoredParticipant | null | undefined) {
+  return participant?.eventId ?? null;
+}
+
 function isDjUser(user: StoredUser | null | undefined) {
   const role = user?.role?.toLowerCase();
   return role === 'dj' || role === 'admin';
@@ -251,6 +255,7 @@ export function useDashboardSession({
 
         if (isDj) {
           let freshEvent = null;
+          const userId = storedUserId(user);
           if (currentEventData.eventId) {
             try {
               freshEvent = await eventsAPI.getEvent(currentEventData.eventId);
@@ -265,6 +270,16 @@ export function useDashboardSession({
                 'Auto-created event',
                 new Date().toISOString(),
               ));
+            ({ eventData: currentEventData, participantData: currentParticipantData } =
+              storeDjEventSession(freshEvent, user as StoredUser));
+          }
+
+          const freshEventId = entityId(freshEvent);
+          if (
+            freshEventId &&
+            (entityId(currentParticipantData) !== userId ||
+              participantEventId(currentParticipantData) !== freshEventId)
+          ) {
             ({ eventData: currentEventData, participantData: currentParticipantData } =
               storeDjEventSession(freshEvent, user as StoredUser));
           }

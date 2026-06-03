@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { Dashboard } from '@/pages/Dashboard';
 import { writeStoredJson, readStoredJson } from '@/utils/storage';
 import { suspendNextSingleUserSessionCheck } from '@/services/singleUserSession';
@@ -217,6 +217,28 @@ describe('Dashboard attendee admin effects', () => {
     );
   });
 
+  it('does not render DJ dashboard from attendee session cache', async () => {
+    const onNavigate = vi.fn();
+
+    writeStoredJson('user', {
+      id: 'attendee-1',
+      displayName: 'Bailey',
+      role: 'attendee',
+    });
+
+    render(<Dashboard mode="dj" onNavigate={onNavigate} />);
+
+    expect(screen.queryByText('DJProfileCard')).toBeNull();
+    expect(dashboardSearchBarMock).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(onNavigate).toHaveBeenCalledWith('dj-login');
+    });
+    expect(localStorage.getItem('authToken')).toBeNull();
+    expect(readStoredJson('currentEvent')).toBeNull();
+    expect(readStoredJson('currentParticipant')).toBeNull();
+    expect(initSocketMock).not.toHaveBeenCalled();
+  });
+
   it('replaces a stale DJ event before passing event id to dashboard children', async () => {
     writeStoredJson('user', {
       id: 'dj-1',
@@ -250,6 +272,8 @@ describe('Dashboard attendee admin effects', () => {
 
     render(<Dashboard mode="dj" onNavigate={vi.fn()} />);
 
+    expect(screen.queryByText('DJProfileCard')).toBeNull();
+    expect(dashboardSearchBarMock).not.toHaveBeenCalled();
     await waitFor(() => {
       expect(dashboardSearchBarMock).toHaveBeenCalledWith(
         expect.objectContaining({ eventId: 'owned-event', isDj: true }),
