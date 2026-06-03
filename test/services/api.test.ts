@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { loadToken, saveToken, clearToken, API_BASE } from '@/services/api';
+import { loadToken, saveToken, clearToken, API_BASE, eventsAPI } from '@/services/api';
 
 describe('API Service', () => {
   beforeEach(() => {
+    vi.unstubAllGlobals();
     /* Clear localStorage before each test */
     if (typeof window !== 'undefined') {
       localStorage.clear();
@@ -50,6 +51,25 @@ describe('API Service', () => {
 
     it('should include /api/v1 in the base URL', () => {
       expect(API_BASE).toContain('/api/v1');
+    });
+
+    it('does not send localhost as a phone microphone frontend origin', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          data: {
+            link: 'http://192.168.1.50:5173/dj/microphone/event-1?token=abc',
+          },
+        }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      await eventsAPI.getPhoneMicrophoneLink('event-1');
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringMatching(/\/events\/event-1\/phone-microphone-link$/),
+        expect.any(Object),
+      );
     });
   });
 

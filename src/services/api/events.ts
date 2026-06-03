@@ -3,7 +3,12 @@ import { apiCall } from './client';
 function getPublicFrontendOrigin() {
   if (typeof window === 'undefined') return '';
 
-  return /^https?:\/\//i.test(window.location.origin) ? window.location.origin : '';
+  const { hostname, origin } = window.location;
+  if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') {
+    return '';
+  }
+
+  return /^https?:\/\//i.test(origin) ? origin : '';
 }
 
 export const eventsAPI = {

@@ -20,6 +20,7 @@ import { t } from '@/i18n';
 
 interface ConnectedUser {
   _id: string;
+  id?: string;
   nickname: string;
   profilePicture?: string | null;
   userId?:
@@ -50,15 +51,20 @@ function participantUserId(participant: ConnectedUser) {
   return participant.userId?._id ?? participant.userId?.id ?? null;
 }
 
+function participantId(participant: ConnectedUser) {
+  return participant._id ?? participant.id;
+}
+
 function isDjParticipant(
   participant: ConnectedUser,
   djParticipantId: string | null,
   djUserId: string | null,
 ) {
   const userId = participantUserId(participant);
+  const id = participantId(participant);
   return participant.role === 'dj'
     || (!!djParticipantId
-      && (participant._id === djParticipantId || userId === djParticipantId))
+      && (id === djParticipantId || userId === djParticipantId))
     || (!!djUserId && userId === djUserId);
 }
 
@@ -139,12 +145,13 @@ function connectedUsersReducer(
         loading: false,
       };
     case 'upsert_user': {
-      const exists = state.users.some((user) => user._id === action.user._id);
+      const nextId = participantId(action.user);
+      const exists = state.users.some((user) => participantId(user) === nextId);
       return {
         ...state,
         users: exists
           ? state.users.map((user) =>
-              user._id === action.user._id ? action.user : user,
+              participantId(user) === nextId ? action.user : user,
             )
           : [...state.users, action.user],
         loading: false,
@@ -153,7 +160,7 @@ function connectedUsersReducer(
     case 'remove_user':
       return {
         ...state,
-        users: state.users.filter((user) => user._id !== action.participantId),
+        users: state.users.filter((user) => participantId(user) !== action.participantId),
         selectedParticipantId:
           state.selectedParticipantId === action.participantId
             ? null
@@ -164,7 +171,7 @@ function connectedUsersReducer(
       return {
         ...state,
         users: state.users.map((user) =>
-          user._id === action.update.participantId
+          participantId(user) === action.update.participantId
             ? {
                 ...user,
                 nickname: action.update.nickname ?? user.nickname,
@@ -184,7 +191,7 @@ function connectedUsersReducer(
       return {
         ...state,
         users: state.users.map((user) =>
-          user._id === action.participantId
+          participantId(user) === action.participantId
             ? {
                 ...user,
                 cooldownUntil,
@@ -199,7 +206,7 @@ function connectedUsersReducer(
       return {
         ...state,
         users: state.users.map((user) =>
-          user._id === action.participantId
+          participantId(user) === action.participantId
             ? {
                 ...user,
                 isPremium: action.isPremium,
@@ -258,14 +265,14 @@ export function ConnectedUsers({
       ? previewParticipants
       : state.users;
   const djIdentityId = getStoredDjUserId();
-  const attendeeUsers = isDj
-    ? users.filter((user) => !isDjParticipant(user, djIdentityId, djIdentityId))
-    : users;
   const loading =
     usesPreviewUsers || usesPreviewParticipants ? false : state.loading;
   const selectedParticipantId = state.selectedParticipantId;
   const djParticipantId = participantData?._id ?? participantData?.id ?? null;
   const djUserId = djIdentityId;
+  const attendeeUsers = isDj
+    ? users.filter((user) => !isDjParticipant(user, djParticipantId, djUserId))
+    : users;
 
   useEffect(() => {
     if (usesPreviewUsers || usesPreviewParticipants) {
@@ -763,9 +770,9 @@ function DjConnectedUsers({
               })
               .map((participant) => (
                 <ParticipantItem
-                  key={participant._id}
+                  key={participantId(participant)}
                   participant={participant}
-                  isSelected={selectedParticipantId === participant._id}
+                  isSelected={selectedParticipantId === participantId(participant)}
                   onSelect={(id) =>
                     setSelectedParticipantId(
                       selectedParticipantId === id ? null : id,
@@ -798,14 +805,16 @@ function ParticipantItem({
   eventId,
 }: ParticipantItemProps) {
   const [cooldownMs, setCooldownMs] = useState(DEFAULT_COOLDOWN_MS);
+  const id = participantId(participant);
 
   const handleAdminAction = async (action: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!id) return;
 
     try {
       if (action === 'Cooldown' && eventId) {
         const promise = participantsAPI.setCooldown(
-          participant._id,
+          id,
           cooldownMs,
           'DJ cooldown',
         );
@@ -822,7 +831,7 @@ function ParticipantItem({
         onSelect(null);
       } else if (action === 'Kick' && eventId) {
         const promise = participantsAPI.kickParticipant(
-          participant._id,
+          id,
           'Kicked by DJ',
         );
         await toast.promise(promise, {
@@ -830,7 +839,7 @@ function ParticipantItem({
           error: (err: unknown) =>
             t('Failed to kick: {error}', { error: formatErrorMessage(err, t('Unknown error')) }),
         });
-        onRemove(participant._id);
+        onRemove(id);
         onSelect(null);
       }
     } catch (error: unknown) {
@@ -847,7 +856,7 @@ function ParticipantItem({
         scale: 0.95,
         transition: { duration: 0.3 },
       }}
-      onClick={() => onSelect(participant._id)}
+      onClick={() => onSelect(id ?? null)}
       className="bg-slate-50 rounded-xl p-3 lg:p-2 flex items-center justify-between hover:bg-slate-100 transition-colors cursor-pointer"
     >
       <div className="flex items-center gap-3 flex-1 min-w-0">

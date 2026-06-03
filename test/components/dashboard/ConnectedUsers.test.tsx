@@ -54,6 +54,17 @@ function setDashboardStorage() {
   });
 }
 
+function setDjDashboardStorage() {
+  writeStoredJson('user', {
+    id: 'dj-user',
+    role: 'DJ',
+  });
+  writeStoredJson('currentParticipant', {
+    _id: 'dj-participant',
+    nickname: 'DJ Nova',
+  });
+}
+
 describe('Connected Users dashboard UI', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -209,6 +220,7 @@ describe('Connected Users dashboard UI', () => {
   });
 
   it('keeps attendee-only DJ identity section out of DJ mode', async () => {
+    setDjDashboardStorage();
     mockParticipantsAPI.listEventParticipants.mockResolvedValue([]);
 
     render(<ConnectedUsers mode="dj" />);
@@ -218,6 +230,7 @@ describe('Connected Users dashboard UI', () => {
   });
 
   it('renders DJ connected users with total, connected count, premium count, and premium-first ordering', async () => {
+    setDjDashboardStorage();
     mockParticipantsAPI.listEventParticipants.mockResolvedValue([
       {
         _id: 'attendee-1',
@@ -270,6 +283,7 @@ describe('Connected Users dashboard UI', () => {
   });
 
   it('keeps a cooldowned attendee visible in DJ mode and removes them only when kicked', async () => {
+    setDjDashboardStorage();
     const socket = createSocketMock();
     mockGetSocket.mockReturnValue(socket as Socket);
     mockParticipantsAPI.listEventParticipants.mockResolvedValue([
@@ -317,6 +331,7 @@ describe('Connected Users dashboard UI', () => {
   });
 
   it('renders the DJ empty state when no attendees have joined', async () => {
+    setDjDashboardStorage();
     mockParticipantsAPI.listEventParticipants.mockResolvedValue([]);
 
     render(<ConnectedUsers mode="dj" />);
