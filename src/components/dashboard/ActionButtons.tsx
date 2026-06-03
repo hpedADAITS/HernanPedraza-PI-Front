@@ -9,6 +9,7 @@ import * as socket from '@/services/socket';
 import { disconnectSocket } from '@/services/socket';
 import { readStoredJson, removeStoredItem } from '@/utils/storage';
 import { useTrackedTimeout } from '@/hooks/useTrackedTimeout';
+import { useSound } from '@/hooks/useSound';
 import { useViewNavigate } from '@/router/navigationContext';
 import { AttendeePasswordPrompt } from './AttendeeSavePrompt';
 import { t } from '@/i18n';
@@ -57,6 +58,7 @@ export function ActionButtons({
   showActions = true,
 }: ActionButtonsProps) {
   const navigate = useViewNavigate(onNavigate);
+  const { playSound } = useSound();
   const isDj = mode === 'dj';
   const [isQueueHovered, setIsQueueHovered] = useState(false);
   const queueHoverTimeoutRef = useRef<number | null>(null);
@@ -156,6 +158,7 @@ export function ActionButtons({
   };
 
   const handleLeaveParty = async () => {
+    playSound('leaveParty');
     if (!isDj) {
       setPasswordPrompt({
         reason: 'leave',
@@ -185,6 +188,7 @@ export function ActionButtons({
               variant="queue"
               queueTone={isDj ? 'dj' : 'attendee'}
               onHoverChange={handleQueueHoverChange}
+              soundKey="suggestSong"
             />
 
             <ActionButton
@@ -196,6 +200,7 @@ export function ActionButtons({
               }
               variant="settings"
               iconOnly
+              soundKey="settingsOpen"
             />
 
             <ActionButton
@@ -236,6 +241,7 @@ interface CurrentSong {
 }
 
 function VotingButtons() {
+  const { playSound } = useSound();
   const [currentSong, setCurrentSong] = useState<CurrentSong | null>(null);
   const [voting, setVoting] = useState(false);
 
@@ -299,6 +305,7 @@ function VotingButtons() {
       return;
     }
 
+    playSound(value === 1 ? 'voteUp' : 'voteDown');
     setVoting(true);
     try {
       await votesAPI.castVote(currentSong._id, participantId, value);
@@ -346,6 +353,8 @@ function VoteButton({
   onClick,
   disabled,
 }: VoteButtonProps) {
+  const { playSound } = useSound();
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -355,6 +364,7 @@ function VoteButton({
           whileHover={disabled ? undefined : { y: -1, scale: 1.01 }}
           whileTap={disabled ? undefined : { scale: 0.99 }}
           onClick={onClick}
+          onHoverStart={() => !disabled && playSound('buttonHover')}
           disabled={disabled}
           transition={{ duration: ANIMATION_DURATION.fast }}
           className={`group flex h-16 w-16 items-center justify-center rounded-full border shadow-[0_12px_28px_rgba(15,23,42,0.16)] outline-none transition-all focus-visible:ring-4 md:h-[72px] md:w-[72px] lg:h-14 lg:w-14 ${VOTE_BUTTON_COLORS[color].button} ${disabled ? 'cursor-not-allowed opacity-45 grayscale' : ''}`}
@@ -381,6 +391,7 @@ interface ActionButtonProps {
   collapsed?: boolean;
   iconOnly?: boolean;
   onHoverChange?: (isHovered: boolean) => void;
+  soundKey?: string;
 }
 
 function ActionButton({
@@ -393,7 +404,25 @@ function ActionButton({
   collapsed,
   iconOnly,
   onHoverChange,
+  soundKey,
 }: ActionButtonProps) {
+  const { playSound } = useSound();
+
+  const handleClick = () => {
+    if (soundKey) {
+      playSound(soundKey);
+    }
+    onClick();
+  };
+
+  const handleHoverStart = () => {
+    playSound('buttonHover');
+    onHoverChange?.(true);
+  };
+
+  const handleHoverEnd = () => {
+    onHoverChange?.(false);
+  };
   const styles = {
     queue:
       queueTone === 'dj'
@@ -417,9 +446,9 @@ function ActionButton({
       type="button"
       whileHover={{ y: -1 }}
       whileTap={{ scale: 0.99 }}
-      onClick={onClick}
-      onHoverStart={() => onHoverChange?.(true)}
-      onHoverEnd={() => onHoverChange?.(false)}
+      onClick={handleClick}
+      onHoverStart={handleHoverStart}
+      onHoverEnd={handleHoverEnd}
       onFocus={() => onHoverChange?.(true)}
       onBlur={() => onHoverChange?.(false)}
       transition={{ duration: ANIMATION_DURATION.fast }}
