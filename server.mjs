@@ -65,7 +65,7 @@ function shouldServeIndex(req) {
   if (req.method !== 'GET' && req.method !== 'HEAD') return false;
 
   const pathname = new URL(req.url || '/', 'http://localhost').pathname;
-  return pathname === '/' || (!extname(pathname) && (req.headers.accept || '').includes('text/html'));
+  return pathname === '/' || !extname(pathname);
 }
 
 createServer((req, res) => {

@@ -96,6 +96,10 @@ function participantEventId(participant: StoredParticipant | null | undefined) {
   return participant?.eventId ?? null;
 }
 
+function storedEventId(event: StoredEvent | null | undefined) {
+  return event?.eventId ?? event?._id ?? event?.id ?? null;
+}
+
 function isDjUser(user: StoredUser | null | undefined) {
   const role = user?.role?.toLowerCase();
   return role === 'dj' || role === 'admin';
@@ -217,6 +221,7 @@ export function useDashboardSession({
     const participantData = getStoredParticipant();
     const user = getStoredUser();
     const token = getAuthToken();
+    const participantId = entityId(participantData);
 
     setIsSessionReady(!isDj);
     setSessionError(null);
@@ -258,9 +263,10 @@ export function useDashboardSession({
         if (isDj) {
           let freshEvent = null;
           const userId = storedUserId(user);
-          if (currentEventData.eventId) {
+          const currentEventId = storedEventId(currentEventData);
+          if (currentEventId) {
             try {
-              freshEvent = await eventsAPI.getEvent(currentEventData.eventId);
+              freshEvent = await eventsAPI.getEvent(currentEventId);
             } catch {}
           }
 
@@ -302,7 +308,9 @@ export function useDashboardSession({
           }));
         }
 
-        if (!currentEventData.eventId || !currentParticipantData._id) {
+        const currentEventId = storedEventId(currentEventData);
+        const currentParticipantId = entityId(currentParticipantData);
+        if (!currentEventId || !currentParticipantId) {
           throw new Error(t('Session data is incomplete'));
         }
 
@@ -311,11 +319,11 @@ export function useDashboardSession({
           djName: currentEventData.ownerName || current.djName,
           djProfilePicture:
             currentEventData.ownerProfilePicture ?? current.djProfilePicture,
-          eventId: currentEventData.eventId || current.eventId,
+          eventId: currentEventId,
         }));
         setIsSessionReady(true);
 
-        const freshEvent = await eventsAPI.getEvent(currentEventData.eventId);
+        const freshEvent = await eventsAPI.getEvent(currentEventId);
         if (freshEvent?.accessCode) {
           persistAccessCode(freshEvent.accessCode);
         }
@@ -337,8 +345,8 @@ export function useDashboardSession({
         }
 
         joinEvent(
-          currentEventData.eventId,
-          currentParticipantData._id,
+          currentEventId,
+          currentParticipantId,
           currentParticipantData.nickname || 'User',
           currentParticipantData.profilePicture || user?.profilePicture || null,
         );
@@ -384,7 +392,7 @@ export function useDashboardSession({
     };
 
     const handleSongSuggested = (data: SongEventPayload & { nickname?: string; participantId?: string }) => {
-      if (!data?.title || data.participantId === participantData._id) return;
+      if (!data?.title || data.participantId === participantId) return;
 
       toast.info(t('{name} suggested {title}!', {
         name: data.nickname || t('Someone'),
@@ -393,7 +401,7 @@ export function useDashboardSession({
     };
 
     const handleParticipantUpdated = (data: ParticipantUpdatedPayload) => {
-      if (!data.participantId || data.participantId !== participantData._id) {
+      if (!data.participantId || data.participantId !== participantId) {
         return;
       }
 
@@ -425,7 +433,7 @@ export function useDashboardSession({
     };
 
     const handleParticipantKicked = (data: ParticipantEventPayload & { reason?: string }) => {
-      if (isDj || data?.participantId !== participantData._id) return;
+      if (isDj || data?.participantId !== participantId) return;
 
       const message = data.reason
         ? t('You were removed from the event: {reason}', { reason: data.reason })
@@ -434,7 +442,7 @@ export function useDashboardSession({
     };
 
     const handleParticipantCooldown = (data: ParticipantCooldownPayload) => {
-      if (isDj || data?.participantId !== participantData._id) return;
+      if (isDj || data?.participantId !== participantId) return;
 
       const expiresAt = data.cooldownUntil
         ? new Date(data.cooldownUntil)
@@ -462,7 +470,7 @@ export function useDashboardSession({
     };
 
     const handleParticipantBanned = (data: ParticipantEventPayload & { reason?: string }) => {
-      if (isDj || data?.participantId !== participantData._id) return;
+      if (isDj || data?.participantId !== participantId) return;
 
       const message = data.reason
         ? t('You were banned from the event: {reason}', { reason: data.reason })

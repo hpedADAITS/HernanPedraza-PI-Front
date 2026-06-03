@@ -323,4 +323,40 @@ describe('Dashboard attendee admin effects', () => {
       expect.objectContaining({ _id: 'dj-1', eventId: 'owned-event' }),
     );
   });
+
+  it('boots DJ dashboard from id-only session cache', async () => {
+    writeStoredJson('user', {
+      id: 'dj-1',
+      displayName: 'DJ Nova',
+      role: 'DJ',
+    });
+    writeStoredJson('currentEvent', {
+      id: 'owned-event',
+      ownerName: 'DJ Nova',
+      accessCode: 'OWNED',
+    });
+    writeStoredJson('currentParticipant', {
+      id: 'dj-1',
+      nickname: 'DJ Nova',
+      eventId: 'owned-event',
+    });
+    suspendNextSingleUserSessionCheck();
+    eventsApiGetEventMock.mockResolvedValue({
+      id: 'owned-event',
+      accessCode: 'OWNED',
+      ownerId: { _id: 'dj-1', profilePicture: null },
+    });
+
+    render(<Dashboard mode="dj" onNavigate={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(joinEventMock).toHaveBeenCalledWith(
+        'owned-event',
+        'dj-1',
+        'DJ Nova',
+        null,
+      );
+    });
+    expect(screen.queryByText('Session data is incomplete')).toBeNull();
+  });
 });

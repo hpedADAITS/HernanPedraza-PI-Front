@@ -1,6 +1,8 @@
 import { readStoredJson, removeStoredItem, writeStoredJson } from '@/utils/storage';
 
 export interface StoredEvent {
+  _id?: string;
+  id?: string;
   eventId?: string;
   eventCode?: string;
   ownerName?: string;
@@ -36,7 +38,8 @@ export function getStoredEvent() {
 }
 
 export function getStoredEventId() {
-  return getStoredEvent()?.eventId ?? null;
+  const event = getStoredEvent();
+  return event?.eventId ?? event?._id ?? event?.id ?? null;
 }
 
 export function setStoredEvent(event: StoredEvent) {
