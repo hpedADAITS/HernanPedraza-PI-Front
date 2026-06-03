@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { disconnectSocket, getEventListeners, getSocket, initSocket } from '@/services/socket/connection';
+import { buildSocketUrl, disconnectSocket, getEventListeners, getSocket, initSocket } from '@/services/socket/connection';
 import { approveSong, castVote, joinEvent, sendNowSong } from '@/services/socket/emitters';
 import { off, onParticipantJoined, onSongApproved } from '@/services/socket/listeners';
 
@@ -49,6 +49,15 @@ describe('socket service', () => {
     expect(socket.on).toHaveBeenCalledWith('connect', expect.any(Function));
     expect(socket.on).toHaveBeenCalledWith('disconnect', expect.any(Function));
     expect(socket.on).toHaveBeenCalledWith('error', expect.any(Function));
+  });
+
+  it('uses the backend origin for Socket.IO instead of the REST API namespace', () => {
+    expect(buildSocketUrl('https://sr-backend-im3y.onrender.com/api/v1')).toBe(
+      'https://sr-backend-im3y.onrender.com',
+    );
+    expect(buildSocketUrl('https://sr-backend-im3y.onrender.com/api/v1/')).toBe(
+      'https://sr-backend-im3y.onrender.com',
+    );
   });
 
   it('falls back to the stored auth token when initializing', () => {

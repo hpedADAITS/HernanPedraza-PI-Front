@@ -2,11 +2,21 @@ import io, { Socket } from 'socket.io-client';
 import { SocketEventName, SocketListener } from './contracts';
 
 // @ts-ignore
-const SOCKET_URL: string | undefined =
-  import.meta.env?.VITE_API_URL || undefined;
+const VITE_API_URL: string | undefined = import.meta.env?.VITE_API_URL || undefined;
 
 let socket: Socket | null = null;
 let eventListeners: Map<SocketEventName, SocketListener<SocketEventName>[]> = new Map();
+
+export function buildSocketUrl(apiUrl?: string) {
+  if (!apiUrl) return undefined;
+
+  const trimmed = apiUrl.replace(/\/+$/, '');
+  return trimmed.endsWith('/api/v1')
+    ? trimmed.slice(0, -'/api/v1'.length)
+    : trimmed;
+}
+
+const SOCKET_URL = buildSocketUrl(VITE_API_URL);
 
 function getAuthToken(token?: string) {
   return token || localStorage.getItem('authToken') || undefined;
