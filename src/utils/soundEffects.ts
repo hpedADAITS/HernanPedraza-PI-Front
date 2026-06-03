@@ -11,14 +11,14 @@ interface SoundConfig {
 }
 
 const sounds = {
-  addSong: new URL('../assets/sounds/SoundsSR/AddSong.wav', import.meta.url).href,
-  cancel: new URL('../assets/sounds/SoundsSR/Cancel.wav', import.meta.url).href,
-  cooldown: new URL('../assets/sounds/SoundsSR/Cooldown.wav', import.meta.url).href,
-  logout: new URL('../assets/sounds/SoundsSR/Logout.wav', import.meta.url).href,
-  hover: new URL('../assets/sounds/SoundsSR/OnHover.wav', import.meta.url).href,
-  request: new URL('../assets/sounds/SoundsSR/Request.wav', import.meta.url).href,
-  voteDown: new URL('../assets/sounds/SoundsSR/VoteDown.wav', import.meta.url).href,
-  voteUp: new URL('../assets/sounds/SoundsSR/VoteUp.wav', import.meta.url).href,
+  addSong: new URL('../assets/sounds/AddSong.wav', import.meta.url).href,
+  cancel: new URL('../assets/sounds/Cancel.wav', import.meta.url).href,
+  cooldown: new URL('../assets/sounds/Cooldown.wav', import.meta.url).href,
+  logout: new URL('../assets/sounds/Logout.wav', import.meta.url).href,
+  hover: new URL('../assets/sounds/OnHover.wav', import.meta.url).href,
+  request: new URL('../assets/sounds/Request.wav', import.meta.url).href,
+  voteDown: new URL('../assets/sounds/VoteDown.wav', import.meta.url).href,
+  voteUp: new URL('../assets/sounds/VoteUp.wav', import.meta.url).href,
 };
 
 class SoundEffectsManager {
@@ -35,7 +35,7 @@ class SoundEffectsManager {
     },
     buttonHover: {
       src: sounds.hover,
-      volume: 0.4,
+      volume: 0.2,
     },
     navigateBack: {
       src: sounds.cancel,
@@ -45,23 +45,23 @@ class SoundEffectsManager {
     // Song-related Actions
     suggestSong: {
       src: sounds.request,
-      volume: 0.7,
+      volume: 0.4,
     },
     approveSong: {
       src: sounds.addSong,
-      volume: 0.7,
+      volume: 0.3,
     },
     rejectSong: {
       src: sounds.cancel,
-      volume: 0.7,
+      volume: 0.3,
     },
     skipSong: {
       src: sounds.cancel,
-      volume: 0.7,
+      volume: 0.4,
     },
     songQueued: {
       src: sounds.addSong,
-      volume: 0.6,
+      volume: 0.5,
     },
 
     // Voting Actions
