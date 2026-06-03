@@ -10,6 +10,17 @@ interface SoundConfig {
   loop?: boolean;
 }
 
+const sounds = {
+  addSong: new URL('../assets/sounds/SoundsSR/AddSong.wav', import.meta.url).href,
+  cancel: new URL('../assets/sounds/SoundsSR/Cancel.wav', import.meta.url).href,
+  cooldown: new URL('../assets/sounds/SoundsSR/Cooldown.wav', import.meta.url).href,
+  logout: new URL('../assets/sounds/SoundsSR/Logout.wav', import.meta.url).href,
+  hover: new URL('../assets/sounds/SoundsSR/OnHover.wav', import.meta.url).href,
+  request: new URL('../assets/sounds/SoundsSR/Request.wav', import.meta.url).href,
+  voteDown: new URL('../assets/sounds/SoundsSR/VoteDown.wav', import.meta.url).href,
+  voteUp: new URL('../assets/sounds/SoundsSR/VoteUp.wav', import.meta.url).href,
+};
+
 class SoundEffectsManager {
   private audioCache: Map<string, HTMLAudioElement> = new Map();
   private bufferCache: Map<string, AudioBuffer> = new Map();
@@ -19,132 +30,136 @@ class SoundEffectsManager {
   private soundConfigs: Record<string, SoundConfig> = {
     // Navigation & General Buttons
     buttonClick: {
-      src: new URL('../assets/sounds/ui/button-click.wav', import.meta.url).href,
+      src: sounds.request,
       volume: 0.6,
     },
     buttonHover: {
-      src: new URL('../assets/sounds/ui/button-hover.wav', import.meta.url).href,
+      src: sounds.hover,
       volume: 0.4,
     },
     navigateBack: {
-      src: new URL('../assets/sounds/ui/navigate-back.wav', import.meta.url).href,
+      src: sounds.cancel,
       volume: 0.5,
     },
 
     // Song-related Actions
     suggestSong: {
-      src: new URL('../assets/sounds/actions/suggest-song.wav', import.meta.url).href,
+      src: sounds.request,
       volume: 0.7,
     },
     approveSong: {
-      src: new URL('../assets/sounds/actions/approve-song.wav', import.meta.url).href,
+      src: sounds.addSong,
       volume: 0.7,
     },
     rejectSong: {
-      src: new URL('../assets/sounds/actions/reject-song.wav', import.meta.url).href,
+      src: sounds.cancel,
       volume: 0.7,
     },
     skipSong: {
-      src: new URL('../assets/sounds/actions/skip-song.wav', import.meta.url).href,
+      src: sounds.cancel,
       volume: 0.7,
     },
     songQueued: {
-      src: new URL('../assets/sounds/actions/song-queued.wav', import.meta.url).href,
+      src: sounds.addSong,
       volume: 0.6,
     },
 
     // Voting Actions
     voteUp: {
-      src: new URL('../assets/sounds/voting/vote-up.wav', import.meta.url).href,
+      src: sounds.voteUp,
       volume: 0.6,
     },
     voteDown: {
-      src: new URL('../assets/sounds/voting/vote-down.wav', import.meta.url).href,
+      src: sounds.voteDown,
       volume: 0.6,
     },
 
     // Settings & Preferences
     settingsOpen: {
-      src: new URL('../assets/sounds/settings/settings-open.wav', import.meta.url).href,
+      src: sounds.request,
       volume: 0.5,
     },
     settingsSave: {
-      src: new URL('../assets/sounds/settings/settings-save.wav', import.meta.url).href,
+      src: sounds.addSong,
       volume: 0.6,
     },
     toggleSwitch: {
-      src: new URL('../assets/sounds/settings/toggle-switch.wav', import.meta.url).href,
+      src: sounds.hover,
       volume: 0.5,
     },
 
     // User Actions
     profileUpdate: {
-      src: new URL('../assets/sounds/user/profile-update.wav', import.meta.url).href,
+      src: sounds.addSong,
       volume: 0.6,
     },
     microphoneToggle: {
-      src: new URL('../assets/sounds/user/microphone-toggle.wav', import.meta.url).href,
+      src: sounds.request,
       volume: 0.6,
     },
     leaveParty: {
-      src: new URL('../assets/sounds/user/leave-party.wav', import.meta.url).href,
+      src: sounds.logout,
       volume: 0.7,
     },
 
     // Search & Selection
     searchOpen: {
-      src: new URL('../assets/sounds/search/search-open.wav', import.meta.url).href,
+      src: sounds.request,
       volume: 0.5,
     },
     searchSelect: {
-      src: new URL('../assets/sounds/search/search-select.wav', import.meta.url).href,
+      src: sounds.addSong,
       volume: 0.5,
     },
 
     // Notifications & Feedback
     success: {
-      src: new URL('../assets/sounds/feedback/success.wav', import.meta.url).href,
+      src: sounds.addSong,
       volume: 0.6,
     },
     error: {
-      src: new URL('../assets/sounds/feedback/error.wav', import.meta.url).href,
+      src: sounds.cancel,
       volume: 0.6,
     },
     warning: {
-      src: new URL('../assets/sounds/feedback/warning.wav', import.meta.url).href,
+      src: sounds.cooldown,
       volume: 0.6,
     },
 
     // Modal Actions
     modalOpen: {
-      src: new URL('../assets/sounds/modals/modal-open.wav', import.meta.url).href,
+      src: sounds.request,
       volume: 0.5,
     },
     modalClose: {
-      src: new URL('../assets/sounds/modals/modal-close.wav', import.meta.url).href,
+      src: sounds.cancel,
       volume: 0.5,
     },
     confirmAction: {
-      src: new URL('../assets/sounds/modals/confirm-action.wav', import.meta.url).href,
+      src: sounds.addSong,
       volume: 0.6,
     },
     cancelAction: {
-      src: new URL('../assets/sounds/modals/cancel-action.wav', import.meta.url).href,
+      src: sounds.cancel,
       volume: 0.5,
     },
 
     // Auth Actions
     login: {
-      src: new URL('../assets/sounds/auth/login.wav', import.meta.url).href,
+      src: sounds.request,
       volume: 0.7,
     },
     logout: {
-      src: new URL('../assets/sounds/auth/logout.wav', import.meta.url).href,
+      src: sounds.logout,
       volume: 0.6,
     },
     register: {
-      src: new URL('../assets/sounds/auth/register.wav', import.meta.url).href,
+      src: sounds.addSong,
       volume: 0.7,
+    },
+    cooldown: {
+      src: sounds.cooldown,
+      volume: 0.6,
     },
   };
 

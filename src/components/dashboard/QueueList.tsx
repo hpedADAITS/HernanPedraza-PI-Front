@@ -10,6 +10,7 @@ import { SLIDE_UP, ANIMATION_DURATION } from '@/constants/animations';
 import { participantsAPI, songsAPI } from '@/services/api';
 import { getStoredDjUserId, getStoredParticipantId } from '@/services/session';
 import { useQueueRealtime, type RemovalReason } from '@/features/dashboard/useQueueRealtime';
+import { useSound } from '@/hooks/useSound';
 import { t } from '@/i18n';
 import type { Song } from '@/types/songs';
 
@@ -328,10 +329,18 @@ function QueueItem({
 }: QueueItemProps) {
   const isDj = context.mode === 'dj';
   const [cooldownMs, setCooldownMs] = useState(DEFAULT_COOLDOWN_MS);
+  const { playSound } = useSound();
   const canModerateRequester = !!song.requestedBy?._id && !isRequestedByDj(song, djUserId, djParticipantId);
 
   const handleAdminAction = async (action: string, e: MouseEvent) => {
     e.stopPropagation();
+    playSound(
+      action === 'Cooldown'
+        ? 'cooldown'
+        : action === 'Reject' || action === 'Kick'
+          ? 'cancelAction'
+          : 'approveSong',
+    );
 
     try {
       const songId = song._id;

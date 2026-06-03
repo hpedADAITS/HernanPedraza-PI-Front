@@ -8,6 +8,7 @@ import { participantsAPI } from '@/services/api';
 import { COOLDOWN_OPTIONS, DEFAULT_COOLDOWN_MS, formatCooldownDuration } from '@/constants/cooldowns';
 import { getStoredDjUserId } from '@/services/session';
 import { getSocket } from '@/services/socket';
+import { useSound } from '@/hooks/useSound';
 import type {
   ParticipantCooldownPayload,
   ParticipantEventPayload,
@@ -805,11 +806,13 @@ function ParticipantItem({
   eventId,
 }: ParticipantItemProps) {
   const [cooldownMs, setCooldownMs] = useState(DEFAULT_COOLDOWN_MS);
+  const { playSound } = useSound();
   const id = participantId(participant);
 
   const handleAdminAction = async (action: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!id) return;
+    playSound(action === 'Cooldown' ? 'cooldown' : 'cancelAction');
 
     try {
       if (action === 'Cooldown' && eventId) {
