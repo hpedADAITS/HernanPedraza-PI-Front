@@ -62,6 +62,7 @@ export function PhoneMicrophone() {
   const [searchParams] = useSearchParams();
   const streamRef = useRef<MediaStream | null>(null);
   const stopAudioMatchRef = useRef<null | (() => void)>(null);
+  const sentTrackRef = useRef('');
   const [connectionState, setConnectionState] =
     useState<ConnectionState>('idle');
   const [error, setError] = useState('');
@@ -115,9 +116,18 @@ export function PhoneMicrophone() {
       streamRef.current = stream;
       await eventsAPI.connectPhoneMicrophone(eventId, getPhoneDeviceName(), token);
       const socket = initSocket(token);
-      socket.on('audio_match_update', (payload) => {
+      socket.on('audio_match_update', async (payload) => {
         const match = payload?.matches?.[0];
         setBestMatch(match ? `${match.title} - ${match.artist} (${match.score})` : '');
+        if (!match?.trackId || sentTrackRef.current === match.trackId) return;
+
+        try {
+          sentTrackRef.current = match.trackId;
+          await eventsAPI.sendMatchedAudioTrackNow(eventId, match.trackId, token);
+        } catch (sendError) {
+          sentTrackRef.current = '';
+          console.warn('Unable to send matched audio track now:', sendError);
+        }
       });
       stopAudioMatchRef.current = await startAudioMatchStream({
         eventId,

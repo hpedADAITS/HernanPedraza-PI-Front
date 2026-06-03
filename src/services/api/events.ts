@@ -111,4 +111,14 @@ export const eventsAPI = {
     );
     return data.data.microphone;
   },
+
+  sendMatchedAudioTrackNow: async (eventId: string, trackId: string, token = '') => {
+    const data = await apiCall(
+      `/events/${eventId}/audio-tracks/${trackId}/send-now${
+        token ? `?token=${encodeURIComponent(token)}` : ''
+      }`,
+      { method: 'POST' },
+    );
+    return data.data.song;
+  },
 };

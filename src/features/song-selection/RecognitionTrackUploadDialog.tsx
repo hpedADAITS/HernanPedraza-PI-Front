@@ -8,6 +8,7 @@ import {
 } from '@/components/settings/SettingsUI';
 import { audioTracksAPI, eventsAPI } from '@/services/api';
 import { toBrowserWav } from '@/services/audio/ffmpegWav';
+import { getStoredEventId } from '@/services/session';
 import { t } from '@/i18n';
 
 interface RecognitionTrackUploadDialogProps {
@@ -39,11 +40,20 @@ export function RecognitionTrackUploadDialog({
 
     setBusy(true);
     try {
-      const [wav, ownedEvent] = await Promise.all([
-        toBrowserWav(file),
-        eventsAPI.getMyActiveEvent().catch(() => null),
-      ]);
-      const uploadEventId = ownedEvent?.id || ownedEvent?._id || eventId;
+      const dashboardEventId = eventId || getStoredEventId();
+      const [wav, ownedEvent] = dashboardEventId
+        ? [await toBrowserWav(file), null]
+        : await Promise.all([
+            toBrowserWav(file),
+            eventsAPI.getMyActiveEvent().catch(() => null),
+          ]);
+      const uploadEventId = dashboardEventId || ownedEvent?.id || ownedEvent?._id;
+
+      if (!uploadEventId) {
+        toast.error(t('No active event found'));
+        return;
+      }
+
       const track = await audioTracksAPI.uploadTrack(
         uploadEventId,
         wav,
