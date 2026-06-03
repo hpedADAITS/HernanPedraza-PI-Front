@@ -176,7 +176,7 @@ function renderAccountsWindow(result: DebugAccountsResult) {
   return `
     <h1>Debug Mock Accounts</h1>
     <p class="meta">
-      Created ${escapeHtml(result.createdAt)}.
+      Persistent debug fixture.
       <span class="status">Validated against MongoDB: ${result.validatedAgainstMongo ? 'yes' : 'no'}</span>
     </p>
     ${
@@ -236,10 +236,6 @@ function renderAccountsWindow(result: DebugAccountsResult) {
                 <div>
                   <dt>User ID</dt>
                   <dd>${escapeHtml(account.id)}</dd>
-                </div>
-                <div>
-                  <dt>Token</dt>
-                  <dd>${escapeHtml(account.token)}</dd>
                 </div>
               </dl>
               <button
