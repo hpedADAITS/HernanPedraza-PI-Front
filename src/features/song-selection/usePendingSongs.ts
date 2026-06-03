@@ -32,7 +32,8 @@ function getErrorMessage(error: unknown, fallback: string) {
 
 export function usePendingSongs(eventId: string | null, isDj: boolean) {
   const [pendingSongs, setPendingSongs] = useState<PendingSong[]>([]);
-  const pendingSongIdsRef = useRef(new Set<string>());
+  const pendingSongIdsRef = useRef<Set<string> | null>(null);
+  if (pendingSongIdsRef.current === null) pendingSongIdsRef.current = new Set<string>();
   const [reviewSongIds, setReviewSongIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [processingSongId, setProcessingSongId] = useState<string | null>(null);
@@ -91,7 +92,7 @@ export function usePendingSongs(eventId: string | null, isDj: boolean) {
     } finally {
       setLoading(false);
     }
-  }, [eventId]);
+  }, [eventId, setSyncedPendingSongs]);
 
   useEffect(() => {
     if (isDj) {

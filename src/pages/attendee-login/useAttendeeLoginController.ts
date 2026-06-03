@@ -4,7 +4,7 @@ import { attendeeSessionAPI, participantsAPI, eventsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
 import { writeStoredJson } from '@/utils/storage';
 import { activateSingleUserSession } from '@/services/singleUserSession';
-import { queueFirstTimeTutorial } from '@/components/modals/FirstTimeTutorialModal';
+import { queueFirstTimeTutorial } from '@/components/modals/firstTimeTutorialQueue';
 import { validateNickname } from '@/utils/validation';
 import { t } from '@/i18n';
 import type { NavigateToView } from '@/types';

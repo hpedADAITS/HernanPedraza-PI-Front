@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { readSettingJson, readSettingString, writeSettingJson, writeSettingString } from './storage';
 
 export type MediaQuality = 'auto' | 'high' | 'medium' | 'low';
@@ -35,13 +35,31 @@ const DEFAULT_APP_SOCIAL_PREFS: AppSocialPrefs = {
 const isMediaQuality = (value: string | null): value is MediaQuality =>
   MEDIA_QUALITY_OPTIONS.some((option) => option.value === value);
 
-export function useMediaQualityPreference(defaultValue: MediaQuality = 'auto') {
-  const [mediaQuality, setMediaQuality] = useState<MediaQuality>(defaultValue);
+const getInitialMediaQuality = (defaultValue: MediaQuality) => {
+  const storedQuality = readSettingString('mediaQuality');
+  return isMediaQuality(storedQuality) ? storedQuality : defaultValue;
+};
 
-  useEffect(() => {
-    const storedQuality = readSettingString('mediaQuality');
-    if (isMediaQuality(storedQuality)) setMediaQuality(storedQuality);
-  }, []);
+const getInitialProfileSocialPrefs = () => ({
+  ...DEFAULT_PROFILE_SOCIAL_PREFS,
+  ...readSettingJson<Partial<ProfileSocialPrefs>>('socialPrefs'),
+});
+
+const getInitialAppSocialPrefs = () => {
+  const storedSocial = readSettingJson<Partial<AppSocialPrefs>>('appSocialPrefs');
+  if (storedSocial) return { ...DEFAULT_APP_SOCIAL_PREFS, ...storedSocial };
+
+  return {
+    allowNotifications:
+      readSettingJson<boolean>('allowNotifications') ?? DEFAULT_APP_SOCIAL_PREFS.allowNotifications,
+    allowSharing: readSettingJson<boolean>('allowSharing') ?? DEFAULT_APP_SOCIAL_PREFS.allowSharing,
+  };
+};
+
+export function useMediaQualityPreference(defaultValue: MediaQuality = 'auto') {
+  const [mediaQuality, setMediaQuality] = useState<MediaQuality>(() =>
+    getInitialMediaQuality(defaultValue),
+  );
 
   const saveMediaQuality = (value: MediaQuality) => {
     setMediaQuality(value);
@@ -52,14 +70,7 @@ export function useMediaQualityPreference(defaultValue: MediaQuality = 'auto') {
 }
 
 export function useProfileSocialPrefs() {
-  const [socialPrefs, setSocialPrefs] = useState(DEFAULT_PROFILE_SOCIAL_PREFS);
-
-  useEffect(() => {
-    const storedSocial = readSettingJson<Partial<ProfileSocialPrefs>>('socialPrefs');
-    if (storedSocial) {
-      setSocialPrefs({ ...DEFAULT_PROFILE_SOCIAL_PREFS, ...storedSocial });
-    }
-  }, []);
+  const [socialPrefs, setSocialPrefs] = useState(getInitialProfileSocialPrefs);
 
   const saveSocialPrefs = (next: ProfileSocialPrefs) => {
     setSocialPrefs(next);
@@ -70,22 +81,7 @@ export function useProfileSocialPrefs() {
 }
 
 export function useAppSocialPrefs() {
-  const [appSocialPrefs, setAppSocialPrefs] = useState(DEFAULT_APP_SOCIAL_PREFS);
-
-  useEffect(() => {
-    const storedSocial = readSettingJson<Partial<AppSocialPrefs>>('appSocialPrefs');
-    if (storedSocial) {
-      setAppSocialPrefs({ ...DEFAULT_APP_SOCIAL_PREFS, ...storedSocial });
-      return;
-    }
-
-    const allowNotifications = readSettingJson<boolean>('allowNotifications');
-    const allowSharing = readSettingJson<boolean>('allowSharing');
-    setAppSocialPrefs({
-      allowNotifications: allowNotifications ?? DEFAULT_APP_SOCIAL_PREFS.allowNotifications,
-      allowSharing: allowSharing ?? DEFAULT_APP_SOCIAL_PREFS.allowSharing,
-    });
-  }, []);
+  const [appSocialPrefs, setAppSocialPrefs] = useState(getInitialAppSocialPrefs);
 
   const saveAppSocialPrefs = (next: AppSocialPrefs) => {
     setAppSocialPrefs(next);

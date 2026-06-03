@@ -41,7 +41,7 @@ export function SearchBar({
     error,
   } = useMicrophone(isDj);
 
-  const handleClick = () => {
+  const openSongSelection = () => {
     const view = isDj ? 'dj-song-select' : 'attendee-song-select';
     navigate(view);
   };
@@ -242,8 +242,8 @@ export function SearchBar({
             <input
               type="search"
               readOnly
-              onClick={handleClick}
-              onFocus={handleClick}
+              onClick={openSongSelection}
+              onFocus={openSongSelection}
               aria-label={t('Search for songs')}
               placeholder={t('Search for artists, songs, albums...')}
               className={`h-full min-w-0 flex-1 cursor-text border-0 bg-transparent text-sm font-semibold tracking-normal outline-none ${

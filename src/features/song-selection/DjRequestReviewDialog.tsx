@@ -61,7 +61,7 @@ export function DjRequestReviewDialog({
               </button>
             </div>
 
-            <div className="space-y-4 px-5 py-5">
+            <div className="space-y-4 p-5">
               <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <UserAvatar
                   name={song.requestedBy?.nickname || t('Unknown')}

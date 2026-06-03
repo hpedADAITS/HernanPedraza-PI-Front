@@ -24,8 +24,7 @@ export function QRScannerModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          style={{ zIndex: 99999 }}
-          className="fixed inset-0 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4"
         >
           <m.div
             initial={{ scale: 0.97, opacity: 0, y: 12 }}

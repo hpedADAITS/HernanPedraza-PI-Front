@@ -408,7 +408,7 @@ function ActionButton({
 }: ActionButtonProps) {
   const { playSound } = useSound();
 
-  const handleClick = () => {
+  const activateActionButton = () => {
     if (soundKey) {
       playSound(soundKey);
     }
@@ -446,7 +446,7 @@ function ActionButton({
       type="button"
       whileHover={{ y: -1 }}
       whileTap={{ scale: 0.99 }}
-      onClick={handleClick}
+      onClick={activateActionButton}
       onHoverStart={handleHoverStart}
       onHoverEnd={handleHoverEnd}
       onFocus={() => onHoverChange?.(true)}

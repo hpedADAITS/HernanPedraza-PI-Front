@@ -6,7 +6,7 @@ import { authAPI, eventsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
 import { EventIdSetupModal } from '@/components/modals/EventIdSetupModal';
 import { EmailConfirmationModal } from '@/components/modals/EmailConfirmationModal';
-import { queueFirstTimeTutorial } from '@/components/modals/FirstTimeTutorialModal';
+import { queueFirstTimeTutorial } from '@/components/modals/firstTimeTutorialQueue';
 import logoWhite from '@/assets/logo_white.png';
 import { writeStoredJson } from '@/utils/storage';
 import { t } from '@/i18n';

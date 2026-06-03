@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Headphones, ListMusic, Mic, QrCode, Search, Users } from 'lucide-react';
 import {
   AlertDialog,
@@ -9,11 +9,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { consumePendingTutorial, type TutorialRole } from '@/components/modals/firstTimeTutorialQueue';
 import { t } from '@/i18n';
-
-type TutorialRole = 'attendee' | 'dj';
-
-const STORAGE_KEY = 'firstTimeTutorialRole:v1';
 
 const TUTORIALS = {
   attendee: {
@@ -41,25 +38,23 @@ const TUTORIALS = {
   steps: { icon: typeof Search; text: string }[];
 }>;
 
-export function queueFirstTimeTutorial(role: TutorialRole) {
-  sessionStorage.setItem(STORAGE_KEY, role);
-}
-
 export function FirstTimeTutorialModal({ role }: { role: TutorialRole }) {
-  const [open, setOpen] = useState(false);
+  const [state, setState] = useState(() => ({
+    open: consumePendingTutorial(role),
+    role,
+  }));
 
-  useEffect(() => {
-    const pendingRole = sessionStorage.getItem(STORAGE_KEY);
-    if (pendingRole !== role) return;
-
-    sessionStorage.removeItem(STORAGE_KEY);
-    setOpen(true);
-  }, [role]);
+  if (state.role !== role) {
+    setState({ open: consumePendingTutorial(role), role });
+  }
 
   const tutorial = TUTORIALS[role];
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
+    <AlertDialog
+      open={state.open}
+      onOpenChange={(open) => setState((current) => ({ ...current, open }))}
+    >
       <AlertDialogContent className="max-w-[calc(100%-2rem)] gap-5 rounded-lg p-5 sm:max-w-md sm:p-6">
         <AlertDialogHeader>
           <AlertDialogTitle>{t(tutorial.title)}</AlertDialogTitle>

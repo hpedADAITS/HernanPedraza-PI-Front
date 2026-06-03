@@ -10,30 +10,41 @@ function parseCooldown(value: unknown) {
 }
 
 export function useParticipantCooldown(participantId: string | null, enabled = true) {
-  const [cooldownUntil, setCooldownUntil] = useState<Date | null>(null);
-  const [now, setNow] = useState(Date.now());
+  const [cooldownState, setCooldownState] = useState<{
+    participantId: string | null;
+    until: Date | null;
+  }>({ participantId, until: null });
+  const [now, setNow] = useState(() => Date.now());
+
+  if (cooldownState.participantId !== participantId) {
+    setCooldownState({ participantId, until: null });
+  }
+
+  const cooldownUntil =
+    enabled && cooldownState.until && cooldownState.until.getTime() > now
+      ? cooldownState.until
+      : null;
   const remainingMs = useMemo(
     () => Math.max(0, (cooldownUntil?.getTime() ?? 0) - now),
     [cooldownUntil, now],
   );
 
   useEffect(() => {
-    if (!enabled || !participantId) {
-      setCooldownUntil(null);
-      return;
-    }
+    if (!enabled || !participantId) return;
 
     let active = true;
     participantsAPI.getParticipant(participantId)
       .then((participant) => {
-        if (active) setCooldownUntil(parseCooldown(participant?.cooldownUntil));
+        if (active) {
+          setCooldownState({ participantId, until: parseCooldown(participant?.cooldownUntil) });
+        }
       })
       .catch(() => {});
 
     const socket = getSocket();
     const handleCooldown = (payload: ParticipantCooldownPayload) => {
       if (payload.participantId === participantId) {
-        setCooldownUntil(parseCooldown(payload.cooldownUntil));
+        setCooldownState({ participantId, until: parseCooldown(payload.cooldownUntil) });
       }
     };
 
@@ -49,10 +60,6 @@ export function useParticipantCooldown(participantId: string | null, enabled = t
     const interval = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(interval);
   }, [cooldownUntil]);
-
-  useEffect(() => {
-    if (cooldownUntil && remainingMs <= 0) setCooldownUntil(null);
-  }, [cooldownUntil, remainingMs]);
 
   return { cooldownUntil, isCoolingDown: remainingMs > 0, remainingMs };
 }

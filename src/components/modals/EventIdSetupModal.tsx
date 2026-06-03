@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { m, AnimatePresence } from 'motion/react';
 import { RefreshCw, Check } from 'lucide-react';
 import { toast } from 'sonner';
@@ -33,7 +33,16 @@ export function EventIdSetupModal({
   displayName,
 }: EventIdSetupModalProps) {
   const [{ eventId, generatedId, mode }, setSetupState] = useState(getInitialEventIdSetupState);
+  const wasOpenRef = useRef(isOpen);
   const [loading, setLoading] = useState(false);
+
+  if (wasOpenRef.current !== isOpen) {
+    wasOpenRef.current = isOpen;
+    if (isOpen) {
+      setSetupState(getInitialEventIdSetupState());
+      setLoading(false);
+    }
+  }
 
   const generateRandomId = () => {
     setSetupState((current) => ({
@@ -42,11 +51,6 @@ export function EventIdSetupModal({
       mode: 'generated',
     }));
   };
-
-  useEffect(() => {
-    if (!isOpen) return;
-    setSetupState(getInitialEventIdSetupState());
-  }, [isOpen]);
 
   const handleConfirm = async () => {
     const finalEventId = mode === 'generated' ? generatedId : eventId.trim();

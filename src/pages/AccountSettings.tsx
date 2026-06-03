@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { toast } from 'sonner';
 import { authAPI, clearToken, participantsAPI } from '@/services/api';
@@ -26,6 +26,20 @@ const SETTINGS_ITEMS = [
   { id: 'signOut', label: 'Sign Out' },
 ] as const;
 
+const getInitialProfilePicture = () =>
+  readStoredJson<{ profilePicture?: string | null }>('user')?.profilePicture || null;
+
+const getDebugInfo = () => {
+  const hasToken = !!localStorage.getItem('authToken');
+  const eventData = readStoredJson<{ eventId?: string }>('currentEvent');
+  const participantData = readStoredJson<{ _id?: string }>('currentParticipant');
+  const eventId = eventData?.eventId || t('None');
+  const participantId = participantData?._id || t('None');
+  const socketConnected = getSocket()?.connected || false;
+
+  return { hasToken, eventId, participantId, socketConnected };
+};
+
 export function AccountSettings({ mode, onNavigate }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNameModal, setShowNameModal] = useState(false);
@@ -36,16 +50,9 @@ export function AccountSettings({ mode, onNavigate }: Props) {
   const [newDisplayName, setNewDisplayName] = useState('');
   const { mediaQuality, saveMediaQuality } = useMediaQualityPreference();
   const { saveSocialPrefs, socialPrefs } = useProfileSocialPrefs();
-  const [currentProfilePicture, setCurrentProfilePicture] = useState<string | null>(null);
+  const [currentProfilePicture, setCurrentProfilePicture] = useState(getInitialProfilePicture);
   const [showAttendeeSavePrompt, setShowAttendeeSavePrompt] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const user = readStoredJson<{ profilePicture?: string | null }>('user');
-    if (user) {
-      setCurrentProfilePicture(user.profilePicture || null);
-    }
-  }, []);
 
   const handleSelectMediaQuality = (value: typeof mediaQuality) => {
     saveMediaQuality(value);
@@ -149,17 +156,6 @@ export function AccountSettings({ mode, onNavigate }: Props) {
     disconnectSocket();
     toast.success(t('Signed out'));
     onNavigate('role-selection');
-  };
-
-  const getDebugInfo = () => {
-    const hasToken = !!localStorage.getItem('authToken');
-    const eventData = readStoredJson<{ eventId?: string }>('currentEvent');
-    const participantData = readStoredJson<{ _id?: string }>('currentParticipant');
-    const eventId = eventData?.eventId || t('None');
-    const participantId = participantData?._id || t('None');
-    const socketConnected = getSocket()?.connected || false;
-
-    return { hasToken, eventId, participantId, socketConnected };
   };
 
   const handleItemClick = (item: (typeof SETTINGS_ITEMS)[number]['id']) => {

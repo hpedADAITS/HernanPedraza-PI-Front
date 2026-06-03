@@ -32,6 +32,11 @@ function getCoverCoordinates(
   };
 }
 
+const canUseCoverCubeWorker = () =>
+  typeof Worker !== 'undefined' &&
+  typeof HTMLCanvasElement !== 'undefined' &&
+  'transferControlToOffscreen' in HTMLCanvasElement.prototype;
+
 export function CoverCube({
   albumArt,
   accentColor,
@@ -42,7 +47,8 @@ export function CoverCube({
   const workerRef = React.useRef<Worker | null>(null);
   const requestIdRef = React.useRef(0);
   const pointerDraggingRef = React.useRef(false);
-  const [renderFailed, setRenderFailed] = React.useState(false);
+  const [workerFailed, setWorkerFailed] = React.useState(false);
+  const renderFailed = !canUseCoverCubeWorker() || workerFailed;
 
   const postWorkerMessage = React.useCallback((message: CoverCubeWorkerMessage) => {
     workerRef.current?.postMessage(message);
@@ -77,13 +83,7 @@ export function CoverCube({
       return;
     }
 
-    if (
-      typeof Worker === 'undefined' ||
-      typeof canvas.transferControlToOffscreen !== 'function'
-    ) {
-      setRenderFailed(true);
-      return;
-    }
+    if (!canUseCoverCubeWorker()) return;
 
     const size = syncCanvasLayout();
 
@@ -93,9 +93,8 @@ export function CoverCube({
 
     const worker = new Worker(workerUrl, { type: 'module' });
     workerRef.current = worker;
-    setRenderFailed(false);
 
-    const fail = () => setRenderFailed(true);
+    const fail = () => setWorkerFailed(true);
     worker.addEventListener('error', fail);
     worker.addEventListener('messageerror', fail);
 

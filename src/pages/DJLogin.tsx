@@ -10,7 +10,7 @@ import {
   suspendNextSingleUserSessionCheck,
 } from '@/services/singleUserSession';
 import { LoginPage } from '@/pages/LoginPage';
-import { queueFirstTimeTutorial } from '@/components/modals/FirstTimeTutorialModal';
+import { queueFirstTimeTutorial } from '@/components/modals/firstTimeTutorialQueue';
 import { t } from '@/i18n';
 import type { NavigateToView } from '@/types';
 
