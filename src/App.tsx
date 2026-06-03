@@ -1,10 +1,11 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useEffect } from 'react';
 import { LazyMotion, domAnimation } from 'motion/react';
 import { Toaster } from 'sonner';
 import { useAppStartup } from '@/hooks/useAppStartup';
 import { AppRoutes } from '@/router/AppRoutes';
 import { ViewNavigationProvider } from '@/router/navigationContext';
 import { useViewNavigation } from '@/router/useViewNavigation';
+import { soundEffects } from '@/utils/soundEffects';
 
 const DebugModal =
   import.meta.env.DEV
@@ -18,6 +19,10 @@ const DebugModal =
 export default function App() {
   useAppStartup();
   const { direction, logoWhite, navigate, setLogoWhite } = useViewNavigation();
+
+  useEffect(() => {
+    soundEffects.preloadAll();
+  }, []);
 
   return (
     <LazyMotion features={domAnimation}>

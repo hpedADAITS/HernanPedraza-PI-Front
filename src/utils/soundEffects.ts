@@ -12,134 +12,138 @@ interface SoundConfig {
 
 class SoundEffectsManager {
   private audioCache: Map<string, HTMLAudioElement> = new Map();
+  private bufferCache: Map<string, AudioBuffer> = new Map();
+  private bufferLoads: Map<string, Promise<void>> = new Map();
+  private audioContext: AudioContext | null = null;
+  private unlockListenersAttached = false;
   private soundConfigs: Record<string, SoundConfig> = {
     // Navigation & General Buttons
     buttonClick: {
-      src: '/src/assets/sounds/ui/button-click.wav',
+      src: new URL('../assets/sounds/ui/button-click.wav', import.meta.url).href,
       volume: 0.6,
     },
     buttonHover: {
-      src: '/src/assets/sounds/ui/button-hover.wav',
+      src: new URL('../assets/sounds/ui/button-hover.wav', import.meta.url).href,
       volume: 0.4,
     },
     navigateBack: {
-      src: '/src/assets/sounds/ui/navigate-back.wav',
+      src: new URL('../assets/sounds/ui/navigate-back.wav', import.meta.url).href,
       volume: 0.5,
     },
 
     // Song-related Actions
     suggestSong: {
-      src: '/src/assets/sounds/actions/suggest-song.wav',
+      src: new URL('../assets/sounds/actions/suggest-song.wav', import.meta.url).href,
       volume: 0.7,
     },
     approveSong: {
-      src: '/src/assets/sounds/actions/approve-song.wav',
+      src: new URL('../assets/sounds/actions/approve-song.wav', import.meta.url).href,
       volume: 0.7,
     },
     rejectSong: {
-      src: '/src/assets/sounds/actions/reject-song.wav',
+      src: new URL('../assets/sounds/actions/reject-song.wav', import.meta.url).href,
       volume: 0.7,
     },
     skipSong: {
-      src: '/src/assets/sounds/actions/skip-song.wav',
+      src: new URL('../assets/sounds/actions/skip-song.wav', import.meta.url).href,
       volume: 0.7,
     },
     songQueued: {
-      src: '/src/assets/sounds/actions/song-queued.wav',
+      src: new URL('../assets/sounds/actions/song-queued.wav', import.meta.url).href,
       volume: 0.6,
     },
 
     // Voting Actions
     voteUp: {
-      src: '/src/assets/sounds/voting/vote-up.wav',
+      src: new URL('../assets/sounds/voting/vote-up.wav', import.meta.url).href,
       volume: 0.6,
     },
     voteDown: {
-      src: '/src/assets/sounds/voting/vote-down.wav',
+      src: new URL('../assets/sounds/voting/vote-down.wav', import.meta.url).href,
       volume: 0.6,
     },
 
     // Settings & Preferences
     settingsOpen: {
-      src: '/src/assets/sounds/settings/settings-open.wav',
+      src: new URL('../assets/sounds/settings/settings-open.wav', import.meta.url).href,
       volume: 0.5,
     },
     settingsSave: {
-      src: '/src/assets/sounds/settings/settings-save.wav',
+      src: new URL('../assets/sounds/settings/settings-save.wav', import.meta.url).href,
       volume: 0.6,
     },
     toggleSwitch: {
-      src: '/src/assets/sounds/settings/toggle-switch.wav',
+      src: new URL('../assets/sounds/settings/toggle-switch.wav', import.meta.url).href,
       volume: 0.5,
     },
 
     // User Actions
     profileUpdate: {
-      src: '/src/assets/sounds/user/profile-update.wav',
+      src: new URL('../assets/sounds/user/profile-update.wav', import.meta.url).href,
       volume: 0.6,
     },
     microphoneToggle: {
-      src: '/src/assets/sounds/user/microphone-toggle.wav',
+      src: new URL('../assets/sounds/user/microphone-toggle.wav', import.meta.url).href,
       volume: 0.6,
     },
     leaveParty: {
-      src: '/src/assets/sounds/user/leave-party.wav',
+      src: new URL('../assets/sounds/user/leave-party.wav', import.meta.url).href,
       volume: 0.7,
     },
 
     // Search & Selection
     searchOpen: {
-      src: '/src/assets/sounds/search/search-open.wav',
+      src: new URL('../assets/sounds/search/search-open.wav', import.meta.url).href,
       volume: 0.5,
     },
     searchSelect: {
-      src: '/src/assets/sounds/search/search-select.wav',
+      src: new URL('../assets/sounds/search/search-select.wav', import.meta.url).href,
       volume: 0.5,
     },
 
     // Notifications & Feedback
     success: {
-      src: '/src/assets/sounds/feedback/success.wav',
+      src: new URL('../assets/sounds/feedback/success.wav', import.meta.url).href,
       volume: 0.6,
     },
     error: {
-      src: '/src/assets/sounds/feedback/error.wav',
+      src: new URL('../assets/sounds/feedback/error.wav', import.meta.url).href,
       volume: 0.6,
     },
     warning: {
-      src: '/src/assets/sounds/feedback/warning.wav',
+      src: new URL('../assets/sounds/feedback/warning.wav', import.meta.url).href,
       volume: 0.6,
     },
 
     // Modal Actions
     modalOpen: {
-      src: '/src/assets/sounds/modals/modal-open.wav',
+      src: new URL('../assets/sounds/modals/modal-open.wav', import.meta.url).href,
       volume: 0.5,
     },
     modalClose: {
-      src: '/src/assets/sounds/modals/modal-close.wav',
+      src: new URL('../assets/sounds/modals/modal-close.wav', import.meta.url).href,
       volume: 0.5,
     },
     confirmAction: {
-      src: '/src/assets/sounds/modals/confirm-action.wav',
+      src: new URL('../assets/sounds/modals/confirm-action.wav', import.meta.url).href,
       volume: 0.6,
     },
     cancelAction: {
-      src: '/src/assets/sounds/modals/cancel-action.wav',
+      src: new URL('../assets/sounds/modals/cancel-action.wav', import.meta.url).href,
       volume: 0.5,
     },
 
     // Auth Actions
     login: {
-      src: '/src/assets/sounds/auth/login.wav',
+      src: new URL('../assets/sounds/auth/login.wav', import.meta.url).href,
       volume: 0.7,
     },
     logout: {
-      src: '/src/assets/sounds/auth/logout.wav',
+      src: new URL('../assets/sounds/auth/logout.wav', import.meta.url).href,
       volume: 0.6,
     },
     register: {
-      src: '/src/assets/sounds/auth/register.wav',
+      src: new URL('../assets/sounds/auth/register.wav', import.meta.url).href,
       volume: 0.7,
     },
   };
@@ -161,6 +165,7 @@ class SoundEffectsManager {
 
     // Create new audio element
     const audio = new Audio(config.src);
+    audio.preload = 'auto';
     audio.volume = config.volume ?? 0.5;
     audio.loop = config.loop ?? false;
 
@@ -171,8 +176,75 @@ class SoundEffectsManager {
     audio.onerror = () => {
       console.warn(`Failed to load audio: ${config.src}`);
     };
+    audio.load();
 
     return audio;
+  }
+
+  private getContext(): AudioContext | null {
+    if (typeof window === 'undefined') return null;
+    if (this.audioContext) return this.audioContext;
+
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return null;
+
+    this.audioContext = new AudioContextClass();
+    return this.audioContext;
+  }
+
+  private loadBuffer(soundKey: string): void {
+    const config = this.soundConfigs[soundKey];
+    const context = this.getContext();
+    if (!config || !context || this.bufferCache.has(soundKey) || this.bufferLoads.has(soundKey)) return;
+
+    this.bufferLoads.set(
+      soundKey,
+      fetch(config.src)
+        .then((response) => response.arrayBuffer())
+        .then((data) => context.decodeAudioData(data))
+        .then((buffer) => {
+          this.bufferCache.set(soundKey, buffer);
+        })
+        .catch(() => {})
+        .finally(() => {
+          this.bufferLoads.delete(soundKey);
+        }),
+    );
+  }
+
+  private playBuffer(soundKey: string): boolean {
+    const context = this.getContext();
+    const buffer = this.bufferCache.get(soundKey);
+    const config = this.soundConfigs[soundKey];
+    if (!context || !buffer || !config) return false;
+
+    const start = () => {
+      const source = context.createBufferSource();
+      const gain = context.createGain();
+      source.buffer = buffer;
+      gain.gain.value = config.volume ?? 0.5;
+      source.connect(gain).connect(context.destination);
+      source.start(0);
+    };
+
+    if (context.state === 'suspended') {
+      context.resume().then(start).catch(() => {});
+    } else {
+      start();
+    }
+    return true;
+  }
+
+  private unlockContext = (): void => {
+    this.audioContext?.resume().catch(() => {});
+  };
+
+  private attachUnlockListeners(): void {
+    if (typeof window === 'undefined' || this.unlockListenersAttached) return;
+    this.unlockListenersAttached = true;
+    ['pointerdown', 'touchstart', 'keydown'].forEach((event) => {
+      window.addEventListener(event, this.unlockContext, { capture: true, passive: true });
+    });
   }
 
   /**
@@ -181,6 +253,9 @@ class SoundEffectsManager {
    */
   play(soundKey: string): void {
     if (typeof window === 'undefined') return; // SSR safety
+
+    this.loadBuffer(soundKey);
+    if (this.playBuffer(soundKey)) return;
 
     const audio = this.getAudio(soundKey);
     if (!audio) return;
@@ -241,12 +316,14 @@ class SoundEffectsManager {
    */
   preload(soundKey: string): void {
     this.getAudio(soundKey);
+    this.loadBuffer(soundKey);
   }
 
   /**
    * Preload multiple sounds
    */
-  preloadAll(soundKeys: string[]): void {
+  preloadAll(soundKeys: string[] = Object.keys(this.soundConfigs)): void {
+    this.attachUnlockListeners();
     soundKeys.forEach((key) => this.preload(key));
   }
 }
