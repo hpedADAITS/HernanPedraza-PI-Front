@@ -1,0 +1,34 @@
+
+> syncrekuest@0.1.0 test
+> vitest
+
+
+[1m[30m[44m DEV [49m[39m[22m [34mv4.1.5 [39m[90m/home/herp/TFG/repo/Front[39m
+
+ [32m✓[39m test/components/NowPlaying.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[32m 263[2mms[22m[39m
+ [32m✓[39m test/pages/VerifyEmail.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 209[2mms[22m[39m
+ [32m✓[39m test/pages/RoleSelection.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[32m 296[2mms[22m[39m
+ [32m✓[39m test/pages/DJLogin.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 277[2mms[22m[39m
+ [32m✓[39m test/components/dashboard/ConnectedUsers.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[33m 566[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps a cooldowned attendee visible in DJ mode and removes them only when kicked [33m 333[2mms[22m[39m
+ [32m✓[39m test/pages/SongSelection.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[33m 670[2mms[22m[39m
+ [32m✓[39m test/hooks/useAuth.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 82[2mms[22m[39m
+ [32m✓[39m test/components/Logo.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[32m 85[2mms[22m[39m
+ [32m✓[39m test/pages/Dashboard.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[32m 69[2mms[22m[39m
+ [32m✓[39m test/pages/AccountSettings.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 179[2mms[22m[39m
+ [32m✓[39m test/hooks/useDarkMode.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 45[2mms[22m[39m
+ [32m✓[39m test/services/cache/cacheManager.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m test/services/socket.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m test/components/dashboard/ProfileCards.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+ [32m✓[39m test/utils/validation.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m test/services/api.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m16 passed[39m[22m[90m (16)[39m
+[2m      Tests [22m [1m[32m133 passed[39m[22m[90m (133)[39m
+[2m   Start at [22m 09:45:12
+[2m   Duration [22m 2.96s[2m (transform 706ms, setup 1.30s, import 2.82s, tests 2.82s, environment 7.99s)[22m
+
+[1m[30m[42m PASS [49m[39m[22m [32mWaiting for file changes...[39m
+       [2mpress [22m[1mh[22m[2m to show help[22m[2m, [22m[2mpress [22m[1mq[22m[2m to quit[22m
+[31mCancelling test run. Press CTRL+c again to exit forcefully.
+[39m

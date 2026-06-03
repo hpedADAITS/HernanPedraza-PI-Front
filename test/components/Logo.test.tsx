@@ -12,6 +12,16 @@ vi.mock('@/assets/logo_normal.png', () => ({
   default: 'logo_normal.png',
 }));
 
+vi.mock('@/services/cache', () => ({
+  useAssetCache: (src: string) => ({
+    src,
+    isLoading: false,
+    error: null,
+    cached: false,
+    refetch: vi.fn(),
+  }),
+}));
+
 describe('Logo Component', () => {
   it('should render the logo', () => {
     render(<Logo />);

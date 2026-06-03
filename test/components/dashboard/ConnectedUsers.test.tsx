@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import { Socket } from 'socket.io-client';
 import { ConnectedUsers } from '@/components/dashboard/ConnectedUsers';
 import { participantsAPI } from '@/services/api';
@@ -145,12 +145,14 @@ describe('Connected Users dashboard UI', () => {
     expect(await screen.findByText('DJ Nova')).toBeInTheDocument();
     expect(screen.getByText('2 members')).toBeInTheDocument();
 
-    socket.emitEvent('participant_joined', {
-      participantId: 'attendee-4',
-      nickname: 'Drew',
-      profilePicture: 'data:image/png;base64,drew-picture',
-      joinedAt: '2026-05-21T10:03:00.000Z',
-      isPremium: true,
+    act(() => {
+      socket.emitEvent('participant_joined', {
+        participantId: 'attendee-4',
+        nickname: 'Drew',
+        profilePicture: 'data:image/png;base64,drew-picture',
+        joinedAt: '2026-05-21T10:03:00.000Z',
+        isPremium: true,
+      });
     });
 
     expect(await screen.findByText('Drew')).toBeInTheDocument();
@@ -161,8 +163,10 @@ describe('Connected Users dashboard UI', () => {
     expect(screen.getByText('3 members')).toBeInTheDocument();
     expect(screen.getByLabelText('Priority attendee')).toBeInTheDocument();
 
-    socket.emitEvent('participant_left', {
-      participantId: 'attendee-4',
+    act(() => {
+      socket.emitEvent('participant_left', {
+        participantId: 'attendee-4',
+      });
     });
 
     await waitFor(() => {
@@ -188,10 +192,12 @@ describe('Connected Users dashboard UI', () => {
 
     expect(await screen.findByText('Alex')).toBeInTheDocument();
 
-    socket.emitEvent('participant_updated', {
-      participantId: 'attendee-1',
-      nickname: 'Avery',
-      profilePicture: 'data:image/png;base64,new-picture',
+    act(() => {
+      socket.emitEvent('participant_updated', {
+        participantId: 'attendee-1',
+        nickname: 'Avery',
+        profilePicture: 'data:image/png;base64,new-picture',
+      });
     });
 
     expect(await screen.findByText('Avery')).toBeInTheDocument();
@@ -288,16 +294,20 @@ describe('Connected Users dashboard UI', () => {
     expect(await screen.findByText('Alex')).toBeInTheDocument();
     expect(screen.getByText('Bailey')).toBeInTheDocument();
 
-    socket.emitEvent('participant_cooldown', {
-      participantId: 'attendee-1',
-      cooldownUntil: '2026-05-21T10:10:00.000Z',
+    act(() => {
+      socket.emitEvent('participant_cooldown', {
+        participantId: 'attendee-1',
+        cooldownUntil: '2026-05-21T10:10:00.000Z',
+      });
     });
 
     expect(screen.getByText('Alex')).toBeInTheDocument();
     expect(screen.getByText('Bailey')).toBeInTheDocument();
 
-    socket.emitEvent('participant_kicked', {
-      participantId: 'attendee-1',
+    act(() => {
+      socket.emitEvent('participant_kicked', {
+        participantId: 'attendee-1',
+      });
     });
 
     await waitFor(() => {

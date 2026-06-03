@@ -13,6 +13,7 @@ const {
   eventsApiCreateEventMock,
   eventsApiGetEventMock,
   eventsApiGetMyActiveEventMock,
+  joinEventMock,
   toastInfoMock,
 } = vi.hoisted(() => {
   const registry = new Map<string, Array<(data: unknown) => void>>();
@@ -25,6 +26,7 @@ const {
     eventsApiCreateEventMock: vi.fn(),
     eventsApiGetEventMock: vi.fn(),
     eventsApiGetMyActiveEventMock: vi.fn(),
+    joinEventMock: vi.fn(),
     toastInfoMock: vi.fn(),
   };
 });
@@ -66,7 +68,7 @@ vi.mock('@/services/socket', () => ({
     on: vi.fn(),
     off: vi.fn(),
   })),
-  joinEvent: vi.fn(),
+  joinEvent: joinEventMock,
   on: vi.fn((event: string, callback: (data: unknown) => void) => {
     const callbacks = callbackRegistry.get(event) ?? [];
     callbacks.push(callback);
@@ -281,6 +283,44 @@ describe('Dashboard attendee admin effects', () => {
     });
     expect(readStoredJson('currentEvent')).toEqual(
       expect.objectContaining({ eventId: 'owned-event' }),
+    );
+  });
+
+  it('replaces stale attendee participant cache before joining as DJ', async () => {
+    writeStoredJson('user', {
+      id: 'dj-1',
+      displayName: 'DJ Nova',
+      role: 'DJ',
+    });
+    writeStoredJson('currentEvent', {
+      eventId: 'owned-event',
+      ownerName: 'DJ Nova',
+      accessCode: 'OWNED',
+    });
+    writeStoredJson('currentParticipant', {
+      _id: 'attendee-1',
+      nickname: 'Bailey',
+      eventId: 'owned-event',
+    });
+    suspendNextSingleUserSessionCheck();
+    eventsApiGetEventMock.mockResolvedValue({
+      id: 'owned-event',
+      accessCode: 'OWNED',
+      ownerId: { _id: 'dj-1', profilePicture: null },
+    });
+
+    render(<Dashboard mode="dj" onNavigate={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(joinEventMock).toHaveBeenCalledWith(
+        'owned-event',
+        'dj-1',
+        'DJ Nova',
+        null,
+      );
+    });
+    expect(readStoredJson('currentParticipant')).toEqual(
+      expect.objectContaining({ _id: 'dj-1', eventId: 'owned-event' }),
     );
   });
 });
