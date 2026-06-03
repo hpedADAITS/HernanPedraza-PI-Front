@@ -24,6 +24,7 @@ export interface Song {
     title: string;
     artist: string;
     coverUrl?: string | null;
+    duration?: number | null;
     score: number;
     matchedOn: 'title' | 'artist' | 'title_artist';
   } | null;

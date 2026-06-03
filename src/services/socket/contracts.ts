@@ -111,6 +111,7 @@ export interface AudioMatchUpdatePayload {
     title: string;
     artist: string;
     coverUrl?: string | null;
+    duration?: number | null;
     offset: number;
     score: number;
   }>;
