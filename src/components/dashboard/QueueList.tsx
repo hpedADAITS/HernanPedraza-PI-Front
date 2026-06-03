@@ -13,8 +13,9 @@ import { useQueueRealtime, type RemovalReason } from '@/features/dashboard/useQu
 import { t } from '@/i18n';
 import type { Song } from '@/types/songs';
 
-function isRequestedByDj(song: Song, djUserId: string | null) {
-  return !!djUserId && song.requestedBy?._id === djUserId;
+function isRequestedByDj(song: Song, djUserId: string | null, djParticipantId: string | null) {
+  const requesterId = song.requestedBy?._id;
+  return !!requesterId && (requesterId === djUserId || requesterId === djParticipantId);
 }
 
 function formatWait(totalSeconds: number): string {
@@ -148,6 +149,7 @@ export function QueueList({
                           isDarkMode={isDarkMode}
                           waitSeconds={wait}
                           djUserId={djUserId}
+                          djParticipantId={participantId}
                         />
                       );
                     })}
@@ -308,6 +310,7 @@ interface QueueItemProps {
   isDarkMode?: boolean;
   waitSeconds?: number;
   djUserId?: string | null;
+  djParticipantId?: string | null;
 }
 
 function QueueItem({
@@ -321,10 +324,11 @@ function QueueItem({
   isDarkMode = false,
   waitSeconds,
   djUserId = null,
+  djParticipantId = null,
 }: QueueItemProps) {
   const isDj = context.mode === 'dj';
   const [cooldownMs, setCooldownMs] = useState(DEFAULT_COOLDOWN_MS);
-  const canModerateRequester = !!song.requestedBy?._id && !isRequestedByDj(song, djUserId);
+  const canModerateRequester = !!song.requestedBy?._id && !isRequestedByDj(song, djUserId, djParticipantId);
 
   const handleAdminAction = async (action: string, e: MouseEvent) => {
     e.stopPropagation();

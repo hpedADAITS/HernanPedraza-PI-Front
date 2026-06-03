@@ -116,7 +116,7 @@ function DjSongCardContent({ song }: { song: SongSelectionSong }) {
         <div className="flex min-w-0 flex-1 flex-col">
           <h3 className="truncate text-base font-semibold text-slate-900 md:text-lg">{song.title}</h3>
           <p className="truncate text-sm font-medium text-slate-500">{song.artist}</p>
-          <p className="mt-1 flex items-center gap-1.5 truncate text-xs font-medium text-slate-400">
+          <div className="mt-1 flex items-center gap-1.5 truncate text-xs font-medium text-slate-400">
             <UserAvatar
               name={song.requestedBy?.nickname || 'Unknown'}
               profilePicture={song.requestedBy?.profilePicture || null}
@@ -125,7 +125,7 @@ function DjSongCardContent({ song }: { song: SongSelectionSong }) {
               fallbackClassName="flex h-full w-full items-center justify-center bg-slate-700 text-[9px] font-semibold text-white"
             />
             {song.requestedBy?.nickname || 'Unknown'}
-          </p>
+          </div>
         </div>
       </div>
 
