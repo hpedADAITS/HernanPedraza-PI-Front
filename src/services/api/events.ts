@@ -3,9 +3,7 @@ import { apiCall } from './client';
 function getPublicFrontendOrigin() {
   if (typeof window === 'undefined') return '';
 
-  return /^https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\])(?::|\/|$)/i.test(window.location.origin)
-    ? ''
-    : window.location.origin;
+  return /^https?:\/\//i.test(window.location.origin) ? window.location.origin : '';
 }
 
 export const eventsAPI = {

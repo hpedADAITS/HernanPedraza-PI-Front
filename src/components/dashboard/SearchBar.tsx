@@ -58,19 +58,22 @@ export function SearchBar({
   };
 
   const loadPhoneMicrophoneLink = useCallback(async () => {
-    if (!eventId || phoneMicrophoneLink) return;
+    if (!eventId) return;
 
     try {
+      setPhoneMicrophoneLink('');
+      setPhoneMicrophoneStatus('');
       const link = await eventsAPI.getPhoneMicrophoneLink(eventId);
       setPhoneMicrophoneLink(link);
     } catch (error) {
+      setPhoneMicrophoneLink('');
       setPhoneMicrophoneStatus(
         error instanceof Error
           ? error.message
           : t('Unable to create phone microphone link'),
       );
     }
-  }, [eventId, phoneMicrophoneLink]);
+  }, [eventId]);
 
   const copyPhoneMicrophoneLink = async () => {
     if (!phoneMicrophoneLink) return;
