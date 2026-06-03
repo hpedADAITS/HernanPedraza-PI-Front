@@ -82,18 +82,8 @@ function entityId(value: unknown) {
   return entity._id ?? entity.id ?? null;
 }
 
-function eventOwnerId(event: unknown) {
-  if (!event || typeof event !== 'object') return null;
-  const owner = (event as { ownerId?: unknown }).ownerId;
-  return typeof owner === 'string' ? owner : entityId(owner);
-}
-
 function storedUserId(user: StoredUser | null | undefined) {
   return user?._id ?? user?.id ?? null;
-}
-
-function participantEventId(participant: StoredParticipant | null | undefined) {
-  return participant?.eventId ?? null;
 }
 
 function storedEventId(event: StoredEvent | null | undefined) {
@@ -218,9 +208,22 @@ export function useDashboardSession({
 
   useEffect(() => {
     const eventData = getStoredEvent();
-    const participantData = getStoredParticipant();
+    let participantData = getStoredParticipant();
     const user = getStoredUser();
     const token = getAuthToken();
+    const userId = storedUserId(user);
+    const eventId = storedEventId(eventData);
+
+    if (isDj && eventData && userId && !participantData) {
+      participantData = {
+        _id: userId,
+        nickname: user?.displayName || 'DJ',
+        eventId: eventId || undefined,
+        profilePicture: user?.profilePicture || null,
+      };
+      setStoredParticipant(participantData);
+    }
+
     const participantId = entityId(participantData);
 
     setIsSessionReady(!isDj);
@@ -262,17 +265,11 @@ export function useDashboardSession({
 
         if (isDj) {
           let freshEvent = null;
-          const userId = storedUserId(user);
           const currentEventId = storedEventId(currentEventData);
-          if (currentEventId) {
-            try {
-              freshEvent = await eventsAPI.getEvent(currentEventId);
-            } catch {}
-          }
 
-          if (eventOwnerId(freshEvent) !== storedUserId(user)) {
+          if (!currentEventId) {
             freshEvent =
-              (await eventsAPI.getMyActiveEvent()) ??
+              (await eventsAPI.getMyActiveEvent().catch(() => null)) ??
               (await eventsAPI.createEvent(
                 `${user?.displayName || 'DJ'}'s Party`,
                 'Auto-created event',
@@ -282,14 +279,17 @@ export function useDashboardSession({
               storeDjEventSession(freshEvent, user as StoredUser));
           }
 
-          const freshEventId = entityId(freshEvent);
-          if (
-            freshEventId &&
-            (entityId(currentParticipantData) !== userId ||
-              participantEventId(currentParticipantData) !== freshEventId)
-          ) {
+          const resolvedEventId = storedEventId(currentEventData);
+          if (resolvedEventId && entityId(currentParticipantData) !== userId) {
             ({ eventData: currentEventData, participantData: currentParticipantData } =
-              storeDjEventSession(freshEvent, user as StoredUser));
+              storeDjEventSession(
+                {
+                  id: resolvedEventId,
+                  accessCode: currentEventData.accessCode,
+                  ownerId: { profilePicture: currentEventData.ownerProfilePicture ?? null },
+                },
+                user as StoredUser,
+              ));
           }
 
           setDashboardState((current) => ({
@@ -323,7 +323,7 @@ export function useDashboardSession({
         }));
         setIsSessionReady(true);
 
-        const freshEvent = await eventsAPI.getEvent(currentEventId);
+        const freshEvent = await eventsAPI.getEvent(currentEventId).catch(() => null);
         if (freshEvent?.accessCode) {
           persistAccessCode(freshEvent.accessCode);
         }

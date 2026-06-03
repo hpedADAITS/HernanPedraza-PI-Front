@@ -241,7 +241,7 @@ describe('Dashboard attendee admin effects', () => {
     expect(initSocketMock).not.toHaveBeenCalled();
   });
 
-  it('replaces a stale DJ event before passing event id to dashboard children', async () => {
+  it('renders DJ dashboard from stored event without blocking on active-event lookup', async () => {
     writeStoredJson('user', {
       id: 'dj-1',
       displayName: 'DJ Nova',
@@ -258,32 +258,20 @@ describe('Dashboard attendee admin effects', () => {
       eventId: 'stale-event',
     });
     suspendNextSingleUserSessionCheck();
-    eventsApiGetEventMock.mockImplementation(async (eventId: string) => ({
-      id: eventId,
-      accessCode: eventId === 'stale-event' ? 'OLD' : 'OWNED',
-      ownerId:
-        eventId === 'stale-event'
-          ? { _id: 'other-dj', profilePicture: null }
-          : { _id: 'dj-1', profilePicture: null },
-    }));
-    eventsApiGetMyActiveEventMock.mockResolvedValue({
-      id: 'owned-event',
-      accessCode: 'OWNED',
-      ownerId: { _id: 'dj-1', profilePicture: null },
-    });
+    eventsApiGetEventMock.mockRejectedValue(new Error('Not found'));
+    eventsApiGetMyActiveEventMock.mockRejectedValue(new Error('Not found'));
 
     render(<Dashboard mode="dj" onNavigate={vi.fn()} />);
 
-    expect(screen.queryByText('DJProfileCard')).toBeNull();
-    expect(dashboardSearchBarMock).not.toHaveBeenCalled();
     await waitFor(() => {
       expect(dashboardSearchBarMock).toHaveBeenCalledWith(
-        expect.objectContaining({ eventId: 'owned-event', isDj: true }),
+        expect.objectContaining({ eventId: 'stale-event', isDj: true }),
       );
     });
     expect(readStoredJson('currentEvent')).toEqual(
-      expect.objectContaining({ eventId: 'owned-event' }),
+      expect.objectContaining({ eventId: 'stale-event' }),
     );
+    expect(eventsApiGetMyActiveEventMock).not.toHaveBeenCalled();
   });
 
   it('replaces stale attendee participant cache before joining as DJ', async () => {
@@ -358,5 +346,36 @@ describe('Dashboard attendee admin effects', () => {
       );
     });
     expect(screen.queryByText('Session data is incomplete')).toBeNull();
+  });
+
+  it('synthesizes missing DJ participant cache from the authenticated user', async () => {
+    writeStoredJson('user', {
+      id: 'dj-1',
+      displayName: 'DJ Nova',
+      role: 'DJ',
+    });
+    writeStoredJson('currentEvent', {
+      eventId: 'owned-event',
+      ownerName: 'DJ Nova',
+      accessCode: 'OWNED',
+    });
+    localStorage.setItem('authToken', 'token-123');
+    suspendNextSingleUserSessionCheck();
+    eventsApiGetEventMock.mockRejectedValue(new Error('Not found'));
+    eventsApiGetMyActiveEventMock.mockRejectedValue(new Error('Not found'));
+
+    render(<Dashboard mode="dj" onNavigate={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(joinEventMock).toHaveBeenCalledWith(
+        'owned-event',
+        'dj-1',
+        'DJ Nova',
+        null,
+      );
+    });
+    expect(readStoredJson('currentParticipant')).toEqual(
+      expect.objectContaining({ _id: 'dj-1', eventId: 'owned-event' }),
+    );
   });
 });
