@@ -58,7 +58,7 @@ export function SearchBar({
   };
 
   const loadPhoneMicrophoneLink = useCallback(async () => {
-    if (!eventId) return;
+    if (!isDj || !eventId) return;
 
     try {
       setPhoneMicrophoneLink('');
@@ -73,7 +73,7 @@ export function SearchBar({
           : t('Unable to create phone microphone link'),
       );
     }
-  }, [eventId]);
+  }, [eventId, isDj]);
 
   const copyPhoneMicrophoneLink = async () => {
     if (!phoneMicrophoneLink) return;
@@ -143,7 +143,8 @@ export function SearchBar({
     setTrackedTimeout,
   ]);
 
-  const isMicrophoneDialogOpen = isAccessDenied || Boolean(connectedMicrophone.name);
+  const isMicrophoneDialogOpen =
+    isDj && (isAccessDenied || Boolean(connectedMicrophone.name));
   const isMicrophoneConnected = Boolean(connectedMicrophone.name);
   const microphoneStatus = connectedMicrophone.status || phoneMicrophoneStatus;
 
@@ -317,7 +318,7 @@ export function SearchBar({
                 t('Connect or enable a microphone, then try starting recording again.')}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {eventId && !isMicrophoneConnected && (
+          {isDj && eventId && !isMicrophoneConnected && (
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
               <div className="mb-2 flex items-center gap-2 font-semibold text-slate-900">
                 <Smartphone className="h-4 w-4 text-blue-600" />

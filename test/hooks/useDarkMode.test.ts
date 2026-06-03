@@ -51,7 +51,7 @@ describe('useDarkMode Hook', () => {
     });
 
     await waitFor(() => {
-      expect(localStorage.getItem('darkMode')).toBe('true');
+      expect(localStorage.getItem('darkMode:v1')).toBe('true');
     });
   });
 
@@ -74,7 +74,7 @@ describe('useDarkMode Hook', () => {
       expect(result.current[0]).toBe(false);
     });
 
-    expect(localStorage.getItem('darkMode')).toBe('false');
+    expect(localStorage.getItem('darkMode:v1')).toBe('false');
   });
 
   it('should respond to storage events from other tabs', async () => {

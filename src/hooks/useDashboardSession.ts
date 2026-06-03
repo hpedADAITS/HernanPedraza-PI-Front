@@ -11,7 +11,7 @@ import {
   onCurrentUserSessionReplaced,
 } from '@/services/singleUserSession';
 import { toast } from 'sonner';
-import { StoredEvent } from '@/services/session';
+import { StoredEvent, StoredParticipant, StoredUser } from '@/services/session';
 import { t } from '@/i18n';
 
 type DashboardMode = 'attendee' | 'dj';
@@ -24,6 +24,15 @@ export interface DashboardState {
   accessCode: string;
   eventId: string;
 }
+
+const emptyDashboardState: DashboardState = {
+  userName: 'User',
+  profilePicture: null,
+  djName: 'DJ',
+  djProfilePicture: null,
+  accessCode: '',
+  eventId: '',
+};
 
 function updateStoredParticipantProfilePicture(newPicture: string) {
   const participant = getStoredParticipant();
@@ -67,6 +76,53 @@ function syncStoredEvent(eventData: StoredEvent, updates: Partial<StoredEvent>) 
   });
 }
 
+function entityId(value: unknown) {
+  if (!value || typeof value !== 'object') return null;
+  const entity = value as { _id?: string; id?: string };
+  return entity._id ?? entity.id ?? null;
+}
+
+function eventOwnerId(event: unknown) {
+  if (!event || typeof event !== 'object') return null;
+  const owner = (event as { ownerId?: unknown }).ownerId;
+  return typeof owner === 'string' ? owner : entityId(owner);
+}
+
+function storedUserId(user: StoredUser | null | undefined) {
+  return user?._id ?? user?.id ?? null;
+}
+
+function isDjUser(user: StoredUser | null | undefined) {
+  const role = user?.role?.toLowerCase();
+  return role === 'dj' || role === 'admin';
+}
+
+function storeDjEventSession(
+  event: { _id?: string; id?: string; accessCode?: string; ownerId?: { profilePicture?: string | null } },
+  user: StoredUser,
+) {
+  const eventId = entityId(event);
+  const userId = storedUserId(user);
+  if (!eventId || !userId) throw new Error(t('Session data is incomplete'));
+
+  const eventData = {
+    accessCode: event.accessCode,
+    eventId,
+    ownerName: user.displayName || 'DJ',
+    ownerProfilePicture: user.profilePicture ?? event.ownerId?.profilePicture ?? null,
+  };
+  const participantData = {
+    _id: userId,
+    nickname: user.displayName || 'DJ',
+    eventId,
+    profilePicture: user.profilePicture || null,
+  };
+
+  setStoredEvent(eventData);
+  setStoredParticipant(participantData);
+  return { eventData, participantData };
+}
+
 function clearAttendeeEventSession() {
   disconnectSocket();
   clearStoredEvent();
@@ -81,7 +137,9 @@ function clearCurrentSession() {
   clearStoredParticipant();
 }
 
-export function getInitialDashboardState(): DashboardState {
+export function getInitialDashboardState(mode: DashboardMode = 'attendee'): DashboardState {
+  if (mode === 'dj') return emptyDashboardState;
+
   const eventData = getStoredEvent();
   const participantData = getStoredParticipant();
   const user = getStoredUser();
@@ -108,8 +166,9 @@ export function useDashboardSession({
 }: UseDashboardSessionOptions) {
   const isDj = mode === 'dj';
   const [dashboardState, setDashboardState] = useState<DashboardState>(
-    getInitialDashboardState,
+    () => getInitialDashboardState(mode),
   );
+  const [isSessionReady, setIsSessionReady] = useState(!isDj);
 
   const navigateAway = useEffectEvent(() => {
     onNavigate(isDj ? 'dj-login' : 'attendee-login');
@@ -152,8 +211,17 @@ export function useDashboardSession({
     const eventData = getStoredEvent();
     const participantData = getStoredParticipant();
     const user = getStoredUser();
+    const token = getAuthToken();
+
+    setIsSessionReady(!isDj);
 
     if (!eventData || !participantData) {
+      navigateAway();
+      return;
+    }
+
+    if (isDj && (!token || !isDjUser(user))) {
+      clearCurrentSession();
       navigateAway();
       return;
     }
@@ -174,24 +242,56 @@ export function useDashboardSession({
       navigateAway();
     });
 
-    const token = getAuthToken();
     const socket = initSocket(token ?? undefined);
 
     const handleConnect = async () => {
       try {
-        if (!eventData.eventId || !participantData._id) {
+        let currentEventData = eventData;
+        let currentParticipantData = participantData;
+
+        if (isDj) {
+          let freshEvent = null;
+          if (currentEventData.eventId) {
+            try {
+              freshEvent = await eventsAPI.getEvent(currentEventData.eventId);
+            } catch {}
+          }
+
+          if (eventOwnerId(freshEvent) !== storedUserId(user)) {
+            freshEvent =
+              (await eventsAPI.getMyActiveEvent()) ??
+              (await eventsAPI.createEvent(
+                `${user?.displayName || 'DJ'}'s Party`,
+                'Auto-created event',
+                new Date().toISOString(),
+              ));
+            ({ eventData: currentEventData, participantData: currentParticipantData } =
+              storeDjEventSession(freshEvent, user as StoredUser));
+          }
+
+          setDashboardState((current) => ({
+            ...current,
+            userName: currentParticipantData.nickname || user?.displayName || current.userName,
+            profilePicture:
+              currentParticipantData.profilePicture ?? user?.profilePicture ?? current.profilePicture,
+            accessCode: currentEventData.accessCode || current.accessCode,
+          }));
+        }
+
+        if (!currentEventData.eventId || !currentParticipantData._id) {
           throw new Error(t('Session data is incomplete'));
         }
 
         setDashboardState((current) => ({
           ...current,
-          djName: eventData.ownerName || current.djName,
+          djName: currentEventData.ownerName || current.djName,
           djProfilePicture:
-            eventData.ownerProfilePicture ?? current.djProfilePicture,
-          eventId: eventData.eventId || current.eventId,
+            currentEventData.ownerProfilePicture ?? current.djProfilePicture,
+          eventId: currentEventData.eventId || current.eventId,
         }));
+        setIsSessionReady(true);
 
-        const freshEvent = await eventsAPI.getEvent(eventData.eventId);
+        const freshEvent = await eventsAPI.getEvent(currentEventData.eventId);
         if (freshEvent?.accessCode) {
           persistAccessCode(freshEvent.accessCode);
         }
@@ -206,17 +306,17 @@ export function useDashboardSession({
         }
 
         if (freshEvent?.ownerId?.profilePicture) {
-          syncStoredEvent(eventData, {
-            accessCode: freshEvent.accessCode || eventData.accessCode,
+          syncStoredEvent(currentEventData, {
+            accessCode: freshEvent.accessCode || currentEventData.accessCode,
             ownerProfilePicture: freshEvent.ownerId.profilePicture,
           });
         }
 
         joinEvent(
-          eventData.eventId,
-          participantData._id,
-          participantData.nickname || 'User',
-          participantData.profilePicture || user?.profilePicture || null,
+          currentEventData.eventId,
+          currentParticipantData._id,
+          currentParticipantData.nickname || 'User',
+          currentParticipantData.profilePicture || user?.profilePicture || null,
         );
       } catch (error) {
         console.error('Error initializing dashboard:', error);
@@ -372,6 +472,7 @@ export function useDashboardSession({
   return {
     dashboardState,
     handleProfilePictureChange,
+    isSessionReady,
     persistAccessCode,
   };
 }

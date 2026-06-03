@@ -127,7 +127,7 @@ const DashboardRightColumn = memo(function DashboardRightColumn({
 export function Dashboard({ mode, onNavigate }: DashboardProps) {
   const isDj = mode === 'dj';
   const [isDarkMode] = useDarkMode();
-  const { dashboardState, handleProfilePictureChange, persistAccessCode } =
+  const { dashboardState, handleProfilePictureChange, isSessionReady, persistAccessCode } =
     useDashboardSession({
       mode,
       onNavigate,
@@ -135,8 +135,10 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
   const participantId = getStoredParticipantId();
   const { isCoolingDown, remainingMs } = useParticipantCooldown(
     participantId,
-    !isDj,
+    !isDj && isSessionReady,
   );
+
+  if (!isSessionReady) return null;
 
   return (
     <Layout

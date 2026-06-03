@@ -12,12 +12,14 @@ describe('AccountSettings debug diagnostics', () => {
     localStorage.setItem('authToken', 'token-123');
     writeStoredJson('currentEvent', { eventId: 'event-1' });
     writeStoredJson('currentParticipant', { _id: 'participant-1' });
+    window.__DEBUG_MODE__ = true;
 
     const socket = initSocket('token-123');
     socket.connected = true;
   });
 
   afterEach(() => {
+    delete window.__DEBUG_MODE__;
     disconnectSocket();
   });
 

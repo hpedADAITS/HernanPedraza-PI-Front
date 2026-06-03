@@ -3,12 +3,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, waitFor } from '@testing-library/react';
 import { Dashboard } from '@/pages/Dashboard';
 import { writeStoredJson, readStoredJson } from '@/utils/storage';
+import { suspendNextSingleUserSessionCheck } from '@/services/singleUserSession';
 
 const {
   callbackRegistry,
   initSocketMock,
   disconnectSocketMock,
+  dashboardSearchBarMock,
+  eventsApiCreateEventMock,
   eventsApiGetEventMock,
+  eventsApiGetMyActiveEventMock,
   toastInfoMock,
 } = vi.hoisted(() => {
   const registry = new Map<string, Array<(data: unknown) => void>>();
@@ -17,7 +21,10 @@ const {
     callbackRegistry: registry,
     initSocketMock: vi.fn(),
     disconnectSocketMock: vi.fn(),
+    dashboardSearchBarMock: vi.fn(),
+    eventsApiCreateEventMock: vi.fn(),
     eventsApiGetEventMock: vi.fn(),
+    eventsApiGetMyActiveEventMock: vi.fn(),
     toastInfoMock: vi.fn(),
   };
 });
@@ -34,7 +41,10 @@ vi.mock('@/components/dashboard', () => ({
   DJProfileCard: () => <div>DJProfileCard</div>,
   AttendeeProfileCard: () => <div>AttendeeProfileCard</div>,
   QueueList: () => <div>QueueList</div>,
-  SearchBar: () => <div>SearchBar</div>,
+  SearchBar: (props: unknown) => {
+    dashboardSearchBarMock(props);
+    return <div>SearchBar</div>;
+  },
   ActionButtons: () => <div>ActionButtons</div>,
   NowPlayingSection: () => <div>NowPlayingSection</div>,
   ConnectedUsers: () => <div>ConnectedUsers</div>,
@@ -52,6 +62,10 @@ vi.mock('sonner', () => ({
 
 vi.mock('@/services/socket', () => ({
   initSocket: initSocketMock,
+  getSocket: vi.fn(() => ({
+    on: vi.fn(),
+    off: vi.fn(),
+  })),
   joinEvent: vi.fn(),
   on: vi.fn((event: string, callback: (data: unknown) => void) => {
     const callbacks = callbackRegistry.get(event) ?? [];
@@ -78,6 +92,11 @@ vi.mock('@/services/socket', () => ({
     callbacks.push(callback);
     callbackRegistry.set('event_ended', callbacks);
   }),
+  onParticipantBanned: vi.fn((callback: (data: unknown) => void) => {
+    const callbacks = callbackRegistry.get('participant_banned') ?? [];
+    callbacks.push(callback);
+    callbackRegistry.set('participant_banned', callbacks);
+  }),
   off: vi.fn((event: string, callback?: (data: unknown) => void) => {
     if (!callback) {
       callbackRegistry.delete(event);
@@ -99,7 +118,9 @@ vi.mock('@/services/api', async (importOriginal) => {
     ...actual,
     eventsAPI: {
       ...actual.eventsAPI,
+      createEvent: eventsApiCreateEventMock,
       getEvent: eventsApiGetEventMock,
+      getMyActiveEvent: eventsApiGetMyActiveEventMock,
     },
   };
 });
@@ -129,10 +150,16 @@ describe('Dashboard attendee admin effects', () => {
     callbackRegistry.clear();
     vi.clearAllMocks();
     seedStorage();
+    eventsApiCreateEventMock.mockResolvedValue({
+      id: 'event-created',
+      accessCode: 'CREATED',
+      ownerId: { _id: 'dj-1', profilePicture: null },
+    });
     eventsApiGetEventMock.mockResolvedValue({
       accessCode: 'ACCESS1',
-      ownerId: { profilePicture: null },
+      ownerId: { _id: 'dj-1', profilePicture: null },
     });
+    eventsApiGetMyActiveEventMock.mockResolvedValue(null);
     initSocketMock.mockReturnValue({
       connected: true,
       on: vi.fn(),
@@ -187,6 +214,49 @@ describe('Dashboard attendee admin effects', () => {
     );
     expect(readStoredJson('currentParticipant')).toEqual(
       expect.objectContaining({ _id: 'attendee-1' }),
+    );
+  });
+
+  it('replaces a stale DJ event before passing event id to dashboard children', async () => {
+    writeStoredJson('user', {
+      id: 'dj-1',
+      displayName: 'DJ Nova',
+      role: 'DJ',
+    });
+    writeStoredJson('currentEvent', {
+      eventId: 'stale-event',
+      ownerName: 'Other DJ',
+      accessCode: 'OLD',
+    });
+    writeStoredJson('currentParticipant', {
+      _id: 'dj-1',
+      nickname: 'DJ Nova',
+      eventId: 'stale-event',
+    });
+    suspendNextSingleUserSessionCheck();
+    eventsApiGetEventMock.mockImplementation(async (eventId: string) => ({
+      id: eventId,
+      accessCode: eventId === 'stale-event' ? 'OLD' : 'OWNED',
+      ownerId:
+        eventId === 'stale-event'
+          ? { _id: 'other-dj', profilePicture: null }
+          : { _id: 'dj-1', profilePicture: null },
+    }));
+    eventsApiGetMyActiveEventMock.mockResolvedValue({
+      id: 'owned-event',
+      accessCode: 'OWNED',
+      ownerId: { _id: 'dj-1', profilePicture: null },
+    });
+
+    render(<Dashboard mode="dj" onNavigate={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(dashboardSearchBarMock).toHaveBeenCalledWith(
+        expect.objectContaining({ eventId: 'owned-event', isDj: true }),
+      );
+    });
+    expect(readStoredJson('currentEvent')).toEqual(
+      expect.objectContaining({ eventId: 'owned-event' }),
     );
   });
 });
