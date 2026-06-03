@@ -47,10 +47,12 @@ export function VerifyEmail(_props: Props) {
           setMessage(t('Email verified! Closing this window…'));
 
           /* Update localStorage with verified status */
+          const verifiedUser = response.data.user;
           const userData = {
-            displayName: response.data.user.displayName,
-            email: response.data.user.email,
-            role: response.data.user.role,
+            id: verifiedUser.id || verifiedUser._id,
+            displayName: verifiedUser.displayName,
+            email: verifiedUser.email,
+            role: verifiedUser.role,
             emailRegistered: true,
           };
           writeStoredJson('user', userData);

@@ -151,6 +151,9 @@ export function DJRegister({
         userId: result.user?._id || result.user?.id,
         profilePicture: result.user?.profilePicture || null,
       };
+      if (!registrationDataRef.current.userId) {
+        throw new Error(t('Session data is incomplete'));
+      }
       const debugTokenToUse = isDebugModeEnabled()
         ? result.emailVerificationToken
         : undefined;
@@ -190,16 +193,22 @@ export function DJRegister({
 
       const eventMongoDB = event._id || event.id;
       const eventCode = event.accessCode || event.access_code;
+      if (!eventMongoDB) {
+        throw new Error(t('Session data is incomplete'));
+      }
 
       writeStoredJson('currentEvent', {
+        id: eventMongoDB,
         eventCode,
         eventId: eventMongoDB,
         eventIdCode: eventId,
         ownerName: displayName,
+        accessCode: eventCode,
       });
 
       writeStoredJson('currentParticipant', {
         _id: registrationData.userId,
+        id: registrationData.userId,
         nickname: displayName,
         eventId: eventMongoDB,
         profilePicture: registrationData.profilePicture || null,

@@ -46,6 +46,7 @@ describe('VerifyEmail page', () => {
     verifyEmailTokenMock.mockResolvedValue({
       data: {
         user: {
+          id: 'user-123',
           displayName: 'DJ Test',
           email: 'dj@example.com',
           role: 'DJ',
@@ -70,6 +71,7 @@ describe('VerifyEmail page', () => {
     ).toBeInTheDocument();
 
     expect(writeStoredJsonMock).toHaveBeenCalledWith('user', {
+      id: 'user-123',
       displayName: 'DJ Test',
       email: 'dj@example.com',
       role: 'DJ',

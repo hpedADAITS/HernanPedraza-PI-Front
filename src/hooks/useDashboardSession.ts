@@ -2,8 +2,8 @@ import { useCallback, useEffect, useEffectEvent, useState } from 'react';
 import type { NavigateToView } from '@/types';
 import { disconnectSocket, initSocket, joinEvent, off, on, onAccessCodeUpdated, onEventEnded, onEventUpdated, onParticipantBanned, onSongSuggested } from '@/services/socket';
 import type { AccessCodeUpdatedPayload, EventEndedPayload, EventUpdatedPayload, ParticipantCooldownPayload, ParticipantEventPayload, ParticipantUpdatedPayload, SongEventPayload } from '@/services/socket/contracts';
-import { eventsAPI } from '@/services/api';
-import { clearStoredEvent, clearStoredParticipant, clearStoredUser, getAuthToken, getStoredEvent, getStoredParticipant, getStoredUser, setStoredEvent, setStoredParticipant } from '@/services/session';
+import { authAPI, eventsAPI } from '@/services/api';
+import { clearStoredEvent, clearStoredParticipant, clearStoredUser, getAuthToken, getStoredEvent, getStoredParticipant, getStoredUser, setStoredEvent, setStoredParticipant, setStoredUser } from '@/services/session';
 import {
   activateSingleUserSession,
   consumeSingleUserSessionCheckSuspension,
@@ -88,6 +88,10 @@ function storedUserId(user: StoredUser | null | undefined) {
 
 function storedEventId(event: StoredEvent | null | undefined) {
   return event?.eventId ?? event?._id ?? event?.id ?? null;
+}
+
+function storedParticipantEventId(participant: StoredParticipant | null | undefined) {
+  return participant?.eventId ?? null;
 }
 
 function isDjUser(user: StoredUser | null | undefined) {
@@ -209,9 +213,9 @@ export function useDashboardSession({
   useEffect(() => {
     const eventData = getStoredEvent();
     let participantData = getStoredParticipant();
-    const user = getStoredUser();
+    let user = getStoredUser();
     const token = getAuthToken();
-    const userId = storedUserId(user);
+    let userId = storedUserId(user);
     const eventId = storedEventId(eventData);
 
     if (isDj && eventData && userId && !participantData) {
@@ -262,8 +266,20 @@ export function useDashboardSession({
       try {
         let currentEventData = eventData;
         let currentParticipantData = participantData;
+        let currentUser = user;
+        let currentUserId = userId;
 
         if (isDj) {
+          if (!currentUserId) {
+            const freshUser = await authAPI.getCurrentUser();
+            if (freshUser) {
+              currentUser = freshUser;
+              currentUserId = storedUserId(freshUser);
+              setStoredUser(freshUser);
+              activateSingleUserSession(freshUser);
+            }
+          }
+
           let freshEvent = null;
           const currentEventId = storedEventId(currentEventData);
 
@@ -271,16 +287,16 @@ export function useDashboardSession({
             freshEvent =
               (await eventsAPI.getMyActiveEvent().catch(() => null)) ??
               (await eventsAPI.createEvent(
-                `${user?.displayName || 'DJ'}'s Party`,
+                `${currentUser?.displayName || 'DJ'}'s Party`,
                 'Auto-created event',
                 new Date().toISOString(),
               ));
             ({ eventData: currentEventData, participantData: currentParticipantData } =
-              storeDjEventSession(freshEvent, user as StoredUser));
+              storeDjEventSession(freshEvent, currentUser as StoredUser));
           }
 
           const resolvedEventId = storedEventId(currentEventData);
-          if (resolvedEventId && entityId(currentParticipantData) !== userId) {
+          if (resolvedEventId && entityId(currentParticipantData) !== currentUserId) {
             ({ eventData: currentEventData, participantData: currentParticipantData } =
               storeDjEventSession(
                 {
@@ -288,15 +304,15 @@ export function useDashboardSession({
                   accessCode: currentEventData.accessCode,
                   ownerId: { profilePicture: currentEventData.ownerProfilePicture ?? null },
                 },
-                user as StoredUser,
+                currentUser as StoredUser,
               ));
           }
 
           setDashboardState((current) => ({
             ...current,
-            userName: currentParticipantData.nickname || user?.displayName || current.userName,
+            userName: currentParticipantData.nickname || currentUser?.displayName || current.userName,
             profilePicture:
-              currentParticipantData.profilePicture ?? user?.profilePicture ?? current.profilePicture,
+              currentParticipantData.profilePicture ?? currentUser?.profilePicture ?? current.profilePicture,
             accessCode: currentEventData.accessCode || current.accessCode,
           }));
         } else {
@@ -309,9 +325,18 @@ export function useDashboardSession({
         }
 
         const currentEventId = storedEventId(currentEventData);
-        const currentParticipantId = entityId(currentParticipantData);
+        let currentParticipantId = entityId(currentParticipantData);
         if (!currentEventId || !currentParticipantId) {
           throw new Error(t('Session data is incomplete'));
+        }
+
+        if (!isDj && !storedParticipantEventId(currentParticipantData)) {
+          currentParticipantData = {
+            ...currentParticipantData,
+            eventId: currentEventId,
+          };
+          setStoredParticipant(currentParticipantData);
+          currentParticipantId = entityId(currentParticipantData);
         }
 
         setDashboardState((current) => ({
@@ -348,7 +373,7 @@ export function useDashboardSession({
           currentEventId,
           currentParticipantId,
           currentParticipantData.nickname || 'User',
-          currentParticipantData.profilePicture || user?.profilePicture || null,
+          currentParticipantData.profilePicture || currentUser?.profilePicture || null,
         );
       } catch (error) {
         console.error('Error initializing dashboard:', error);
