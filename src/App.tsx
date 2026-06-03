@@ -3,6 +3,7 @@ import { LazyMotion, domAnimation } from 'motion/react';
 import { Toaster } from 'sonner';
 import { useAppStartup } from '@/hooks/useAppStartup';
 import { AppRoutes } from '@/router/AppRoutes';
+import { ViewNavigationProvider } from '@/router/navigationContext';
 import { useViewNavigation } from '@/router/useViewNavigation';
 
 const DebugModal =
@@ -25,12 +26,14 @@ export default function App() {
           position="top-center"
           toastOptions={{ classNames: { toast: 'z-[1000]' } }}
         />
-        <AppRoutes
-          direction={direction}
-          logoWhite={logoWhite}
-          onLogoChange={setLogoWhite}
-          onNavigate={navigate}
-        />
+        <ViewNavigationProvider navigate={navigate}>
+          <AppRoutes
+            direction={direction}
+            logoWhite={logoWhite}
+            onLogoChange={setLogoWhite}
+            onNavigate={navigate}
+          />
+        </ViewNavigationProvider>
         {DebugModal ? (
           <Suspense fallback={null}>
             <DebugModal />

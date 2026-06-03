@@ -3,7 +3,7 @@ import { Layout } from '@/components/layout/Layout';
 import { Music2, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { SettingsChoiceRow, SettingsDialog, SettingsDialogActions, SettingsDialogButton, SettingsGrid, SettingsOptionCard, SettingsPageShell, SettingsToggleRow } from '@/components/settings/SettingsUI';
-import { writeSettingJson, writeSettingString } from '@/features/settings/storage';
+import { MEDIA_QUALITY_OPTIONS, useAppSocialPrefs, useMediaQualityPreference } from '@/features/settings/preferences';
 import { t } from '@/i18n';
 import type { NavigateToView } from '@/types';
 
@@ -25,24 +25,32 @@ const APP_SETTINGS_OPTIONS = [
   },
 ] as const;
 
+const APP_MEDIA_QUALITY_OPTIONS = MEDIA_QUALITY_OPTIONS.filter(
+  ({ value }) => value !== 'auto',
+);
+
 export function AppPreferences({ mode, onNavigate }: Props) {
   const [showMediaQuality, setShowMediaQuality] = useState(false);
   const [showSocialSettings, setShowSocialSettings] = useState(false);
-  const [mediaQuality, setMediaQuality] = useState('high');
-  const [allowNotifications, setAllowNotifications] = useState(true);
-  const [allowSharing, setAllowSharing] = useState(true);
+  const { mediaQuality, saveMediaQuality, setMediaQuality } =
+    useMediaQualityPreference('high');
+  const { appSocialPrefs, saveAppSocialPrefs, setAppSocialPrefs } =
+    useAppSocialPrefs();
 
   const handleMediaQualitySave = () => {
-    writeSettingString('mediaQuality', mediaQuality);
+    saveMediaQuality(mediaQuality);
     toast.success(t('Media quality set to {quality}', { quality: t(mediaQuality) }));
     setShowMediaQuality(false);
   };
 
   const handleSocialSettingsSave = () => {
-    writeSettingJson('allowNotifications', allowNotifications);
-    writeSettingJson('allowSharing', allowSharing);
+    saveAppSocialPrefs(appSocialPrefs);
     toast.success(t('Social settings updated'));
     setShowSocialSettings(false);
+  };
+
+  const toggleAppSocialPref = (key: keyof typeof appSocialPrefs) => {
+    setAppSocialPrefs((value) => ({ ...value, [key]: !value[key] }));
   };
 
   return (
@@ -78,13 +86,13 @@ export function AppPreferences({ mode, onNavigate }: Props) {
         onClose={() => setShowMediaQuality(false)}
       >
         <div className="mb-6 flex flex-col gap-2">
-          {['low', 'medium', 'high'].map((quality) => (
+          {APP_MEDIA_QUALITY_OPTIONS.map(({ value, label }) => (
             <SettingsChoiceRow
-              key={quality}
-              selected={mediaQuality === quality}
-              onClick={() => setMediaQuality(quality)}
+              key={value}
+              selected={mediaQuality === value}
+              onClick={() => setMediaQuality(value)}
             >
-              <span className="capitalize">{t(quality)}</span>
+              <span className="capitalize">{t(label)}</span>
             </SettingsChoiceRow>
           ))}
         </div>
@@ -109,13 +117,13 @@ export function AppPreferences({ mode, onNavigate }: Props) {
         <div className="mb-6 flex flex-col gap-3">
           <SettingsToggleRow
             label={t('Allow notifications')}
-            checked={allowNotifications}
-            onChange={() => setAllowNotifications((value) => !value)}
+            checked={appSocialPrefs.allowNotifications}
+            onChange={() => toggleAppSocialPref('allowNotifications')}
           />
           <SettingsToggleRow
             label={t('Allow sharing')}
-            checked={allowSharing}
-            onChange={() => setAllowSharing((value) => !value)}
+            checked={appSocialPrefs.allowSharing}
+            onChange={() => toggleAppSocialPref('allowSharing')}
           />
         </div>
         <SettingsDialogActions>

@@ -4,14 +4,15 @@ import { AlertCircle, Check, Copy, Mic, MicOff, Search, Smartphone } from 'lucid
 import { SLIDE_UP } from '@/constants/animations';
 import { useMicrophone } from '@/hooks/useMicrophone';
 import { useTrackedTimeout } from '@/hooks/useTrackedTimeout';
+import { useViewNavigate } from '@/router/navigationContext';
 import { eventsAPI } from '@/services/api';
 import { off, onPhoneMicrophoneConnected } from '@/services/socket';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { t } from '@/i18n';
-import type { View } from '@/types';
+import type { NavigateToView } from '@/types';
 
 interface SearchBarProps {
-  onNavigate: (view: View) => void;
+  onNavigate?: NavigateToView;
   isDj: boolean;
   isDarkMode?: boolean;
   eventId?: string;
@@ -23,6 +24,7 @@ export function SearchBar({
   isDarkMode = false,
   eventId = '',
 }: SearchBarProps) {
+  const navigate = useViewNavigate(onNavigate);
   const [phoneMicrophoneLink, setPhoneMicrophoneLink] = useState('');
   const [phoneMicrophoneStatus, setPhoneMicrophoneStatus] = useState('');
   const [connectedMicrophone, setConnectedMicrophone] = useState({ name: '', status: '' });
@@ -41,7 +43,7 @@ export function SearchBar({
 
   const handleClick = () => {
     const view = isDj ? 'dj-song-select' : 'attendee-song-select';
-    onNavigate(view);
+    navigate(view);
   };
 
   const handleMicrophoneClick = async (

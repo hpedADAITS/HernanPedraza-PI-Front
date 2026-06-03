@@ -1,20 +1,22 @@
-import type { View } from '@/types';
+import type { AppMode, View } from '@/types';
+
+const rolePath = (mode: AppMode, path: string) => `/${mode}${path}`;
 
 export const viewPaths: Record<View, string> = {
   'role-selection': '/',
-  'attendee-login': '/attendee/login',
-  'dj-login': '/dj/login',
+  'attendee-login': rolePath('attendee', '/login'),
+  'dj-login': rolePath('dj', '/login'),
   'dj-register': '/dj/register',
-  'attendee-dashboard': '/attendee/dashboard',
-  'dj-dashboard': '/dj/dashboard',
-  'attendee-song-select': '/attendee/songs',
-  'dj-song-select': '/dj/songs',
-  'attendee-settings': '/attendee/settings',
-  'attendee-account-settings': '/attendee/settings/account',
-  'attendee-app-settings': '/attendee/settings/app',
-  'dj-settings': '/dj/settings',
-  'dj-account-settings': '/dj/settings/account',
-  'dj-app-settings': '/dj/settings/app',
+  'attendee-dashboard': rolePath('attendee', '/dashboard'),
+  'dj-dashboard': rolePath('dj', '/dashboard'),
+  'attendee-song-select': rolePath('attendee', '/songs'),
+  'dj-song-select': rolePath('dj', '/songs'),
+  'attendee-settings': rolePath('attendee', '/settings'),
+  'attendee-account-settings': rolePath('attendee', '/settings/account'),
+  'attendee-app-settings': rolePath('attendee', '/settings/app'),
+  'dj-settings': rolePath('dj', '/settings'),
+  'dj-account-settings': rolePath('dj', '/settings/account'),
+  'dj-app-settings': rolePath('dj', '/settings/app'),
   'dj-phone-microphone': '/dj/microphone',
   banned: '/banned',
   'verify-email': '/verify-email',

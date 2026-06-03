@@ -1,7 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { AnimatePresence } from 'motion/react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import type { NavigateToView } from '@/types';
+import type { AppMode, NavigateToView } from '@/types';
 
 const RoleSelection = lazy(() =>
   import('@/pages/RoleSelection').then((module) => ({
@@ -67,16 +67,21 @@ interface AppRoutesProps {
   onNavigate: NavigateToView;
 }
 
-function getDashboardWorkspaceMode(pathname: string): 'attendee' | 'dj' | null {
-  if (pathname === '/attendee/dashboard' || pathname === '/attendee/songs') {
-    return 'attendee';
-  }
+const APP_MODES = ['attendee', 'dj'] as const;
 
-  if (pathname === '/dj/dashboard' || pathname === '/dj/songs') {
-    return 'dj';
-  }
+const WORKSPACE_ROUTES = APP_MODES.flatMap((mode) => [
+  { path: `/${mode}/dashboard`, mode, showSongs: false },
+  { path: `/${mode}/songs`, mode, showSongs: true },
+]);
 
-  return null;
+const SETTINGS_ROUTES = [
+  { path: 'settings', Component: SettingsHome },
+  { path: 'settings/account', Component: AccountSettings },
+  { path: 'settings/app', Component: AppPreferences },
+] as const;
+
+function getWorkspaceRoute(pathname: string) {
+  return WORKSPACE_ROUTES.find((route) => route.path === pathname) ?? null;
 }
 
 export function AppRoutes({
@@ -86,25 +91,24 @@ export function AppRoutes({
   onNavigate,
 }: AppRoutesProps) {
   const location = useLocation();
-  const dashboardWorkspaceMode = getDashboardWorkspaceMode(location.pathname);
-  const isSongSelection = location.pathname.endsWith('/songs');
+  const workspaceRoute = getWorkspaceRoute(location.pathname);
 
-  if (dashboardWorkspaceMode) {
+  if (workspaceRoute) {
     return (
       <Suspense fallback={null}>
         <div className="relative h-full w-full">
           <div
             className="absolute inset-0"
-            aria-hidden={isSongSelection}
-            inert={isSongSelection ? true : undefined}
+            aria-hidden={workspaceRoute.showSongs}
+            inert={workspaceRoute.showSongs ? true : undefined}
           >
-            <Dashboard mode={dashboardWorkspaceMode} onNavigate={onNavigate} />
+            <Dashboard mode={workspaceRoute.mode} onNavigate={onNavigate} />
           </div>
 
-          {isSongSelection && (
+          {workspaceRoute.showSongs && (
             <div className="absolute inset-0 z-50">
               <SongSelection
-                mode={dashboardWorkspaceMode}
+                mode={workspaceRoute.mode}
                 onNavigate={onNavigate}
               />
             </div>
@@ -161,48 +165,15 @@ export function AppRoutes({
               />
             }
           />
-          <Route
-            path="/attendee/dashboard"
-            element={<Dashboard mode="attendee" onNavigate={onNavigate} />}
-          />
-          <Route
-            path="/dj/dashboard"
-            element={<Dashboard mode="dj" onNavigate={onNavigate} />}
-          />
-          <Route
-            path="/attendee/songs"
-            element={<SongSelection mode="attendee" onNavigate={onNavigate} />}
-          />
-          <Route
-            path="/dj/songs"
-            element={<SongSelection mode="dj" onNavigate={onNavigate} />}
-          />
-          <Route
-            path="/attendee/settings"
-            element={<SettingsHome mode="attendee" onNavigate={onNavigate} />}
-          />
-          <Route
-            path="/attendee/settings/account"
-            element={
-              <AccountSettings mode="attendee" onNavigate={onNavigate} />
-            }
-          />
-          <Route
-            path="/attendee/settings/app"
-            element={<AppPreferences mode="attendee" onNavigate={onNavigate} />}
-          />
-          <Route
-            path="/dj/settings"
-            element={<SettingsHome mode="dj" onNavigate={onNavigate} />}
-          />
-          <Route
-            path="/dj/settings/account"
-            element={<AccountSettings mode="dj" onNavigate={onNavigate} />}
-          />
-          <Route
-            path="/dj/settings/app"
-            element={<AppPreferences mode="dj" onNavigate={onNavigate} />}
-          />
+          {APP_MODES.flatMap((mode: AppMode) =>
+            SETTINGS_ROUTES.map(({ path, Component }) => (
+              <Route
+                key={`${mode}-${path}`}
+                path={`/${mode}/${path}`}
+                element={<Component mode={mode} onNavigate={onNavigate} />}
+              />
+            )),
+          )}
           <Route
             path="/verify-email"
             element={<VerifyEmail onNavigate={onNavigate} />}

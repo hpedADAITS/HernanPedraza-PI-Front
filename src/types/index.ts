@@ -1,3 +1,5 @@
+export type AppMode = 'attendee' | 'dj';
+
 export type View =
   | 'role-selection'
   | 'attendee-login'

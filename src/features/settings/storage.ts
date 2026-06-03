@@ -1,6 +1,7 @@
 const SETTINGS_KEYS = {
   mediaQuality: 'mediaQuality',
   socialPrefs: 'socialPrefs',
+  appSocialPrefs: 'appSocialPrefs',
   allowNotifications: 'allowNotifications',
   allowSharing: 'allowSharing',
 } as const;

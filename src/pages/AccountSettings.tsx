@@ -6,7 +6,7 @@ import { disconnectSocket, getSocket, leaveEvent } from '@/services/socket';
 import { ProfilePictureUpload } from '@/components/common';
 import { AttendeePasswordPrompt } from '@/components/dashboard/AttendeeSavePrompt';
 import { SettingsChoiceRow, SettingsDialog, SettingsDialogActions, SettingsDialogButton, SettingsList, SettingsListItem, SettingsPageShell, SettingsSearch, SettingsToggleRow } from '@/components/settings/SettingsUI';
-import { readSettingJson, readSettingString, writeSettingJson, writeSettingString } from '@/features/settings/storage';
+import { MEDIA_QUALITY_OPTIONS, useMediaQualityPreference, useProfileSocialPrefs } from '@/features/settings/preferences';
 import { readStoredJson, writeStoredJson } from '@/utils/storage';
 import { isDebugModeEnabled } from '@/utils/debugMode';
 import { t } from '@/i18n';
@@ -16,27 +16,6 @@ interface Props {
   mode: 'attendee' | 'dj';
   onNavigate: NavigateToView;
 }
-
-type MediaQuality = 'low' | 'medium' | 'high' | 'auto';
-
-interface SocialPrefs {
-  showDisplayName: boolean;
-  showProfilePicture: boolean;
-  allowFriendRequests: boolean;
-}
-
-const MEDIA_QUALITY_OPTIONS: { value: MediaQuality; label: string }[] = [
-  { value: 'auto', label: 'Auto (recommended)' },
-  { value: 'high', label: 'High' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'low', label: 'Low (data saver)' },
-];
-
-const DEFAULT_SOCIAL_PREFS: SocialPrefs = {
-  showDisplayName: true,
-  showProfilePicture: true,
-  allowFriendRequests: true,
-};
 
 const SETTINGS_ITEMS = [
   { id: 'profilePicture', label: 'Profile Picture' },
@@ -55,42 +34,28 @@ export function AccountSettings({ mode, onNavigate }: Props) {
   const [showSocialModal, setShowSocialModal] = useState(false);
   const [showProfilePictureModal, setShowProfilePictureModal] = useState(false);
   const [newDisplayName, setNewDisplayName] = useState('');
-  const [mediaQuality, setMediaQuality] = useState<MediaQuality>('auto');
-  const [socialPrefs, setSocialPrefs] =
-    useState<SocialPrefs>(DEFAULT_SOCIAL_PREFS);
+  const { mediaQuality, saveMediaQuality } = useMediaQualityPreference();
+  const { saveSocialPrefs, socialPrefs } = useProfileSocialPrefs();
   const [currentProfilePicture, setCurrentProfilePicture] = useState<string | null>(null);
   const [showAttendeeSavePrompt, setShowAttendeeSavePrompt] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const storedQuality = readSettingString('mediaQuality') as MediaQuality | null;
-    if (
-      storedQuality &&
-      MEDIA_QUALITY_OPTIONS.some((o) => o.value === storedQuality)
-    ) {
-      setMediaQuality(storedQuality);
-    }
-    const storedSocial = readSettingJson<Partial<SocialPrefs>>('socialPrefs');
-    if (storedSocial) {
-      setSocialPrefs({ ...DEFAULT_SOCIAL_PREFS, ...storedSocial });
-    }
     const user = readStoredJson<{ profilePicture?: string | null }>('user');
     if (user) {
       setCurrentProfilePicture(user.profilePicture || null);
     }
   }, []);
 
-  const handleSelectMediaQuality = (value: MediaQuality) => {
-    setMediaQuality(value);
-    writeSettingString('mediaQuality', value);
+  const handleSelectMediaQuality = (value: typeof mediaQuality) => {
+    saveMediaQuality(value);
     toast.success(t('Media quality set to {quality}', { quality: t(value) }));
     setShowMediaQualityModal(false);
   };
 
-  const handleToggleSocial = (key: keyof SocialPrefs) => {
+  const handleToggleSocial = (key: keyof typeof socialPrefs) => {
     const next = { ...socialPrefs, [key]: !socialPrefs[key] };
-    setSocialPrefs(next);
-    writeSettingJson('socialPrefs', next);
+    saveSocialPrefs(next);
   };
 
   const handleDisplayName = () => {
@@ -361,7 +326,7 @@ export function AccountSettings({ mode, onNavigate }: Props) {
               ['showDisplayName', 'Show display name'],
               ['showProfilePicture', 'Show profile picture'],
               ['allowFriendRequests', 'Allow friend requests'],
-            ] as [keyof SocialPrefs, string][]
+            ] as [keyof typeof socialPrefs, string][]
           ).map(([key, label]) => (
             <SettingsToggleRow
               key={key}

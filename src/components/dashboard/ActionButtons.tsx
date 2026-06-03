@@ -9,13 +9,14 @@ import * as socket from '@/services/socket';
 import { disconnectSocket } from '@/services/socket';
 import { readStoredJson, removeStoredItem } from '@/utils/storage';
 import { useTrackedTimeout } from '@/hooks/useTrackedTimeout';
+import { useViewNavigate } from '@/router/navigationContext';
 import { AttendeePasswordPrompt } from './AttendeeSavePrompt';
 import { t } from '@/i18n';
-import type { View } from '@/types';
+import type { NavigateToView } from '@/types';
 
 interface ActionButtonsProps {
   mode: 'attendee' | 'dj';
-  onNavigate: (view: View) => void;
+  onNavigate?: NavigateToView;
   showVoting?: boolean;
   showActions?: boolean;
 }
@@ -55,6 +56,7 @@ export function ActionButtons({
   showVoting = true,
   showActions = true,
 }: ActionButtonsProps) {
+  const navigate = useViewNavigate(onNavigate);
   const isDj = mode === 'dj';
   const [isQueueHovered, setIsQueueHovered] = useState(false);
   const queueHoverTimeoutRef = useRef<number | null>(null);
@@ -135,7 +137,7 @@ export function ActionButtons({
     removeStoredItem('currentEvent');
     removeStoredItem('currentParticipant');
     removeStoredItem('user');
-    onNavigate(isDj ? 'dj-login' : 'attendee-login');
+    navigate(isDj ? 'dj-login' : 'attendee-login');
   };
 
   const finishAttendeeLeaveWithoutSavedProfile = async () => {
@@ -178,7 +180,7 @@ export function ActionButtons({
               label={t('Queue a song')}
               subtitle={t('Add to the upcoming list')}
               onClick={() =>
-                onNavigate(isDj ? 'dj-song-select' : 'attendee-song-select')
+                navigate(isDj ? 'dj-song-select' : 'attendee-song-select')
               }
               variant="queue"
               queueTone={isDj ? 'dj' : 'attendee'}
@@ -190,7 +192,7 @@ export function ActionButtons({
               label={t('Settings')}
               subtitle={t('Manage your experience')}
               onClick={() =>
-                onNavigate(isDj ? 'dj-settings' : 'attendee-settings')
+                navigate(isDj ? 'dj-settings' : 'attendee-settings')
               }
               variant="settings"
               iconOnly

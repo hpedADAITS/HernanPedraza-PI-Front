@@ -29,7 +29,6 @@ interface DashboardLeftColumnProps {
   isDj: boolean;
   mode: 'attendee' | 'dj';
   onAccessCodeChange: (newCode: string) => void;
-  onNavigate: PageProps['onNavigate'];
   onProfilePictureChange: (newPicture: string) => void;
   profilePicture?: string | null;
   userName: string;
@@ -43,7 +42,6 @@ const DashboardLeftColumn = memo(function DashboardLeftColumn({
   isDj,
   mode,
   onAccessCodeChange,
-  onNavigate,
   onProfilePictureChange,
   profilePicture,
   userName,
@@ -69,7 +67,6 @@ const DashboardLeftColumn = memo(function DashboardLeftColumn({
       )}
       <DashboardActionButtons
         mode={mode}
-        onNavigate={onNavigate}
         showVoting={false}
       />
       <DashboardQueueList mode={mode} isDarkMode={isDarkMode} />
@@ -84,7 +81,6 @@ interface DashboardRightColumnProps {
   isDarkMode: boolean;
   isDj: boolean;
   mode: 'attendee' | 'dj';
-  onNavigate: PageProps['onNavigate'];
 }
 
 const DashboardRightColumn = memo(function DashboardRightColumn({
@@ -94,13 +90,11 @@ const DashboardRightColumn = memo(function DashboardRightColumn({
   isDarkMode,
   isDj,
   mode,
-  onNavigate,
 }: DashboardRightColumnProps) {
   return (
     <div className="w-full lg:w-[64%] min-h-0 relative">
       <div className="mx-auto flex w-full max-w-[896px] flex-col gap-8 lg:gap-6">
         <DashboardSearchBar
-          onNavigate={onNavigate}
           isDj={isDj}
           isDarkMode={isDarkMode}
           eventId={eventId}
@@ -115,7 +109,6 @@ const DashboardRightColumn = memo(function DashboardRightColumn({
         {!isDj && (
           <DashboardActionButtons
             mode={mode}
-            onNavigate={onNavigate}
             showActions={false}
           />
         )}
@@ -162,7 +155,6 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
           isDj={isDj}
           mode={mode}
           onAccessCodeChange={persistAccessCode}
-          onNavigate={onNavigate}
           onProfilePictureChange={handleProfilePictureChange}
           profilePicture={dashboardState.profilePicture}
           userName={dashboardState.userName}
@@ -175,7 +167,6 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
           isDarkMode={isDarkMode}
           isDj={isDj}
           mode={mode}
-          onNavigate={onNavigate}
         />
       </div>
       <FirstTimeTutorialModal role={mode} />
