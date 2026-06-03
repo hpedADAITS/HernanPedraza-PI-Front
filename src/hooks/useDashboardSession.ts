@@ -173,6 +173,7 @@ export function useDashboardSession({
     () => getInitialDashboardState(mode),
   );
   const [isSessionReady, setIsSessionReady] = useState(!isDj);
+  const [sessionError, setSessionError] = useState<string | null>(null);
 
   const navigateAway = useEffectEvent(() => {
     onNavigate(isDj ? 'dj-login' : 'attendee-login');
@@ -218,6 +219,7 @@ export function useDashboardSession({
     const token = getAuthToken();
 
     setIsSessionReady(!isDj);
+    setSessionError(null);
 
     if (!eventData || !participantData) {
       navigateAway();
@@ -291,6 +293,13 @@ export function useDashboardSession({
               currentParticipantData.profilePicture ?? user?.profilePicture ?? current.profilePicture,
             accessCode: currentEventData.accessCode || current.accessCode,
           }));
+        } else {
+          setDashboardState((current) => ({
+            ...current,
+            userName: currentParticipantData.nickname || user?.displayName || current.userName,
+            profilePicture:
+              currentParticipantData.profilePicture ?? user?.profilePicture ?? current.profilePicture,
+          }));
         }
 
         if (!currentEventData.eventId || !currentParticipantData._id) {
@@ -335,6 +344,11 @@ export function useDashboardSession({
         );
       } catch (error) {
         console.error('Error initializing dashboard:', error);
+        setSessionError(
+          error instanceof Error
+            ? error.message
+            : t('Failed to initialize dashboard session'),
+        );
 
         try {
           if (eventData.accessCode) {
@@ -489,5 +503,6 @@ export function useDashboardSession({
     handleProfilePictureChange,
     isSessionReady,
     persistAccessCode,
+    sessionError,
   };
 }

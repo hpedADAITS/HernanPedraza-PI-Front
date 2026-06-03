@@ -80,6 +80,14 @@ const SETTINGS_ROUTES = [
   { path: 'settings/app', Component: AppPreferences },
 ] as const;
 
+function RouteFallback() {
+  return (
+    <div className="grid h-full w-full place-items-center bg-slate-50 text-sm font-medium text-slate-600">
+      Loading...
+    </div>
+  );
+}
+
 function getWorkspaceRoute(pathname: string) {
   return WORKSPACE_ROUTES.find((route) => route.path === pathname) ?? null;
 }
@@ -95,7 +103,7 @@ export function AppRoutes({
 
   if (workspaceRoute) {
     return (
-      <Suspense fallback={null}>
+      <Suspense fallback={<RouteFallback />}>
         <div className="relative h-full w-full">
           <div
             className="absolute inset-0"
@@ -120,7 +128,7 @@ export function AppRoutes({
 
   return (
     <AnimatePresence mode="wait" custom={direction}>
-      <Suspense fallback={null}>
+      <Suspense fallback={<RouteFallback />}>
         <Routes location={location} key={location.pathname}>
           <Route
             path="/"

@@ -9,6 +9,7 @@ import { FirstTimeTutorialModal } from '@/components/modals/FirstTimeTutorialMod
 import { AttendeeCooldownOverlay } from '@/components/dashboard/AttendeeCooldownOverlay';
 import { getStoredParticipantId } from '@/services/session';
 import { useParticipantCooldown } from '@/hooks/useParticipantCooldown';
+import { t } from '@/i18n';
 
 interface DashboardProps extends PageProps {
   mode: 'attendee' | 'dj';
@@ -20,6 +21,36 @@ const DashboardSearchBar = memo(SearchBar);
 const DashboardActionButtons = memo(ActionButtons);
 const DashboardNowPlayingSection = memo(NowPlayingSection);
 const DashboardConnectedUsers = memo(ConnectedUsers);
+
+function DashboardStatus({
+  message,
+  mode,
+  onNavigate,
+  showAction = false,
+}: {
+  message: string;
+  mode: 'attendee' | 'dj';
+  onNavigate: PageProps['onNavigate'];
+  showAction?: boolean;
+}) {
+  return (
+    <Layout theme="white" className="grid min-h-full place-items-center p-6">
+      <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-7 text-center shadow-[0_24px_80px_-44px_rgba(15,23,42,0.65)]">
+        <DashboardLogo size="medium" className="mb-6 flex justify-center" />
+        <p className="text-sm font-medium text-slate-700">{message}</p>
+        {showAction && (
+          <button
+            type="button"
+            onClick={() => onNavigate(mode === 'dj' ? 'dj-login' : 'attendee-login')}
+            className="mt-6 h-10 rounded-full bg-slate-900 px-5 text-sm font-semibold text-white transition-colors hover:bg-slate-700"
+          >
+            {t('Back to login')}
+          </button>
+        )}
+      </div>
+    </Layout>
+  );
+}
 
 interface DashboardLeftColumnProps {
   accessCode: string;
@@ -127,7 +158,7 @@ const DashboardRightColumn = memo(function DashboardRightColumn({
 export function Dashboard({ mode, onNavigate }: DashboardProps) {
   const isDj = mode === 'dj';
   const [isDarkMode] = useDarkMode();
-  const { dashboardState, handleProfilePictureChange, isSessionReady, persistAccessCode } =
+  const { dashboardState, handleProfilePictureChange, isSessionReady, persistAccessCode, sessionError } =
     useDashboardSession({
       mode,
       onNavigate,
@@ -138,7 +169,26 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
     !isDj && isSessionReady,
   );
 
-  if (!isSessionReady) return null;
+  if (sessionError) {
+    return (
+      <DashboardStatus
+        message={sessionError}
+        mode={mode}
+        onNavigate={onNavigate}
+        showAction
+      />
+    );
+  }
+
+  if (!isSessionReady) {
+    return (
+      <DashboardStatus
+        message={t('Preparing dashboard...')}
+        mode={mode}
+        onNavigate={onNavigate}
+      />
+    );
+  }
 
   return (
     <Layout
