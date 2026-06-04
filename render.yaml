@@ -10,3 +10,4 @@ services:
         value: production
       - key: VITE_API_URL
         value: https://sr-backend-im3y.onrender.com/api/v1
+    numInstances: 1

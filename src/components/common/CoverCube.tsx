@@ -1,8 +1,10 @@
 import React from 'react';
 import { CoverCubeTextureMessageSource, CoverCubeWorkerMessage, SetCoverCubeTextureOptions } from './coverCubeWorkerMessages';
 
+// Import worker as inline blob to ensure it works in production
+import workerSource from './CoverCube.worker.ts?worker&url';
+
 const spillScale = 1.03;
-const workerUrl = new URL('./CoverCube.worker.ts', import.meta.url);
 
 interface CoverCubeProps {
   albumArt?: string;
@@ -91,7 +93,7 @@ export function CoverCube({
       return;
     }
 
-    const worker = new Worker(workerUrl, { type: 'module' });
+    const worker = new Worker(workerSource, { type: 'module' });
     workerRef.current = worker;
 
     const fail = () => setWorkerFailed(true);

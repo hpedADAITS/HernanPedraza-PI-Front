@@ -47,9 +47,15 @@ export async function startAudioMatchStream({
     }
 
     const sampleRate = context.sampleRate;
-    const workletUrl = new URL('./audio-match-processor.js', import.meta.url);
+
+    // Load processor from public/ directory for reliable Vite/Render serving
+    const workletUrl = new URL('/audio/audio-match-processor.js', window.location.origin);
+
+    console.log('[micStream] Loading AudioWorklet from:', workletUrl.href);
 
     await context.audioWorklet.addModule(workletUrl.href);
+
+    console.log('[micStream] AudioWorklet loaded successfully');
 
     source = context.createMediaStreamSource(stream);
 

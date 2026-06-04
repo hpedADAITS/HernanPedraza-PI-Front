@@ -54,6 +54,7 @@ function bindLifecycleHandlers(nextSocket: Socket) {
       message: error.message,
       name: error.name,
       url: SOCKET_URL,
+      transport: nextSocket.io.engine.transport.name,
     });
   });
 
