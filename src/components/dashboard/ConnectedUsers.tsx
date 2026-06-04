@@ -3,7 +3,6 @@ import { LazyMotion, domAnimation, m, AnimatePresence } from 'motion/react';
 import { Crown, Users, Music, Zap, UserX } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ANIMATION_DURATION } from '@/constants/animations';
 import { participantsAPI } from '@/services/api';
 import { COOLDOWN_OPTIONS, DEFAULT_COOLDOWN_MS, formatCooldownDuration } from '@/constants/cooldowns';
 import { getStoredDjUserId } from '@/services/session';
@@ -184,7 +183,7 @@ function connectedUsersReducer(
             : user,
         ),
       };
-    case 'set_cooldown':
+    case 'set_cooldown': {
       if (!action.participantId) {
         return state;
       }
@@ -200,7 +199,8 @@ function connectedUsersReducer(
             : user,
         ),
       };
-    case 'set_premium':
+    }
+    case 'set_premium': {
       if (!action.participantId || typeof action.isPremium !== 'boolean') {
         return state;
       }
@@ -215,6 +215,7 @@ function connectedUsersReducer(
             : user,
         ),
       };
+    }
     case 'select_participant':
       return {
         ...state,
@@ -235,7 +236,6 @@ export function ConnectedUsers({
   previewCurrentUserId,
   previewParticipants,
 }: ConnectedUsersProps) {
-  const toast = useToast();
   const [state, dispatch] = useReducer(connectedUsersReducer, {
     users: [],
     loading: true,
@@ -808,6 +808,7 @@ function ParticipantItem({
 }: ParticipantItemProps) {
   const [cooldownMs, setCooldownMs] = useState(DEFAULT_COOLDOWN_MS);
   const { playSound } = useSound();
+  const toast = useToast();
   const id = participantId(participant);
 
   const handleAdminAction = async (action: string, e: React.MouseEvent) => {
