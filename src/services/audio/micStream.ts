@@ -1,4 +1,5 @@
 import type { Socket } from 'socket.io-client';
+import { createAudioMatchWorkletUrl } from './audioMatchWorklet';
 
 interface MicStreamOptions {
   eventId: string;
@@ -12,23 +13,30 @@ interface MicStreamOptions {
   }) => void;
 }
 
+type WebkitAudioWindow = typeof window & {
+  webkitAudioContext?: typeof AudioContext;
+};
+
 export async function startAudioMatchStream({
   eventId,
   stream,
   socket,
   onError,
   onDebug,
-}: MicStreamOptions) {
+}: MicStreamOptions): Promise<() => void> {
   const AudioContextClass =
-    window.AudioContext ||
-    (window as typeof window & { webkitAudioContext?: typeof AudioContext })
-      .webkitAudioContext;
+    window.AudioContext || (window as WebkitAudioWindow).webkitAudioContext;
 
   if (!AudioContextClass) {
     throw new Error('Web Audio API is not supported in this browser');
   }
 
   const context = new AudioContextClass();
+  let workletUrl: string | null = null;
+  let source: MediaStreamAudioSourceNode | null = null;
+  let worklet: AudioWorkletNode | null = null;
+  let muteGain: GainNode | null = null;
+  let stopped = false;
 
   try {
     await context.resume();
@@ -38,35 +46,29 @@ export async function startAudioMatchStream({
     }
 
     const sampleRate = context.sampleRate;
-    const workletUrl = '/audio-match-processor.js';
 
-    try {
-      await context.audioWorklet.addModule(workletUrl);
-    } catch (error) {
-      throw new Error(
-        `Unable to load AudioWorklet module from ${workletUrl}: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
-    }
+    workletUrl = createAudioMatchWorkletUrl();
+    await context.audioWorklet.addModule(workletUrl);
 
-    const source = context.createMediaStreamSource(stream);
+    source = context.createMediaStreamSource(stream);
 
-    const worklet = new AudioWorkletNode(context, 'audio-match-processor', {
+    worklet = new AudioWorkletNode(context, 'audio-match-processor', {
       numberOfInputs: 1,
-      numberOfOutputs: 0,
+      numberOfOutputs: 1,
       channelCount: 1,
       channelCountMode: 'explicit',
       channelInterpretation: 'speakers',
+      outputChannelCount: [1],
     });
 
-    socket.emit('audio_match_start', {
-      eventId,
-      sampleRate,
-    });
+    // Keeps the audio graph alive on stricter mobile browsers without audible feedback.
+    muteGain = context.createGain();
+    muteGain.gain.value = 0;
 
     worklet.port.onmessage = (event: MessageEvent<Float32Array>) => {
       try {
+        if (stopped) return;
+
         const chunk = event.data;
 
         socket.emit('audio_match_chunk', {
@@ -88,12 +90,21 @@ export async function startAudioMatchStream({
     };
 
     source.connect(worklet);
+    worklet.connect(muteGain);
+    muteGain.connect(context.destination);
+
+    socket.emit('audio_match_start', {
+      eventId,
+      sampleRate,
+    });
 
     return () => {
-      worklet.port.onmessage = null;
+      stopped = true;
 
-      source.disconnect();
-      worklet.disconnect();
+      worklet?.port.close();
+      worklet?.disconnect();
+      muteGain?.disconnect();
+      source?.disconnect();
 
       socket.emit('audio_match_stop', { eventId });
 
@@ -101,11 +112,26 @@ export async function startAudioMatchStream({
         track.stop();
       }
 
+      if (workletUrl) {
+        URL.revokeObjectURL(workletUrl);
+      }
+
       void context.close();
     };
   } catch (error) {
+    stopped = true;
+
+    worklet?.port.close();
+    worklet?.disconnect();
+    muteGain?.disconnect();
+    source?.disconnect();
+
     for (const track of stream.getTracks()) {
       track.stop();
+    }
+
+    if (workletUrl) {
+      URL.revokeObjectURL(workletUrl);
     }
 
     void context.close();
