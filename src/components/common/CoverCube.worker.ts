@@ -27,6 +27,11 @@ interface WorkerState {
   dragStartX: number;
   dragStartY: number;
   lastFrameAt: number;
+  popAnimation: {
+    requestId: number;
+    startedAt: number;
+    progress: number;
+  } | null;
   requestId: number;
   spinAngle: number;
   targetRotationX: number;
@@ -51,6 +56,7 @@ const state: WorkerState = {
   isDragging: false,
   isDisposed: false,
   lastFrameAt: 0,
+  popAnimation: null,
   requestId: 0,
   spinAngle: 0,
   targetRotationX: 0,
@@ -518,6 +524,25 @@ function updateScene(deltaSeconds: number) {
     state.displayRotationY = state.spinAngle + state.currentRotationY;
   }
 
+  // Pop animation: scale cube toward camera
+  let popScale = 1;
+  if (state.popAnimation) {
+    const elapsed = performance.now() - state.popAnimation.startedAt;
+    const progress = Math.min(elapsed / POP_DURATION_MS, 1);
+
+    // Elastic easing: overshoot and settle
+    const elastic = progress === 1
+      ? 1
+      : 1 - Math.pow(2, -10 * progress) * Math.cos(progress * Math.PI * 2.5);
+
+    popScale = 1 + elastic * 0.15; // Scale up to 115%
+
+    if (progress >= 1) {
+      state.popAnimation = null;
+    }
+  }
+
+  cube.scale.setScalar(popScale);
   cube.rotation.x = state.displayRotationX;
   cube.rotation.y = state.displayRotationY;
 }
@@ -740,6 +765,16 @@ async function handleSetTexture(
   applyTexture(texture, options, ownsTexture);
 }
 
+const POP_DURATION_MS = 450;
+
+function handlePop(requestId: number) {
+  state.popAnimation = {
+    requestId,
+    startedAt: performance.now(),
+    progress: 0,
+  };
+}
+
 function handlePointerDown(x: number, y: number) {
   if (state.textureTransition) {
     return;
@@ -792,6 +827,9 @@ self.onmessage = (event: MessageEvent<CoverCubeWorkerMessage>) => {
       break;
     case 'setTexture':
       void handleSetTexture(message.requestId, message.source, message.options);
+      break;
+    case 'pop':
+      handlePop(message.requestId);
       break;
     case 'pointerDown':
       handlePointerDown(message.x, message.y);

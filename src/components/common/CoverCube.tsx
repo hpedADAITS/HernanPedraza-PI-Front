@@ -10,6 +10,7 @@ interface CoverCubeProps {
   albumArt?: string;
   accentColor: string;
   className?: string;
+  popKey?: number;
 }
 
 declare global {
@@ -43,6 +44,7 @@ export function CoverCube({
   albumArt,
   accentColor,
   className,
+  popKey,
 }: CoverCubeProps) {
   const coverRef = React.useRef<HTMLDivElement | null>(null);
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
@@ -148,6 +150,17 @@ export function CoverCube({
       accentColor,
     });
   }, [accentColor, postWorkerMessage]);
+
+  // Trigger pop animation when popKey changes (song detected)
+  React.useEffect(() => {
+    if (popKey !== undefined && popKey > 0) {
+      requestIdRef.current += 1;
+      postWorkerMessage({
+        type: 'pop',
+        requestId: requestIdRef.current,
+      });
+    }
+  }, [popKey, postWorkerMessage]);
 
   React.useEffect(() => {
     const sendTexture = async (

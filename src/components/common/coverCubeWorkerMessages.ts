@@ -41,6 +41,10 @@ export type CoverCubeWorkerMessage =
       options: SetCoverCubeTextureOptions;
     }
   | {
+      type: 'pop';
+      requestId: number;
+    }
+  | {
       type: 'pointerDown';
       x: number;
       y: number;

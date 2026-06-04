@@ -1,5 +1,6 @@
 import React from 'react';
 import { m } from 'motion/react';
+import { Mic } from 'lucide-react';
 import { CoverCube } from './CoverCube';
 
 type PlayerState =
@@ -21,6 +22,8 @@ interface NowPlayingProps {
   waitLabel?: string;
   attentionKey?: number;
   celebrateKey?: number;
+  microphoneLabel?: string;
+  audioLevel?: number;
 }
 
 const waveformBars = [
@@ -136,6 +139,44 @@ function Waveform() {
   );
 }
 
+function AnimatedWaveform({ audioLevel = 0 }: { audioLevel?: number }) {
+  const normalizedLevel = Math.max(0, Math.min(1, audioLevel));
+
+  const bars = React.useMemo(() => {
+    return Array.from({ length: 28 }, (_, i) => {
+      const centerY = 47;
+      const maxAmplitude = 40 * normalizedLevel;
+      const phase = i * 0.35;
+      const randomOffset = Math.sin(phase * 2.1 + i * 0.8) * 0.4 + 0.6;
+      const amplitude = maxAmplitude * randomOffset;
+
+      return {
+        x: 8 + i * 7.5,
+        y1: centerY - amplitude,
+        y2: centerY + amplitude,
+      };
+    });
+  }, [normalizedLevel]);
+
+  return (
+    <svg
+      className="hidden h-[75px] w-[171px] justify-self-end opacity-70 lg:block"
+      viewBox="0 0 214 94"
+      aria-hidden="true"
+    >
+      <g
+        stroke="#60a5fa"
+        strokeWidth="2"
+        strokeLinecap="round"
+      >
+        {bars.map((bar, i) => (
+          <line key={i} x1={bar.x} y1={bar.y1} x2={bar.x} y2={bar.y2} />
+        ))}
+      </g>
+    </svg>
+  );
+}
+
 export function NowPlaying({
   songTitle = 'Queue Song',
   artist = 'Unknown Artist',
@@ -147,6 +188,8 @@ export function NowPlaying({
   waitLabel,
   attentionKey = 0,
   celebrateKey = 0,
+  microphoneLabel,
+  audioLevel,
 }: NowPlayingProps) {
   const safeProgress = Math.max(0, Math.min(100, progress));
   const config = stateConfig[status];
@@ -187,7 +230,7 @@ export function NowPlaying({
         duration: attentionKey ? 0.45 : 0.22,
         ease: 'easeInOut',
       }}
-      className="relative min-h-[246px] w-full origin-center overflow-hidden rounded-[17px] px-5 pb-6 pt-16 text-white shadow-[0_18px_40px_rgba(7,18,36,.18),inset_0_1px_0_rgba(255,255,255,.14)] sm:min-h-[234px] sm:px-7 sm:pb-7 lg:min-h-0 lg:h-[186px] lg:px-6 lg:pb-5 lg:pt-14"
+      className="relative min-h-[246px] w-full origin-center rounded-[17px] px-5 pb-6 pt-16 text-white shadow-[0_18px_40px_rgba(7,18,36,.18),inset_0_1px_0_rgba(255,255,255,.14)] sm:min-h-[234px] sm:px-7 sm:pb-7 lg:min-h-0 lg:h-[186px] lg:px-6 lg:pb-5 lg:pt-14"
       style={
         {
           '--state-color': config.color,
@@ -239,6 +282,7 @@ export function NowPlaying({
         <CoverCube
           albumArt={albumArt}
           accentColor={config.color}
+          popKey={status === 'playing' ? celebrateKey : 0}
           className="h-20 w-20 sm:h-24 sm:w-24 lg:h-[116px] lg:w-[114px]"
         />
 
@@ -257,9 +301,19 @@ export function NowPlaying({
             />
             <span className="truncate">{config.badge}</span>
           </div>
+          {microphoneLabel && (
+            <div className="inline-flex h-6 max-w-full items-center gap-1.5 rounded-md bg-blue-600/80 px-2 text-xs font-semibold text-white backdrop-blur-sm">
+              <Mic className="h-3 w-3 shrink-0" />
+              <span className="truncate">{microphoneLabel}</span>
+            </div>
+          )}
         </div>
 
-        <Waveform />
+        {microphoneLabel && audioLevel !== undefined ? (
+          <AnimatedWaveform audioLevel={audioLevel} />
+        ) : (
+          <Waveform />
+        )}
       </div>
 
       <div className="absolute bottom-6 left-6 right-6 grid grid-cols-[41px_minmax(0,1fr)_43px] items-center gap-3 text-sm font-semibold text-white/95 sm:left-7 sm:right-7 sm:text-[15px] lg:bottom-5 lg:left-40 lg:text-sm">
