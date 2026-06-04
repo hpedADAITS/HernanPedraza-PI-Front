@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { m, AnimatePresence } from 'motion/react';
-import { Mail, Check, Clock } from 'lucide-react';
+import { Mail, Check, Clock, Loader } from 'lucide-react';
 import { t } from '@/i18n';
+import { authAPI } from '@/services/api';
 
 interface EmailConfirmationModalProps {
   isOpen: boolean;
   email: string;
   displayName: string;
   debugToken?: string;
+  onVerified?: () => void;
 }
 
 export function EmailConfirmationModal({
@@ -15,8 +17,10 @@ export function EmailConfirmationModal({
   email,
   displayName,
   debugToken,
+  onVerified,
 }: EmailConfirmationModalProps) {
-  const [status, setStatus] = useState<'sending' | 'sent'>('sending');
+  const [status, setStatus] = useState<'sending' | 'sent' | 'verifying'>('sending');
+  const [verifyError, setVerifyError] = useState<string>('');
   const debugVerificationUrl = debugToken
     ? `${window.location.origin}/?verifyEmailToken=${encodeURIComponent(debugToken)}`
     : '';
@@ -99,27 +103,42 @@ export function EmailConfirmationModal({
                 className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6"
               >
                 <h3 className="font-semibold text-blue-900 mb-2">{t("What's Next?")}</h3>
-                {debugToken ? (
+                {(debugToken || import.meta.env.DEV) ? (
                   <div className="text-sm text-blue-800">
-                    <p className="mb-3">{t('Debug Mode: Verification URL')}</p>
+                    <p className="mb-3">{import.meta.env.DEV ? t('Dev Mode: Click to verify directly') : t('Debug Mode: Click to verify directly')}</p>
                     <button
                       type="button"
+                      disabled={status === 'verifying'}
                       onClick={async () => {
+                        setStatus('verifying');
+                        setVerifyError('');
                         try {
-                          await navigator.clipboard.writeText(
-                            debugVerificationUrl,
-                          );
-                          alert(t('URL copied to clipboard!'));
+                          await authAPI.verifyEmailToken(debugToken);
+                          if (onVerified) {
+                            onVerified();
+                          }
                         } catch (err) {
-                          console.error('Failed to copy:', err);
-                          alert(t('Failed to copy URL'));
+                          setVerifyError(err instanceof Error ? err.message : t('Verification failed'));
+                          setStatus('sent');
                         }
                       }}
-                      className="block w-full bg-white p-2 rounded border border-blue-300 break-all text-left text-xs font-mono mb-2 cursor-pointer hover:bg-blue-100"
+                      className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
                     >
-                      <code>{debugVerificationUrl}</code>
+                      {status === 'verifying' ? (
+                        <>
+                          <Loader size={18} className="animate-spin" />
+                          {t('Verifying...')}
+                        </>
+                      ) : (
+                        <>
+                          <Check size={18} />
+                          {t('Verify Email')}
+                        </>
+                      )}
                     </button>
-                    <p className="text-xs text-blue-700">{t('Click to copy and paste in browser')}</p>
+                    {verifyError && (
+                      <p className="mt-2 text-red-600 text-xs">{verifyError}</p>
+                    )}
                   </div>
                 ) : (
                   <ul className="text-sm text-blue-800 space-y-1">

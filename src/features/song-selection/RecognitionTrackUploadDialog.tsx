@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Upload } from 'lucide-react';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 import {
   SettingsDialog,
   SettingsDialogActions,
@@ -22,6 +22,7 @@ export function RecognitionTrackUploadDialog({
   open,
   onClose,
 }: RecognitionTrackUploadDialogProps) {
+  const toast = useToast();
   const [busy, setBusy] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState('');

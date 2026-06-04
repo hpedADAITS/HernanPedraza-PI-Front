@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 import { eventsAPI, songsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
 import { normalizeNowPlaying, normalizeQueueUpdated, normalizeSocketSong } from '@/services/socket/normalize';
@@ -82,6 +82,7 @@ function getSortedSongs(songs: Song[]) {
 }
 
 export function useQueueRealtime(mode: 'attendee' | 'dj', eventId?: string) {
+  const toast = useToast();
   const [state, setState] = useState<QueueState>(() => getInitialState(eventId));
   const [fallingCards, setFallingCards] = useState<QueueCard[]>([]);
   const [tick, setTick] = useState(0);

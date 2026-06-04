@@ -18,4 +18,11 @@ export const attendeeSessionAPI = {
     if (data.data.token) saveToken(data.data.token);
     return data.data;
   },
+
+  markTutorialAsSeen: async () => {
+    const data = await apiCall('/attendee-session/mark-tutorial-seen', {
+      method: 'POST',
+    });
+    return data.data;
+  },
 };

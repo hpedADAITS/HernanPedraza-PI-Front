@@ -55,7 +55,8 @@
     "tailwind-animations": "^1.0.1",
     "tailwind-merge": "^3.5.0",
     "three": "^0.181.2",
-    "vaul": "^1.1.2"
+    "vaul": "^1.1.2",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

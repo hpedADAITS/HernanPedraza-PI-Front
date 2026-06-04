@@ -12,13 +12,21 @@ export interface Song {
   title: string;
   artist: string;
   voteScore: number;
+  voteCount?: number;
   status: SongStatus | string;
   totalDuration?: number;
   duration?: number;
   queuePosition?: number;
   approvedAt?: string;
   playingStartedAt?: string;
-  requestedBy?: { _id: string; nickname: string; profilePicture?: string | null } | null;
+  isPremiumSuggestion?: boolean;
+  requestedBy?: {
+    _id: string;
+    nickname: string;
+    profilePicture?: string | null;
+    isPremium?: boolean;
+    approvalCount?: number;
+  } | null;
   recognitionMatch?: {
     trackId: string;
     title: string;

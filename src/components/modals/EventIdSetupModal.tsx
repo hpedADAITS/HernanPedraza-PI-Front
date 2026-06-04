@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { m, AnimatePresence } from 'motion/react';
 import { RefreshCw, Check } from 'lucide-react';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 import { t } from '@/i18n';
 
 interface EventIdSetupModalProps {
@@ -32,6 +32,7 @@ export function EventIdSetupModal({
   onConfirm,
   displayName,
 }: EventIdSetupModalProps) {
+  const toast = useToast();
   const [{ eventId, generatedId, mode }, setSetupState] = useState(getInitialEventIdSetupState);
   const wasOpenRef = useRef(isOpen);
   const [loading, setLoading] = useState(false);

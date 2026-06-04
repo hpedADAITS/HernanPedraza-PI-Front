@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import jsQR from 'jsqr';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 import { t } from '@/i18n';
 
 interface UseQrScannerOptions {
@@ -25,6 +25,7 @@ export function useQrScanner({ enabled, onCode, onClose }: UseQrScannerOptions) 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scanningRef = useRef(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!enabled) return;

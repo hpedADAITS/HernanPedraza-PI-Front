@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { m } from 'motion/react';
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 import { authAPI, eventsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
 import { writeStoredJson } from '@/utils/storage';
@@ -28,6 +28,7 @@ export function DJLogin({
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

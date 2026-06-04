@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { m } from 'motion/react';
 import { User, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff } from 'lucide-react';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 import { authAPI, eventsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
 import { EventIdSetupModal } from '@/components/modals/EventIdSetupModal';
@@ -58,6 +58,7 @@ export function DJRegister({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const { toast } = useToast();
   const [showEventIdModal, setShowEventIdModal] = useState(false);
   const registrationDataRef = useRef<RegistrationData | null>(null);
   const [debugToken, setDebugToken] = useState<string | undefined>(undefined);
@@ -161,9 +162,8 @@ export function DJRegister({
       if (!registrationDataRef.current.userId) {
         throw new Error(t('Session data is incomplete'));
       }
-      const debugTokenToUse = isDebugModeEnabled()
-        ? result.emailVerificationToken
-        : undefined;
+      /* Use token from backend if available (sent when DEBUG_EMAIL=true) */
+      const debugTokenToUse = result.emailVerificationToken;
       if (
         debugTokenToUse &&
         debugTokenToUse.split('.').length === 3
@@ -457,13 +457,14 @@ export function DJRegister({
       </div>
 
       {/* Email Confirmation Modal */}
-       <EmailConfirmationModal
-         isOpen={showEmailModal}
-         email={email}
-         displayName={displayName}
-       debugToken={debugToken}
+{/* Email Confirmation Modal */}
+      <EmailConfirmationModal
+        isOpen={showEmailModal}
+        email={email}
+        displayName={displayName}
+        debugToken={debugToken}
+        onVerified={() => setShowEmailModal(false)}
       />
-
       {/* Event ID Setup Modal */}
       <EventIdSetupModal
         isOpen={showEventIdModal}

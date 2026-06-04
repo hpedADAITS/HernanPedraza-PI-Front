@@ -10,7 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import { clsx } from 'clsx';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 import { isDebugModeEnabled } from '@/utils/debugMode';
 import { readStoredJson } from '@/utils/storage';
 import { DEBUG_EVENT_NAME, dispatchDebugSongEvent } from '@/utils/debugSongEvents';
@@ -862,6 +862,7 @@ function renderQueueTestWindow(eventId: string) {
 }
 
 export function SongCardDebugModal() {
+  const toast = useToast();
   const [open, setOpen] = useState(false);
   const [running, setRunning] = useState(false);
   const [creatingAccounts, setCreatingAccounts] = useState(false);

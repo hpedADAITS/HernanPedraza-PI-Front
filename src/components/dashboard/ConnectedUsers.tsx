@@ -1,7 +1,7 @@
 import React, { useEffect, useReducer, useState } from 'react';
 import { LazyMotion, domAnimation, m, AnimatePresence } from 'motion/react';
 import { Crown, Users, Music, Zap, UserX } from 'lucide-react';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ANIMATION_DURATION } from '@/constants/animations';
 import { participantsAPI } from '@/services/api';
@@ -235,6 +235,7 @@ export function ConnectedUsers({
   previewCurrentUserId,
   previewParticipants,
 }: ConnectedUsersProps) {
+  const toast = useToast();
   const [state, dispatch] = useReducer(connectedUsersReducer, {
     users: [],
     loading: true,

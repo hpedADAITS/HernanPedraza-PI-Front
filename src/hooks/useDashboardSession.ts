@@ -10,7 +10,7 @@ import {
   isCurrentUserSessionActive,
   onCurrentUserSessionReplaced,
 } from '@/services/singleUserSession';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 import { StoredEvent, StoredParticipant, StoredUser } from '@/services/session';
 import { t } from '@/i18n';
 
@@ -166,6 +166,7 @@ export function useDashboardSession({
   mode,
   onNavigate,
 }: UseDashboardSessionOptions) {
+  const toast = useToast();
   const isDj = mode === 'dj';
   const [dashboardState, setDashboardState] = useState<DashboardState>(
     () => getInitialDashboardState(mode),

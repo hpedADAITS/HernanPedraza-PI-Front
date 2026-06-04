@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 import { authAPI, clearToken, participantsAPI } from '@/services/api';
 import { disconnectSocket, getSocket, leaveEvent } from '@/services/socket';
 import { ProfilePictureUpload } from '@/components/common';
@@ -53,6 +53,7 @@ export function AccountSettings({ mode, onNavigate }: Props) {
   const [currentProfilePicture, setCurrentProfilePicture] = useState(getInitialProfilePicture);
   const [showAttendeeSavePrompt, setShowAttendeeSavePrompt] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleSelectMediaQuality = (value: typeof mediaQuality) => {
     saveMediaQuality(value);

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Music2, Users } from 'lucide-react';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 import { SettingsChoiceRow, SettingsDialog, SettingsDialogActions, SettingsDialogButton, SettingsGrid, SettingsOptionCard, SettingsPageShell, SettingsToggleRow } from '@/components/settings/SettingsUI';
 import { MEDIA_QUALITY_OPTIONS, useAppSocialPrefs, useMediaQualityPreference } from '@/features/settings/preferences';
 import { t } from '@/i18n';
@@ -36,6 +36,8 @@ export function AppPreferences({ mode, onNavigate }: Props) {
     useMediaQualityPreference('high');
   const { appSocialPrefs, saveAppSocialPrefs, setAppSocialPrefs } =
     useAppSocialPrefs();
+
+  const { toast } = useToast();
 
   const handleMediaQualitySave = () => {
     saveMediaQuality(mediaQuality);

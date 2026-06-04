@@ -3,14 +3,14 @@ import { m } from 'motion/react';
 import { NowPlaying } from '@/components/common';
 import { NOW_PLAYING } from '@/constants/dashboard';
 import { SCALE_IN } from '@/constants/animations';
-import { initSocket, onSongQueued, onSongNowPlaying, onSongRejected, onSongSkipped, onQueueUpdated, onSongSuggested, off } from '@/services/socket';
+import { initSocket, onSongQueued, onSongNowPlaying, onSongRejected, onSongSkipped, onQueueUpdated, onSongSuggested, onPhoneMicrophoneConnected, onAudioMatchChunk, off } from '@/services/socket';
 import { normalizeNowPlaying, normalizeQueueUpdated, normalizeSocketSong } from '@/services/socket/normalize';
 import { songsAPI } from '@/services/api';
 import { listenDebugSongEvents } from '@/utils/debugSongEvents';
 import { getStoredEventId } from '@/services/session';
 import { useTrackedTimeout } from '@/hooks/useTrackedTimeout';
 import type { Song } from '@/types/songs';
-import type { NowPlayingEventPayload, QueueUpdatedPayload, SongEventPayload } from '@/services/socket/contracts';
+import type { NowPlayingEventPayload, QueueUpdatedPayload, SongEventPayload, PhoneMicrophoneConnectedPayload, AudioMatchChunkPayload } from '@/services/socket/contracts';
 
 interface NowPlayingSong {
   id: string;
@@ -92,6 +92,8 @@ interface NowPlayingSectionState {
   tempStatus: NowPlayingSong | null;
   attentionKey: number;
   celebrateKey: number;
+  microphone: string | null;
+  audioLevel: number;
 }
 
 type NowPlayingSectionAction =
@@ -105,7 +107,9 @@ type NowPlayingSectionAction =
       fallbackArtist: string;
     }
   | { type: 'queue_updated'; payload: QueueUpdatedPayload }
-  | { type: 'clear_temp_status' };
+  | { type: 'clear_temp_status' }
+  | { type: 'microphone_connected'; deviceName: string }
+  | { type: 'audio_level'; level: number };
 
 function nowPlayingSectionReducer(
   state: NowPlayingSectionState,
@@ -219,6 +223,16 @@ function nowPlayingSectionReducer(
         ...state,
         tempStatus: null,
       };
+    case 'microphone_connected':
+      return {
+        ...state,
+        microphone: action.deviceName,
+      };
+    case 'audio_level':
+      return {
+        ...state,
+        audioLevel: action.level,
+      };
     default:
       return state;
   }
@@ -231,6 +245,8 @@ export function NowPlayingSection() {
     tempStatus: null,
     attentionKey: 0,
     celebrateKey: 0,
+    microphone: null,
+    audioLevel: 0,
   });
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -342,12 +358,30 @@ export function NowPlayingSection() {
       dispatch({ type: 'queue_updated', payload: data });
     };
 
+    const handlePhoneMicrophoneConnected = (data: PhoneMicrophoneConnectedPayload) => {
+      dispatch({ type: 'microphone_connected', deviceName: data.deviceName || 'Phone microphone' });
+    };
+
+    const handleAudioMatchChunk = (data: AudioMatchChunkPayload) => {
+      if (!data.pcm || data.pcm.length === 0) return;
+      const pcm = data.pcm;
+      let sum = 0;
+      for (let i = 0; i < pcm.length; i++) {
+        sum += Math.abs(pcm[i]);
+      }
+      const avg = sum / pcm.length;
+      const level = Math.min(1, avg * 4);
+      dispatch({ type: 'audio_level', level });
+    };
+
     onSongQueued(handleSongQueued);
     onSongSuggested(handleSongSuggested);
     onSongNowPlaying(handleSongNowPlaying);
     onSongRejected(handleSongRejected);
     onSongSkipped(handleSongSkipped);
     onQueueUpdated(handleQueueUpdated);
+    onPhoneMicrophoneConnected(handlePhoneMicrophoneConnected);
+    onAudioMatchChunk(handleAudioMatchChunk);
 
     const stopDebugEvents = listenDebugSongEvents(({ type, payload }) => {
       if (type === 'song_suggested') handleSongSuggested(payload);
@@ -365,6 +399,8 @@ export function NowPlayingSection() {
       off('song_rejected', handleSongRejected);
       off('song_skipped', handleSongSkipped);
       off('queue_updated', handleQueueUpdated);
+      off('phone_microphone_connected', handlePhoneMicrophoneConnected);
+      off('audio_match_chunk', handleAudioMatchChunk);
       stopDebugEvents();
     };
   }, [eventId, showTemporaryStatus]);
@@ -450,6 +486,8 @@ export function NowPlayingSection() {
           }
           attentionKey={state.attentionKey}
           celebrateKey={state.celebrateKey}
+          microphoneLabel={state.microphone || undefined}
+          audioLevel={state.microphone ? state.audioLevel : undefined}
         />
       </m.div>
     </m.div>

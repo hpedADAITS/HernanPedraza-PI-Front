@@ -134,3 +134,7 @@ export function onAttendeePasswordPromptRequested(callback: Listener<'attendee_p
 export function onPhoneMicrophoneConnected(callback: Listener<'phone_microphone_connected'>) {
   on('phone_microphone_connected', callback);
 }
+
+export function onAudioMatchChunk(callback: Listener<'audio_match_chunk'>) {
+  on('audio_match_chunk', callback);
+}

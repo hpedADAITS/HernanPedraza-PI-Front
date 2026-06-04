@@ -2,7 +2,7 @@ import { useState, type MouseEvent } from 'react';
 import { LazyMotion, domAnimation, m, AnimatePresence } from 'motion/react';
 import { clsx } from 'clsx';
 import { Play, X, Clock, UserX, SkipForward, Check } from 'lucide-react';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { THEME_CONFIG } from '@/constants/dashboard';
 import { COOLDOWN_OPTIONS, DEFAULT_COOLDOWN_MS, formatCooldownDuration } from '@/constants/cooldowns';
@@ -52,12 +52,11 @@ export function QueueList({
     sortedSongs,
     waitTimes,
   } = useQueueRealtime(mode, propEventId);
+  const toast = useToast();
   const participantId =
-    propParticipantId ||
     getStoredParticipantId() ||
     null;
   const djUserId = isDj ? getStoredDjUserId() : null;
-
   return (
     <LazyMotion features={domAnimation}>
       <TooltipProvider>
@@ -97,10 +96,29 @@ export function QueueList({
 
           <header
             className={clsx(
-              'flex items-start gap-3 px-6 pt-5 sm:px-6 sm:pt-6',
+              'flex items-start justify-between gap-3 px-6 pt-5 sm:px-6 sm:pt-6',
             )}
           >
             <QueueHeader isDarkMode={isDarkMode} />
+            {isDj && sortedSongs.some((s) => s.status === 'APPROVED') && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <m.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleAdminAction('Play Next', undefined as unknown as MouseEvent)}
+                    className={clsx(
+                      'mt-1 flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold text-white shadow-md transition-colors',
+                      isDarkMode ? 'bg-emerald-700 hover:bg-emerald-600' : 'bg-emerald-600 hover:bg-emerald-500',
+                    )}
+                  >
+                    <SkipForward size={14} />
+                    <span className="hidden sm:inline">Play Next</span>
+                  </m.button>
+                </TooltipTrigger>
+                <TooltipContent>Play highest voted song</TooltipContent>
+              </Tooltip>
+            )}
           </header>
 
           <m.div
@@ -397,6 +415,17 @@ function QueueItem({
         await songsAPI.skipSong(eventId, songId, 'Skipped by DJ');
         onSongRemoved(songId, 'skipped');
         toast.success(t('Skipped "{title}"', { title: song.title }));
+      } else if (action === 'Play Next') {
+        if (!eventId) {
+          toast.error(t('Event ID not found'));
+          return;
+        }
+        const played = await songsAPI.playNext(eventId);
+        if (played) {
+          toast.success(t('Now playing "{title}"', { title: played.title }));
+        } else {
+          toast.error(t('No songs in queue to play'));
+        }
       } else {
         console.error(
           `[ERROR] Action "${action}" failed - eventId: ${eventId}, songId: ${songId}`,
@@ -473,11 +502,14 @@ function QueueItem({
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={(e) => handleAdminAction('Approve', e)}
+                  disabled={song.status === 'PLAYING'}
                   className={clsx(
                     'p-2 rounded-lg transition-colors',
-                    isDarkMode
-                      ? 'bg-blue-900/30 hover:bg-blue-800/40 text-blue-300'
-                      : 'bg-blue-100 hover:bg-blue-200 text-blue-700',
+                    song.status === 'PLAYING'
+                      ? 'opacity-30 cursor-not-allowed'
+                      : isDarkMode
+                        ? 'bg-blue-900/30 hover:bg-blue-800/40 text-blue-300'
+                        : 'bg-blue-100 hover:bg-blue-200 text-blue-700',
                   )}
                 >
                   <Check size={18} />

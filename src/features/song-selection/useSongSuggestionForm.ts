@@ -1,5 +1,5 @@
 import { useCallback, useState, type FormEvent } from 'react';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 import { songsAPI } from '@/services/api';
 import { t } from '@/i18n';
 
@@ -14,6 +14,7 @@ export function useSongSuggestionForm(
   participantId: string | null,
   onSuccess: SuggestionSuccess,
 ) {
+  const toast = useToast();
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
   const [submitting, setSubmitting] = useState(false);

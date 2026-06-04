@@ -73,4 +73,11 @@ export const authAPI = {
     });
     return data.data;
   },
+
+  markTutorialAsSeen: async () => {
+    const data = await apiCall('/auth/mark-tutorial-seen', {
+      method: 'POST',
+    });
+    return data.data;
+  },
 };

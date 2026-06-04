@@ -7,7 +7,7 @@ import { useDashboardSession } from '@/hooks/useDashboardSession';
 import { useDarkMode } from '@/hooks/useDarkMode';
 import { FirstTimeTutorialModal } from '@/components/modals/FirstTimeTutorialModal';
 import { AttendeeCooldownOverlay } from '@/components/dashboard/AttendeeCooldownOverlay';
-import { getStoredParticipantId } from '@/services/session';
+import { getStoredParticipantId, getStoredUser } from '@/services/session';
 import { useParticipantCooldown } from '@/hooks/useParticipantCooldown';
 import { t } from '@/i18n';
 
@@ -164,6 +164,8 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
       onNavigate,
     });
   const participantId = getStoredParticipantId();
+  const storedUser = getStoredUser();
+  const hasSeenTutorial = storedUser?.hasSeenTutorial;
   const { isCoolingDown, remainingMs } = useParticipantCooldown(
     participantId,
     !isDj && isSessionReady,
@@ -227,7 +229,7 @@ export function Dashboard({ mode, onNavigate }: DashboardProps) {
           mode={mode}
         />
       </div>
-      <FirstTimeTutorialModal role={mode} />
+      <FirstTimeTutorialModal role={mode} hasSeenTutorial={hasSeenTutorial} />
       {!isDj && isCoolingDown && <AttendeeCooldownOverlay remainingMs={remainingMs} />}
     </Layout>
   );

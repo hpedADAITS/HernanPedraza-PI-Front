@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, useEffect } from 'react';
 import { LazyMotion, domAnimation } from 'motion/react';
-import { Toaster } from 'sonner';
+import { ToastContainer } from '@/components/ui/toast';
 import { useAppStartup } from '@/hooks/useAppStartup';
 import { AppRoutes } from '@/router/AppRoutes';
 import { ViewNavigationProvider } from '@/router/navigationContext';
@@ -27,10 +27,7 @@ export default function App() {
   return (
     <LazyMotion features={domAnimation}>
       <div className="relative w-full h-screen overflow-hidden font-sans text-slate-800">
-        <Toaster
-          position="top-center"
-          toastOptions={{ classNames: { toast: 'z-[1000]' } }}
-        />
+        <ToastContainer position="top-center" />
         <ViewNavigationProvider navigate={navigate}>
           <AppRoutes
             direction={direction}

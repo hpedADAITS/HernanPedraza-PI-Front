@@ -7,10 +7,12 @@ export interface SongEventPayload {
   title?: string;
   artist?: string;
   voteScore?: number;
+  voteCount?: number;
   status?: SongStatus | string;
   totalDuration?: number;
   duration?: number;
   queuePosition?: number;
+  isPremiumSuggestion?: boolean;
   requestedBy?: Song['requestedBy'];
   recognitionMatch?: Song['recognitionMatch'];
   eventId?: string;

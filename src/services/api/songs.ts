@@ -47,6 +47,13 @@ export const songsAPI = {
     return data.data.song;
   },
 
+  playNext: async (eventId: string) => {
+    const data = await apiCall(`/songs/${eventId}/play-next`, {
+      method: 'POST',
+    });
+    return data.data.song;
+  },
+
   skipSong: async (eventId: string, songId: string, reason: string) => {
     const data = await apiCall(`/songs/${eventId}/${songId}/skip`, {
       method: 'POST',

@@ -9,8 +9,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { consumePendingTutorial, type TutorialRole } from '@/components/modals/firstTimeTutorialQueue';
+import { type TutorialRole, shouldShowTutorial } from '@/components/modals/firstTimeTutorialQueue';
 import { t } from '@/i18n';
+import { authAPI } from '@/services/api/auth';
+import { attendeeSessionAPI } from '@/services/api/attendeeSession';
+
+interface FirstTimeTutorialModalProps {
+  role: TutorialRole;
+  /** Optional: Pass from stored user.hasSeenTutorial to check against backend flag */
+  hasSeenTutorial?: boolean;
+}
 
 const TUTORIALS = {
   attendee: {
@@ -38,23 +46,32 @@ const TUTORIALS = {
   steps: { icon: typeof Search; text: string }[];
 }>;
 
-export function FirstTimeTutorialModal({ role }: { role: TutorialRole }) {
+export function FirstTimeTutorialModal({ role, hasSeenTutorial }: FirstTimeTutorialModalProps) {
   const [state, setState] = useState(() => ({
-    open: consumePendingTutorial(role),
+    open: shouldShowTutorial(role, hasSeenTutorial),
     role,
   }));
 
   if (state.role !== role) {
-    setState({ open: consumePendingTutorial(role), role });
+    setState({ open: shouldShowTutorial(role, hasSeenTutorial), role });
   }
 
   const tutorial = TUTORIALS[role];
 
+  const handleDismiss = (open: boolean) => {
+    if (!open && state.open) {
+      // Modal is closing - mark as seen in backend
+      if (role === 'dj') {
+        authAPI.markTutorialAsSeen().catch(console.error);
+      } else {
+        attendeeSessionAPI.markTutorialAsSeen().catch(console.error);
+      }
+    }
+    setState((current) => ({ ...current, open }));
+  };
+
   return (
-    <AlertDialog
-      open={state.open}
-      onOpenChange={(open) => setState((current) => ({ ...current, open }))}
-    >
+    <AlertDialog open={state.open} onOpenChange={handleDismiss}>
       <AlertDialogContent className="max-w-[calc(100%-2rem)] gap-5 rounded-lg p-5 sm:max-w-md sm:p-6">
         <AlertDialogHeader>
           <AlertDialogTitle>{t(tutorial.title)}</AlertDialogTitle>

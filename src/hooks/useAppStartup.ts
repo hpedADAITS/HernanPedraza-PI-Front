@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 import { API_BASE, checkHealth, loadToken } from '@/services/api';
 import { isDebugModeEnabled } from '@/utils/debugMode';
 import { t } from '@/i18n';
 
 export function useAppStartup() {
+  const toast = useToast();
   useEffect(() => {
     loadToken();
 

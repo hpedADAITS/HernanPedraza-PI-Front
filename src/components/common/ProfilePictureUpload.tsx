@@ -1,7 +1,7 @@
 import React, { useRef, useState, useTransition } from 'react';
 import { m, AnimatePresence } from 'motion/react';
 import { Upload, X } from 'lucide-react';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 import { authAPI, participantsAPI } from '@/services/api';
 import { readStoredJson, writeStoredJson } from '@/utils/storage';
 import { t } from '@/i18n';
@@ -23,6 +23,7 @@ export function ProfilePictureUpload({
   onPictureUpdated,
   size = 'md',
 }: ProfilePictureUploadProps) {
+  const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isPending, startTransition] = useTransition();

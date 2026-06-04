@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 import { t } from '@/i18n';
 
 interface UseMicrophoneReturn {
@@ -21,6 +21,7 @@ type MicrophoneIssue =
   | null;
 
 export function useMicrophone(isDj: boolean): UseMicrophoneReturn {
+  const toast = useToast();
   const [isListening, setIsListening] = useState(false);
   const [microphoneIssue, setMicrophoneIssue] =
     useState<MicrophoneIssue>(null);

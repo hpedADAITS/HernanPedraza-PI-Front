@@ -1,5 +1,5 @@
 import { useReducer, useState } from 'react';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 import { attendeeSessionAPI, participantsAPI, eventsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
 import { writeStoredJson } from '@/utils/storage';
@@ -66,6 +66,7 @@ export function useAttendeeLoginController(onNavigate: NavigateToView) {
   const [loading, setLoading] = useState(false);
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
   const isAccessCodeVerified = Boolean(state.verifiedEvent);
+  const { toast } = useToast();
 
   const closeScanner = () => dispatch({ type: 'set_show_qr_scanner', value: false });
   const openScanner = () => dispatch({ type: 'set_show_qr_scanner', value: true });

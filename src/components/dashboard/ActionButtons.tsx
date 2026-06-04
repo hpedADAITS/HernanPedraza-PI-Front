@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { m } from 'motion/react';
 import { ThumbsUp, ThumbsDown, LogOut, Settings, Plus } from 'lucide-react';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ANIMATION_DURATION } from '@/constants/animations';
 import { songsAPI, votesAPI, eventsAPI, participantsAPI, authAPI, clearToken } from '@/services/api';
@@ -57,6 +57,7 @@ export function ActionButtons({
   showVoting = true,
   showActions = true,
 }: ActionButtonsProps) {
+  const { info, error, success } = useToast();
   const navigate = useViewNavigate(onNavigate);
   const { playSound } = useSound();
   const isDj = mode === 'dj';
@@ -117,7 +118,7 @@ export function ActionButtons({
         try {
           await eventsAPI.endEvent(eventId);
         } catch (err: unknown) {
-          toast.error(getErrorMessage(err, t('Failed to end event')));
+          error(getErrorMessage(err, t('Failed to end event')));
         }
       }
     } else {
@@ -149,7 +150,7 @@ export function ActionButtons({
         await authAPI.updateProfilePicture({ profilePicture: null });
         await participantsAPI.updateProfile(participantId, { profilePicture: null });
       } catch (err: unknown) {
-        toast.error(getErrorMessage(err, t('Failed to remove profile picture')));
+        error(getErrorMessage(err, t('Failed to remove profile picture')));
         return;
       }
     }
@@ -286,7 +287,7 @@ function VotingButtons() {
 
   const handleVote = async (value: 1 | -1) => {
     if (!currentSong) {
-      toast.info(t('No song playing'));
+      info(t('No song playing'));
       return;
     }
     if (voting) return;
@@ -294,14 +295,14 @@ function VotingButtons() {
     const event = readStoredJson<{ eventId?: string; _id?: string; id?: string }>('currentEvent');
     const participant = readStoredJson<{ _id?: string; id?: string }>('currentParticipant');
     if (!event || !participant) {
-      toast.error(t('Session data missing'));
+      error(t('Session data missing'));
       return;
     }
 
     const eventId = event.eventId || event._id || event.id;
     const participantId = participant._id || participant.id;
     if (!eventId || !participantId) {
-      toast.error(t('Session data missing'));
+      error(t('Session data missing'));
       return;
     }
 
@@ -310,9 +311,9 @@ function VotingButtons() {
     try {
       await votesAPI.castVote(currentSong._id, participantId, value);
       const direction = value === 1 ? '👍' : '👎';
-      toast.success(`${direction} ${currentSong.title}`);
+      success(`${direction} ${currentSong.title}`);
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, t('Vote failed')));
+      error(getErrorMessage(err, t('Vote failed')));
     } finally {
       setVoting(false);
     }

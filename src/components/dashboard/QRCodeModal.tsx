@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState, useEffectEvent } from 'react';
 import { m, AnimatePresence } from 'motion/react';
 import { QRCodeSVG as QRCode } from 'qrcode.react';
 import { Copy, Download, RefreshCw, X } from 'lucide-react';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { eventsAPI } from '@/services/api/events';
@@ -25,6 +25,7 @@ export function QRCodeModal({
   eventId,
   onAccessCodeChange,
 }: QRCodeModalProps) {
+  const toast = useToast();
   const qrRef = useRef<HTMLDivElement>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [regenerating, setRegenerating] = useState(false);

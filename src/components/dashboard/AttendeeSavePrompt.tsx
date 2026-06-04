@@ -1,6 +1,6 @@
 import React, { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { Lock, X } from 'lucide-react';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 import { authAPI, participantsAPI } from '@/services/api';
 import { readStoredJson, writeStoredJson } from '@/utils/storage';
 import { t } from '@/i18n';
@@ -26,6 +26,7 @@ export function AttendeePasswordPrompt({
   onSkip,
   onSaved,
 }: AttendeePasswordPromptProps) {
+  const toast = useToast();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [saveProfilePicture, setSaveProfilePicture] = useState(true);

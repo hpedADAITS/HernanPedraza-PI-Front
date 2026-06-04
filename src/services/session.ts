@@ -27,6 +27,7 @@ export interface StoredUser {
   displayName?: string;
   role?: string;
   profilePicture?: string | null;
+  hasSeenTutorial?: boolean;
 }
 
 export function getAuthToken() {

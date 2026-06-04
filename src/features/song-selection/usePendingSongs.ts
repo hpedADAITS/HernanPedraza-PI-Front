@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 import { songsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
 import { listenDebugSongEvents } from '@/utils/debugSongEvents';
@@ -31,6 +31,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 }
 
 export function usePendingSongs(eventId: string | null, isDj: boolean) {
+  const toast = useToast();
   const [pendingSongs, setPendingSongs] = useState<PendingSong[]>([]);
   const pendingSongIdsRef = useRef<Set<string> | null>(null);
   if (pendingSongIdsRef.current === null) pendingSongIdsRef.current = new Set<string>();
