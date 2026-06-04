@@ -68,12 +68,12 @@ export function EventIdSetupModal({
 
     setLoading(true);
     try {
-      onConfirm(finalEventId);
+      await onConfirm(finalEventId);
     } catch (error) {
       toast.error(t('Failed to create event'));
-    } finally {
-      setLoading(false);
+      setLoading(false); // Keep modal open on error
     }
+    // Don't setLoading(false) in finally - let it close naturally on success
   };
 
   return (
