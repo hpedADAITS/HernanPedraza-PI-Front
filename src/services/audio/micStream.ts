@@ -1,5 +1,6 @@
 import type { Socket } from 'socket.io-client';
-import { createAudioMatchWorkletUrl } from './audioMatchWorklet';
+
+const AUDIO_MATCH_PROCESSOR_NAME = 'audio-match-processor';
 
 interface MicStreamOptions {
   eventId: string;
@@ -32,7 +33,7 @@ export async function startAudioMatchStream({
   }
 
   const context = new AudioContextClass();
-  let workletUrl: string | null = null;
+
   let source: MediaStreamAudioSourceNode | null = null;
   let worklet: AudioWorkletNode | null = null;
   let muteGain: GainNode | null = null;
@@ -46,13 +47,13 @@ export async function startAudioMatchStream({
     }
 
     const sampleRate = context.sampleRate;
+    const workletUrl = new URL('./audio-match-processor.js', import.meta.url);
 
-    workletUrl = createAudioMatchWorkletUrl();
-    await context.audioWorklet.addModule(workletUrl);
+    await context.audioWorklet.addModule(workletUrl.href);
 
     source = context.createMediaStreamSource(stream);
 
-    worklet = new AudioWorkletNode(context, 'audio-match-processor', {
+    worklet = new AudioWorkletNode(context, AUDIO_MATCH_PROCESSOR_NAME, {
       numberOfInputs: 1,
       numberOfOutputs: 1,
       channelCount: 1,
@@ -61,7 +62,6 @@ export async function startAudioMatchStream({
       outputChannelCount: [1],
     });
 
-    // Keeps the audio graph alive on stricter mobile browsers without audible feedback.
     muteGain = context.createGain();
     muteGain.gain.value = 0;
 
@@ -84,7 +84,7 @@ export async function startAudioMatchStream({
         });
       } catch (error) {
         onError?.(
-          error instanceof Error ? error : new Error('Audio stream failed')
+          error instanceof Error ? error : new Error('Audio stream failed'),
         );
       }
     };
@@ -112,10 +112,6 @@ export async function startAudioMatchStream({
         track.stop();
       }
 
-      if (workletUrl) {
-        URL.revokeObjectURL(workletUrl);
-      }
-
       void context.close();
     };
   } catch (error) {
@@ -128,10 +124,6 @@ export async function startAudioMatchStream({
 
     for (const track of stream.getTracks()) {
       track.stop();
-    }
-
-    if (workletUrl) {
-      URL.revokeObjectURL(workletUrl);
     }
 
     void context.close();
