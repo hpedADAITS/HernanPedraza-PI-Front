@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { m, AnimatePresence } from 'motion/react';
-import { Mail, Check, Clock, Loader } from 'lucide-react';
+import { Mail, Check, Clock, Loader, Copy, ExternalLink } from 'lucide-react';
 import { t } from '@/i18n';
 import { authAPI } from '@/services/api';
 
@@ -21,9 +21,28 @@ export function EmailConfirmationModal({
 }: EmailConfirmationModalProps) {
   const [status, setStatus] = useState<'sending' | 'sent' | 'verifying'>('sending');
   const [verifyError, setVerifyError] = useState<string>('');
+  const [copied, setCopied] = useState(false);
   const debugVerificationUrl = debugToken
     ? `${window.location.origin}/?verifyEmailToken=${encodeURIComponent(debugToken)}`
     : '';
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -104,38 +123,84 @@ export function EmailConfirmationModal({
               >
                 <h3 className="font-semibold text-blue-900 mb-2">{t("What's Next?")}</h3>
                 {(debugToken || import.meta.env.DEV) ? (
-                  <div className="text-sm text-blue-800">
-                    <p className="mb-3">{import.meta.env.DEV ? t('Dev Mode: Click to verify directly') : t('Debug Mode: Click to verify directly')}</p>
-                    <button
-                      type="button"
-                      disabled={status === 'verifying'}
-                      onClick={async () => {
-                        setStatus('verifying');
-                        setVerifyError('');
-                        try {
-                          await authAPI.verifyEmailToken(debugToken);
-                          if (onVerified) {
-                            onVerified();
-                          }
-                        } catch (err) {
-                          setVerifyError(err instanceof Error ? err.message : t('Verification failed'));
-                          setStatus('sent');
-                        }
-                      }}
-                      className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-                    >
-                      {status === 'verifying' ? (
-                        <>
-                          <Loader size={18} className="animate-spin" />
-                          {t('Verifying...')}
-                        </>
-                      ) : (
-                        <>
-                          <Check size={18} />
-                          {t('Verify Email')}
-                        </>
-                      )}
-                    </button>
+                  <div className="text-sm text-blue-800 space-y-3">
+                    <p className="font-medium">{import.meta.env.DEV ? t('Dev Mode: Click the link below to verify') : t('Debug Mode: Click the link below to verify')}</p>
+                    
+                    {debugToken && debugVerificationUrl ? (
+                      <>
+                        {/* Verification URL Card */}
+                        <div className="bg-white rounded-lg p-3 border border-blue-200">
+                          <p className="text-xs text-slate-500 mb-2">{t('Verification Link')}</p>
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={debugVerificationUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 text-xs text-blue-600 hover:text-blue-800 hover:underline break-all font-mono bg-blue-50 px-2 py-1 rounded"
+                            >
+                              {debugVerificationUrl}
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => copyToClipboard(debugVerificationUrl)}
+                              className="flex-shrink-0 p-1.5 bg-blue-100 hover:bg-blue-200 rounded-md transition-colors"
+                              title={t('Copy link')}
+                            >
+                              {copied ? (
+                                <Check size={14} className="text-green-600" />
+                              ) : (
+                                <Copy size={14} className="text-blue-600" />
+                              )}
+                            </button>
+                            <a
+                              href={debugVerificationUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-shrink-0 p-1.5 bg-blue-100 hover:bg-blue-200 rounded-md transition-colors"
+                              title={t('Open link')}
+                            >
+                              <ExternalLink size={14} className="text-blue-600" />
+                            </a>
+                          </div>
+                        </div>
+
+                        {/* Direct Verify Button */}
+                        <button
+                          type="button"
+                          disabled={status === 'verifying'}
+                          onClick={async () => {
+                            setStatus('verifying');
+                            setVerifyError('');
+                            try {
+                              await authAPI.verifyEmailToken(debugToken);
+                              if (onVerified) {
+                                onVerified();
+                              }
+                            } catch (err) {
+                              setVerifyError(err instanceof Error ? err.message : t('Verification failed'));
+                              setStatus('sent');
+                            }
+                          }}
+                          className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                        >
+                          {status === 'verifying' ? (
+                            <>
+                              <Loader size={18} className="animate-spin" />
+                              {t('Verifying...')}
+                            </>
+                          ) : (
+                            <>
+                              <Check size={18} />
+                              {t('Verify Email')}
+                            </>
+                          )}
+                        </button>
+                      </>
+                    ) : (
+                      <p className="text-xs text-orange-600 bg-orange-50 p-2 rounded border border-orange-200">
+                        {t('No debug token available. Set DEBUG_EMAIL=true or DEBUG_MODE=true in backend .env')}
+                      </p>
+                    )}
                     {verifyError && (
                       <p className="mt-2 text-red-600 text-xs">{verifyError}</p>
                     )}
