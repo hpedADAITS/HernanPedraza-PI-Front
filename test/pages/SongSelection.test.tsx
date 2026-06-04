@@ -99,13 +99,11 @@ describe('SongSelection attendee request form', () => {
     expect(submitButton.className).toContain('bg-emerald-500');
   });
 
-  it('goes back when tabbing away from the attendee back button', () => {
+  it('goes back when pressing Escape key', () => {
     const onNavigate = vi.fn();
     render(<SongSelection mode="attendee" onNavigate={onNavigate} />);
 
-    const backButton = screen.getByRole('button', { name: /back/i });
-
-    fireEvent.keyDown(backButton, { key: 'Tab' });
+    fireEvent.keyDown(screen.getByRole('button', { name: /back/i }), { key: 'Escape' });
 
     expect(onNavigate).toHaveBeenCalledWith('attendee-dashboard');
   });

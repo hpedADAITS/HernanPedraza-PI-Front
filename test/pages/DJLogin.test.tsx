@@ -34,18 +34,20 @@ vi.mock('@/utils/storage', () => ({
   writeStoredJson: writeStoredJsonMock,
 }));
 
-// Mock the new useToast hook
+// Mock the new useToast hook - supports both patterns
 vi.mock('@/hooks/useToast', () => {
   const mockFn = () => {};
+  const mockToastMethods = {
+    success: mockFn,
+    error: mockFn,
+    info: mockFn,
+    warning: mockFn,
+    promise: mockFn,
+  };
   return {
     useToast: () => ({
-      toast: {
-        success: mockFn,
-        error: mockFn,
-        info: mockFn,
-        warning: mockFn,
-        promise: mockFn,
-      },
+      ...mockToastMethods,
+      toast: mockToastMethods,
     }),
     useToastStore: () => ({
       toasts: [],

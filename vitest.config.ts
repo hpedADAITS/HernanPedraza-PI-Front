@@ -11,6 +11,8 @@ export default defineConfig({
     css: true,
     include: ['test/**/*.{test,spec}.{ts,tsx,js}'],
     exclude: ['node_modules/**', 'dist/**', 'coverage/**', 'e2e/**', '**/*.spec.js'],
+    pool: 'forks',
+    maxWorkers: 4,
   },
   resolve: {
     alias: {

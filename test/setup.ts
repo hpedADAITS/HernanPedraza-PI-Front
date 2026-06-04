@@ -2,17 +2,22 @@ import '@testing-library/jest-dom';
 import { expect, afterEach, vi, beforeAll, afterAll } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
-/* Mock useToast hook */
+/* Mock useToast hook - supports both patterns:
+ * const { toast } = useToast() -> toast.error()
+ * const toast = useToast() -> toast.error()
+ */
 const mockToastFn = () => {};
+const mockToastMethods = {
+  success: mockToastFn,
+  error: mockToastFn,
+  info: mockToastFn,
+  warning: mockToastFn,
+  promise: mockToastFn,
+};
 vi.mock('@/hooks/useToast', () => ({
   useToast: () => ({
-    toast: {
-      success: mockToastFn,
-      error: mockToastFn,
-      info: mockToastFn,
-      warning: mockToastFn,
-      promise: mockToastFn,
-    },
+    ...mockToastMethods,
+    toast: mockToastMethods,
   }),
   useToastStore: () => ({
     toasts: [],
@@ -49,6 +54,14 @@ const socketIoMock = vi.fn(() => ({
   off: vi.fn(),
   disconnect: vi.fn(),
   connect: vi.fn(),
+  io: {
+    engine: {
+      on: vi.fn(),
+      transport: {
+        name: 'websocket',
+      },
+    },
+  },
 }));
 
 vi.mock('socket.io-client', () => ({

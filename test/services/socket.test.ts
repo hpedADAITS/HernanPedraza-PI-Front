@@ -17,6 +17,14 @@ function createSocketDouble(connected = false) {
     off: vi.fn(),
     emit: vi.fn(),
     disconnect: vi.fn(),
+    io: {
+      engine: {
+        on: vi.fn(),
+        transport: {
+          name: 'websocket',
+        },
+      },
+    },
   };
 }
 
@@ -36,15 +44,17 @@ describe('socket service', () => {
 
     expect(result).toBe(socket);
     expect(getSocket()).toBe(socket);
-    expect(socketIoMock).toHaveBeenCalledWith(undefined, {
-      transports: ['websocket'],
+    expect(socketIoMock).toHaveBeenCalledWith('', {
+      transports: ['polling', 'websocket'],
+      path: '/socket.io',
       auth: {
         token: 'explicit-token',
       },
       reconnection: true,
       reconnectionDelay: 500,
       reconnectionDelayMax: 3000,
-      reconnectionAttempts: Number.POSITIVE_INFINITY,
+      reconnectionAttempts: Infinity,
+      timeout: 20000,
     });
     expect(socket.on).toHaveBeenCalledWith('connect', expect.any(Function));
     expect(socket.on).toHaveBeenCalledWith('disconnect', expect.any(Function));
@@ -67,7 +77,7 @@ describe('socket service', () => {
     initSocket();
 
     expect(socketIoMock).toHaveBeenCalledWith(
-      undefined,
+      '',
       expect.objectContaining({
         auth: {
           token: 'stored-token',

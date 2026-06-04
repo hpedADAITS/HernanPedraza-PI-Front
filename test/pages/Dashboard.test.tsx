@@ -304,7 +304,7 @@ describe('Dashboard attendee admin effects', () => {
         'owned-event',
         'dj-1',
         'DJ Nova',
-        null,
+        undefined,
       );
     });
     expect(readStoredJson('currentParticipant')).toEqual(
@@ -342,7 +342,7 @@ describe('Dashboard attendee admin effects', () => {
         'owned-event',
         'dj-1',
         'DJ Nova',
-        null,
+        undefined,
       );
     });
     expect(screen.queryByText('Session data is incomplete')).toBeNull();
@@ -371,7 +371,7 @@ describe('Dashboard attendee admin effects', () => {
         'owned-event',
         'dj-1',
         'DJ Nova',
-        null,
+        undefined,
       );
     });
     expect(readStoredJson('currentParticipant')).toEqual(
