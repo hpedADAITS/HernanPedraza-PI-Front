@@ -1,12 +1,17 @@
 import { io, type Socket } from 'socket.io-client';
 import { SocketEventName, SocketListener } from './contracts';
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 const VITE_API_URL: string | undefined =
   import.meta.env?.VITE_API_URL || undefined;
 
-let socket: Socket | null = null;
+// Socket client config constants
+const SOCKET_RECONNECT_DELAY = 500;
+const SOCKET_RECONNECT_DELAY_MAX = 3000;
+const SOCKET_TIMEOUT = 20000;
 
+let socket: Socket | null = null;
 const eventListeners: Map<
   SocketEventName,
   SocketListener<SocketEventName>[]
@@ -87,15 +92,15 @@ export function initSocket(token?: string) {
 
   socket = io(SOCKET_URL, {
     path: '/socket.io',
-    transports: ['polling'],  // Mobile-friendly: use polling only (more reliable on cellular networks)
+    transports: ['polling', 'websocket'],
     auth: {
       token: authToken,
     },
     reconnection: true,
-    reconnectionDelay: 500,
-    reconnectionDelayMax: 3000,
+    reconnectionDelay: SOCKET_RECONNECT_DELAY,
+    reconnectionDelayMax: SOCKET_RECONNECT_DELAY_MAX,
     reconnectionAttempts: Number.POSITIVE_INFINITY,
-    timeout: 20000,
+    timeout: SOCKET_TIMEOUT,
   });
 
   socket.auth = { token: authToken };
