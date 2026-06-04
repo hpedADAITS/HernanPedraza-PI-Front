@@ -351,9 +351,11 @@ export function SearchBar({
           </AlertDialogHeader>
           {isDj && eventId && !isMicrophoneConnected && (
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-              <div className="mb-2 flex items-center gap-2 font-semibold text-slate-900">
-                <Smartphone className="h-4 w-4 text-blue-600" />
-                {t('Use a phone as microphone')}
+              <div className="mb-2 flex min-w-0 items-center gap-2 font-semibold text-slate-900">
+                <Smartphone className="h-4 w-4 flex-shrink-0 text-blue-600" />
+                <span className="min-w-0 truncate">
+                  {t('Use a phone as microphone')}
+                </span>
               </div>
               <div className="flex w-full min-w-0 max-w-full items-center gap-2 overflow-hidden">
                 <a
