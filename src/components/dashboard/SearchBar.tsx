@@ -44,7 +44,7 @@ export function SearchBar({
   const navigate = useViewNavigate(onNavigate);
   const [phoneMicrophoneLink, setPhoneMicrophoneLink] = useState('');
   const phoneMicrophoneDisplayLink = phoneMicrophoneLink
-    ? phoneMicrophoneLink.replace(/^https?:\/\//, '')
+    ? new URL(phoneMicrophoneLink).origin.replace(/^https?:\/\//, '')
     : t('Creating link...');
   const [phoneMicrophoneStatus, setPhoneMicrophoneStatus] = useState('');
   const [connectedMicrophone, setConnectedMicrophone] = useState({
