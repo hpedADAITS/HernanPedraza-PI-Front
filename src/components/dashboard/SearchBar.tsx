@@ -1,13 +1,30 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { m } from 'motion/react';
-import { AlertCircle, Check, Copy, Mic, MicOff, Search, Smartphone } from 'lucide-react';
+import {
+  AlertCircle,
+  Check,
+  Copy,
+  Mic,
+  MicOff,
+  Search,
+  Smartphone,
+} from 'lucide-react';
 import { SLIDE_UP } from '@/constants/animations';
 import { useMicrophone } from '@/hooks/useMicrophone';
 import { useTrackedTimeout } from '@/hooks/useTrackedTimeout';
 import { useViewNavigate } from '@/router/navigationContext';
 import { eventsAPI } from '@/services/api';
 import { off, onPhoneMicrophoneConnected } from '@/services/socket';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { t } from '@/i18n';
 import type { NavigateToView } from '@/types';
 
@@ -27,7 +44,10 @@ export function SearchBar({
   const navigate = useViewNavigate(onNavigate);
   const [phoneMicrophoneLink, setPhoneMicrophoneLink] = useState('');
   const [phoneMicrophoneStatus, setPhoneMicrophoneStatus] = useState('');
-  const [connectedMicrophone, setConnectedMicrophone] = useState({ name: '', status: '' });
+  const [connectedMicrophone, setConnectedMicrophone] = useState({
+    name: '',
+    status: '',
+  });
   const [isLinkCopied, setIsLinkCopied] = useState(false);
   const connectedMicrophoneTimeoutRef = useRef<number | null>(null);
   const { clearTrackedTimeout, setTrackedTimeout } = useTrackedTimeout();
@@ -85,7 +105,9 @@ export function SearchBar({
       setIsLinkCopied(true);
       window.setTimeout(() => setIsLinkCopied(false), 1400);
     } catch {
-      setPhoneMicrophoneStatus(t('Copy failed. Open the link and share it from the browser.'));
+      setPhoneMicrophoneStatus(
+        t('Copy failed. Open the link and share it from the browser.'),
+      );
     }
   };
 
@@ -259,7 +281,9 @@ export function SearchBar({
               type="button"
               onClick={handleMicrophoneClick}
               disabled={isAccessDenied && !isListening && !isNoSuitableMicFound}
-              aria-label={isListening ? t('Stop recording') : t('Use microphone')}
+              aria-label={
+                isListening ? t('Stop recording') : t('Use microphone')
+              }
               title={
                 isAccessDenied && !isListening
                   ? isNoSuitableMicFound
@@ -271,9 +295,7 @@ export function SearchBar({
                 isDarkMode
                   ? 'border-white/10 bg-white/10 shadow-[0_10px_20px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.10)] hover:shadow-[0_14px_24px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.12)]'
                   : 'border-slate-900/10 bg-white shadow-[0_10px_20px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.95)] hover:shadow-[0_14px_24px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.95)]'
-              } ${
-                isListening ? 'text-red-500' : 'text-[#2878ff]'
-              }`}
+              } ${isListening ? 'text-red-500' : 'text-[#2878ff]'}`}
             >
               {isListening ? (
                 <MicOff className="h-6 w-6" />
@@ -310,14 +332,18 @@ export function SearchBar({
               {isMicrophoneConnected
                 ? t('Microphone connected')
                 : isNoSuitableMicFound
-                ? t('No microphone found')
-                : t('Microphone unavailable')}
+                  ? t('No microphone found')
+                  : t('Microphone unavailable')}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {isMicrophoneConnected
-                ? t('{device} connected', { device: connectedMicrophone.name }) + '.'
+                ? t('{device} connected', {
+                    device: connectedMicrophone.name,
+                  }) + '.'
                 : error ||
-                t('Connect or enable a microphone, then try starting recording again.')}
+                  t(
+                    'Connect or enable a microphone, then try starting recording again.',
+                  )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           {isDj && eventId && !isMicrophoneConnected && (
@@ -326,12 +352,13 @@ export function SearchBar({
                 <Smartphone className="h-4 w-4 text-blue-600" />
                 {t('Use a phone as microphone')}
               </div>
-              <div className="flex min-w-0 items-center gap-2">
+              <div className="flex w-full min-w-0 max-w-full items-center gap-2 overflow-hidden">
                 <a
                   href={phoneMicrophoneLink || undefined}
                   target="_blank"
                   rel="noreferrer"
-                  className="min-w-0 flex-1 truncate rounded-md bg-white px-3 py-2 text-xs font-medium text-blue-700 ring-1 ring-slate-200"
+                  title={phoneMicrophoneLink || undefined}
+                  className="block min-w-0 max-w-full flex-1 overflow-hidden truncate whitespace-nowrap rounded-md bg-white px-3 py-2 text-xs font-medium text-blue-700 ring-1 ring-slate-200"
                 >
                   {phoneMicrophoneLink || t('Creating link...')}
                 </a>
