@@ -1,14 +1,25 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { LazyMotion, domAnimation, m } from 'motion/react';
 import { AlertCircle } from 'lucide-react';
 import { t } from '@/i18n';
 import type { NavigateToView } from '@/types';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 
 interface Props {
   onNavigate?: NavigateToView;
 }
 
 export function Banned({ onNavigate }: Props) {
+  const handleBack = useCallback(() => {
+    if (onNavigate) {
+      onNavigate('role-selection');
+    } else {
+      window.location.href = '/';
+    }
+  }, [onNavigate]);
+
+  useEscapeKey(handleBack);
+
   return (
     <div
       className="w-full min-h-screen overflow-hidden font-sans text-white flex items-center justify-center px-5"

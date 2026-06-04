@@ -1,9 +1,10 @@
-import React, { ReactNode, useEffect, useEffectEvent } from 'react';
+import React, { ReactNode, useCallback, useEffect, useEffectEvent } from 'react';
 import { m, AnimatePresence } from 'motion/react';
 import type { LucideIcon } from 'lucide-react';
 import { ArrowLeft, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { t } from '@/i18n';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 
 const tapMotion = { scale: 0.99 };
 const hoverMotion = { scale: 1.01 };
@@ -23,6 +24,12 @@ export function SettingsPageShell({
   onBack,
   titleClassName,
 }: SettingsPageShellProps) {
+  const handleBack = useCallback(() => {
+    onBack();
+  }, [onBack]);
+
+  useEscapeKey(handleBack);
+
   return (
     <m.div
       initial={{ opacity: 0, y: 20 }}

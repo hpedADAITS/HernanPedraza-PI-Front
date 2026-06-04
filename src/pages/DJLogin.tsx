@@ -79,8 +79,9 @@ export function DJLogin({
 
         if (!ownedEvent) {
           suspendNextSingleUserSessionCheck();
-          queueFirstTimeTutorial('dj');
         }
+        // Queue the tutorial based on backend's hasSeenTutorial flag from login response
+        queueFirstTimeTutorial('dj');
       }
 
       toast.success(t('Welcome back, {name}!', { name: displayName }));

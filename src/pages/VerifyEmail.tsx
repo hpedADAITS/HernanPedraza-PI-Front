@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { LazyMotion, domAnimation, m } from 'motion/react';
 import { CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import { authAPI } from '@/services/api';
@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { writeStoredJson } from '@/utils/storage';
 import { t } from '@/i18n';
 import type { NavigateToView } from '@/types';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 
 function AutoCloseWindow({ delay = 500 }: { delay?: number }) {
   useEffect(() => {
@@ -25,6 +26,16 @@ export function VerifyEmail({ onNavigate }: Props) {
     'loading',
   );
   const [message, setMessage] = useState('');
+
+  const handleBack = useCallback(() => {
+    if (onNavigate) {
+      onNavigate('dj-register');
+    } else {
+      window.location.href = '/';
+    }
+  }, [onNavigate]);
+
+  useEscapeKey(handleBack);
 
   useEffect(() => {
     const verifyToken = async () => {

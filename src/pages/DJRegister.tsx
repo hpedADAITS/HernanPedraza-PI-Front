@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { m } from 'motion/react';
 import { User, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
@@ -16,6 +16,7 @@ import {
 } from '@/services/singleUserSession';
 import { isDebugModeEnabled } from '@/utils/debugMode';
 import type { NavigateToView } from '@/types';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 
 interface Props {
   onNavigate: NavigateToView;
@@ -60,6 +61,12 @@ export function DJRegister({
   const [showEventIdModal, setShowEventIdModal] = useState(false);
   const registrationDataRef = useRef<RegistrationData | null>(null);
   const [debugToken, setDebugToken] = useState<string | undefined>(undefined);
+
+  const handleBack = useCallback(() => {
+    onNavigate('dj-login');
+  }, [onNavigate]);
+
+  useEscapeKey(handleBack);
 
   /* Poll for email verification status */
   React.useEffect(() => {

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { m } from 'motion/react';
 import { ArrowLeft } from 'lucide-react';
 import logoWhite from '@/assets/logo_white.png';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 
 interface LoginPageProps {
   children: React.ReactNode;
@@ -18,6 +19,12 @@ export function LoginPage({
   onBack,
   onSubmit,
 }: LoginPageProps) {
+  const handleBack = useCallback(() => {
+    onBack();
+  }, [onBack]);
+
+  useEscapeKey(handleBack);
+
   return (
     <div
       className="dark relative w-full min-h-screen overflow-x-hidden font-sans text-white"

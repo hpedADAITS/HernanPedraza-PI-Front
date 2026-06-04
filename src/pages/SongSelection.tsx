@@ -15,6 +15,7 @@ import { usePendingSongs } from '@/features/song-selection/usePendingSongs';
 import { useParticipantCooldown } from '@/hooks/useParticipantCooldown';
 import { useSongSuggestionForm } from '@/features/song-selection/useSongSuggestionForm';
 import { t } from '@/i18n';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 
 interface Props {
   mode: 'attendee' | 'dj';
@@ -54,12 +55,7 @@ export function SongSelection({ mode, onNavigate }: Props) {
     title,
   } = useSongSuggestionForm(eventId, participantId, () => onNavigate('attendee-dashboard'));
 
-  const handleBackKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
-    if (mode !== 'attendee' || e.key !== 'Tab') return;
-
-    e.preventDefault();
-    navigateBack();
-  };
+  useEscapeKey(navigateBack);
 
   return (
     <Layout theme={theme} className="px-5 py-6 md:px-10 md:py-8" showNav={true}>
@@ -70,7 +66,6 @@ export function SongSelection({ mode, onNavigate }: Props) {
             animate={{ opacity: 1, x: 0 }}
             whileTap={{ scale: 0.98 }}
             onClick={navigateBack}
-            onKeyDown={handleBackKeyDown}
             className="flex h-11 items-center gap-2 rounded-full border border-white/55 bg-white/16 px-4 text-sm font-semibold text-white shadow-lg shadow-slate-950/10 backdrop-blur-md transition-colors hover:bg-white/24"
           >
             <ArrowLeft size={18} />
