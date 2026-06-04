@@ -2,6 +2,26 @@ import '@testing-library/jest-dom';
 import { expect, afterEach, vi, beforeAll, afterAll } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
+/* Mock useToast hook */
+const mockToastFn = () => {};
+vi.mock('@/hooks/useToast', () => ({
+  useToast: () => ({
+    toast: {
+      success: mockToastFn,
+      error: mockToastFn,
+      info: mockToastFn,
+      warning: mockToastFn,
+      promise: mockToastFn,
+    },
+  }),
+  useToastStore: () => ({
+    toasts: [],
+    addToast: mockToastFn,
+    removeToast: mockToastFn,
+    clearAll: mockToastFn,
+  }),
+}));
+
 /* Cleanup after each test */
 afterEach(() => {
   cleanup();

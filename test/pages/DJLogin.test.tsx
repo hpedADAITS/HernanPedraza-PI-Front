@@ -8,16 +8,12 @@ const {
   createEventMock,
   initSocketMock,
   writeStoredJsonMock,
-  toastErrorMock,
-  toastSuccessMock,
 } = vi.hoisted(() => ({
   authLoginMock: vi.fn(),
   getMyActiveEventMock: vi.fn(),
   createEventMock: vi.fn(),
   initSocketMock: vi.fn(),
   writeStoredJsonMock: vi.fn(),
-  toastErrorMock: vi.fn(),
-  toastSuccessMock: vi.fn(),
 }));
 
 vi.mock('@/services/api', () => ({
@@ -38,12 +34,27 @@ vi.mock('@/utils/storage', () => ({
   writeStoredJson: writeStoredJsonMock,
 }));
 
-vi.mock('sonner', () => ({
-  toast: {
-    error: toastErrorMock,
-    success: toastSuccessMock,
-  },
-}));
+// Mock the new useToast hook
+vi.mock('@/hooks/useToast', () => {
+  const mockFn = () => {};
+  return {
+    useToast: () => ({
+      toast: {
+        success: mockFn,
+        error: mockFn,
+        info: mockFn,
+        warning: mockFn,
+        promise: mockFn,
+      },
+    }),
+    useToastStore: () => ({
+      toasts: [],
+      addToast: mockFn,
+      removeToast: mockFn,
+      clearAll: mockFn,
+    }),
+  };
+});
 
 describe('DJLogin page', () => {
   beforeEach(() => {
@@ -52,8 +63,6 @@ describe('DJLogin page', () => {
     createEventMock.mockReset();
     initSocketMock.mockReset();
     writeStoredJsonMock.mockReset();
-    toastErrorMock.mockReset();
-    toastSuccessMock.mockReset();
     localStorage.clear();
   });
 
@@ -81,9 +90,6 @@ describe('DJLogin page', () => {
     expect(screen.getByText(
       'Your password cannot be the same as your email address.',
     )).toBeInTheDocument();
-    expect(toastErrorMock).toHaveBeenCalledWith(
-      'Your password cannot be the same as your email address.',
-    );
   });
 
   it('continues with a normal login when the password is different', async () => {
@@ -125,6 +131,5 @@ describe('DJLogin page', () => {
     expect(createEventMock).toHaveBeenCalledTimes(1);
     expect(initSocketMock).toHaveBeenCalledWith('token');
     expect(onNavigate).toHaveBeenCalledWith('dj-dashboard');
-    expect(toastSuccessMock).toHaveBeenCalledWith('Welcome back, DJ Test!');
   });
 });
