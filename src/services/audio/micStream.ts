@@ -5,6 +5,11 @@ interface MicStreamOptions {
   stream: MediaStream;
   socket: Socket;
   onError?: (error: Error) => void;
+  onDebug?: (data: {
+    sampleRate: number;
+    inputSamples: number;
+    byteLength: number;
+  }) => void;
 }
 
 export async function startAudioMatchStream({
@@ -12,33 +17,71 @@ export async function startAudioMatchStream({
   stream,
   socket,
   onError,
+  onDebug,
 }: MicStreamOptions) {
-  const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+  const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+
+  if (!AudioContextClass) {
+    throw new Error('Web Audio API is not supported in this browser');
+  }
+
   const context = new AudioContextClass();
-  const source = context.createMediaStreamSource(stream);
-  const processor = context.createScriptProcessor(4096, 1, 1);
 
   await context.resume();
-  socket.emit('audio_match_start', { eventId, sampleRate: context.sampleRate });
+  const sampleRate = context.sampleRate;
 
-  processor.onaudioprocess = (event) => {
+  await context.audioWorklet.addModule('/audio-match-processor.js');
+
+  const source = context.createMediaStreamSource(stream);
+  const worklet = new AudioWorkletNode(context, 'audio-match-processor', {
+    numberOfInputs: 1,
+    numberOfOutputs: 0,
+    channelCount: 1,
+    channelCountMode: 'explicit',
+    channelInterpretation: 'speakers',
+  });
+
+  socket.emit('audio_match_start', {
+    eventId,
+    sampleRate,
+  });
+
+  worklet.port.onmessage = (event: MessageEvent<Float32Array>) => {
     try {
-      const input = event.inputBuffer.getChannelData(0);
-      const chunk = new Float32Array(input.length);
-      chunk.set(input);
-      socket.emit('audio_match_chunk', chunk.buffer);
+      const chunk = event.data;
+
+      socket.emit('audio_match_chunk', {
+        eventId,
+        sampleRate,
+        pcm: chunk.buffer,
+      });
+
+      onDebug?.({
+        sampleRate,
+        inputSamples: chunk.length,
+        byteLength: chunk.byteLength,
+      });
     } catch (error) {
-      onError?.(error instanceof Error ? error : new Error('Audio stream failed'));
+      onError?.(
+        error instanceof Error ? error : new Error('Audio stream failed')
+      );
     }
   };
 
-  source.connect(processor);
-  processor.connect(context.destination);
+  source.connect(worklet);
 
   return () => {
-    processor.disconnect();
+    worklet.port.onmessage = null;
+
     source.disconnect();
+    worklet.disconnect();
+
     socket.emit('audio_match_stop', { eventId });
+
+    for (const track of stream.getTracks()) {
+      track.stop();
+    }
+
     void context.close();
   };
 }

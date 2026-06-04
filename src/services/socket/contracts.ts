@@ -117,6 +117,11 @@ export interface AudioMatchUpdatePayload {
   }>;
 }
 
+export interface AudioMatchChunkPayload {
+  sampleRate: number;
+  pcm: Float32Array;
+}
+
 export interface SocketEventPayloads {
   participant_joined: ParticipantEventPayload;
   participant_left: ParticipantEventPayload;
@@ -142,9 +147,14 @@ export interface SocketEventPayloads {
   attendee_password_prompt_requested: AttendeePasswordPromptPayload;
   phone_microphone_connected: PhoneMicrophoneConnectedPayload;
   audio_match_update: AudioMatchUpdatePayload;
+  audio_match_chunk: AudioMatchChunkPayload;
 }
 
 export type SocketEventName = keyof SocketEventPayloads;
+
+// Listener for audio_match_chunk event - receives raw Float32 PCM from phone microphone
+export type AudioMatchChunkListener = (data: AudioMatchChunkPayload) => void;
+
 export type SocketListener<Event extends SocketEventName> = (
   data: SocketEventPayloads[Event],
 ) => void;
