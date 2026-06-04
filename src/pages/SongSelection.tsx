@@ -133,9 +133,13 @@ export function SongSelection({ mode, onNavigate }: Props) {
             />
             <DjRequestReviewDialog
               isProcessing={!!reviewSong && processingSongId === reviewSong._id}
-              onApprove={() => reviewSong ? handleApprove(reviewSong._id) : Promise.resolve(false)}
+              onApprove={async () => {
+                if (reviewSong) await handleApprove(reviewSong._id);
+              }}
               onClose={closeReviewSong}
-              onReject={() => reviewSong ? handleReject(reviewSong._id) : Promise.resolve(false)}
+              onReject={async () => {
+                if (reviewSong) await handleReject(reviewSong._id);
+              }}
               song={reviewSong}
             />
 
@@ -164,8 +168,12 @@ export function SongSelection({ mode, onNavigate }: Props) {
                   <DjSongCard
                     key={song._id}
                     isProcessing={processingSongId === song._id}
-                    onApprove={() => handleApprove(song._id)}
-                    onReject={() => handleReject(song._id)}
+                    onApprove={async () => {
+                      await handleApprove(song._id);
+                    }}
+                    onReject={async () => {
+                      await handleReject(song._id);
+                    }}
                     song={song}
                   />
                 ))}

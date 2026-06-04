@@ -8,6 +8,8 @@ export function useTrackedTimeout() {
 
   useEffect(() => {
     const timers = timersRef.current;
+    if (!timers) return;
+
     return () => {
       timers.forEach(window.clearTimeout);
       timers.clear();

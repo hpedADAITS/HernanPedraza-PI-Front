@@ -53,7 +53,7 @@ export function usePendingSongs(eventId: string | null, isDj: boolean) {
   const syncSuggestedSong = useCallback(
     (payload: SongEventPayload | DebugSongPayload) => {
       const songId = getSongId(payload);
-      if (!songId || pendingSongIdsRef.current.has(songId)) return;
+      if (!songId || pendingSongIdsRef.current?.has(songId)) return;
 
       const song = {
         _id: songId,

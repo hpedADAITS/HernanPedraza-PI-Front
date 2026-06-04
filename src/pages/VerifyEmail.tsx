@@ -20,7 +20,7 @@ interface Props {
   onNavigate?: NavigateToView;
 }
 
-export function VerifyEmail(_props: Props) {
+export function VerifyEmail({ onNavigate }: Props) {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>(
     'loading',
   );

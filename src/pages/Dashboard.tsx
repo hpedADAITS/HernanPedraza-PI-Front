@@ -36,7 +36,7 @@ function DashboardStatus({
   return (
     <Layout theme="white" className="grid min-h-full place-items-center p-6">
       <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-7 text-center shadow-[0_24px_80px_-44px_rgba(15,23,42,0.65)]">
-        <DashboardLogo size="medium" className="mb-6 flex justify-center" />
+        <DashboardLogo className="mb-6 flex justify-center" />
         <p className="text-sm font-medium text-slate-700">{message}</p>
         {showAction && (
           <button

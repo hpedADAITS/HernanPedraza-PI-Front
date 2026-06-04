@@ -43,6 +43,9 @@ export function SearchBar({
 }: SearchBarProps) {
   const navigate = useViewNavigate(onNavigate);
   const [phoneMicrophoneLink, setPhoneMicrophoneLink] = useState('');
+  const phoneMicrophoneDisplayLink = phoneMicrophoneLink
+    ? phoneMicrophoneLink.replace(/^https?:\/\//, '')
+    : t('Creating link...');
   const [phoneMicrophoneStatus, setPhoneMicrophoneStatus] = useState('');
   const [connectedMicrophone, setConnectedMicrophone] = useState({
     name: '',
@@ -358,9 +361,9 @@ export function SearchBar({
                   target="_blank"
                   rel="noreferrer"
                   title={phoneMicrophoneLink || undefined}
-                  className="block min-w-0 max-w-full flex-1 overflow-hidden truncate whitespace-nowrap rounded-md bg-white px-3 py-2 text-xs font-medium text-blue-700 ring-1 ring-slate-200"
+                  className="block min-w-0 flex-1 overflow-hidden truncate whitespace-nowrap rounded-md bg-white px-3 py-2 text-xs font-medium text-blue-700 ring-1 ring-slate-200"
                 >
-                  {phoneMicrophoneLink || t('Creating link...')}
+                  {phoneMicrophoneDisplayLink}
                 </a>
                 <button
                   type="button"

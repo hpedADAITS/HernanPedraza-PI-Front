@@ -36,7 +36,9 @@ export async function toBrowserWav(file: File) {
     ffmpeg.deleteFile(output).catch(() => {}),
   ]);
 
-  return new File([data instanceof Uint8Array ? data : new TextEncoder().encode(data)], `${file.name}.wav`, {
+  const wavBytes = data instanceof Uint8Array ? new Uint8Array(data) : new TextEncoder().encode(data);
+
+  return new File([wavBytes], `${file.name}.wav`, {
     type: 'audio/wav',
   });
 }

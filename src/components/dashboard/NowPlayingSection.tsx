@@ -378,6 +378,7 @@ export function NowPlayingSection() {
     state.tempStatus ||
     state.nowPlaying ||
     (queuedPreview ? toPlayerSong(queuedPreview) : NOW_PLAYING);
+  const albumArt = 'albumArt' in display ? display.albumArt : undefined;
 
   if (
     !state.tempStatus &&
@@ -416,7 +417,7 @@ export function NowPlayingSection() {
           progress={display.progress}
           currentTime={display.currentTime}
           duration={display.duration}
-          albumArt={display.albumArt || undefined}
+          albumArt={albumArt || undefined}
           waitLabel={
             display.status === 'queued'
               ? (() => {

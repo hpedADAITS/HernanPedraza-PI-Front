@@ -5,7 +5,7 @@ export const COOLDOWN_OPTIONS = [
   { label: '1h', valueMs: 3_600_000 },
 ] as const;
 
-export const DEFAULT_COOLDOWN_MS = COOLDOWN_OPTIONS[1].valueMs;
+export const DEFAULT_COOLDOWN_MS: number = COOLDOWN_OPTIONS[1].valueMs;
 
 export function formatCooldownDuration(durationMs: number) {
   const minutes = Math.round(durationMs / 60_000);

@@ -337,6 +337,9 @@ export function useDashboardSession({
           };
           setStoredParticipant(currentParticipantData);
           currentParticipantId = entityId(currentParticipantData);
+          if (!currentParticipantId) {
+            throw new Error(t('Session data is incomplete'));
+          }
         }
 
         setDashboardState((current) => ({
@@ -373,7 +376,7 @@ export function useDashboardSession({
           currentEventId,
           currentParticipantId,
           currentParticipantData.nickname || 'User',
-          currentParticipantData.profilePicture || currentUser?.profilePicture || null,
+          currentParticipantData.profilePicture || currentUser?.profilePicture || undefined,
         );
       } catch (error) {
         console.error('Error initializing dashboard:', error);
