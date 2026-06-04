@@ -463,7 +463,10 @@ export function DJRegister({
         email={email}
         displayName={displayName}
         debugToken={debugToken}
-        onVerified={() => setShowEmailModal(false)}
+        onVerified={() => {
+          setShowEmailModal(false);
+          setShowEventIdModal(true);
+        }}
       />
       {/* Event ID Setup Modal */}
       <EventIdSetupModal
