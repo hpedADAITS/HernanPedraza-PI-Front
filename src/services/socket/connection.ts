@@ -13,9 +13,9 @@ const eventListeners: Map<
 > = new Map();
 
 export function buildSocketUrl(apiUrl?: string) {
-  if (!apiUrl) { throw new Error('Missing VITE_API_URL'); }
+  const resolvedApiUrl = apiUrl || '/';
 
-  const trimmed = apiUrl.replace(/\/+$/, '');
+  const trimmed = resolvedApiUrl.replace(/\/+$/, '');
 
   return trimmed.endsWith('/api/v1')
     ? trimmed.slice(0, -'/api/v1'.length)
@@ -87,7 +87,7 @@ export function initSocket(token?: string) {
 
   socket = io(SOCKET_URL, {
     path: '/socket.io',
-    transports: ['polling', 'websocket'],
+    transports: ['polling'],  // Mobile-friendly: use polling only (more reliable on cellular networks)
     auth: {
       token: authToken,
     },
