@@ -28,6 +28,7 @@ export function RecognitionTrackUploadDialog({
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
   const [coverUrl, setCoverUrl] = useState('');
+  const [progress, setProgress] = useState(0);
 
   const close = () => {
     if (!busy) onClose();
@@ -40,12 +41,13 @@ export function RecognitionTrackUploadDialog({
     }
 
     setBusy(true);
+    setProgress(0);
     try {
       const dashboardEventId = eventId || getStoredEventId();
       const [wav, ownedEvent] = dashboardEventId
-        ? [await toBrowserWav(file), null]
+        ? [await toBrowserWav(file, setProgress), null]
         : await Promise.all([
-            toBrowserWav(file),
+            toBrowserWav(file, setProgress),
             eventsAPI.getMyActiveEvent().catch(() => null),
           ]);
       const uploadEventId = dashboardEventId || ownedEvent?.id || ownedEvent?._id;
@@ -128,7 +130,7 @@ export function RecognitionTrackUploadDialog({
           disabled={busy}
           className="w-full flex-none"
         >
-          {busy ? t('Processing...') : t('Fingerprint Track')}
+          {busy ? (progress > 0 ? `${t('Converting...')} ${progress}%` : t('Processing...')) : t('Fingerprint Track')}
         </SettingsDialogButton>
       </SettingsDialogActions>
     </SettingsDialog>

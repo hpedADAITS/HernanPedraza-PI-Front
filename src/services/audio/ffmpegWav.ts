@@ -21,15 +21,22 @@ async function loadFfmpeg() {
   return ffmpegPromise;
 }
 
-export async function toBrowserWav(file: File) {
+export async function toBrowserWav(file: File, onProgress?: (percent: number) => void) {
   if (isWav(file)) return file;
 
   const ffmpeg = await loadFfmpeg();
   const input = `input-${Date.now()}.${file.name.split('.').pop() || 'mp3'}`;
   const output = `output-${Date.now()}.wav`;
 
+  ffmpeg.on('progress', ({ progress }) => {
+    const percent = Math.round((progress || 0) * 100);
+    console.log(`[FFmpeg] Converting ${file.name}: ${percent}%`);
+    onProgress?.(percent);
+  });
+
   await ffmpeg.writeFile(input, await fetchFile(file));
   await ffmpeg.exec(['-i', input, '-ac', '1', '-ar', '16000', '-f', 'wav', output]);
+  console.log(`[FFmpeg] Finished converting ${file.name}`);
   const data = await ffmpeg.readFile(output);
   await Promise.all([
     ffmpeg.deleteFile(input).catch(() => {}),
