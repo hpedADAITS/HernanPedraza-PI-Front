@@ -165,7 +165,7 @@ function PcmWaveform({ pcmData }: { pcmData: Float32Array }) {
         if (absVal > maxVal) maxVal = absVal;
       }
 
-      const amplitude = Math.min(maxAmplitude, maxVal * maxAmplitude * 2);
+      const amplitude = Math.min(maxAmplitude, maxVal * maxAmplitude * 8);
       const y1 = centerY - amplitude;
       const y2 = centerY + amplitude;
 
