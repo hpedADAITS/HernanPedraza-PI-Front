@@ -124,6 +124,13 @@ export interface AudioMatchChunkPayload {
   pcm: Float32Array;
 }
 
+export interface PhoneAudioStreamPayload {
+  eventId: string;
+  pcm: Float32Array;
+  sampleRate: number;
+  timestamp: number;
+}
+
 export interface SocketEventPayloads {
   participant_joined: ParticipantEventPayload;
   participant_left: ParticipantEventPayload;
@@ -150,6 +157,7 @@ export interface SocketEventPayloads {
   phone_microphone_connected: PhoneMicrophoneConnectedPayload;
   audio_match_update: AudioMatchUpdatePayload;
   audio_match_chunk: AudioMatchChunkPayload;
+  phone_audio_stream: PhoneAudioStreamPayload;
 }
 
 export type SocketEventName = keyof SocketEventPayloads;

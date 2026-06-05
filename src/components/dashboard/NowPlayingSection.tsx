@@ -3,14 +3,14 @@ import { m } from 'motion/react';
 import { NowPlaying } from '@/components/common';
 import { NOW_PLAYING } from '@/constants/dashboard';
 import { SCALE_IN } from '@/constants/animations';
-import { initSocket, onSongQueued, onSongNowPlaying, onSongRejected, onSongSkipped, onQueueUpdated, onSongSuggested, onPhoneMicrophoneConnected, onAudioMatchChunk, off } from '@/services/socket';
+import { initSocket, onSongQueued, onSongNowPlaying, onSongRejected, onSongSkipped, onQueueUpdated, onSongSuggested, onPhoneMicrophoneConnected, onAudioMatchChunk, onPhoneAudioStream, off } from '@/services/socket';
 import { normalizeNowPlaying, normalizeQueueUpdated, normalizeSocketSong } from '@/services/socket/normalize';
 import { songsAPI } from '@/services/api';
 import { listenDebugSongEvents } from '@/utils/debugSongEvents';
 import { getStoredEventId } from '@/services/session';
 import { useTrackedTimeout } from '@/hooks/useTrackedTimeout';
 import type { Song } from '@/types/songs';
-import type { NowPlayingEventPayload, QueueUpdatedPayload, SongEventPayload, PhoneMicrophoneConnectedPayload, AudioMatchChunkPayload } from '@/services/socket/contracts';
+import type { NowPlayingEventPayload, QueueUpdatedPayload, SongEventPayload, PhoneMicrophoneConnectedPayload, AudioMatchChunkPayload, PhoneAudioStreamPayload } from '@/services/socket/contracts';
 
 interface NowPlayingSong {
   id: string;
@@ -379,6 +379,11 @@ export function NowPlayingSection() {
       dispatch({ type: 'audio_pcm', pcm: data.pcm });
     };
 
+    const handlePhoneAudioStream = (data: PhoneAudioStreamPayload) => {
+      if (!data.pcm || data.pcm.length === 0) return;
+      dispatch({ type: 'audio_pcm', pcm: data.pcm });
+    };
+
     onSongQueued(handleSongQueued);
     onSongSuggested(handleSongSuggested);
     onSongNowPlaying(handleSongNowPlaying);
@@ -387,6 +392,7 @@ export function NowPlayingSection() {
     onQueueUpdated(handleQueueUpdated);
     onPhoneMicrophoneConnected(handlePhoneMicrophoneConnected);
     onAudioMatchChunk(handleAudioMatchChunk);
+    onPhoneAudioStream(handlePhoneAudioStream);
 
     const stopDebugEvents = listenDebugSongEvents(({ type, payload }) => {
       if (type === 'song_suggested') handleSongSuggested(payload);
@@ -406,6 +412,7 @@ export function NowPlayingSection() {
       off('queue_updated', handleQueueUpdated);
       off('phone_microphone_connected', handlePhoneMicrophoneConnected);
       off('audio_match_chunk', handleAudioMatchChunk);
+      off('phone_audio_stream', handlePhoneAudioStream);
       stopDebugEvents();
     };
   }, [eventId, showTemporaryStatus]);

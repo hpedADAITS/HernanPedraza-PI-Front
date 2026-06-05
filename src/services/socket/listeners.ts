@@ -138,3 +138,7 @@ export function onPhoneMicrophoneConnected(callback: Listener<'phone_microphone_
 export function onAudioMatchChunk(callback: Listener<'audio_match_chunk'>) {
   on('audio_match_chunk', callback);
 }
+
+export function onPhoneAudioStream(callback: Listener<'phone_audio_stream'>) {
+  on('phone_audio_stream', callback);
+}
