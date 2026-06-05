@@ -1,7 +1,7 @@
 import type { Socket } from 'socket.io-client';
 
 const AUDIO_MATCH_PROCESSOR_NAME = 'audio-match-processor';
-const TARGET_SAMPLE_RATE = 32000;
+const TARGET_SAMPLE_RATE = 16000;
 
 function resampleLinear(input: Float32Array, fromRate: number, toRate: number): Float32Array {
   if (fromRate === toRate) return input;
