@@ -1,6 +1,23 @@
 import type { Socket } from 'socket.io-client';
 
 const AUDIO_MATCH_PROCESSOR_NAME = 'audio-match-processor';
+const TARGET_SAMPLE_RATE = 32000;
+
+function resampleLinear(input: Float32Array, fromRate: number, toRate: number): Float32Array {
+  if (fromRate === toRate) return input;
+  const ratio = fromRate / toRate;
+  const outputLength = Math.round(input.length / ratio);
+  const output = new Float32Array(outputLength);
+  for (let i = 0; i < outputLength; i++) {
+    const sourceIndex = i * ratio;
+    const index = Math.floor(sourceIndex);
+    const fraction = sourceIndex - index;
+    const a = input[index];
+    const b = index + 1 < input.length ? input[index + 1] : a;
+    output[i] = a + (b - a) * fraction;
+  }
+  return output;
+}
 
 interface MicStreamOptions {
   eventId: string;
@@ -77,16 +94,19 @@ export async function startAudioMatchStream({
 
         const chunk = event.data;
 
+        // Resample to 32kHz for efficient fingerprinting
+        const resampled = resampleLinear(chunk, sampleRate, TARGET_SAMPLE_RATE);
+
         socket.emit('audio_match_chunk', {
           eventId,
-          sampleRate,
-          pcm: chunk.buffer,
+          sampleRate: TARGET_SAMPLE_RATE,
+          pcm: resampled.buffer,
         });
 
         onDebug?.({
-          sampleRate,
-          inputSamples: chunk.length,
-          byteLength: chunk.byteLength,
+          sampleRate: TARGET_SAMPLE_RATE,
+          inputSamples: resampled.length,
+          byteLength: resampled.byteLength,
         });
       } catch (error) {
         onError?.(
