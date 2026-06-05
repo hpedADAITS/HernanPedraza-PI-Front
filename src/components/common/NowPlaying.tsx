@@ -24,6 +24,7 @@ interface NowPlayingProps {
   celebrateKey?: number;
   microphoneLabel?: string;
   audioLevel?: number;
+  pcmData?: Float32Array;
 }
 
 const waveformBars = [
@@ -139,6 +140,58 @@ function Waveform() {
   );
 }
 
+function PcmWaveform({ pcmData }: { pcmData: Float32Array }) {
+  const bars = React.useMemo(() => {
+    if (!pcmData || pcmData.length === 0) {
+      return Array.from({ length: 28 }, (_, i) => ({
+        x: 8 + i * 7.5,
+        y1: 47,
+        y2: 47,
+      }));
+    }
+
+    const numBars = 28;
+    const samplesPerBar = Math.max(1, Math.floor(pcmData.length / numBars));
+    const centerY = 47;
+    const maxAmplitude = 40;
+
+    return Array.from({ length: numBars }, (_, i) => {
+      const startIdx = i * samplesPerBar;
+      const endIdx = Math.min(startIdx + samplesPerBar, pcmData.length);
+
+      let maxVal = 0;
+      for (let j = startIdx; j < endIdx; j++) {
+        const absVal = Math.abs(pcmData[j]);
+        if (absVal > maxVal) maxVal = absVal;
+      }
+
+      const amplitude = Math.min(maxAmplitude, maxVal * maxAmplitude * 2);
+      const y1 = centerY - amplitude;
+      const y2 = centerY + amplitude;
+
+      return {
+        x: 8 + i * 7.5,
+        y1,
+        y2,
+      };
+    });
+  }, [pcmData]);
+
+  return (
+    <svg
+      className="hidden h-[75px] w-[171px] justify-self-end opacity-70 lg:block"
+      viewBox="0 0 214 94"
+      aria-hidden="true"
+    >
+      <g stroke="#60a5fa" strokeWidth="2" strokeLinecap="round">
+        {bars.map((bar, i) => (
+          <line key={i} x1={bar.x} y1={bar.y1} x2={bar.x} y2={bar.y2} />
+        ))}
+      </g>
+    </svg>
+  );
+}
+
 function AnimatedWaveform({ audioLevel = 0 }: { audioLevel?: number }) {
   const normalizedLevel = Math.max(0, Math.min(1, audioLevel));
 
@@ -164,11 +217,7 @@ function AnimatedWaveform({ audioLevel = 0 }: { audioLevel?: number }) {
       viewBox="0 0 214 94"
       aria-hidden="true"
     >
-      <g
-        stroke="#60a5fa"
-        strokeWidth="2"
-        strokeLinecap="round"
-      >
+      <g stroke="#60a5fa" strokeWidth="2" strokeLinecap="round">
         {bars.map((bar, i) => (
           <line key={i} x1={bar.x} y1={bar.y1} x2={bar.x} y2={bar.y2} />
         ))}
@@ -190,6 +239,7 @@ export function NowPlaying({
   celebrateKey = 0,
   microphoneLabel,
   audioLevel,
+  pcmData,
 }: NowPlayingProps) {
   const safeProgress = Math.max(0, Math.min(100, progress));
   const config = stateConfig[status];
@@ -309,7 +359,9 @@ export function NowPlaying({
           )}
         </div>
 
-        {microphoneLabel && audioLevel !== undefined ? (
+        {pcmData ? (
+          <PcmWaveform pcmData={pcmData} />
+        ) : microphoneLabel ? (
           <AnimatedWaveform audioLevel={audioLevel} />
         ) : (
           <Waveform />

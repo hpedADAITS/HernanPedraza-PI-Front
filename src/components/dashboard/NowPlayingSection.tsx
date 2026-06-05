@@ -94,6 +94,7 @@ interface NowPlayingSectionState {
   celebrateKey: number;
   microphone: string | null;
   audioLevel: number;
+  pcmData: Float32Array | null;
 }
 
 type NowPlayingSectionAction =
@@ -109,7 +110,8 @@ type NowPlayingSectionAction =
   | { type: 'queue_updated'; payload: QueueUpdatedPayload }
   | { type: 'clear_temp_status' }
   | { type: 'microphone_connected'; deviceName: string }
-  | { type: 'audio_level'; level: number };
+  | { type: 'audio_level'; level: number }
+  | { type: 'audio_pcm'; pcm: Float32Array };
 
 function nowPlayingSectionReducer(
   state: NowPlayingSectionState,
@@ -233,6 +235,11 @@ function nowPlayingSectionReducer(
         ...state,
         audioLevel: action.level,
       };
+    case 'audio_pcm':
+      return {
+        ...state,
+        pcmData: action.pcm,
+      };
     default:
       return state;
   }
@@ -247,6 +254,7 @@ export function NowPlayingSection() {
     celebrateKey: 0,
     microphone: null,
     audioLevel: 0,
+    pcmData: null,
   });
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -368,14 +376,7 @@ export function NowPlayingSection() {
 
     const handleAudioMatchChunk = (data: AudioMatchChunkPayload) => {
       if (!data.pcm || data.pcm.length === 0) return;
-      const pcm = data.pcm;
-      let sum = 0;
-      for (let i = 0; i < pcm.length; i++) {
-        sum += Math.abs(pcm[i]);
-      }
-      const avg = sum / pcm.length;
-      const level = Math.min(1, avg * 4);
-      dispatch({ type: 'audio_level', level });
+      dispatch({ type: 'audio_pcm', pcm: data.pcm });
     };
 
     onSongQueued(handleSongQueued);
@@ -492,6 +493,7 @@ export function NowPlayingSection() {
           celebrateKey={state.celebrateKey}
           microphoneLabel={state.microphone || undefined}
           audioLevel={state.microphone ? state.audioLevel : undefined}
+          pcmData={state.microphone && state.pcmData ? state.pcmData : undefined}
         />
       </m.div>
     </m.div>

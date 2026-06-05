@@ -92,7 +92,7 @@ export function initSocket(token?: string) {
 
   socket = io(SOCKET_URL, {
     path: '/socket.io',
-    transports: ['polling', 'websocket'],
+    transports: ['websocket', 'polling'],
     auth: {
       token: authToken,
     },
