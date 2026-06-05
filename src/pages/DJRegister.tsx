@@ -15,7 +15,6 @@ import {
   activateSingleUserSession,
   suspendNextSingleUserSessionCheck,
 } from '@/services/singleUserSession';
-import { isDebugModeEnabled } from '@/utils/debugMode';
 import type { NavigateToView } from '@/types';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
 
@@ -82,8 +81,8 @@ export function DJRegister({
             setShowEventIdModal(true);
             clearInterval(pollInterval);
           }
-        } catch (error) {
-          /* Silently fail - user will manually trigger next step */
+        } catch {
+          // Silently fail - user will manually trigger next step
         }
       }, 2000); /* Poll every 2 seconds */
 
@@ -169,11 +168,26 @@ export function DJRegister({
         debugTokenToUse &&
         debugTokenToUse.split('.').length === 3
       ) {
-        setDebugToken(debugTokenToUse);
+        // Auto-verify in debug mode and go directly to event setup
+        try {
+          const verifyResult = await authAPI.verifyEmailToken(debugTokenToUse);
+          const newToken = verifyResult?.data?.token || token;
+          saveToken(newToken);
+          registrationDataRef.current = {
+            token: newToken,
+            userId: result.user?._id || result.user?.id,
+            profilePicture: result.user?.profilePicture || null,
+          };
+          setShowEventIdModal(true);
+        } catch {
+          // Fall back to email modal if auto-verify fails
+          setDebugToken(debugTokenToUse);
+          setShowEmailModal(true);
+        }
       } else {
         setDebugToken(undefined);
+        setShowEmailModal(true);
       }
-      setShowEmailModal(true);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : t('Registration failed'),
