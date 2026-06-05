@@ -101,12 +101,10 @@ export const eventsAPI = {
 
   connectPhoneMicrophone: async (eventId: string, deviceName: string, token = '') => {
     const data = await apiCall(
-      `/events/${eventId}/phone-microphone/connect${
-        token ? `?token=${encodeURIComponent(token)}` : ''
-      }`,
+      `/events/${eventId}/phone-microphone/connect`,
       {
-      method: 'POST',
-      body: JSON.stringify({ deviceName }),
+        method: 'POST',
+        body: JSON.stringify({ deviceName, token }),
       },
     );
     return data.data.microphone;
@@ -114,10 +112,11 @@ export const eventsAPI = {
 
   sendMatchedAudioTrackNow: async (eventId: string, trackId: string, token = '') => {
     const data = await apiCall(
-      `/events/${eventId}/audio-tracks/${trackId}/send-now${
-        token ? `?token=${encodeURIComponent(token)}` : ''
-      }`,
-      { method: 'POST' },
+      `/events/${eventId}/audio-tracks/${trackId}/send-now`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ token }),
+      },
     );
     return data.data.song;
   },

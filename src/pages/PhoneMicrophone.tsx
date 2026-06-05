@@ -6,6 +6,7 @@ import { eventsAPI } from '@/services/api';
 import { startAudioMatchStream } from '@/services/audio/micStream';
 import { disconnectSocket, initSocket } from '@/services/socket/connection';
 import { t } from '@/i18n';
+import { useToast } from '@/components/ui/toast';
 
 type ConnectionState = 'idle' | 'connecting' | 'connected' | 'failed';
 
@@ -67,6 +68,7 @@ export function PhoneMicrophone() {
     useState<ConnectionState>('idle');
   const [error, setError] = useState('');
   const [bestMatch, setBestMatch] = useState('');
+  const { toast } = useToast();
 
   const stopActiveStream = useCallback(() => {
     stopAudioMatchRef.current?.();
@@ -119,7 +121,7 @@ export function PhoneMicrophone() {
       const socket = initSocket(token);
       socket.on('audio_match_update', async (payload) => {
         const match = payload?.matches?.[0];
-        setBestMatch(match ? `${match.title} - ${match.artist} (${match.score})` : '');
+        setBestMatch(match ? `${match.title} - ${match.artist}` : '');
         if (!match?.trackId || sentTrackRef.current === match.trackId) return;
 
         try {
@@ -127,6 +129,7 @@ export function PhoneMicrophone() {
           await eventsAPI.sendMatchedAudioTrackNow(eventId, match.trackId, token);
         } catch (sendError) {
           sentTrackRef.current = '';
+          toast.error(t('Failed to queue matched track. Please try again.'));
           console.warn('Unable to send matched audio track now:', sendError);
         }
       });
