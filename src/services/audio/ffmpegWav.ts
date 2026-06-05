@@ -29,7 +29,7 @@ export async function toBrowserWav(file: File) {
   const output = `output-${Date.now()}.wav`;
 
   await ffmpeg.writeFile(input, await fetchFile(file));
-  await ffmpeg.exec(['-i', input, '-ac', '1', '-ar', '44100', '-f', 'wav', output]);
+  await ffmpeg.exec(['-i', input, '-ac', '1', '-ar', '16000', '-f', 'wav', output]);
   const data = await ffmpeg.readFile(output);
   await Promise.all([
     ffmpeg.deleteFile(input).catch(() => {}),
