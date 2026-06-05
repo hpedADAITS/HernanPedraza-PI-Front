@@ -126,7 +126,7 @@ export interface AudioMatchChunkPayload {
 
 export interface PhoneAudioStreamPayload {
   eventId: string;
-  pcm: Float32Array;
+  pcm: number[];
   sampleRate: number;
   timestamp: number;
 }

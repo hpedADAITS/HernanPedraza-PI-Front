@@ -381,7 +381,7 @@ export function NowPlayingSection() {
 
     const handlePhoneAudioStream = (data: PhoneAudioStreamPayload) => {
       if (!data.pcm || data.pcm.length === 0) return;
-      dispatch({ type: 'audio_pcm', pcm: data.pcm });
+      dispatch({ type: 'audio_pcm', pcm: new Float32Array(data.pcm) });
     };
 
     onSongQueued(handleSongQueued);
