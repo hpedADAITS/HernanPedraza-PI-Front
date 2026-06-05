@@ -46,6 +46,11 @@ export function DJLogin({
     setLoading(true);
     try {
       const result = await authAPI.login(email, password);
+      const token = result.authToken || result.token;
+      if (!token) {
+        throw new Error(t('Session data is incomplete'));
+      }
+
       const displayName = result.user?.displayName || 'DJ';
 
       if (result.user) {
@@ -86,7 +91,7 @@ export function DJLogin({
       }
 
       toast.success(t('Welcome back, {name}!', { name: displayName }));
-      socket.initSocket(result.authToken);
+      socket.initSocket(token);
       onNavigate('dj-dashboard');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t('Login failed'));

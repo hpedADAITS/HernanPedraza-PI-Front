@@ -1,5 +1,17 @@
 import { apiCall, clearToken, saveToken } from './client';
 
+type AuthResponseData = {
+  token?: string;
+  authToken?: string;
+};
+
+function saveAuthResponseToken(data: AuthResponseData) {
+  const token = data.token ?? data.authToken;
+  if (token) {
+    saveToken(token);
+  }
+}
+
 export const authAPI = {
   register: async (
     email: string,
@@ -11,9 +23,7 @@ export const authAPI = {
       method: 'POST',
       body: JSON.stringify({ email, password, displayName, role }),
     });
-    if (data.data.token) {
-      saveToken(data.data.token);
-    }
+    saveAuthResponseToken(data.data);
     return data.data;
   },
 
@@ -22,9 +32,7 @@ export const authAPI = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
-    if (data.data.token) {
-      saveToken(data.data.token);
-    }
+    saveAuthResponseToken(data.data);
     return data.data;
   },
 

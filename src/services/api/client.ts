@@ -17,6 +17,80 @@ export const API_BASE: string = buildApiBase(VITE_API_URL);
 
 let authToken: string | null = null;
 
+type JwtSessionPayload = {
+  userId?: unknown;
+  sub?: unknown;
+  id?: unknown;
+  _id?: unknown;
+};
+
+function decodeBase64Url(value: string) {
+  const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized.padEnd(
+    normalized.length + ((4 - (normalized.length % 4)) % 4),
+    '=',
+  );
+
+  return atob(padded);
+}
+
+function decodeJwtPayload(token: string | null): JwtSessionPayload | null {
+  if (!token || typeof atob === 'undefined') {
+    return null;
+  }
+
+  const [, payload] = token.split('.');
+  if (!payload) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(decodeBase64Url(payload)) as JwtSessionPayload;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeTokenIdentity(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value : null;
+}
+
+function getTokenIdentity(token: string | null) {
+  const payload = decodeJwtPayload(token);
+
+  return (
+    normalizeTokenIdentity(payload?.userId) ??
+    normalizeTokenIdentity(payload?.sub) ??
+    normalizeTokenIdentity(payload?.id) ??
+    normalizeTokenIdentity(payload?._id)
+  );
+}
+
+function clearStoredSession() {
+  removeStoredItem('user');
+  removeStoredItem('currentEvent');
+  removeStoredItem('currentParticipant');
+}
+
+function shouldClearSessionOnTokenChange(
+  previousToken: string | null,
+  nextToken: string,
+) {
+  if (!previousToken || previousToken === nextToken) {
+    return false;
+  }
+
+  const previousIdentity = getTokenIdentity(previousToken);
+  const nextIdentity = getTokenIdentity(nextToken);
+
+  /*
+   * If a token changed and either side cannot be decoded, prefer clearing stale
+   * UI session state over keeping a possibly wrong user/event/participant.
+   */
+  return !previousIdentity || !nextIdentity || previousIdentity !== nextIdentity;
+}
+
+
 /* Retrieve token from localStorage */
 export function loadToken() {
   if (typeof window !== 'undefined') {
@@ -36,8 +110,19 @@ export { getToken };
 
 /* Store token in localStorage */
 export function saveToken(token: string) {
+  const previousToken = getToken();
+  const shouldClearStoredSession =
+    typeof window !== 'undefined' &&
+    shouldClearSessionOnTokenChange(previousToken, token);
+
   authToken = token;
+
   if (typeof window !== 'undefined') {
+    if (shouldClearStoredSession) {
+      clearStoredSession();
+      clearAllCaches();
+    }
+
     localStorage.setItem('authToken', token);
   }
 }
@@ -47,9 +132,7 @@ export function clearToken() {
   authToken = null;
   if (typeof window !== 'undefined') {
     localStorage.removeItem('authToken');
-    removeStoredItem('user');
-    removeStoredItem('currentEvent');
-    removeStoredItem('currentParticipant');
+    clearStoredSession();
   }
   clearAllCaches();
 }

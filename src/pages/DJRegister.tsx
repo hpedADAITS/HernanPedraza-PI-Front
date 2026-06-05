@@ -136,7 +136,7 @@ export function DJRegister({
         'DJ',
       )) as DJRegisterResponse;
 
-      if (!result || !result.token) {
+      if (!result || !(result.authToken || result.token)) {
         throw new Error(t('Failed to create account'));
       }
 
@@ -209,7 +209,7 @@ export function DJRegister({
       // Refresh user data to get updated emailRegistered status and new token
       const updatedUser = await authAPI.getCurrentUser();
 
-      const freshToken = updatedUser?.token || registrationData.token;
+      const freshToken = updatedUser?.token || updatedUser?.authToken || registrationData.token;
       if (!freshToken) {
         throw new Error(t('Session data is incomplete'));
       }
