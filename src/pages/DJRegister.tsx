@@ -3,6 +3,7 @@ import { m } from 'motion/react';
 import { User, Mail, Lock, ArrowLeft, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 import { authAPI, eventsAPI } from '@/services/api';
+import { saveToken } from '@/services/api/client';
 import * as socket from '@/services/socket';
 import { EventIdSetupModal } from '@/components/modals/EventIdSetupModal';
 import { EmailConfirmationModal } from '@/components/modals/EmailConfirmationModal';
@@ -191,6 +192,15 @@ export function DJRegister({
         throw new Error(t('Registration data missing'));
       }
 
+      // Refresh user data to get updated emailRegistered status and new token
+      const updatedUser = await authAPI.getCurrentUser();
+
+      const freshToken = updatedUser?.token || registrationData.token;
+      if (!freshToken) {
+        throw new Error(t('Session data is incomplete'));
+      }
+      saveToken(freshToken);
+
       const event = await eventsAPI.createEvent(
         `${displayName}'s Event`,
         'Welcome to your event!',
@@ -214,16 +224,16 @@ export function DJRegister({
       });
 
       writeStoredJson('currentParticipant', {
-        _id: registrationData.userId,
-        id: registrationData.userId,
+        _id: updatedUser?.id || registrationData.userId,
+        id: updatedUser?.id || registrationData.userId,
         nickname: displayName,
         eventId: eventMongoDB,
         profilePicture: registrationData.profilePicture || null,
       });
 
       toast.success(t('Welcome, {name}! Your event is ready to go.', { name: displayName }));
-      socket.initSocket(registrationData.token);
-      activateSingleUserSession({ _id: registrationData.userId, email, displayName });
+      socket.initSocket(freshToken);
+      activateSingleUserSession({ _id: updatedUser?.id || registrationData.userId, email, displayName });
       suspendNextSingleUserSessionCheck();
       setShowEventIdModal(false);
       queueFirstTimeTutorial('dj');
@@ -463,7 +473,11 @@ export function DJRegister({
         email={email}
         displayName={displayName}
         debugToken={debugToken}
-        onVerified={() => {
+        onVerified={(token) => {
+          /* Save the new token from direct verification if provided */
+          if (token) {
+            saveToken(token);
+          }
           setShowEmailModal(false);
           setShowEventIdModal(true);
         }}

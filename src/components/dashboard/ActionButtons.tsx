@@ -57,7 +57,7 @@ export function ActionButtons({
   showVoting = true,
   showActions = true,
 }: ActionButtonsProps) {
-  const { info, error, success } = useToast();
+  const { error } = useToast();
   const navigate = useViewNavigate(onNavigate);
   const { playSound } = useSound();
   const isDj = mode === 'dj';
@@ -130,7 +130,9 @@ export function ActionButtons({
         if (eventId && participantId) {
           try {
             socket.leaveEvent(eventId, participantId);
-          } catch {}
+          } catch {
+            // Ignore socket errors on leave
+          }
           await participantsAPI.leaveEvent(participantId);
         }
       }
@@ -243,6 +245,7 @@ interface CurrentSong {
 
 function VotingButtons() {
   const { playSound } = useSound();
+  const { error, info, success } = useToast();
   const [currentSong, setCurrentSong] = useState<CurrentSong | null>(null);
   const [voting, setVoting] = useState(false);
 

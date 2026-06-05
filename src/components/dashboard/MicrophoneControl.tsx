@@ -19,13 +19,12 @@ export function MicrophoneControl({ isDj }: MicrophoneControlProps) {
     error,
   } = useMicrophone(isDj);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const analyzerRef = useRef<AnalyserNode | null>(null);
 
   useEffect(() => {
     /* Initialize Web Audio API if not already done */
     if (!audioContextRef.current && typeof window !== 'undefined') {
       audioContextRef.current = new (window.AudioContext ||
-        (window as any).webkitAudioContext)();
+        (window.AudioContext as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
     }
   }, []);
 

@@ -1,3 +1,4 @@
+import React from 'react';
 import { m } from 'motion/react';
 import { Clock } from 'lucide-react';
 import { formatCooldownRemaining } from '@/constants/cooldowns';

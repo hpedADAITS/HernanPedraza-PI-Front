@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { m, AnimatePresence } from 'motion/react';
 import { RefreshCw, Check } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
@@ -30,20 +30,19 @@ const getInitialEventIdSetupState = (): EventIdSetupState => ({
 export function EventIdSetupModal({
   isOpen,
   onConfirm,
-  displayName,
 }: EventIdSetupModalProps) {
   const toast = useToast();
   const [{ eventId, generatedId, mode }, setSetupState] = useState(getInitialEventIdSetupState);
-  const wasOpenRef = useRef(isOpen);
   const [loading, setLoading] = useState(false);
 
-  if (wasOpenRef.current !== isOpen) {
-    wasOpenRef.current = isOpen;
+  // Reset state when modal opens
+  useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSetupState(getInitialEventIdSetupState());
       setLoading(false);
     }
-  }
+  }, [isOpen]);
 
   const generateRandomId = () => {
     setSetupState((current) => ({
@@ -69,7 +68,7 @@ export function EventIdSetupModal({
     setLoading(true);
     try {
       await onConfirm(finalEventId);
-    } catch (error) {
+    } catch {
       toast.error(t('Failed to create event'));
       setLoading(false); // Keep modal open on error
     }

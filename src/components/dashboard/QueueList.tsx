@@ -1,8 +1,7 @@
-import { useState, type MouseEvent } from 'react';
+import React, { useState, type MouseEvent } from 'react';
 import { LazyMotion, domAnimation, m, AnimatePresence } from 'motion/react';
 import { clsx } from 'clsx';
 import { Play, X, Clock, UserX, SkipForward, Check } from 'lucide-react';
-import { useToast } from '@/hooks/useToast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { THEME_CONFIG } from '@/constants/dashboard';
 import { COOLDOWN_OPTIONS, DEFAULT_COOLDOWN_MS, formatCooldownDuration } from '@/constants/cooldowns';
@@ -37,7 +36,6 @@ interface QueueListProps {
 export function QueueList({
   mode,
   eventId: propEventId,
-  participantId: propParticipantId,
   isDarkMode = false,
 }: QueueListProps) {
   const isDj = mode === 'dj';
@@ -52,7 +50,6 @@ export function QueueList({
     sortedSongs,
     waitTimes,
   } = useQueueRealtime(mode, propEventId);
-  const toast = useToast();
   const participantId =
     getStoredParticipantId() ||
     null;

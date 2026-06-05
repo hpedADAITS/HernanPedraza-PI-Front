@@ -291,8 +291,12 @@ export function NowPlayingSection() {
       tickRef.current = setInterval(updateElapsed, 1000);
       return () => {
         if (tickRef.current) clearInterval(tickRef.current);
+        tickRef.current = undefined;
+        setElapsedSeconds(0);
       };
     }
+    // Reset when not playing
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setElapsedSeconds(0);
     return undefined;
   }, [state.nowPlaying?.id, state.nowPlaying?.status, state.nowPlaying?.startedAt]);

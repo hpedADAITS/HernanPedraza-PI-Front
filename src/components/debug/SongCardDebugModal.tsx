@@ -877,11 +877,11 @@ export function SongCardDebugModal() {
   });
 
   const ids = useMemo(() => {
-    const stamp = Date.now();
+    // Using a static prefix is fine - the actual uniqueness comes from event handlers
     return {
-      play: `debug-play-${stamp}`,
-      rejected: `debug-reject-${stamp}`,
-      skipped: `debug-skip-${stamp}`,
+      play: 'debug-play',
+      rejected: 'debug-reject',
+      skipped: 'debug-skip',
     };
   }, []);
 

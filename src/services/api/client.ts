@@ -69,8 +69,22 @@ export async function apiCall(endpoint: string, options: RequestInit = {}) {
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error?.message || 'API Error');
+    let errorMessage = 'API Error';
+    try {
+      const error = await response.json();
+      errorMessage = error?.error?.message || error?.message || error?.error || 'API Error';
+    } catch {
+      // Response wasn't valid JSON, try to get text
+      try {
+        const errorText = await response.text();
+        if (errorText) {
+          errorMessage = errorText;
+        }
+      } catch {
+        // Ignore text errors
+      }
+    }
+    throw new Error(errorMessage);
   }
 
   return response.json();

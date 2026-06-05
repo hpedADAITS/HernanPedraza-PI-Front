@@ -1,6 +1,6 @@
 import React, { useRef, useState, useTransition } from 'react';
-import { m, AnimatePresence } from 'motion/react';
-import { Upload, X } from 'lucide-react';
+import { m } from 'motion/react';
+import { Upload } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 import { authAPI, participantsAPI } from '@/services/api';
 import { readStoredJson, writeStoredJson } from '@/utils/storage';

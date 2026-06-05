@@ -126,6 +126,7 @@ export function SearchBar({
 
   useEffect(() => {
     if (isAccessDenied) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       void loadPhoneMicrophoneLink();
     }
   }, [isAccessDenied, loadPhoneMicrophoneLink]);

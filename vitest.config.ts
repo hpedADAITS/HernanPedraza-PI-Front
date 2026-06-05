@@ -12,7 +12,7 @@ export default defineConfig({
     include: ['test/**/*.{test,spec}.{ts,tsx,js}'],
     exclude: ['node_modules/**', 'dist/**', 'coverage/**', 'e2e/**', '**/*.spec.js'],
     pool: 'forks',
-    maxWorkers: 4,
+    maxWorkers: 8,
   },
   resolve: {
     alias: {

@@ -9,7 +9,7 @@ interface EmailConfirmationModalProps {
   email: string;
   displayName: string;
   debugToken?: string;
-  onVerified?: () => void;
+  onVerified?: (token?: string) => void;
 }
 
 export function EmailConfirmationModal({
@@ -172,9 +172,11 @@ export function EmailConfirmationModal({
                             setStatus('verifying');
                             setVerifyError('');
                             try {
-                              await authAPI.verifyEmailToken(debugToken);
+                              const result = await authAPI.verifyEmailToken(debugToken);
+                              // Pass the new token to the parent so it can be stored
+                              const newToken = result?.data?.token;
                               if (onVerified) {
-                                onVerified();
+                                onVerified(newToken);
                               }
                             } catch (err) {
                               setVerifyError(err instanceof Error ? err.message : t('Verification failed'));
