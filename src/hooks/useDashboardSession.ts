@@ -96,7 +96,7 @@ function storedParticipantEventId(participant: StoredParticipant | null | undefi
 
 function isDjUser(user: StoredUser | null | undefined) {
   const role = user?.role?.toLowerCase();
-  return role === 'dj' || role === 'admin';
+  return role === 'dj';
 }
 
 type AuthTokenPayload = {
@@ -147,7 +147,7 @@ function authTokenUserId(token: string | null) {
 
 function authTokenRole(token: string | null) {
   const role = decodeAuthTokenPayload(token)?.role?.toUpperCase();
-  if (role === 'ADMIN' || role === 'DJ') return 'dj';
+  if (role === 'DJ') return 'dj';
   return 'attendee';
 }
 
@@ -160,7 +160,7 @@ function isDjTokenForStoredUser(token: string | null, user: StoredUser | null | 
     tokenId &&
     userId &&
     tokenId === userId &&
-    (role === 'dj' || role === 'admin'),
+    role === 'dj',
   );
 }
 

@@ -112,7 +112,7 @@ const es: Record<string, string> = {
   'Invalid password': 'Contrasena no valida',
   'Display name is required': 'El nombre es obligatorio',
   'Display name must be less than 50 characters': 'El nombre debe tener menos de 50 caracteres',
-  'Invalid role. Must be ATTENDEE, DJ, or ADMIN': 'Rol no valido. Debe ser ATTENDEE, DJ o ADMIN',
+  'Invalid role. Must be ATTENDEE or DJ': 'Rol no valido. Debe ser ATTENDEE o DJ',
   'Token is required': 'El token es obligatorio',
   'Invalid token format': 'Formato de token no valido',
   'Email already verified': 'El email ya esta verificado',

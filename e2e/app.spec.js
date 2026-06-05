@@ -192,6 +192,7 @@ test.beforeAll(async () => {
       MONGODB_URI: mongoServer.getUri(),
       JWT_SECRET: 'e2e-secret-key-for-running-browser-tests',
       DEBUG_EMAIL: 'true',
+      DEBUG_MODE: 'true',
       FRONTEND_URL: frontendUrl,
       ALLOWED_ORIGINS: frontendUrl,
       SOCKET_CORS_ORIGIN: frontendUrl,
