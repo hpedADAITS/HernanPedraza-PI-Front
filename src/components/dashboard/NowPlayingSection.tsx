@@ -3,26 +3,36 @@ import { m } from 'motion/react';
 import { NowPlaying } from '@/components/common';
 import { NOW_PLAYING } from '@/constants/dashboard';
 import { SCALE_IN } from '@/constants/animations';
-import { initSocket, onSongQueued, onSongNowPlaying, onSongRejected, onSongSkipped, onQueueUpdated, onSongSuggested, onPhoneMicrophoneConnected, onAudioMatchChunk, onPhoneAudioStream, off } from '@/services/socket';
+import { initSocket, onSongQueued, onSongNowPlaying, onSongRejected, onSongSkipped, onQueueUpdated, onSongSuggested, onPhoneMicrophoneConnected, onAudioMatchChunk, onAudioMatchUpdate, onPhoneAudioStream, off } from '@/services/socket';
 import { normalizeNowPlaying, normalizeQueueUpdated, normalizeSocketSong } from '@/services/socket/normalize';
 import { songsAPI } from '@/services/api';
 import { listenDebugSongEvents } from '@/utils/debugSongEvents';
 import { getStoredEventId } from '@/services/session';
 import { useTrackedTimeout } from '@/hooks/useTrackedTimeout';
 import type { Song } from '@/types/songs';
-import type { NowPlayingEventPayload, QueueUpdatedPayload, SongEventPayload, PhoneMicrophoneConnectedPayload, AudioMatchChunkPayload, PhoneAudioStreamPayload } from '@/services/socket/contracts';
+import type { NowPlayingEventPayload, QueueUpdatedPayload, SongEventPayload, PhoneMicrophoneConnectedPayload, AudioMatchChunkPayload, AudioMatchUpdatePayload, PhoneAudioStreamPayload } from '@/services/socket/contracts';
 
 interface NowPlayingSong {
   id: string;
   title: string;
   artist: string;
-  status: 'playing' | 'rejected' | 'queued' | 'skipped' | 'idle';
+  status: 'playing' | 'rejected' | 'queued' | 'skipped' | 'matched' | 'idle';
   progress?: number;
   currentTime?: string;
   duration?: string;
   durationSec?: number;
   startedAt?: number;
   albumArt?: string | null;
+}
+
+interface CurrentMatch {
+  trackId: string;
+  title: string;
+  artist: string;
+  coverUrl?: string | null;
+  duration?: number | null;
+  score: number;
+  matchedAt: number;
 }
 
 function formatWait(totalSeconds: number): string {
@@ -38,6 +48,21 @@ function formatTime(totalSeconds: number): string {
   const m = Math.floor(safe / 60);
   const s = safe % 60;
   return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function matchToPlayerSong(match: CurrentMatch): NowPlayingSong {
+  const duration = Number.isFinite(match.duration) ? (match.duration as number) : undefined;
+  return {
+    id: `match-${match.trackId}`,
+    title: match.title || 'Matched track',
+    artist: match.artist || 'Unknown artist',
+    status: 'matched',
+    progress: 0,
+    currentTime: '0:00',
+    duration: duration ? formatTime(duration) : undefined,
+    durationSec: duration,
+    albumArt: match.coverUrl || null,
+  };
 }
 
 function getSongDuration(song?: Partial<Song> | null): number | undefined {
@@ -90,6 +115,7 @@ interface NowPlayingSectionState {
   queue: Song[];
   nowPlaying: NowPlayingSong | null;
   tempStatus: NowPlayingSong | null;
+  currentMatch: CurrentMatch | null;
   attentionKey: number;
   celebrateKey: number;
   microphone: string | null;
@@ -111,7 +137,8 @@ type NowPlayingSectionAction =
   | { type: 'clear_temp_status' }
   | { type: 'microphone_connected'; deviceName: string }
   | { type: 'audio_level'; level: number }
-  | { type: 'audio_pcm'; pcm: Float32Array };
+  | { type: 'audio_pcm'; pcm: Float32Array }
+  | { type: 'audio_match_update'; payload: AudioMatchUpdatePayload };
 
 function nowPlayingSectionReducer(
   state: NowPlayingSectionState,
@@ -154,6 +181,7 @@ function nowPlayingSectionReducer(
           startedAt: nowPlaying.startedAt,
           albumArt: nowPlaying.albumArt,
         },
+        currentMatch: null,
         queue: state.queue.filter((song) => song._id !== nowPlaying.songId),
         celebrateKey: state.celebrateKey + 1,
       };
@@ -240,6 +268,32 @@ function nowPlayingSectionReducer(
         ...state,
         pcmData: action.pcm,
       };
+    case 'audio_match_update': {
+      const topMatch = action.payload?.matches?.[0];
+      if (!topMatch?.trackId) {
+        return {
+          ...state,
+          currentMatch: null,
+        };
+      }
+
+      const nextMatch: CurrentMatch = {
+        trackId: topMatch.trackId,
+        title: topMatch.title,
+        artist: topMatch.artist,
+        coverUrl: topMatch.coverUrl ?? null,
+        duration: topMatch.duration ?? null,
+        score: topMatch.score,
+        matchedAt: Date.now(),
+      };
+
+      const isSameTrack = state.currentMatch?.trackId === nextMatch.trackId;
+      return {
+        ...state,
+        currentMatch: isSameTrack ? state.currentMatch : nextMatch,
+        attentionKey: isSameTrack ? state.attentionKey : state.attentionKey + 1,
+      };
+    }
     default:
       return state;
   }
@@ -250,6 +304,7 @@ export function NowPlayingSection() {
     queue: [],
     nowPlaying: null,
     tempStatus: null,
+    currentMatch: null,
     attentionKey: 0,
     celebrateKey: 0,
     microphone: null,
@@ -384,6 +439,10 @@ export function NowPlayingSection() {
       dispatch({ type: 'audio_pcm', pcm: new Float32Array(data.pcm) });
     };
 
+    const handleAudioMatchUpdate = (data: AudioMatchUpdatePayload) => {
+      dispatch({ type: 'audio_match_update', payload: data });
+    };
+
     onSongQueued(handleSongQueued);
     onSongSuggested(handleSongSuggested);
     onSongNowPlaying(handleSongNowPlaying);
@@ -392,6 +451,7 @@ export function NowPlayingSection() {
     onQueueUpdated(handleQueueUpdated);
     onPhoneMicrophoneConnected(handlePhoneMicrophoneConnected);
     onAudioMatchChunk(handleAudioMatchChunk);
+    onAudioMatchUpdate(handleAudioMatchUpdate);
     onPhoneAudioStream(handlePhoneAudioStream);
 
     const stopDebugEvents = listenDebugSongEvents(({ type, payload }) => {
@@ -412,6 +472,7 @@ export function NowPlayingSection() {
       off('queue_updated', handleQueueUpdated);
       off('phone_microphone_connected', handlePhoneMicrophoneConnected);
       off('audio_match_chunk', handleAudioMatchChunk);
+      off('audio_match_update', handleAudioMatchUpdate);
       off('phone_audio_stream', handlePhoneAudioStream);
       stopDebugEvents();
     };
@@ -422,9 +483,14 @@ export function NowPlayingSection() {
     (song) => song.status !== 'PLAYING',
   );
 
+  const matchedPreview = state.currentMatch
+    ? matchToPlayerSong(state.currentMatch)
+    : null;
+
   let display: NowPlayingSong | typeof NOW_PLAYING =
     state.tempStatus ||
     state.nowPlaying ||
+    matchedPreview ||
     (queuedPreview ? toPlayerSong(queuedPreview) : NOW_PLAYING);
   const albumArt = 'albumArt' in display ? display.albumArt : undefined;
 

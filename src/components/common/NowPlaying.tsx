@@ -9,6 +9,7 @@ type PlayerState =
   | 'queued'
   | 'priority'
   | 'skipped'
+  | 'matched'
   | 'idle';
 
 interface NowPlayingProps {
@@ -93,6 +94,14 @@ const stateConfig: Record<
     color: '#f8c84e',
     background:
       'radial-gradient(circle at 16% 48%, rgba(248, 200, 78, .25), transparent 34%), radial-gradient(circle at 85% 40%, rgba(255, 153, 51, .30), transparent 38%), linear-gradient(135deg, #241806 0%, #5a3c0c 48%, #a96b12 100%)',
+  },
+  matched: {
+    statusLabel: 'CURRENTLY FINGERPRINTED',
+    subtitle: 'Recognized from the live microphone feed',
+    badge: 'Fingerprint match',
+    color: '#a78bfa',
+    background:
+      'radial-gradient(circle at 16% 48%, rgba(167, 139, 250, .28), transparent 34%), radial-gradient(circle at 85% 40%, rgba(124, 58, 237, .32), transparent 38%), linear-gradient(135deg, #1a0a2e 0%, #3b1d6e 48%, #6d28d9 100%)',
   },
   skipped: {
     statusLabel: 'SKIPPED',

@@ -33,5 +33,6 @@ export {
   onAttendeePasswordPromptRequested,
   onPhoneMicrophoneConnected,
   onAudioMatchChunk,
+  onAudioMatchUpdate,
   onPhoneAudioStream,
 } from './listeners';

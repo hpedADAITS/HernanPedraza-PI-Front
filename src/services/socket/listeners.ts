@@ -139,6 +139,10 @@ export function onAudioMatchChunk(callback: Listener<'audio_match_chunk'>) {
   on('audio_match_chunk', callback);
 }
 
+export function onAudioMatchUpdate(callback: Listener<'audio_match_update'>) {
+  on('audio_match_update', callback);
+}
+
 export function onPhoneAudioStream(callback: Listener<'phone_audio_stream'>) {
   on('phone_audio_stream', callback);
 }

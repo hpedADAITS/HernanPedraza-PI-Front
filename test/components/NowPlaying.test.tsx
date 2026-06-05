@@ -10,6 +10,7 @@ describe('NowPlaying', () => {
     ['playing', 'NOW PLAYING'],
     ['rejected', 'REJECTED'],
     ['skipped', 'SKIPPED'],
+    ['matched', 'CURRENTLY FINGERPRINTED'],
   ] as const)('renders the %s state', (status, label) => {
     render(
       <NowPlaying
