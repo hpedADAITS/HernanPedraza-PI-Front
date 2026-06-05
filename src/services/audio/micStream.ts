@@ -71,16 +71,9 @@ export async function startAudioMatchStream({
     muteGain = context.createGain();
     muteGain.gain.value = 0;
 
-    const THROTTLE_MS = 50;
-    let lastEmitAt = 0;
-
     worklet.port.onmessage = (event: MessageEvent<Float32Array>) => {
       try {
         if (stopped) return;
-
-        const now = Date.now();
-        if (now - lastEmitAt < THROTTLE_MS) return;
-        lastEmitAt = now;
 
         const chunk = event.data;
 
