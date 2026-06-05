@@ -12,7 +12,6 @@ const {
   authRegisterMock,
   getCurrentUserMock,
   createEventMock,
-  verifyEmailTokenMock,
   saveTokenMock,
   initSocketMock,
   writeStoredJsonMock,
@@ -20,7 +19,6 @@ const {
   authRegisterMock: vi.fn(),
   getCurrentUserMock: vi.fn(),
   createEventMock: vi.fn(),
-  verifyEmailTokenMock: vi.fn(),
   saveTokenMock: vi.fn(),
   initSocketMock: vi.fn(),
   writeStoredJsonMock: vi.fn(),
@@ -31,7 +29,7 @@ vi.mock('@/services/api', () => ({
   authAPI: {
     register: authRegisterMock,
     getCurrentUser: getCurrentUserMock,
-    verifyEmailToken: verifyEmailTokenMock,
+    verifyEmailToken: vi.fn(),
   },
   eventsAPI: {
     createEvent: createEventMock,
@@ -64,19 +62,20 @@ describe('DJRegister page', () => {
     authRegisterMock.mockReset();
     getCurrentUserMock.mockReset();
     createEventMock.mockReset();
-    verifyEmailTokenMock.mockReset();
     saveTokenMock.mockReset();
     initSocketMock.mockReset();
     writeStoredJsonMock.mockReset();
     localStorage.clear();
   });
 
-  it('saves the verified token before creating the event and navigates to the DJ dashboard', async () => {
+  it('creates account and navigates to dj-dashboard', async () => {
     const onNavigate = vi.fn();
 
-    // Return non-JWT token to trigger email modal (no debug mode)
+    // Mock registration with emailVerificationToken to trigger auto-verify flow
+    // This bypasses the email modal and goes directly to event setup
     authRegisterMock.mockResolvedValue({
       token: 'registration-token',
+      emailVerificationToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.debug.token',
       user: {
         id: 'user-1',
         email: 'dj@example.com',
@@ -86,15 +85,7 @@ describe('DJRegister page', () => {
         profilePicture: null,
       },
     });
-    verifyEmailTokenMock.mockResolvedValue({ data: { token: 'verified-token' } });
-    getCurrentUserMock.mockResolvedValue({
-      id: 'user-1',
-      email: 'dj@example.com',
-      displayName: 'DJ Test',
-      role: 'DJ',
-      emailRegistered: true,
-      token: 'verified-token',
-    });
+
     createEventMock.mockResolvedValue({
       id: 'event-1',
       accessCode: 'ABCD1234',
@@ -102,6 +93,7 @@ describe('DJRegister page', () => {
 
     render(<DJRegister onNavigate={onNavigate} />);
 
+    // Fill out the registration form
     fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: 'dj@example.com' },
     });
@@ -115,22 +107,29 @@ describe('DJRegister page', () => {
       target: { value: 'DJ Test' },
     });
 
+    // Submit the form
     fireEvent.click(screen.getByRole('button', { name: /create account/i }));
 
+    // Wait for registration to complete
     await waitFor(() => expect(authRegisterMock).toHaveBeenCalledTimes(1));
 
-    fireEvent.click(await screen.findByRole('button', { name: /verify email/i }));
+    // Wait for the event setup modal to appear (auto-verify succeeds)
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: /create event/i })).toBeInTheDocument();
+    }, { timeout: 5000 });
 
-    fireEvent.click(await screen.findByRole('button', { name: /create event/i }));
+    // Click create event button
+    fireEvent.click(screen.getByRole('button', { name: /create event/i }));
 
+    // Verify navigation and API calls
     await waitFor(() => expect(onNavigate).toHaveBeenCalledWith('dj-dashboard'));
-    expect(saveTokenMock).toHaveBeenCalledWith('verified-token');
     expect(createEventMock).toHaveBeenCalledWith(
       "DJ Test's Event",
       'Welcome to your event!',
       expect.any(String),
       expect.any(String),
     );
-    expect(initSocketMock).toHaveBeenCalledWith('verified-token');
+    expect(initSocketMock).toHaveBeenCalled();
+    expect(writeStoredJsonMock).toHaveBeenCalled();
   });
 });

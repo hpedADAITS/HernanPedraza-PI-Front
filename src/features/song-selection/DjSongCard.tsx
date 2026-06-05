@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AnimatePresence, animate, m, useMotionValue } from 'motion/react';
 import { clsx } from 'clsx';
-import { Disc3, Sparkles } from 'lucide-react';
+import { Disc3, Sparkles, ArrowLeft, ArrowRight } from 'lucide-react';
 import { UserAvatar } from '@/components/common';
 import type { Song } from '@/types/songs';
 
@@ -19,6 +19,7 @@ export interface SongSelectionSong {
 interface DjSongCardProps {
   isProcessing: boolean;
   onApprove: () => Promise<void>;
+  onClick?: () => void;
   onReject: () => Promise<void>;
   song: SongSelectionSong;
 }
@@ -148,14 +149,28 @@ function DjSongCardContent({ song }: { song: SongSelectionSong }) {
           </div>
         </div>
       ) : null}
+
+      {/* Keyboard hint icons */}
+      <div className="flex items-center justify-end gap-0.5 pt-1 opacity-40 transition-opacity group-hover:opacity-60">
+        <span className="flex items-center gap-0.5 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+          <ArrowLeft size={10} className="text-red-400" />
+          Reject
+        </span>
+        <span className="text-slate-300">|</span>
+        <span className="flex items-center gap-0.5 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+          Approve
+          <ArrowRight size={10} className="text-green-500" />
+        </span>
+      </div>
     </div>
   );
 }
 
-export function DjSongCard({ isProcessing, onApprove, onReject, song }: DjSongCardProps) {
+export function DjSongCard({ isProcessing, onApprove, onClick, onReject, song }: DjSongCardProps) {
   const x = useMotionValue(0);
   const pointerStartRef = React.useRef<{ x: number; y: number } | null>(null);
   const pointerLockRef = React.useRef<'x' | 'y' | null>(null);
+  const pointerMovedRef = React.useRef(false);
   const [showOverlay, setShowOverlay] = useState(false);
 
   const finishDecision = async (direction: 'left' | 'right') => {
@@ -177,6 +192,7 @@ export function DjSongCard({ isProcessing, onApprove, onReject, song }: DjSongCa
     if (isProcessing) return;
     pointerStartRef.current = { x: e.clientX, y: e.clientY };
     pointerLockRef.current = null;
+    pointerMovedRef.current = false;
     e.currentTarget.setPointerCapture?.(e.pointerId);
   };
 
@@ -188,7 +204,12 @@ export function DjSongCard({ isProcessing, onApprove, onReject, song }: DjSongCa
     const deltaY = e.clientY - start.y;
 
     if (!pointerLockRef.current) {
-      if (Math.abs(deltaX) < 8 && Math.abs(deltaY) < 8) return;
+      if (Math.abs(deltaX) < 8 && Math.abs(deltaY) < 8) {
+        // Small movement - still potentially a click
+        return;
+      }
+      // Mark as moved - this is a drag/swipe, not a click
+      pointerMovedRef.current = true;
       if (Math.abs(deltaX) > Math.abs(deltaY) + 6) pointerLockRef.current = 'x';
       else {
         pointerLockRef.current = 'y';
@@ -211,6 +232,14 @@ export function DjSongCard({ isProcessing, onApprove, onReject, song }: DjSongCa
     setShowOverlay(false);
     releasePointerCapture(e.currentTarget, e.pointerId);
 
+    // Handle click if there was minimal movement and onClick is provided
+    if (!pointerMovedRef.current && onClick) {
+      onClick();
+      pointerMovedRef.current = false;
+      return;
+    }
+    pointerMovedRef.current = false;
+
     if (lockedAxis !== 'x' || isProcessing) return;
     if (direction) {
       await finishDecision(direction);
@@ -222,6 +251,7 @@ export function DjSongCard({ isProcessing, onApprove, onReject, song }: DjSongCa
   const handlePointerCancel = (e: React.PointerEvent<HTMLDivElement>) => {
     pointerStartRef.current = null;
     pointerLockRef.current = null;
+    pointerMovedRef.current = false;
     setShowOverlay(false);
     releasePointerCapture(e.currentTarget, e.pointerId);
     animate(x, 0, { duration: 0.14, ease: 'easeOut' });

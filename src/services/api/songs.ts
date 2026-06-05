@@ -1,5 +1,14 @@
 import { apiCall } from './client';
 
+// Regex for valid MongoDB ObjectId (24 hex characters)
+const OBJECT_ID_REGEX = /^[0-9a-fA-F]{24}$/;
+
+function validateObjectId(id: string, name: string): void {
+  if (!id || !OBJECT_ID_REGEX.test(id)) {
+    throw new Error(`Invalid ${name} ID format: ${id}`);
+  }
+}
+
 export const songsAPI = {
   suggestSong: async (
     eventId: string,
@@ -8,6 +17,7 @@ export const songsAPI = {
     artist: string,
     totalDuration?: number,
   ) => {
+    validateObjectId(eventId, 'eventId');
     const data = await apiCall(`/songs/${eventId}/suggest`, {
       method: 'POST',
       body: JSON.stringify({ participantId, title, artist, totalDuration }),
@@ -16,16 +26,20 @@ export const songsAPI = {
   },
 
   getQueue: async (eventId: string) => {
+    validateObjectId(eventId, 'eventId');
     const data = await apiCall(`/songs/${eventId}/queue`);
     return data.data.queue;
   },
 
   getPendingSongs: async (eventId: string) => {
+    validateObjectId(eventId, 'eventId');
     const data = await apiCall(`/songs/${eventId}/pending`);
     return data.data.pending;
   },
 
   approveSong: async (eventId: string, songId: string) => {
+    validateObjectId(eventId, 'eventId');
+    validateObjectId(songId, 'songId');
     const data = await apiCall(`/songs/${eventId}/${songId}/approve`, {
       method: 'POST',
     });
@@ -33,6 +47,8 @@ export const songsAPI = {
   },
 
   sendNow: async (eventId: string, songId: string) => {
+    validateObjectId(eventId, 'eventId');
+    validateObjectId(songId, 'songId');
     const data = await apiCall(`/songs/${eventId}/${songId}/send-now`, {
       method: 'POST',
     });
@@ -40,6 +56,8 @@ export const songsAPI = {
   },
 
   rejectSong: async (eventId: string, songId: string, reason: string) => {
+    validateObjectId(eventId, 'eventId');
+    validateObjectId(songId, 'songId');
     const data = await apiCall(`/songs/${eventId}/${songId}/reject`, {
       method: 'POST',
       body: JSON.stringify({ reason }),
@@ -48,6 +66,7 @@ export const songsAPI = {
   },
 
   playNext: async (eventId: string) => {
+    validateObjectId(eventId, 'eventId');
     const data = await apiCall(`/songs/${eventId}/play-next`, {
       method: 'POST',
     });
@@ -55,6 +74,8 @@ export const songsAPI = {
   },
 
   skipSong: async (eventId: string, songId: string, reason: string) => {
+    validateObjectId(eventId, 'eventId');
+    validateObjectId(songId, 'songId');
     const data = await apiCall(`/songs/${eventId}/${songId}/skip`, {
       method: 'POST',
       body: JSON.stringify({ reason }),
@@ -63,6 +84,7 @@ export const songsAPI = {
   },
 
   getSongPosition: async (songId: string) => {
+    validateObjectId(songId, 'songId');
     const data = await apiCall(`/songs/${songId}/position`);
     return data.data;
   },

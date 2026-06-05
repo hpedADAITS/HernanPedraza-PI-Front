@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SettingsDialog, SettingsDialogActions, SettingsDialogButton } from '@/components/settings/SettingsUI';
 import { ProfilePictureUpload } from '@/components/common';
 import { readStoredJson } from '@/utils/storage';
+import { t } from '@/i18n';
 
 interface ProfilePictureModalProps {
   open: boolean;

@@ -150,6 +150,20 @@ export function usePendingSongs(eventId: string | null, isDj: boolean) {
     setReviewSongIds((current) => current.slice(1));
   }, []);
 
+  // Select a specific song for review (brings it to front of queue)
+  const selectForReview = useCallback(
+    (songId: string) => {
+      setReviewSongIds((current) => {
+        // If already in queue and at front, do nothing
+        if (current[0] === songId) return current;
+        // Remove if exists elsewhere, then add to front
+        const filtered = current.filter((id) => id !== songId);
+        return [songId, ...filtered];
+      });
+    },
+    [],
+  );
+
   const handleApprove = useCallback(
     async (songId: string) => {
       if (!eventId) return false;
@@ -199,6 +213,7 @@ export function usePendingSongs(eventId: string | null, isDj: boolean) {
     processingSongId,
     reviewSong,
     searchTerm,
+    selectForReview,
     setSearchTerm,
   } as const;
 }
