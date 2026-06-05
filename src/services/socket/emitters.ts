@@ -46,11 +46,11 @@ export function removeVote(
 
 export function suggestSong(
   eventId: string,
-  songId: string,
   title: string,
   artist: string,
   participantId: string,
   nickname: string,
+  totalDuration?: number,
 ) {
   const socket = getSocketInstance();
   if (!socket) throw new Error('Socket not initialized');
@@ -60,6 +60,7 @@ export function suggestSong(
     artist,
     participantId,
     nickname,
+    totalDuration,
   });
 }
 
@@ -98,4 +99,97 @@ export function skipSong(eventId: string, songId: string, reason: string) {
 
 export function updateQueue(_eventId: string, _queue: any[]) {
   throw new Error('Queue updates must come from backend state changes');
+}
+
+/* ============ PARTICIPANT ADMIN ============ */
+
+export function setCooldown(
+  eventId: string,
+  participantId: string,
+  durationMs: number,
+  reason?: string,
+) {
+  const socket = getSocketInstance();
+  if (!socket) throw new Error('Socket not initialized');
+  socket.emit('set_cooldown', { eventId, participantId, durationMs, reason });
+}
+
+export function kickParticipant(
+  eventId: string,
+  participantId: string,
+  reason?: string,
+) {
+  const socket = getSocketInstance();
+  if (!socket) throw new Error('Socket not initialized');
+  socket.emit('kick_participant', { eventId, participantId, reason });
+}
+
+export function banParticipant(
+  eventId: string,
+  participantId: string,
+  reason?: string,
+) {
+  const socket = getSocketInstance();
+  if (!socket) throw new Error('Socket not initialized');
+  socket.emit('ban_participant', { eventId, participantId, reason });
+}
+
+export function setPremium(participantId: string, isPremium: boolean) {
+  const socket = getSocketInstance();
+  if (!socket) throw new Error('Socket not initialized');
+  socket.emit('set_premium', { participantId, isPremium });
+}
+
+/* ============ ADMIN ACTIONS (Promise-based with acknowledgment) ============ */
+
+interface AckResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
+function emitWithAck<T>(event: string, data: unknown): Promise<T> {
+  const socket = getSocketInstance();
+  if (!socket) return Promise.reject(new Error('Socket not initialized'));
+  return new Promise((resolve, reject) => {
+    socket.emit(event, data, (response: AckResponse<T>) => {
+      if (response.success && response.data) {
+        resolve(response.data);
+      } else {
+        reject(new Error(response.error || 'Action failed'));
+      }
+    });
+  });
+}
+
+export function setCooldownAck(
+  eventId: string,
+  participantId: string,
+  durationMs: number,
+  reason?: string,
+): Promise<unknown> {
+  return emitWithAck('set_cooldown', { eventId, participantId, durationMs, reason });
+}
+
+export function kickParticipantAck(
+  eventId: string,
+  participantId: string,
+  reason?: string,
+): Promise<unknown> {
+  return emitWithAck('kick_participant', { eventId, participantId, reason });
+}
+
+export function banParticipantAck(
+  eventId: string,
+  participantId: string,
+  reason?: string,
+): Promise<unknown> {
+  return emitWithAck('ban_participant', { eventId, participantId, reason });
+}
+
+export function setPremiumAck(
+  participantId: string,
+  isPremium: boolean,
+): Promise<unknown> {
+  return emitWithAck('set_premium', { participantId, isPremium });
 }

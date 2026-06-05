@@ -4,8 +4,8 @@ import { clsx } from 'clsx';
 import { Zap, UserX } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { COOLDOWN_OPTIONS, DEFAULT_COOLDOWN_MS, formatCooldownDuration } from '@/constants/cooldowns';
-import { participantsAPI } from '@/services/api';
 import { useSound } from '@/hooks/useSound';
+import { setCooldownAck, kickParticipantAck } from '@/services/socket/emitters';
 import { useToast } from '@/hooks/useToast';
 import { UserAvatar } from '@/components/common';
 import { t } from '@/i18n';
@@ -96,11 +96,7 @@ export function ParticipantItem({
 
     try {
       if (action === 'Cooldown' && eventId) {
-        const promise = participantsAPI.setCooldown(
-          id,
-          cooldownMs,
-          'DJ cooldown',
-        );
+        const promise = setCooldownAck(eventId, id, cooldownMs, 'DJ cooldown');
         await toast.promise(promise, {
           success: t('Cooldown applied to "{name}" for {duration}', {
             name: participant.nickname,
@@ -110,10 +106,7 @@ export function ParticipantItem({
         });
         onSelect(null);
       } else if (action === 'Kick' && eventId) {
-        const promise = participantsAPI.kickParticipant(
-          id,
-          'Kicked by DJ',
-        );
+        const promise = kickParticipantAck(eventId, id, 'Kicked by DJ');
         await toast.promise(promise, {
           success: t('Kicked "{name}"', { name: participant.nickname }),
           error: t('Failed to kick'),

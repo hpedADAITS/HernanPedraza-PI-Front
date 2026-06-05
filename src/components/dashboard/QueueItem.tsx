@@ -5,8 +5,9 @@ import { Play, X, Clock, UserX, SkipForward, Check } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { COOLDOWN_OPTIONS, DEFAULT_COOLDOWN_MS, formatCooldownDuration } from '@/constants/cooldowns';
 import { ANIMATION_DURATION } from '@/constants/animations';
-import { participantsAPI, songsAPI } from '@/services/api';
+import { songsAPI } from '@/services/api';
 import { useSound } from '@/hooks/useSound';
+import { setCooldownAck, kickParticipantAck } from '@/services/socket/emitters';
 import { useToast } from '@/hooks/useToast';
 import { t } from '@/i18n';
 import type { Song } from '@/types/songs';
@@ -106,21 +107,14 @@ export function QueueItem({
           toast.error(t('Only attendee requests can be moderated'));
           return;
         }
-        await participantsAPI.setCooldown(
-          song.requestedBy._id,
-          cooldownMs,
-          'DJ applied cooldown',
-        );
+        await setCooldownAck(eventId, song.requestedBy._id, cooldownMs, 'DJ applied cooldown');
         toast.success(t('User on cooldown for {duration}', { duration: formatCooldownDuration(cooldownMs) }));
       } else if (action === 'Kick' && eventId) {
         if (!canModerateRequester || !song.requestedBy?._id) {
           toast.error(t('Only attendee requests can be moderated'));
           return;
         }
-        await participantsAPI.kickParticipant(
-          song.requestedBy._id,
-          'Kicked by DJ',
-        );
+        await kickParticipantAck(eventId, song.requestedBy._id, 'Kicked by DJ');
         toast.success(t('User kicked from event'));
       } else if (action === 'Skip' && eventId) {
         if (!songId) {

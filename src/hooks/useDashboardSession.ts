@@ -146,8 +146,9 @@ function authTokenUserId(token: string | null) {
 }
 
 function authTokenRole(token: string | null) {
-  const role = decodeAuthTokenPayload(token)?.role;
-  return typeof role === 'string' ? role.toLowerCase() : null;
+  const role = decodeAuthTokenPayload(token)?.role?.toUpperCase();
+  if (role === 'ADMIN' || role === 'DJ') return 'dj';
+  return 'attendee';
 }
 
 function isDjTokenForStoredUser(token: string | null, user: StoredUser | null | undefined) {
