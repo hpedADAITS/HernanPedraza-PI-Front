@@ -1,4 +1,4 @@
-import { apiCall } from './client';
+import { API_BASE, apiCall, getToken } from './client';
 
 function getPublicFrontendOrigin() {
   if (typeof window === 'undefined') return '';
@@ -120,5 +120,24 @@ export const eventsAPI = {
       { method: 'POST' },
     );
     return data.data.song;
+  },
+
+  matchAudio: async (eventId: string, audioBlob: Blob) => {
+    const formData = new FormData();
+    formData.append('audio', audioBlob, 'audio.wav');
+
+    const token = getToken();
+    const response = await fetch(`${API_BASE}/events/${eventId}/audio-match`, {
+      method: 'POST',
+      body: formData,
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to match audio: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.data.matches;
   },
 };

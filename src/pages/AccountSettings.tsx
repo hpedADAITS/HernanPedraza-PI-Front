@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { useToast } from '@/hooks/useToast';
 import { authAPI, clearToken, participantsAPI } from '@/services/api';
-import { disconnectSocket, getSocket, leaveEvent } from '@/services/socket';
-import { ProfilePictureUpload } from '@/components/common';
+import { disconnectSocket, leaveEvent } from '@/services/socket';
 import { AttendeePasswordPrompt } from '@/components/dashboard/AttendeeSavePrompt';
-import { SettingsChoiceRow, SettingsDialog, SettingsDialogActions, SettingsDialogButton, SettingsList, SettingsListItem, SettingsPageShell, SettingsSearch, SettingsToggleRow } from '@/components/settings/SettingsUI';
-import { MEDIA_QUALITY_OPTIONS, useMediaQualityPreference, useProfileSocialPrefs } from '@/features/settings/preferences';
-import { readStoredJson, writeStoredJson } from '@/utils/storage';
+import { SettingsList, SettingsListItem, SettingsPageShell, SettingsSearch } from '@/components/settings/SettingsUI';
+import { DisplayNameModal } from '@/components/modals/DisplayNameModal';
+import { DebugInfoModal } from '@/components/modals/DebugInfoModal';
+import { MediaQualityModal } from '@/components/modals/MediaQualityModal';
+import { SocialSettingsModal } from '@/components/modals/SocialSettingsModal';
+import { ProfilePictureModal } from '@/components/modals/ProfilePictureModal';
+import { readStoredJson } from '@/utils/storage';
 import { isDebugModeEnabled } from '@/utils/debugMode';
 import { t } from '@/i18n';
 import type { NavigateToView } from '@/types';
@@ -26,20 +29,6 @@ const SETTINGS_ITEMS = [
   { id: 'signOut', label: 'Sign Out' },
 ] as const;
 
-const getInitialProfilePicture = () =>
-  readStoredJson<{ profilePicture?: string | null }>('user')?.profilePicture || null;
-
-const getDebugInfo = () => {
-  const hasToken = !!localStorage.getItem('authToken');
-  const eventData = readStoredJson<{ eventId?: string }>('currentEvent');
-  const participantData = readStoredJson<{ _id?: string }>('currentParticipant');
-  const eventId = eventData?.eventId || t('None');
-  const participantId = participantData?._id || t('None');
-  const socketConnected = getSocket()?.connected || false;
-
-  return { hasToken, eventId, participantId, socketConnected };
-};
-
 export function AccountSettings({ mode, onNavigate }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNameModal, setShowNameModal] = useState(false);
@@ -47,71 +36,8 @@ export function AccountSettings({ mode, onNavigate }: Props) {
   const [showMediaQualityModal, setShowMediaQualityModal] = useState(false);
   const [showSocialModal, setShowSocialModal] = useState(false);
   const [showProfilePictureModal, setShowProfilePictureModal] = useState(false);
-  const [newDisplayName, setNewDisplayName] = useState('');
-  const { mediaQuality, saveMediaQuality } = useMediaQualityPreference();
-  const { saveSocialPrefs, socialPrefs } = useProfileSocialPrefs();
-  const [currentProfilePicture, setCurrentProfilePicture] = useState(getInitialProfilePicture);
   const [showAttendeeSavePrompt, setShowAttendeeSavePrompt] = useState(false);
-  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-
-  const handleSelectMediaQuality = (value: typeof mediaQuality) => {
-    saveMediaQuality(value);
-    toast.success(t('Media quality set to {quality}', { quality: t(value) }));
-    setShowMediaQualityModal(false);
-  };
-
-  const handleToggleSocial = (key: keyof typeof socialPrefs) => {
-    const next = { ...socialPrefs, [key]: !socialPrefs[key] };
-    saveSocialPrefs(next);
-  };
-
-  const handleDisplayName = () => {
-    const user = readStoredJson<{ displayName?: string }>('user');
-    if (user) {
-      setNewDisplayName(user.displayName || '');
-    }
-    setShowNameModal(true);
-  };
-
-  const handleSaveDisplayName = async () => {
-    if (!newDisplayName.trim() || newDisplayName.trim().length < 2) {
-      toast.error(t('Display name must be at least 2 characters'));
-      return;
-    }
-    setLoading(true);
-    try {
-      const displayName = newDisplayName.trim();
-      await authAPI.updateProfile({ displayName });
-      const user = readStoredJson<{ displayName?: string }>('user') || {};
-      writeStoredJson('user', {
-        ...user,
-        displayName,
-      });
-      const participant = readStoredJson<{ _id?: string; id?: string } & Record<string, unknown>>('currentParticipant');
-      const participantId = participant?._id || participant?.id;
-      if (participantId) {
-        const updatedParticipant = await participantsAPI.updateProfile(participantId, {
-          nickname: displayName,
-        });
-        writeStoredJson('currentParticipant', {
-          ...participant,
-          ...updatedParticipant,
-          nickname: displayName,
-        });
-      }
-      toast.success(t('Display name updated'));
-      setShowNameModal(false);
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : t('Failed to update display name'),
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const finishAttendeeSignOut = async () => {
     const event = readStoredJson<{ eventId?: string; _id?: string; id?: string }>('currentEvent');
@@ -165,7 +91,7 @@ export function AccountSettings({ mode, onNavigate }: Props) {
         setShowProfilePictureModal(true);
         break;
       case 'displayName':
-        handleDisplayName();
+        setShowNameModal(true);
         break;
       case 'mediaQuality':
         setShowMediaQualityModal(true);
@@ -182,7 +108,6 @@ export function AccountSettings({ mode, onNavigate }: Props) {
     }
   };
 
-  const debugInfo = getDebugInfo();
   const isDebug = isDebugModeEnabled();
   const settingsView = mode === 'dj' ? 'dj-settings' : 'attendee-settings';
   const settingsItems = isDebug
@@ -190,9 +115,7 @@ export function AccountSettings({ mode, onNavigate }: Props) {
     : SETTINGS_ITEMS.filter((item) => item.id !== 'debug');
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
   const filteredSettingsItems = normalizedSearchQuery
-    ? settingsItems.filter((item) =>
-        t(item.label).toLowerCase().includes(normalizedSearchQuery),
-      )
+    ? settingsItems.filter((item) => t(item.label).toLowerCase().includes(normalizedSearchQuery))
     : settingsItems;
 
   return (
@@ -222,151 +145,11 @@ export function AccountSettings({ mode, onNavigate }: Props) {
         )}
       </SettingsPageShell>
 
-      <SettingsDialog
-        open={showNameModal}
-        title={t('Change Display Name')}
-        onClose={() => setShowNameModal(false)}
-      >
-        <input
-          type="text"
-          value={newDisplayName}
-          onChange={(event) => setNewDisplayName(event.target.value)}
-          aria-label={t('New display name')}
-          placeholder={t('New display name')}
-          className="h-12 w-full rounded-lg border border-slate-200 px-4 text-base text-slate-700 outline-none focus:ring-4 focus:ring-blue-100"
-        />
-        <SettingsDialogActions>
-          <SettingsDialogButton onClick={() => setShowNameModal(false)}>
-            {t('Cancel')}
-          </SettingsDialogButton>
-          <SettingsDialogButton
-            onClick={handleSaveDisplayName}
-            disabled={loading}
-            variant="primary"
-          >
-            {loading ? t('Saving…') : t('Save')}
-          </SettingsDialogButton>
-        </SettingsDialogActions>
-      </SettingsDialog>
-
-      <SettingsDialog
-        open={showDebugModal}
-        title={t('Debug Info')}
-        onClose={() => setShowDebugModal(false)}
-      >
-        <div className="space-y-3 text-sm font-mono">
-          <div className="flex justify-between gap-4">
-            <span className="text-slate-500">{t('Auth Token')}:</span>
-            <span className={debugInfo.hasToken ? 'text-green-600' : 'text-red-500'}>
-              {debugInfo.hasToken ? t('Present') : t('Missing')}
-            </span>
-          </div>
-          <div className="flex justify-between gap-4">
-            <span className="text-slate-500">{t('Event ID')}:</span>
-            <span className="max-w-[180px] truncate text-slate-700">
-              {debugInfo.eventId}
-            </span>
-          </div>
-          <div className="flex justify-between gap-4">
-            <span className="text-slate-500">{t('Participant ID')}:</span>
-            <span className="max-w-[180px] truncate text-slate-700">
-              {debugInfo.participantId}
-            </span>
-          </div>
-          <div className="flex justify-between gap-4">
-            <span className="text-slate-500">{t('Socket')}:</span>
-            <span
-              className={
-                debugInfo.socketConnected ? 'text-green-600' : 'text-red-500'
-              }
-            >
-              {debugInfo.socketConnected ? t('Connected') : t('Disconnected')}
-            </span>
-          </div>
-        </div>
-        <SettingsDialogActions>
-          <SettingsDialogButton
-            onClick={() => setShowDebugModal(false)}
-            className="w-full flex-none"
-          >
-            {t('Close')}
-          </SettingsDialogButton>
-        </SettingsDialogActions>
-      </SettingsDialog>
-
-      <SettingsDialog
-        open={showMediaQualityModal}
-        title={t('Media Quality')}
-        onClose={() => setShowMediaQualityModal(false)}
-      >
-        <div className="flex flex-col gap-2">
-          {MEDIA_QUALITY_OPTIONS.map((option) => (
-            <SettingsChoiceRow
-              key={option.value}
-              selected={mediaQuality === option.value}
-              onClick={() => handleSelectMediaQuality(option.value)}
-            >
-              {t(option.label)}
-            </SettingsChoiceRow>
-          ))}
-        </div>
-      </SettingsDialog>
-
-      <SettingsDialog
-        open={showSocialModal}
-        title={t('Social Settings')}
-        onClose={() => setShowSocialModal(false)}
-      >
-        <div className="flex flex-col gap-3">
-          {(
-            [
-              ['showDisplayName', 'Show display name'],
-              ['showProfilePicture', 'Show profile picture'],
-              ['allowFriendRequests', 'Allow friend requests'],
-            ] as [keyof typeof socialPrefs, string][]
-          ).map(([key, label]) => (
-            <SettingsToggleRow
-              key={key}
-              label={t(label)}
-              checked={socialPrefs[key]}
-              onChange={() => handleToggleSocial(key)}
-            />
-          ))}
-        </div>
-        <SettingsDialogActions>
-          <SettingsDialogButton
-            onClick={() => setShowSocialModal(false)}
-            className="w-full flex-none"
-          >
-            {t('Done')}
-          </SettingsDialogButton>
-        </SettingsDialogActions>
-      </SettingsDialog>
-
-      <SettingsDialog
-        open={showProfilePictureModal}
-        title={t('Profile Picture')}
-        onClose={() => setShowProfilePictureModal(false)}
-      >
-        <div className="mb-6 flex justify-center">
-          <ProfilePictureUpload
-            currentPicture={currentProfilePicture}
-            onPictureUpdated={(newPicture) => {
-              setCurrentProfilePicture(newPicture);
-              setShowProfilePictureModal(false);
-            }}
-            size="lg"
-          />
-        </div>
-        <SettingsDialogActions>
-          <SettingsDialogButton
-            onClick={() => setShowProfilePictureModal(false)}
-            className="w-full flex-none"
-          >
-            {t('Done')}
-          </SettingsDialogButton>
-        </SettingsDialogActions>
-      </SettingsDialog>
+      <DisplayNameModal open={showNameModal} onClose={() => setShowNameModal(false)} />
+      <DebugInfoModal open={showDebugModal} onClose={() => setShowDebugModal(false)} />
+      <MediaQualityModal open={showMediaQualityModal} onClose={() => setShowMediaQualityModal(false)} />
+      <SocialSettingsModal open={showSocialModal} onClose={() => setShowSocialModal(false)} />
+      <ProfilePictureModal open={showProfilePictureModal} onClose={() => setShowProfilePictureModal(false)} />
 
       {showAttendeeSavePrompt && (
         <AttendeePasswordPrompt

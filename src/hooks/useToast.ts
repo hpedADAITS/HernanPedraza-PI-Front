@@ -3,7 +3,7 @@ import { useCallback, useRef, type RefObject } from 'react';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
-interface Toast {
+export interface Toast {
   id: string;
   type: ToastType;
   message: string;
@@ -118,5 +118,13 @@ export function useToast() {
     warning,
     promise,
     clearAll,
+    toast: {
+      success,
+      error,
+      info,
+      warning,
+      promise,
+      clearAll,
+    },
   };
 }

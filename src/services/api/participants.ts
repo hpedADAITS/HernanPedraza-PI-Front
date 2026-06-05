@@ -89,4 +89,12 @@ export const participantsAPI = {
     });
     return data.data.participant;
   },
+
+  banParticipant: async (participantId: string, reason: string) => {
+    const data = await apiCall(`/participants/${participantId}/ban`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+    return data.data.participant;
+  },
 };

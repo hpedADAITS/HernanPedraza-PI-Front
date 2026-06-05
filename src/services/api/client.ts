@@ -31,6 +31,9 @@ function getToken() {
   return authToken;
 }
 
+/* Retrieve token - exported for external use */
+export { getToken };
+
 /* Store token in localStorage */
 export function saveToken(token: string) {
   authToken = token;

@@ -167,7 +167,7 @@ export function EmailConfirmationModal({
                         {/* Direct Verify Button */}
                         <button
                           type="button"
-                          disabled={status === 'verifying'}
+                          disabled={(status as string) === 'verifying'}
                           onClick={async () => {
                             setStatus('verifying');
                             setVerifyError('');
@@ -185,7 +185,7 @@ export function EmailConfirmationModal({
                           }}
                           className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
                         >
-                          {status === 'verifying' ? (
+                          {(status as string) === 'verifying' ? (
                             <>
                               <Loader size={18} className="animate-spin" />
                               {t('Verifying...')}

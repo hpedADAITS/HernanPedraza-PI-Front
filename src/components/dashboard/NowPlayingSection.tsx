@@ -291,7 +291,7 @@ export function NowPlayingSection() {
       tickRef.current = setInterval(updateElapsed, 1000);
       return () => {
         if (tickRef.current) clearInterval(tickRef.current);
-        tickRef.current = undefined;
+        tickRef.current = null;
         setElapsedSeconds(0);
       };
     }

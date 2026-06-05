@@ -1,6 +1,6 @@
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 // Set DEV before importing the component
 // @ts-expect-error test controls Vite env branch
@@ -74,9 +74,9 @@ describe('DJRegister page', () => {
   it('saves the verified token before creating the event and navigates to the DJ dashboard', async () => {
     const onNavigate = vi.fn();
 
+    // Return non-JWT token to trigger email modal (no debug mode)
     authRegisterMock.mockResolvedValue({
       token: 'registration-token',
-      emailVerificationToken: 'header.payload.signature',
       user: {
         id: 'user-1',
         email: 'dj@example.com',
