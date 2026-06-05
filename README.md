@@ -1,21 +1,21 @@
 <div align="center" style="max-width:320px; margin:0 auto;">
   <a align="center" href="https://sr-backend.onrender.com/" target="_blank" rel="noopener noreferrer">
     <img align="center"
-      alt="SyncRekuest Logo"
+      alt="Syncrequest Logo"
       src="docs/logo.png"
       style="display:block; width:100%; height:auto;"
     />
   </a>
 </div>
 &nbsp;
-<h1 align="center">SyncRekuest Frontend</h1>
+<h1 align="center">Syncrequest Frontend</h1>
 
 Non commercial Student proyect combining React + TypeScript client for DJ events, attendee song requests, realtime queues, and mobile-friendly participation.
 
 ## Overview
 
 ```text
-DJ/attendee browser -> REST /api/v1 -> SyncRekuest backend -> MongoDB
+DJ/attendee browser -> REST /api/v1 -> Syncrequest backend -> MongoDB
                   `-> Socket.IO rooms <- live queue/song/participant updates
 ```
 

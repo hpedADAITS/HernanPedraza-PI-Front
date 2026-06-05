@@ -99,6 +99,70 @@ function isDjUser(user: StoredUser | null | undefined) {
   return role === 'dj' || role === 'admin';
 }
 
+type AuthTokenPayload = {
+  userId?: unknown;
+  sub?: unknown;
+  id?: unknown;
+  _id?: unknown;
+  role?: unknown;
+};
+
+function decodeBase64Url(value: string) {
+  const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized.padEnd(
+    normalized.length + ((4 - (normalized.length % 4)) % 4),
+    '=',
+  );
+
+  return atob(padded);
+}
+
+function decodeAuthTokenPayload(token: string | null): AuthTokenPayload | null {
+  if (!token || typeof atob === 'undefined') return null;
+
+  const [, payload] = token.split('.');
+  if (!payload) return null;
+
+  try {
+    return JSON.parse(decodeBase64Url(payload)) as AuthTokenPayload;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeTokenString(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value : null;
+}
+
+function authTokenUserId(token: string | null) {
+  const payload = decodeAuthTokenPayload(token);
+
+  return (
+    normalizeTokenString(payload?.userId) ??
+    normalizeTokenString(payload?.sub) ??
+    normalizeTokenString(payload?.id) ??
+    normalizeTokenString(payload?._id)
+  );
+}
+
+function authTokenRole(token: string | null) {
+  const role = decodeAuthTokenPayload(token)?.role;
+  return typeof role === 'string' ? role.toLowerCase() : null;
+}
+
+function isDjTokenForStoredUser(token: string | null, user: StoredUser | null | undefined) {
+  const tokenId = authTokenUserId(token);
+  const userId = storedUserId(user);
+  const role = authTokenRole(token);
+
+  return Boolean(
+    tokenId &&
+    userId &&
+    tokenId === userId &&
+    (role === 'dj' || role === 'admin'),
+  );
+}
+
 function storeDjEventSession(
   event: { _id?: string; id?: string; accessCode?: string; ownerId?: { profilePicture?: string | null } },
   user: StoredUser,
@@ -239,7 +303,7 @@ export function useDashboardSession({
       return;
     }
 
-    if (isDj && (!token || !isDjUser(user))) {
+    if (isDj && (!token || !isDjUser(user) || !isDjTokenForStoredUser(token, user))) {
       clearCurrentSession();
       navigateAway();
       return;

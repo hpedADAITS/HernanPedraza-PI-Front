@@ -591,8 +591,8 @@ function renderQueueTestWindow(eventId: string) {
     <script>
       (() => {
         const DEBUG_EVENT_NAME = ${JSON.stringify(DEBUG_EVENT_NAME)};
-        const DEBUG_CHANNEL_NAME = 'syncrekuest:debug-song-events';
-        const DEBUG_STORAGE_KEY = 'syncrekuest:debug-song-event:last';
+        const DEBUG_CHANNEL_NAME = 'Syncrequest:debug-song-events';
+        const DEBUG_STORAGE_KEY = 'Syncrequest:debug-song-event:last';
         const eventId = ${JSON.stringify(eventId)};
         const requester = { _id: 'debug-attendee', nickname: 'Debug Attendee' };
         const state = {

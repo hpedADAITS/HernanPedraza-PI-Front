@@ -20,6 +20,10 @@ interface Props {
   onLogoChange?: (white: boolean) => void;
 }
 
+function isDjRole(role: unknown) {
+  return typeof role === 'string' && ['dj', 'admin'].includes(role.toLowerCase());
+}
+
 export function DJLogin({
   onNavigate,
 }: Props) {

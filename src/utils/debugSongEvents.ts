@@ -1,8 +1,8 @@
 import { isDebugModeEnabled } from './debugMode';
 
-export const DEBUG_EVENT_NAME = 'syncrekuest:debug-song-event';
-const DEBUG_CHANNEL_NAME = 'syncrekuest:debug-song-events';
-const DEBUG_STORAGE_KEY = 'syncrekuest:debug-song-event:last';
+export const DEBUG_EVENT_NAME = 'Syncrequest:debug-song-event';
+const DEBUG_CHANNEL_NAME = 'Syncrequest:debug-song-events';
+const DEBUG_STORAGE_KEY = 'Syncrequest:debug-song-event:last';
 
 type DebugSongEventDetail = {
   type: string;
