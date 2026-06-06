@@ -65,7 +65,7 @@ export async function toBrowserWav(file: File, onProgress?: (percent: number) =>
 
   const wavBytes = data instanceof Uint8Array ? data : new TextEncoder().encode(data);
 
-  const wavFile = new File([wavBytes], `${file.name}.wav`, {
+  const wavFile = new File([wavBytes as BlobPart], `${file.name}.wav`, {
     type: 'audio/wav',
   });
 
