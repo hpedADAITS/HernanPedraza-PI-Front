@@ -1,5 +1,4 @@
-import { API_BASE } from './client';
-import { getAuthToken } from '@/services/session';
+import { apiCall } from './client';
 
 export interface AudioTrack {
   id: string;
@@ -10,20 +9,6 @@ export interface AudioTrack {
   sampleRate: number;
   pointsCount: number;
   hashesCount: number;
-}
-
-async function authedFetch(endpoint: string, options: RequestInit = {}) {
-  const token = getAuthToken();
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers || {}),
-    },
-  });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error?.message || 'API Error');
-  return data;
 }
 
 export const audioTracksAPI = {
@@ -39,20 +24,21 @@ export const audioTracksAPI = {
     body.append('artist', artist);
     if (coverUrl?.trim()) body.append('coverUrl', coverUrl.trim());
     body.append('audio', file);
-    const data = await authedFetch(`/events/${eventId}/audio-tracks`, {
+    const data = await apiCall(`/events/${eventId}/audio-tracks`, {
       method: 'POST',
       body,
+      contentType: null,
     });
     return data.data.track as AudioTrack;
   },
 
   listTracks: async (eventId: string) => {
-    const data = await authedFetch(`/events/${eventId}/audio-tracks`);
+    const data = await apiCall(`/events/${eventId}/audio-tracks`);
     return data.data.tracks as AudioTrack[];
   },
 
   deleteTrack: async (eventId: string, trackId: string) => {
-    const data = await authedFetch(`/events/${eventId}/audio-tracks/${trackId}`, {
+    const data = await apiCall(`/events/${eventId}/audio-tracks/${trackId}`, {
       method: 'DELETE',
     });
     return data.data.track as AudioTrack;

@@ -88,7 +88,7 @@ export function SearchBar({
     try {
       setPhoneMicrophoneLink('');
       setPhoneMicrophoneStatus('');
-      const link = await eventsAPI.getPhoneMicrophoneLink(eventId);
+      const { link } = await eventsAPI.getPhoneMicrophoneLink(eventId);
       setPhoneMicrophoneLink(link);
     } catch (error) {
       setPhoneMicrophoneLink('');

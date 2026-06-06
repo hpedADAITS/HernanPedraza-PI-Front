@@ -36,7 +36,6 @@ type DJRegisterUser = {
 
 type DJRegisterResponse = {
   token?: string;
-  authToken?: string;
   emailVerificationToken?: string;
   user?: DJRegisterUser;
 };
@@ -136,11 +135,10 @@ export function DJRegister({
         'DJ',
       )) as DJRegisterResponse;
 
-      if (!result || !(result.authToken || result.token)) {
-        throw new Error(t('Failed to create account'));
+      if (!result || !result.token) {
+        throw new Error(t('Registration did not return a session token.'));
       }
-
-      const token = result.authToken || result.token;
+      const token = result.token;
       if (!token) {
         throw new Error(t('Failed to create account'));
       }
@@ -206,10 +204,13 @@ export function DJRegister({
         throw new Error(t('Registration data missing'));
       }
 
-      // Refresh user data to get updated emailRegistered status and new token
-      const updatedUser = await authAPI.getCurrentUser();
+      // Refresh user data to get updated emailRegistered status. The
+      // auth token was issued at register/verify time and is not on the
+      // user object; the registrationData ref still holds the active
+      // token from the verifyEmailToken response.
+      await authAPI.getCurrentUser();
 
-      const freshToken = updatedUser?.token || updatedUser?.authToken || registrationData.token;
+      const freshToken = registrationData.token;
       if (!freshToken) {
         throw new Error(t('Session data is incomplete'));
       }
@@ -238,8 +239,8 @@ export function DJRegister({
       });
 
       writeStoredJson('currentParticipant', {
-        _id: updatedUser?.id || registrationData.userId,
-        id: updatedUser?.id || registrationData.userId,
+        _id: registrationData.userId,
+        id: registrationData.userId,
         nickname: displayName,
         eventId: eventMongoDB,
         profilePicture: registrationData.profilePicture || null,
@@ -247,7 +248,7 @@ export function DJRegister({
 
       toast.success(t('Welcome, {name}! Your event is ready to go.', { name: displayName }));
       socket.initSocket(freshToken);
-      activateSingleUserSession({ _id: updatedUser?.id || registrationData.userId, email, displayName });
+      activateSingleUserSession({ _id: registrationData.userId, email, displayName });
       suspendNextSingleUserSessionCheck();
       setShowEventIdModal(false);
       queueFirstTimeTutorial('dj');

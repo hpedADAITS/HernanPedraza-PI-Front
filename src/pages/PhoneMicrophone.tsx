@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { Mic, MicOff } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { eventsAPI } from '@/services/api';
@@ -58,9 +58,17 @@ function getPhoneDeviceName() {
   return platform;
 }
 
+/* Read a phone-microphone token from the URL hash. The token is delivered
+   in the fragment (not the query string) so it is not sent to the server,
+   not recorded in access logs, and not leaked through the Referer header. */
+function readPhoneMicrophoneTokenFromHash(hash: string) {
+  const params = new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : hash);
+  return params.get('token') || '';
+}
+
 export function PhoneMicrophone() {
   const { eventId = '' } = useParams();
-  const [searchParams] = useSearchParams();
+  const { hash } = useLocation();
   const streamRef = useRef<MediaStream | null>(null);
   const stopAudioMatchRef = useRef<null | (() => void)>(null);
   const sentTrackRef = useRef('');
@@ -90,7 +98,7 @@ export function PhoneMicrophone() {
       return;
     }
 
-    const token = searchParams.get('token') || '';
+    const token = readPhoneMicrophoneTokenFromHash(hash);
     if (!token) {
       setError(t('This microphone link is missing its security token.'));
       setConnectionState('failed');

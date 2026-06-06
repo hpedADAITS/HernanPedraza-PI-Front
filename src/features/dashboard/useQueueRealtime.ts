@@ -19,7 +19,6 @@ type QueueCard = {
 
 type NowPlayingState = {
   songId: string;
-  duration: number;
   totalDuration?: number;
   startedAt: number;
 } | null;
@@ -37,7 +36,7 @@ function getSongId(payload: SongEventPayload) {
 }
 
 function getSongDuration(song?: Partial<Song> | null) {
-  const duration = song?.totalDuration ?? song?.duration;
+  const duration = song?.totalDuration;
   return Number.isFinite(duration) && duration != null ? duration : undefined;
 }
 
@@ -47,7 +46,6 @@ function getNowPlayingState(payload?: NowPlayingEventPayload | null): NowPlaying
 
   return {
     songId: normalized.songId,
-    duration: normalized.duration,
     totalDuration: normalized.totalDuration,
     startedAt: normalized.startedAt,
   };
@@ -162,9 +160,8 @@ export function useQueueRealtime(mode: 'attendee' | 'dj', eventId?: string) {
           nowPlaying: playing
             ? {
                 songId: playing._id,
-                duration: getSongDuration(playing) || 0,
                 totalDuration: getSongDuration(playing),
-                startedAt: playing.playingStartedAt ? new Date(playing.playingStartedAt).getTime() : Date.now(),
+                startedAt: playing.startedAt ? new Date(playing.startedAt).getTime() : Date.now(),
               }
             : current.nowPlaying,
         }));
@@ -260,7 +257,6 @@ export function useQueueRealtime(mode: 'attendee' | 'dj', eventId?: string) {
         nowPlaying: normalized.nowPlaying
           ? {
               songId: normalized.nowPlaying.songId,
-              duration: normalized.nowPlaying.duration,
               totalDuration: normalized.nowPlaying.totalDuration,
               startedAt: normalized.nowPlaying.startedAt,
             }
@@ -312,7 +308,7 @@ export function useQueueRealtime(mode: 'attendee' | 'dj', eventId?: string) {
 
     if (state.nowPlaying) {
       const elapsed = Math.max(0, (Date.now() - state.nowPlaying.startedAt) / 1000);
-      const duration = state.nowPlaying.totalDuration ?? state.nowPlaying.duration;
+      const duration = state.nowPlaying.totalDuration;
       cumulative = duration == null ? 0 : Math.max(0, duration - elapsed);
     }
 

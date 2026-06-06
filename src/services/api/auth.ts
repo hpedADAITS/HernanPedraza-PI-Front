@@ -1,14 +1,8 @@
 import { apiCall, clearToken, saveToken } from './client';
 
-type AuthResponseData = {
-  token?: string;
-  authToken?: string;
-};
-
-function saveAuthResponseToken(data: AuthResponseData) {
-  const token = data.token ?? data.authToken;
-  if (token) {
-    saveToken(token);
+function saveAuthResponseToken(data: { token?: string }) {
+  if (data?.token) {
+    saveToken(data.token);
   }
 }
 

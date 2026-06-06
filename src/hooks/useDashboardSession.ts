@@ -4,6 +4,7 @@ import { disconnectSocket, initSocket, joinEvent, off, on, onAccessCodeUpdated, 
 import type { AccessCodeUpdatedPayload, EventEndedPayload, EventUpdatedPayload, ParticipantCooldownPayload, ParticipantEventPayload, ParticipantUpdatedPayload, SongEventPayload } from '@/services/socket/contracts';
 import { authAPI, eventsAPI } from '@/services/api';
 import { clearStoredEvent, clearStoredParticipant, clearStoredUser, getAuthToken, getStoredEvent, getStoredParticipant, getStoredUser, setStoredEvent, setStoredParticipant, setStoredUser } from '@/services/session';
+import { decodeJwtPayload, type JwtSessionPayload } from '@/services/api/client';
 import {
   activateSingleUserSession,
   consumeSingleUserSessionCheckSuspension,
@@ -99,43 +100,12 @@ function isDjUser(user: StoredUser | null | undefined) {
   return role === 'dj';
 }
 
-type AuthTokenPayload = {
-  userId?: unknown;
-  sub?: unknown;
-  id?: unknown;
-  _id?: unknown;
-  role?: unknown;
-};
-
-function decodeBase64Url(value: string) {
-  const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
-  const padded = normalized.padEnd(
-    normalized.length + ((4 - (normalized.length % 4)) % 4),
-    '=',
-  );
-
-  return atob(padded);
-}
-
-function decodeAuthTokenPayload(token: string | null): AuthTokenPayload | null {
-  if (!token || typeof atob === 'undefined') return null;
-
-  const [, payload] = token.split('.');
-  if (!payload) return null;
-
-  try {
-    return JSON.parse(decodeBase64Url(payload)) as AuthTokenPayload;
-  } catch {
-    return null;
-  }
-}
-
 function normalizeTokenString(value: unknown) {
   return typeof value === 'string' && value.trim() ? value : null;
 }
 
 function authTokenUserId(token: string | null) {
-  const payload = decodeAuthTokenPayload(token);
+  const payload = decodeJwtPayload(token);
 
   return (
     normalizeTokenString(payload?.userId) ??
@@ -146,8 +116,9 @@ function authTokenUserId(token: string | null) {
 }
 
 function authTokenRole(token: string | null) {
-  const role = decodeAuthTokenPayload(token)?.role?.toUpperCase();
-  if (role === 'DJ') return 'dj';
+  const payload = decodeJwtPayload(token) as (JwtSessionPayload & { role?: unknown }) | null;
+  const role = (payload && 'role' in payload ? payload.role : null) as string | null;
+  if (role?.toUpperCase() === 'DJ') return 'dj';
   return 'attendee';
 }
 

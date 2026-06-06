@@ -96,7 +96,7 @@ export const eventsAPI = {
         publicOrigin ? `?frontendOrigin=${encodeURIComponent(publicOrigin)}` : ''
       }`,
     );
-    return data.data.link as string;
+    return { link: data.data.link as string, token: data.data.token as string };
   },
 
   connectPhoneMicrophone: async (eventId: string, deviceName: string, token = '') => {
@@ -104,7 +104,8 @@ export const eventsAPI = {
       `/events/${eventId}/phone-microphone/connect`,
       {
         method: 'POST',
-        body: JSON.stringify({ deviceName, token }),
+        body: JSON.stringify({ deviceName }),
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       },
     );
     return data.data.microphone;
@@ -115,7 +116,7 @@ export const eventsAPI = {
       `/events/${eventId}/audio-tracks/${trackId}/send-now`,
       {
         method: 'POST',
-        body: JSON.stringify({ token }),
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       },
     );
     return data.data.song;

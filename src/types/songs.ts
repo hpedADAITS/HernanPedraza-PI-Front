@@ -15,10 +15,9 @@ export interface Song {
   voteCount?: number;
   status: SongStatus | string;
   totalDuration?: number;
-  duration?: number;
   queuePosition?: number;
   approvedAt?: string;
-  playingStartedAt?: string;
+  startedAt?: string | null;
   isPremiumSuggestion?: boolean;
   requestedBy?: {
     _id: string;
@@ -32,7 +31,6 @@ export interface Song {
     title: string;
     artist: string;
     coverUrl?: string | null;
-    duration?: number | null;
     score: number;
     matchedOn: 'title' | 'artist' | 'title_artist';
   } | null;
@@ -45,8 +43,7 @@ export interface NowPlayingMeta {
   title: string;
   artist: string;
   totalDuration?: number;
-  duration: number;
-  playingStartedAt: string;
+  startedAt: number;
   elapsedTime?: number;
   remainingTime?: number;
 }

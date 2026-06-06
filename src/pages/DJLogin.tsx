@@ -21,7 +21,7 @@ interface Props {
 }
 
 function isDjRole(role: unknown) {
-  return typeof role === 'string' && ['dj', 'admin'].includes(role.toLowerCase());
+  return typeof role === 'string' && role.toLowerCase() === 'dj';
 }
 
 export function DJLogin({
@@ -50,7 +50,7 @@ export function DJLogin({
     setLoading(true);
     try {
       const result = await authAPI.login(email, password);
-      const token = result.authToken || result.token;
+      const token = result.token;
       if (!token) {
         throw new Error(t('Session data is incomplete'));
       }

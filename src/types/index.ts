@@ -2,11 +2,6 @@ export type AppMode = 'attendee' | 'dj';
 
 export type UserRole = 'ATTENDEE' | 'DJ';
 
-export const UserRoles = {
-  ATTENDEE: 'ATTENDEE',
-  DJ: 'DJ',
-} as const;
-
 export type View =
   | 'role-selection'
   | 'attendee-login'

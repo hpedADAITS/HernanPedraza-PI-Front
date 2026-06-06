@@ -107,6 +107,8 @@ function getToken() {
 
 /* Retrieve token - exported for external use */
 export { getToken };
+export { decodeJwtPayload };
+export type { JwtSessionPayload };
 
 /* Store token in localStorage */
 export function saveToken(token: string) {
@@ -138,10 +140,15 @@ export function clearToken() {
 }
 
 /* Helper to make API calls */
-export async function apiCall(endpoint: string, options: RequestInit = {}) {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
+export async function apiCall(endpoint: string, options: RequestInit & { contentType?: string | null } = {}) {
+  const { contentType, ...rest } = options;
+  const headers: Record<string, string> = {};
+
+  if (contentType) {
+    headers['Content-Type'] = contentType;
+  } else if (contentType !== null) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   /* Add auth token if available */
   const token = getToken();
@@ -150,7 +157,7 @@ export async function apiCall(endpoint: string, options: RequestInit = {}) {
   }
 
   const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
+    ...rest,
     headers,
   });
 

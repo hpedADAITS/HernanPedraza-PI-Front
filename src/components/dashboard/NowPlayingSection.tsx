@@ -66,7 +66,7 @@ function matchToPlayerSong(match: CurrentMatch): NowPlayingSong {
 }
 
 function getSongDuration(song?: Partial<Song> | null): number | undefined {
-  const duration = song?.totalDuration ?? song?.duration;
+  const duration = song?.totalDuration;
   return Number.isFinite(duration) && duration != null ? duration : undefined;
 }
 
@@ -86,8 +86,8 @@ function toPlayerSong(song: Song): NowPlayingSong {
     duration: duration ? formatTime(duration) : undefined,
     durationSec: duration,
     albumArt: song.recognitionMatch?.coverUrl || null,
-    startedAt: song.playingStartedAt
-      ? new Date(song.playingStartedAt).getTime()
+    startedAt: song.startedAt
+      ? new Date(song.startedAt).getTime()
       : undefined,
   };
 }
@@ -174,8 +174,8 @@ function nowPlayingSectionReducer(
           status: 'playing',
           progress: 0,
           currentTime: '0:00',
-          duration: nowPlaying.duration
-            ? formatTime(nowPlaying.duration)
+          duration: nowPlaying.totalDuration
+            ? formatTime(nowPlaying.totalDuration)
             : undefined,
           durationSec: nowPlaying.totalDuration,
           startedAt: nowPlaying.startedAt,
@@ -221,15 +221,15 @@ function nowPlayingSectionReducer(
               title: data.nowPlaying.title,
               artist: data.nowPlaying.artist,
               status: 'playing' as const,
-              progress: data.nowPlaying.duration
+              progress: data.nowPlaying.totalDuration
                 ? Math.min(
                     100,
-                    ((data.nowPlaying.elapsedTime || 0) / data.nowPlaying.duration) * 100,
+                    ((data.nowPlaying.elapsedTime || 0) / data.nowPlaying.totalDuration) * 100,
                   )
                 : 0,
               currentTime: formatTime(data.nowPlaying.elapsedTime || 0),
-              duration: data.nowPlaying.duration
-                ? formatTime(data.nowPlaying.duration)
+              duration: data.nowPlaying.totalDuration
+                ? formatTime(data.nowPlaying.totalDuration)
                 : undefined,
               durationSec: data.nowPlaying.totalDuration,
               startedAt: data.nowPlaying.startedAt,

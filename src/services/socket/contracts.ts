@@ -1,8 +1,8 @@
 import type { Song, SongStatus } from '@/types/songs';
 
 export interface SongEventPayload {
-  songId?: string;
   id?: string;
+  songId?: string;
   _id?: string;
   title?: string;
   artist?: string;
@@ -10,15 +10,13 @@ export interface SongEventPayload {
   voteCount?: number;
   status?: SongStatus | string;
   totalDuration?: number;
-  duration?: number;
   queuePosition?: number;
   isPremiumSuggestion?: boolean;
   requestedBy?: Song['requestedBy'];
   recognitionMatch?: Song['recognitionMatch'];
   eventId?: string;
   reason?: string;
-  playingStartedAt?: string;
-  startedPlayingAt?: string;
+  startedAt?: string | null;
 }
 
 export interface NowPlayingEventPayload extends SongEventPayload {
@@ -46,7 +44,6 @@ export interface NormalizedNowPlaying {
   songId: string;
   title: string;
   artist: string;
-  duration: number;
   totalDuration?: number;
   startedAt: number;
   elapsedTime?: number;

@@ -304,7 +304,7 @@ function renderAccountsWindow(result: DebugAccountsResult) {
             method: 'POST',
             body: JSON.stringify({ email: account.email, password: account.password }),
           });
-          const token = login?.data?.token || login?.data?.authToken;
+          const token = login?.data?.token;
           const user = login?.data?.user;
           if (!token || !user) throw new Error('Failed to sign in');
 
@@ -607,7 +607,7 @@ function renderQueueTestWindow(eventId: string) {
           state.pending.find((song) => song._id === id) ||
           state.queue.find((song) => song._id === id);
 
-        const durationOf = (song) => song?.totalDuration ?? song?.duration ?? 0;
+        const durationOf = (song) => song?.totalDuration ?? 0;
         const escapeHtml = (value) =>
           String(value)
             .replace(/&/g, '&amp;')
@@ -620,16 +620,15 @@ function renderQueueTestWindow(eventId: string) {
           if (!state.nowPlaying) return null;
           const elapsedTime = Math.max(
             0,
-            Math.floor((Date.now() - new Date(state.nowPlaying.playingStartedAt).getTime()) / 1000),
+            Math.floor((Date.now() - new Date(state.nowPlaying.startedAt).getTime()) / 1000),
           );
           const totalDuration = durationOf(state.nowPlaying);
           return {
-            songId: state.nowPlaying._id,
+            id: state.nowPlaying._id,
             title: state.nowPlaying.title,
             artist: state.nowPlaying.artist,
             totalDuration,
-            duration: totalDuration,
-            playingStartedAt: state.nowPlaying.playingStartedAt,
+            startedAt: state.nowPlaying.startedAt,
             elapsedTime,
             remainingTime: totalDuration ? Math.max(0, totalDuration - elapsedTime) : null,
           };
@@ -729,16 +728,15 @@ function renderQueueTestWindow(eventId: string) {
           if (!song) return;
           if (state.nowPlaying) state.nowPlaying.status = 'PLAYED';
           song.status = 'PLAYING';
-          song.playingStartedAt = new Date().toISOString();
+          song.startedAt = new Date().toISOString();
           state.nowPlaying = song;
           emit('song_now_playing', {
-            songId: song._id,
+            id: song._id,
             title: song.title,
             artist: song.artist,
             status: song.status,
             totalDuration: song.totalDuration,
-            duration: song.totalDuration,
-            playingStartedAt: song.playingStartedAt,
+            startedAt: song.startedAt,
           });
           emitQueue();
         };

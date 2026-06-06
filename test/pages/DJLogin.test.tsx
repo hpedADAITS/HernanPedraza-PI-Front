@@ -104,7 +104,7 @@ describe('DJLogin page', () => {
         displayName: 'DJ Test',
         profilePicture: null,
       },
-      authToken: 'token',
+      token: 'token',
     });
     getMyActiveEventMock.mockResolvedValue(null);
     createEventMock.mockResolvedValue({

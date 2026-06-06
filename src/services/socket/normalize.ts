@@ -2,12 +2,11 @@ import type { NormalizedNowPlaying, NowPlayingEventPayload, QueueUpdatedPayload,
 import type { Song, SongStatus } from '@/types/songs';
 
 function getSongId(payload: SongEventPayload) {
-  return payload.songId ?? payload._id ?? payload.id ?? null;
+  return payload.songId ?? payload.id ?? payload._id ?? null;
 }
 
 function getDuration(payload: SongEventPayload) {
-  const duration = payload.totalDuration ?? payload.duration;
-  return Number.isFinite(duration) ? duration : undefined;
+  return Number.isFinite(payload.totalDuration) ? payload.totalDuration : undefined;
 }
 
 export function normalizeSocketSong(
@@ -26,14 +25,13 @@ export function normalizeSocketSong(
     voteScore: payload.voteScore || 0,
     voteCount: payload.voteCount,
     status: payload.status || fallbackStatus,
-    duration,
     totalDuration: duration,
     queuePosition: payload.queuePosition,
     isPremiumSuggestion: payload.isPremiumSuggestion,
     requestedBy: payload.requestedBy || null,
     recognitionMatch: payload.recognitionMatch || null,
     eventId: payload.eventId || fallbackEventId || undefined,
-    playingStartedAt: payload.playingStartedAt ?? payload.startedPlayingAt,
+    startedAt: payload.startedAt || null,
   };
 }
 
@@ -45,18 +43,16 @@ export function normalizeNowPlaying(
   const songId = getSongId(payload);
   if (!songId) return null;
 
-  const duration = getDuration(payload) ?? 0;
+  const totalDuration = getDuration(payload);
+  const startedAtTs = payload.startedAt
+    ? new Date(payload.startedAt).getTime()
+    : Date.now() - (payload.elapsedTime || 0) * 1000;
   return {
     songId,
     title: payload.title || 'Now Playing...',
     artist: payload.artist || '',
-    duration,
-    totalDuration: getDuration(payload),
-    startedAt: payload.playingStartedAt
-      ? new Date(payload.playingStartedAt).getTime()
-      : payload.startedPlayingAt
-        ? new Date(payload.startedPlayingAt).getTime()
-        : Date.now() - (payload.elapsedTime || 0) * 1000,
+    totalDuration,
+    startedAt: startedAtTs,
     elapsedTime: payload.elapsedTime,
     albumArt: payload.recognitionMatch?.coverUrl || null,
   };
