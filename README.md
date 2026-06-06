@@ -29,7 +29,7 @@ The app stores local display/session state, sends identity-sensitive actions to 
 - Shared dashboard: role-specific profile, queue, now-playing, connected users, settings, actions, QR/access code, microphone controls.
 - Song selection: attendees suggest songs; DJs approve/reject pending requests.
 - Debug mode: dev-only song/queue lifecycle helpers when `VITE_DEBUG_MODE=true`.
-- Phone microphone fallback: `/dj/microphone/:eventId` uses signed backend phone tokens.
+- Phone microphone fallback: `/dj/microphone/:eventId` uses signed backend phone tokens (not yet revoked on DJ logout).
 
 ## Stack
 
@@ -54,7 +54,7 @@ src/
   services/
     api/           REST client/endpoints
     socket/        contracts, listeners, emitters, normalization
-    cache/         asset cache helpers
+    cache/         asset cache helpers (useAssetCache only, used by Logo; cachedApiCall.ts is dead)
     session.ts     typed session access
   utils/ constants/ types/
 test/ e2e/

@@ -55,6 +55,10 @@ export function DJLogin({
         throw new Error(t('Session data is incomplete'));
       }
 
+      if (!isDjRole(result.user?.role)) {
+        throw new Error(t('Only DJ accounts can sign in here.'));
+      }
+
       const displayName = result.user?.displayName || 'DJ';
 
       if (result.user) {
