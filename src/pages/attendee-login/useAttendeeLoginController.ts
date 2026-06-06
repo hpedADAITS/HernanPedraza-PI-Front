@@ -143,7 +143,12 @@ export function useAttendeeLoginController(onNavigate: NavigateToView) {
       if (!participant || !token || !user) throw new Error(t('Failed to join event'));
 
       const userId = user.id ?? user._id;
-      const userSession = { _id: userId, id: userId, displayName: state.nickname };
+      const userSession = {
+        _id: userId,
+        id: userId,
+        displayName: state.nickname,
+        role: user.role ?? 'ATTENDEE',
+      };
 
       writeStoredJson('user', userSession);
       activateSingleUserSession(userSession);

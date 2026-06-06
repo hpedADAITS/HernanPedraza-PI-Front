@@ -25,9 +25,11 @@ export interface StoredUser {
   _id?: string;
   id?: string;
   displayName?: string;
+  email?: string;
   role?: string;
   profilePicture?: string | null;
   hasSeenTutorial?: boolean;
+  emailRegistered?: boolean;
 }
 
 export function getAuthToken() {
@@ -72,16 +74,22 @@ export function getStoredUser() {
   return readStoredJson<StoredUser>('user');
 }
 
-export function getStoredDjUserId() {
-  const user = getStoredUser();
-  if (user?.role?.toLowerCase() !== 'dj') return null;
-  return user._id ?? user.id ?? null;
-}
-
 export function setStoredUser(user: StoredUser) {
   writeStoredJson('user', user);
 }
 
 export function clearStoredUser() {
   removeStoredItem('user');
+}
+
+export function getStoredDjUserId() {
+  const user = getStoredUser();
+  if (!isDjRole(user?.role)) return null;
+  return user?._id ?? user?.id ?? null;
+}
+
+export function isDjRole(role: unknown): boolean {
+  if (typeof role !== 'string') return false;
+  const normalized = role.trim().toLowerCase();
+  return normalized === 'dj';
 }

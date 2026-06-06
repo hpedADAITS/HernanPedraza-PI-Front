@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/useToast';
 import { authAPI, eventsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
 import { writeStoredJson } from '@/utils/storage';
+import { setStoredUser, isDjRole } from '@/services/session';
 import {
   activateSingleUserSession,
   suspendNextSingleUserSessionCheck,
@@ -18,10 +19,6 @@ interface Props {
   onNavigate: NavigateToView;
   logoWhite?: boolean;
   onLogoChange?: (white: boolean) => void;
-}
-
-function isDjRole(role: unknown) {
-  return typeof role === 'string' && role.toLowerCase() === 'dj';
 }
 
 export function DJLogin({
@@ -62,7 +59,7 @@ export function DJLogin({
       const displayName = result.user?.displayName || 'DJ';
 
       if (result.user) {
-        writeStoredJson('user', result.user);
+        setStoredUser(result.user);
         activateSingleUserSession(result.user);
 
         const userId = result.user.id ?? result.user._id;

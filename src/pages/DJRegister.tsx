@@ -10,6 +10,7 @@ import { EmailConfirmationModal } from '@/components/modals/EmailConfirmationMod
 import { queueFirstTimeTutorial } from '@/components/modals/firstTimeTutorialQueue';
 import logoWhite from '@/assets/logo_white.png';
 import { writeStoredJson } from '@/utils/storage';
+import { setStoredUser } from '@/services/session';
 import { t } from '@/i18n';
 import {
   activateSingleUserSession,
@@ -32,6 +33,7 @@ type DJRegisterUser = {
   role?: string;
   emailRegistered?: boolean;
   profilePicture?: string | null;
+  hasSeenTutorial?: boolean;
 };
 
 type DJRegisterResponse = {
@@ -143,12 +145,15 @@ export function DJRegister({
         throw new Error(t('Failed to create account'));
       }
 
-      writeStoredJson('user', {
-        ...result.user,
+      setStoredUser({
+        _id: result.user?._id,
+        id: result.user?.id,
         displayName: result.user?.displayName || displayName,
         email: result.user?.email || email,
         role: result.user?.role || 'DJ',
         emailRegistered: result.user?.emailRegistered ?? false,
+        profilePicture: result.user?.profilePicture ?? null,
+        hasSeenTutorial: result.user?.hasSeenTutorial ?? false,
       });
 
       /* Show email confirmation modal first */

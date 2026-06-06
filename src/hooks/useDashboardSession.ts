@@ -3,7 +3,7 @@ import type { NavigateToView } from '@/types';
 import { disconnectSocket, initSocket, joinEvent, off, on, onAccessCodeUpdated, onEventEnded, onEventUpdated, onParticipantBanned, onSongSuggested } from '@/services/socket';
 import type { AccessCodeUpdatedPayload, EventEndedPayload, EventUpdatedPayload, ParticipantCooldownPayload, ParticipantEventPayload, ParticipantUpdatedPayload, SongEventPayload } from '@/services/socket/contracts';
 import { authAPI, eventsAPI } from '@/services/api';
-import { clearStoredEvent, clearStoredParticipant, clearStoredUser, getAuthToken, getStoredEvent, getStoredParticipant, getStoredUser, setStoredEvent, setStoredParticipant, setStoredUser } from '@/services/session';
+import { clearStoredEvent, clearStoredParticipant, clearStoredUser, getAuthToken, getStoredEvent, getStoredParticipant, getStoredUser, setStoredEvent, setStoredParticipant, setStoredUser, isDjRole, getStoredDjUserId, type StoredEvent, type StoredParticipant, type StoredUser } from '@/services/session';
 import { decodeJwtPayload, type JwtSessionPayload } from '@/services/api/client';
 import {
   activateSingleUserSession,
@@ -12,7 +12,6 @@ import {
   onCurrentUserSessionReplaced,
 } from '@/services/singleUserSession';
 import { useToast } from '@/hooks/useToast';
-import { StoredEvent, StoredParticipant, StoredUser } from '@/services/session';
 import { t } from '@/i18n';
 
 type DashboardMode = 'attendee' | 'dj';
@@ -95,11 +94,6 @@ function storedParticipantEventId(participant: StoredParticipant | null | undefi
   return participant?.eventId ?? null;
 }
 
-function isDjUser(user: StoredUser | null | undefined) {
-  const role = user?.role?.toLowerCase();
-  return role === 'dj';
-}
-
 function normalizeTokenString(value: unknown) {
   return typeof value === 'string' && value.trim() ? value : null;
 }
@@ -118,8 +112,7 @@ function authTokenUserId(token: string | null) {
 function authTokenRole(token: string | null) {
   const payload = decodeJwtPayload(token) as (JwtSessionPayload & { role?: unknown }) | null;
   const role = (payload && 'role' in payload ? payload.role : null) as string | null;
-  if (role?.toUpperCase() === 'DJ') return 'dj';
-  return 'attendee';
+  return role ?? null;
 }
 
 function isDjTokenForStoredUser(token: string | null, user: StoredUser | null | undefined) {
@@ -131,8 +124,12 @@ function isDjTokenForStoredUser(token: string | null, user: StoredUser | null | 
     tokenId &&
     userId &&
     tokenId === userId &&
-    role === 'dj',
+    isDjRole(role),
   );
+}
+
+function isStoredUserDj(user: StoredUser | null | undefined) {
+  return isDjRole(user?.role);
 }
 
 function storeDjEventSession(
@@ -275,7 +272,7 @@ export function useDashboardSession({
       return;
     }
 
-    if (isDj && (!token || !isDjUser(user) || !isDjTokenForStoredUser(token, user))) {
+    if (isDj && (!token || !isStoredUserDj(user) || !isDjTokenForStoredUser(token, user))) {
       clearCurrentSession();
       navigateAway();
       return;
