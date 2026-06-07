@@ -34,6 +34,7 @@ export function MusicBrainzMatchDialog({
         title: match.title,
         artist: match.artist,
         coverUrl: match.coverUrl,
+        hashSignature: match.metadataSha512?.slice(0, 16) || null,
         detail: match.metadataSha512 ? `SHA512 ${match.metadataSha512.slice(0, 12)}` : 'MusicBrainz metadata',
       },
       ...candidates.map((track) => ({
@@ -42,6 +43,7 @@ export function MusicBrainzMatchDialog({
         title: track.title,
         artist: track.artist,
         coverUrl: track.coverUrl,
+        hashSignature: track.audioSha256?.slice(0, 16) || null,
         detail: `${Math.round((track.matchScore || 0) * 100)}% text match`,
       })),
     ];

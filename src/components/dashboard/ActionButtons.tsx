@@ -8,6 +8,7 @@ import { songsAPI, votesAPI, eventsAPI, participantsAPI, authAPI, clearToken } f
 import * as socket from '@/services/socket';
 import { disconnectSocket } from '@/services/socket';
 import { readStoredJson, removeStoredItem } from '@/utils/storage';
+import { clearEventCoverCache } from '@/services/cache/coverArtSessionCache';
 import { useTrackedTimeout } from '@/hooks/useTrackedTimeout';
 import { useSound } from '@/hooks/useSound';
 import { useViewNavigate } from '@/router/navigationContext';
@@ -111,9 +112,11 @@ export function ActionButtons({
   }, [isDj]);
 
   const finishLeaveParty = async () => {
+    let eventIdForCleanup: string | null = null;
     if (isDj) {
       const event = readStoredJson<{ eventId?: string; _id?: string; id?: string }>('currentEvent');
       const eventId = event?.eventId || event?._id || event?.id || '';
+      eventIdForCleanup = eventId || null;
       if (eventId) {
         try {
           await eventsAPI.endEvent(eventId);
@@ -124,6 +127,7 @@ export function ActionButtons({
     } else {
       const event = readStoredJson<{ eventId?: string; _id?: string; id?: string }>('currentEvent');
       const participant = readStoredJson<{ _id?: string; id?: string }>('currentParticipant');
+      eventIdForCleanup = event?.eventId || event?._id || event?.id || null;
       if (event && participant) {
         const eventId = event.eventId || event._id || event.id;
         const participantId = participant._id || participant.id;
@@ -138,6 +142,7 @@ export function ActionButtons({
       }
     }
     clearToken();
+    clearEventCoverCache(eventIdForCleanup);
     disconnectSocket();
     removeStoredItem('currentEvent');
     removeStoredItem('currentParticipant');

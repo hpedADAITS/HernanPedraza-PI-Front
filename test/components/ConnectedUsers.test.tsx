@@ -4,7 +4,13 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ConnectedUsers } from '@/components/dashboard/ConnectedUsers';
 import { writeStoredJson } from '@/utils/storage';
 
-const { kickParticipantAckMock, listEventParticipantsMock, setCooldownAckMock } = vi.hoisted(() => ({
+const {
+  clearCooldownAckMock,
+  kickParticipantAckMock,
+  listEventParticipantsMock,
+  setCooldownAckMock,
+} = vi.hoisted(() => ({
+  clearCooldownAckMock: vi.fn(),
   kickParticipantAckMock: vi.fn(),
   listEventParticipantsMock: vi.fn(),
   setCooldownAckMock: vi.fn(),
@@ -23,6 +29,7 @@ vi.mock('@/services/api', async (importOriginal) => {
 });
 
 vi.mock('@/services/socket/emitters', () => ({
+  clearCooldownAck: clearCooldownAckMock,
   kickParticipantAck: kickParticipantAckMock,
   setCooldownAck: setCooldownAckMock,
 }));
@@ -76,18 +83,20 @@ describe('ConnectedUsers DJ moderation', () => {
     fireEvent.click(row);
     await screen.findByLabelText('Cooldown duration');
     fireEvent.click(screen.getAllByRole('button')[0]);
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Reason' }), {
+      target: { value: 'Too many requests' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply cooldown' }));
 
     await waitFor(() => {
       expect(setCooldownAckMock).toHaveBeenCalledWith(
         'event-1',
         'attendee-1',
         expect.any(Number),
-        'DJ cooldown',
+        'Too many requests',
       );
     });
 
-    fireEvent.click(row);
-    await screen.findByLabelText('Cooldown duration');
     fireEvent.click(screen.getAllByRole('button')[1]);
 
     await waitFor(() => {
@@ -96,6 +105,48 @@ describe('ConnectedUsers DJ moderation', () => {
         'attendee-1',
         'Kicked by DJ',
       );
+    });
+  });
+
+  it('toggles cooldown off on second cooldown click', async () => {
+    listEventParticipantsMock.mockResolvedValue([
+      {
+        id: 'attendee-1',
+        nickname: 'Riley',
+        joinedAt: new Date().toISOString(),
+      },
+    ]);
+    setCooldownAckMock.mockResolvedValue({
+      cooldownUntil: '2099-01-01T00:00:00.000Z',
+    });
+    clearCooldownAckMock.mockResolvedValue({});
+
+    render(<ConnectedUsers mode="dj" />);
+
+    const row = (await screen.findByText('Riley')).closest('.cursor-pointer');
+    if (!row) throw new Error('Expected participant row');
+
+    fireEvent.click(row);
+    await screen.findByLabelText('Cooldown duration');
+    fireEvent.click(screen.getAllByRole('button')[0]);
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Reason' }), {
+      target: { value: 'Spam' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply cooldown' }));
+
+    await waitFor(() => {
+      expect(setCooldownAckMock).toHaveBeenCalledWith(
+        'event-1',
+        'attendee-1',
+        expect.any(Number),
+        'Spam',
+      );
+    });
+
+    fireEvent.click(screen.getAllByRole('button')[0]);
+
+    await waitFor(() => {
+      expect(clearCooldownAckMock).toHaveBeenCalledWith('event-1', 'attendee-1');
     });
   });
 });

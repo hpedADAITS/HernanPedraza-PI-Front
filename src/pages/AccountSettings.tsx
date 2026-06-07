@@ -11,6 +11,7 @@ import { MediaQualityModal } from '@/components/modals/MediaQualityModal';
 import { SocialSettingsModal } from '@/components/modals/SocialSettingsModal';
 import { ProfilePictureModal } from '@/components/modals/ProfilePictureModal';
 import { readStoredJson } from '@/utils/storage';
+import { clearEventCoverCache } from '@/services/cache/coverArtSessionCache';
 import { isDebugModeEnabled } from '@/utils/debugMode';
 import { t } from '@/i18n';
 import type { NavigateToView } from '@/types';
@@ -55,6 +56,7 @@ export function AccountSettings({ mode, onNavigate }: Props) {
     }
 
     clearToken();
+    clearEventCoverCache(eventId);
     disconnectSocket();
     toast.success(t('Signed out'));
     onNavigate('role-selection');
@@ -77,11 +79,13 @@ export function AccountSettings({ mode, onNavigate }: Props) {
       return;
     }
 
+    const event = readStoredJson<{ eventId?: string; _id?: string; id?: string }>('currentEvent');
     try {
       await authAPI.logout();
     } catch {
       clearToken();
     }
+    clearEventCoverCache(event?.eventId || event?._id || event?.id);
     disconnectSocket();
     toast.success(t('Signed out'));
     onNavigate('role-selection');

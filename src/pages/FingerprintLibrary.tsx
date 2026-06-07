@@ -32,6 +32,7 @@ function CoverflowDialog({
             title: track.musicBrainz.title,
             artist: track.musicBrainz.artist,
             coverUrl: track.musicBrainz.coverUrl,
+            hashSignature: track.musicBrainz.metadataSha512?.slice(0, 16) || null,
             detail: track.musicBrainz.metadataSha512
               ? `SHA512 ${track.musicBrainz.metadataSha512.slice(0, 12)}`
               : 'MusicBrainz metadata',
@@ -44,6 +45,7 @@ function CoverflowDialog({
       title: track.title,
       artist: track.artist,
       coverUrl: track.coverUrl,
+      hashSignature: track.audioSha256?.slice(0, 16) || null,
       detail: `${track.songsAttached} song${track.songsAttached !== 1 ? 's' : ''} attached`,
     },
   ];

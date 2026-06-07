@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { m, AnimatePresence } from 'motion/react';
 import { Zap, UserX, Play } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { SettingsDialog, SettingsDialogActions, SettingsDialogButton } from '@/components/settings/SettingsUI';
 import { COOLDOWN_OPTIONS, DEFAULT_COOLDOWN_MS, formatCooldownDuration } from '@/constants/cooldowns';
 import { useSound } from '@/hooks/useSound';
 import { setCooldownAck, clearCooldownAck, kickParticipantAck } from '@/services/socket/emitters';
@@ -73,6 +74,7 @@ export interface ParticipantItemProps {
   isSelected: boolean;
   onSelect: (id: string | null) => void;
   onRemove: (id: string) => void;
+  onCooldownChange: (id: string, cooldownUntil?: Date | string | null) => void;
   eventId: string | null;
 }
 
@@ -81,38 +83,62 @@ export function ParticipantItem({
   isSelected,
   onSelect,
   onRemove,
+  onCooldownChange,
   eventId,
 }: ParticipantItemProps) {
   const [cooldownMs, setCooldownMs] = useState(DEFAULT_COOLDOWN_MS);
+  const [cooldownDialogOpen, setCooldownDialogOpen] = useState(false);
+  const [cooldownReason, setCooldownReason] = useState('DJ cooldown');
   const { playSound } = useSound();
   const toast = useToast();
   const id = participantId(participant);
 
+  const isOnCooldown = participant.cooldownUntil && new Date(participant.cooldownUntil) > new Date();
+
+  const applyCooldown = async () => {
+    if (!id || !eventId) return;
+    const reason = cooldownReason.trim() || 'DJ cooldown';
+    playSound('cooldown');
+
+    try {
+      const promise = setCooldownAck(eventId, id, cooldownMs, reason);
+      const result = await toast.promise(promise, {
+        success: t('Cooldown applied to "{name}" for {duration}', {
+          name: participant.nickname,
+          duration: formatCooldownDuration(cooldownMs),
+        }),
+        error: t('Failed to apply cooldown'),
+      });
+      onCooldownChange(
+        id,
+        (result as { cooldownUntil?: Date | string | null })?.cooldownUntil
+          ?? new Date(Date.now() + cooldownMs),
+      );
+      setCooldownDialogOpen(false);
+    } catch (error: unknown) {
+      console.error('Error executing Cooldown:', error);
+    }
+  };
+
   const handleAdminAction = async (action: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!id) return;
-    playSound(action === 'Kick' ? 'cancelAction' : 'cooldown');
 
     try {
       if (action === 'Cooldown' && eventId) {
-        if (participant.cooldownUntil) {
+        if (isOnCooldown) {
+          playSound('cooldown');
           const promise = clearCooldownAck(eventId, id);
           await toast.promise(promise, {
             success: t('Cooldown removed for "{name}"', { name: participant.nickname }),
             error: t('Failed to remove cooldown'),
           });
+          onCooldownChange(id, null);
         } else {
-          const promise = setCooldownAck(eventId, id, cooldownMs, 'DJ cooldown');
-          await toast.promise(promise, {
-            success: t('Cooldown applied to "{name}" for {duration}', {
-              name: participant.nickname,
-              duration: formatCooldownDuration(cooldownMs),
-            }),
-            error: t('Failed to apply cooldown'),
-          });
+          setCooldownDialogOpen(true);
         }
-        onSelect(null);
       } else if (action === 'Kick' && eventId) {
+        playSound('cancelAction');
         const promise = kickParticipantAck(eventId, id, 'Kicked by DJ');
         await toast.promise(promise, {
           success: t('Kicked "{name}"', { name: participant.nickname }),
@@ -125,8 +151,6 @@ export function ParticipantItem({
       console.error(`Error executing ${action}:`, error);
     }
   };
-
-  const isOnCooldown = participant.cooldownUntil && new Date(participant.cooldownUntil) > new Date();
 
   return (
     <m.div
@@ -190,37 +214,22 @@ export function ParticipantItem({
                   <TooltipContent>{t('Remove Cooldown')}</TooltipContent>
                 </Tooltip>
               ) : (
-                <>
-                  <select
-                    value={cooldownMs}
-                    onClick={(e) => e.stopPropagation()}
-                    onChange={(e) => setCooldownMs(Number(e.target.value))}
-                    className="h-8 rounded-lg border border-yellow-200 bg-white px-2 text-xs font-bold text-yellow-800 outline-none"
-                    aria-label={t('Cooldown duration')}
-                  >
-                    {COOLDOWN_OPTIONS.map((option) => (
-                      <option key={option.valueMs} value={option.valueMs}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <m.button
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAdminAction('Cooldown', e);
-                        }}
-                        className="p-2 bg-yellow-100 hover:bg-yellow-200 rounded-lg text-yellow-700 transition-colors"
-                      >
-                        <Zap size={16} />
-                      </m.button>
-                    </TooltipTrigger>
-                    <TooltipContent>{t('Cooldown User')}</TooltipContent>
-                  </Tooltip>
-                </>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <m.button
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAdminAction('Cooldown', e);
+                      }}
+                      className="p-2 bg-yellow-100 hover:bg-yellow-200 rounded-lg text-yellow-700 transition-colors"
+                    >
+                      <Zap size={16} />
+                    </m.button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t('Cooldown User')}</TooltipContent>
+                </Tooltip>
               )}
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -270,6 +279,40 @@ export function ParticipantItem({
           </div>
         )}
       </div>
+
+      <SettingsDialog
+        open={cooldownDialogOpen}
+        title={t('Cooldown reason')}
+        onClose={() => setCooldownDialogOpen(false)}
+      >
+        <div className="space-y-3">
+          <label
+            htmlFor={`cooldown-reason-${id}`}
+            className="block text-sm font-bold text-slate-700"
+          >
+            {t('Reason')}
+          </label>
+          <textarea
+            id={`cooldown-reason-${id}`}
+            value={cooldownReason}
+            onChange={(e) => setCooldownReason(e.target.value)}
+            maxLength={140}
+            rows={4}
+            className="w-full resize-none rounded-lg border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none focus:ring-4 focus:ring-blue-100"
+          />
+          <p className="text-xs font-semibold text-slate-500">
+            {t('This reason is shown to the attendee.')}
+          </p>
+        </div>
+        <SettingsDialogActions>
+          <SettingsDialogButton onClick={() => setCooldownDialogOpen(false)}>
+            {t('Cancel')}
+          </SettingsDialogButton>
+          <SettingsDialogButton onClick={applyCooldown} variant="primary">
+            {t('Apply cooldown')}
+          </SettingsDialogButton>
+        </SettingsDialogActions>
+      </SettingsDialog>
     </m.div>
   );
 }

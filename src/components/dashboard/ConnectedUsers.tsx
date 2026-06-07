@@ -453,6 +453,13 @@ export function ConnectedUsers({
               })
             }
             onRemoveParticipant={handleRemoveParticipant}
+            onCooldownChange={(id, cooldownUntil) =>
+              dispatch(
+                cooldownUntil
+                  ? { type: 'set_cooldown', participantId: id, cooldownUntil }
+                  : { type: 'clear_cooldown', participantId: id },
+              )
+            }
             eventId={eventId}
           />
         )}
@@ -761,6 +768,7 @@ interface DjConnectedUsersProps {
   selectedParticipantId: string | null;
   setSelectedParticipantId: (id: string | null) => void;
   onRemoveParticipant: (id: string) => void;
+  onCooldownChange: (id: string, cooldownUntil?: Date | string | null) => void;
   eventId: string | null;
 }
 
@@ -772,6 +780,7 @@ function DjConnectedUsers({
   selectedParticipantId,
   setSelectedParticipantId,
   onRemoveParticipant,
+  onCooldownChange,
   eventId,
 }: DjConnectedUsersProps) {
   return (
@@ -824,6 +833,7 @@ function DjConnectedUsers({
                     )
                   }
                   onRemove={onRemoveParticipant}
+                  onCooldownChange={onCooldownChange}
                   eventId={eventId}
                 />
               ))}
