@@ -42,7 +42,6 @@ export function FingerprintPickerDialog({
 }: FingerprintPickerDialogProps) {
   const { error: toastError, success: toastSuccess } = useToast();
 
-  if (!song) return null;
   const [tracks, setTracks] = useState<Array<{ id: string; title: string; artist: string; coverUrl?: string | null }>>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -64,6 +63,7 @@ export function FingerprintPickerDialog({
   }, [eventId, onClose, toastError]);
 
   const items = useMemo<CoverflowItem[]>(() => {
+    if (!song) return [];
     const targetTitle = song.title;
     const targetArtist = song.artist;
     return tracks.map((track) => {
@@ -81,9 +81,13 @@ export function FingerprintPickerDialog({
         track,
       };
     });
-  }, [tracks, song.title, song.artist]);
+  }, [tracks, song?.title, song?.artist]);
 
-  useEffect(() => setIndex(0), [song._id]);
+  useEffect(() => {
+    if (song?._id) setIndex(0);
+  }, [song?._id]);
+
+  if (!song) return null;
 
   const selected = items[index] || null;
   const move = (offset: number) => {

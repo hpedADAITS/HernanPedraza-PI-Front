@@ -1,7 +1,6 @@
 import { cacheManager } from '../cache/cacheManager';
 import { removeStoredItem } from '../../utils/storage';
 
-// @ts-expect-error import.meta.env is provided by Vite.
 const VITE_API_URL = import.meta.env?.VITE_API_URL as string | undefined;
 
 function buildApiBase(apiUrl?: string) {

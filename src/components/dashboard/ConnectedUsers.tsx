@@ -469,13 +469,38 @@ function AttendeeConnectedUsers({
   hoverBgColor,
 }: AttendeeConnectedUsersProps) {
   const [sendingToUserId, setSendingToUserId] = useState<string | null>(null);
+  const [friendIds, setFriendIds] = useState<Set<string> | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    let cancelled = false;
+    friendsAPI
+      .listFriends()
+      .then((list) => {
+        if (!cancelled) {
+          setFriendIds(new Set(list.map((f) => f.friendId)));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setFriendIds(new Set());
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const sendFriendRequest = async (userId: string, name: string) => {
     setSendingToUserId(userId);
     try {
       await friendsAPI.sendRequest(userId);
       toast.success(t('Friend request sent to {name}', { name }));
+      setFriendIds((prev) => {
+        const next = new Set(prev ?? []);
+        next.add(userId);
+        return next;
+      });
     } catch (error) {
       toast.error(formatErrorMessage(error, t('Failed to send friend request')));
     } finally {
@@ -593,7 +618,9 @@ function AttendeeConnectedUsers({
                     const userAccountId = participantUserId(user);
                     const canAddFriend = !!userAccountId
                       && userAccountId !== currentAccountId
-                      && !isCurrentUser;
+                      && !isCurrentUser
+                      && friendIds !== null
+                      && !friendIds.has(userAccountId);
                     /* The server stores the masked nickname ("Participant N")
                        directly on the participant row when "Show display name"
                        is off, so we just use what we got. The status row at
