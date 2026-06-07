@@ -1,4 +1,4 @@
-import { Disc3, Library, Sparkles, X } from 'lucide-react';
+import { Disc3, Library, Mic, Sparkles, X } from 'lucide-react';
 import { AnimatePresence, m } from 'motion/react';
 import { UserAvatar } from '@/components/common';
 import { t } from '@/i18n';
@@ -131,8 +131,23 @@ export function DjRequestReviewDialog({
                   </div>
                 </div>
               ) : (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">
-                  {t('No DB fingerprint match found.')}
+                <div className="space-y-2">
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">
+                    {t('No DB fingerprint match found.')}
+                  </div>
+                  <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-900">
+                    <m.span
+                      aria-hidden="true"
+                      animate={{ opacity: [0.55, 1, 0.55], scale: [1, 1.1, 1] }}
+                      transition={{ duration: 1.1, repeat: Infinity, ease: 'easeInOut' }}
+                      className="mt-0.5 inline-flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-red-500 text-white shadow-[0_0_8px_rgba(239,68,68,0.55)]"
+                    >
+                      <Mic size={12} />
+                    </m.span>
+                    <span>
+                      {t('You can still approve it, but it will stay in the queue until a microphone is connected and the audio fingerprinting matches this track. The matched track is the only path that pushes a song to Now Playing.')}
+                    </span>
+                  </div>
                 </div>
               )}
             </div>

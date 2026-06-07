@@ -1,7 +1,7 @@
 import React, { useState, type MouseEvent } from 'react';
 import { m, AnimatePresence } from 'motion/react';
 import { clsx } from 'clsx';
-import { Play, X, Clock, UserX, SkipForward, Check } from 'lucide-react';
+import { Play, X, Clock, UserX, SkipForward, Check, Mic } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { DEFAULT_COOLDOWN_MS, formatCooldownDuration } from '@/constants/cooldowns';
 import { CooldownDurationSelect } from './CooldownDurationSelect';
@@ -40,6 +40,16 @@ function isRequestedByDj(song: Song, djUserId: string | null, djParticipantId: s
   return !!requesterId && (requesterId === djUserId || requesterId === djParticipantId);
 }
 
+function isMatchRequiredError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const candidate = error as { code?: string; error?: { code?: string } | string; message?: string };
+  if (candidate.code === 'MATCH_REQUIRED') return true;
+  if (typeof candidate.error === 'object' && candidate.error !== null && candidate.error.code === 'MATCH_REQUIRED') {
+    return true;
+  }
+  return typeof candidate.message === 'string' && /fingerprint match/i.test(candidate.message);
+}
+
 function formatWait(totalSeconds: number): string {
   const safe = Math.max(0, Math.floor(totalSeconds));
   const m = Math.floor(safe / 60);
@@ -66,6 +76,11 @@ export function QueueItem({
   const { playSound } = useSound();
   const { toast } = useToast();
   const canModerateRequester = !!song.requestedBy?._id && !isRequestedByDj(song, djUserId, djParticipantId);
+  // Send Now is only allowed once a fingerprint trackId is bound to the song.
+  // Until the audio fingerprinting pipeline (or a manual fingerprint pick)
+  // assigns a trackId, the server will reject the push.
+  const hasMatchedTrack = Boolean(song.recognitionMatch?.trackId);
+  const canSendNow = hasMatchedTrack && song.status !== 'PLAYING';
 
   const handleAdminAction = async (action: string, e: MouseEvent) => {
     e.stopPropagation();
@@ -92,9 +107,23 @@ export function QueueItem({
           toast.error(t('Song ID not found'));
           return;
         }
-        await songsAPI.sendNow(eventId, songId);
-        onSongRemoved(songId);
-        toast.success(t('Now playing "{title}"', { title: song.title }));
+        if (!canSendNow) {
+          toast.error(t('Send Now needs a fingerprint match. Connect a microphone and wait for the audio fingerprinting to match this track.'));
+          return;
+        }
+        try {
+          await songsAPI.sendNow(eventId, songId);
+          onSongRemoved(songId);
+          toast.success(t('Now playing "{title}"', { title: song.title }));
+          return;
+        } catch (sendNowError) {
+          if (isMatchRequiredError(sendNowError)) {
+            toast.error(t('Send Now needs a fingerprint match. Connect a microphone and wait for the audio fingerprinting to match this track.'));
+          } else {
+            throw sendNowError;
+          }
+          return;
+        }
       } else if (action === 'Reject' && eventId) {
         if (!songId) {
           toast.error(t('Song ID not found'));
@@ -226,8 +255,10 @@ export function QueueItem({
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={(e) => handleAdminAction('Send Now', e)}
+                  disabled={!canSendNow}
+                  aria-disabled={!canSendNow}
                   className={clsx(
-                    'p-2 rounded-lg transition-colors',
+                    'p-2 rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-40',
                     isDarkMode
                       ? 'bg-emerald-900/30 hover:bg-emerald-800/40 text-emerald-300'
                       : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-700',
@@ -236,7 +267,11 @@ export function QueueItem({
                   <Play size={18} />
                 </m.button>
               </TooltipTrigger>
-              <TooltipContent>{t('Send Song Now')}</TooltipContent>
+              <TooltipContent>
+                {canSendNow
+                  ? t('Send Song Now')
+                  : t('Waiting for microphone to match this track')}
+              </TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -341,6 +376,24 @@ export function QueueItem({
                   >
                     You
                   </span>
+                )}
+                {isDj && !hasMatchedTrack && song.status !== 'PLAYING' && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <m.span
+                        role="img"
+                        aria-label={t('Waiting for microphone to match this track')}
+                        animate={{ opacity: [0.55, 1, 0.55], scale: [1, 1.08, 1] }}
+                        transition={{ duration: 1.1, repeat: Infinity, ease: 'easeInOut' }}
+                        className="ml-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow-[0_0_8px_rgba(239,68,68,0.55)] align-middle"
+                      >
+                        <Mic size={12} aria-hidden="true" />
+                      </m.span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {t('Waiting for microphone to match this track')}
+                    </TooltipContent>
+                  </Tooltip>
                 )}
               </span>
               <span
