@@ -146,6 +146,8 @@ export function SongSelection({ mode, onNavigate }: Props) {
     declineMusicBrainzMatch,
     handleSubmit,
     pendingMatch,
+    pendingMatches,
+    selectMusicBrainzMatch,
     setArtist,
     setTitle,
     submitting,
