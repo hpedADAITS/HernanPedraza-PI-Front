@@ -96,7 +96,7 @@ export function Layout({
               isDarkMode || !isWhite ? 'text-white/50' : 'text-slate-400',
             )}
           >
-            © 2025 SyncRequest
+            © 2025 SyncRequest (Non commercial rights reserved lol)
           </div>
         </footer>
       )}
