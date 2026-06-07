@@ -37,6 +37,53 @@ export const songsAPI = {
     return data.data;
   },
 
+  getFingerprintMatchCandidates: async (
+    eventId: string,
+    songId: string,
+  ): Promise<{
+    song: Song;
+    target: { title: string; artist: string };
+    recognitionMatch: Song['recognitionMatch'] | null;
+    tracks: (AudioTrack & {
+      matchScore: number;
+      titleScore?: number;
+      artistScore?: number;
+      matchedOn?: string;
+    })[];
+  }> => {
+    validateObjectId(eventId, 'eventId');
+    validateObjectId(songId, 'songId');
+    const data = await apiCall(`/songs/${eventId}/${songId}/fingerprint-match-candidates`);
+    return data.data;
+  },
+
+  searchFingerprints: async (
+    eventId: string,
+    participantId: string,
+    title: string,
+    artist: string,
+  ): Promise<{
+    matches: Array<{
+      trackId: string;
+      title: string;
+      artist: string;
+      coverUrl: string | null;
+      duration: number | null;
+      matchScore: number;
+      titleScore: number;
+      artistScore: number;
+      matchedOn: string;
+    }>;
+    query: { title: string; artist: string };
+  }> => {
+    validateObjectId(eventId, 'eventId');
+    const data = await apiCall(`/songs/${eventId}/search-fingerprints`, {
+      method: 'POST',
+      body: JSON.stringify({ participantId, title, artist }),
+    });
+    return data.data;
+  },
+
   assignMusicBrainzTrack: async (
     eventId: string,
     songId: string,

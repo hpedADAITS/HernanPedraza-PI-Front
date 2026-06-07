@@ -3,8 +3,8 @@ import { ArrowLeft, ArrowRight, Library, Link2, X } from 'lucide-react';
 import { AnimatePresence, m } from 'motion/react';
 import { useToast } from '@/hooks/useToast';
 import { t } from '@/i18n';
-import { audioTracksAPI } from '@/services/api/audioTracks';
 import { songsAPI } from '@/services/api/songs';
+import type { AudioTrack } from '@/services/api/audioTracks';
 import type { SongSelectionSong } from '@/features/song-selection/DjSongCard';
 
 interface FingerprintPickerDialogProps {
@@ -14,6 +14,13 @@ interface FingerprintPickerDialogProps {
   onAssigned: () => void;
 }
 
+type Candidate = AudioTrack & {
+  matchScore: number;
+  titleScore?: number;
+  artistScore?: number;
+  matchedOn?: string;
+};
+
 type CoverflowItem = {
   type: 'track';
   id: string;
@@ -21,18 +28,8 @@ type CoverflowItem = {
   artist: string;
   coverUrl?: string | null;
   detail: string;
-  track: { id: string; title: string; artist: string; coverUrl?: string | null };
+  track: Candidate;
 };
-
-function similarity(a: string, b: string) {
-  const aTokens = new Set(a.toLowerCase().split(' '));
-  const bTokens = new Set(b.toLowerCase().split(' '));
-  let overlap = 0;
-  for (const token of aTokens) {
-    if (bTokens.has(token)) overlap += 1;
-  }
-  return aTokens.size + bTokens.size > 0 ? (2 * overlap) / (aTokens.size + bTokens.size) : 0;
-}
 
 export function FingerprintPickerDialog({
   song,
@@ -42,17 +39,17 @@ export function FingerprintPickerDialog({
 }: FingerprintPickerDialogProps) {
   const { error: toastError, success: toastSuccess } = useToast();
 
-  const [tracks, setTracks] = useState<Array<{ id: string; title: string; artist: string; coverUrl?: string | null }>>([]);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
-    if (!eventId) return;
+    if (!eventId || !song) return;
     void (async () => {
       try {
-        const data = await audioTracksAPI.listTracks(eventId);
-        setTracks(data);
+        const data = await songsAPI.getFingerprintMatchCandidates(eventId, song._id);
+        setCandidates((data.tracks as Candidate[]) || []);
       } catch {
         toastError(t('Failed to load fingerprints'));
         onClose();
@@ -60,28 +57,27 @@ export function FingerprintPickerDialog({
         setLoading(false);
       }
     })();
-  }, [eventId, onClose, toastError]);
+  }, [eventId, onClose, song, toastError]);
 
   const items = useMemo<CoverflowItem[]>(() => {
-    if (!song) return [];
-    const targetTitle = song.title;
-    const targetArtist = song.artist;
-    return tracks.map((track) => {
-      const score = Number((
-        similarity(targetTitle, track.title) * 0.65 +
-        similarity(targetArtist, track.artist) * 0.35
-      ).toFixed(3));
+    return candidates.map((track) => {
+      const score = track.matchScore || 0;
+      const scorePct = Math.round(score * 100);
+      const matchedOn = track.matchedOn && track.matchedOn !== 'lenient' ? track.matchedOn : null;
+      const detail = matchedOn
+        ? `${scorePct}% match · ${matchedOn.replace('_', ' + ')}`
+        : `${scorePct}% match`;
       return {
         type: 'track' as const,
         id: track.id,
         title: track.title,
         artist: track.artist,
         coverUrl: track.coverUrl,
-        detail: `${Math.round(score * 100)}% text match`,
+        detail,
         track,
       };
     });
-  }, [tracks, song?.title, song?.artist]);
+  }, [candidates]);
 
   useEffect(() => {
     if (song?._id) setIndex(0);
@@ -138,6 +134,9 @@ export function FingerprintPickerDialog({
                 <h2 className="mt-1 truncate text-xl font-black tracking-normal text-slate-950">
                   {song.title}
                 </h2>
+                <p className="mt-0.5 truncate text-xs font-semibold text-slate-500">
+                  {t('Attendee asked:')} {song.artist}
+                </p>
               </div>
               <button
                 type="button"

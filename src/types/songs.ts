@@ -37,7 +37,20 @@ export interface Song {
     coverUrl?: string | null;
     duration?: number | null;
     score: number;
-    matchedOn: 'title' | 'artist' | 'title_artist';
+    matchedOn: 'title' | 'artist' | 'title_artist' | 'lenient';
+    /** True when the match was supplied by the local fingerprint fallback
+     *  (MusicBrainz returned no match / failed). */
+    fallbackUsed?: boolean;
+    /** Top candidates the DJ can pick from via the fingerprint picker. */
+    alternates?: Array<{
+      trackId: string;
+      title: string;
+      artist: string;
+      coverUrl?: string | null;
+      duration?: number | null;
+      score: number;
+      matchedOn: 'title' | 'artist' | 'title_artist' | 'lenient';
+    }>;
   } | null;
   eventId?: string;
   createdAt?: string;

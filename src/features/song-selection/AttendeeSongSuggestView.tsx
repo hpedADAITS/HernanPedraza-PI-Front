@@ -1,22 +1,38 @@
 import type React from 'react';
 import { m } from 'motion/react';
-import { Check, Disc3, Mic2, Music2, X } from 'lucide-react';
+import { Check, Disc3, Library, Mic2, Music2, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { t } from '@/i18n';
 import type { Song } from '@/types/songs';
 
+export interface FingerprintSearchMatch {
+  trackId: string;
+  title: string;
+  artist: string;
+  coverUrl: string | null;
+  duration: number | null;
+  matchScore: number;
+  titleScore: number;
+  artistScore: number;
+  matchedOn: string;
+}
+
 interface AttendeeSongSuggestViewProps {
   artist: string;
   checkingMusicBrainz: boolean;
+  fingerprintMatches: FingerprintSearchMatch[];
+  fingerprintSearchActive: boolean;
   isDarkMode: boolean;
   musicBrainzMatch: Song['recognitionMatch'];
   musicBrainzMatches: Song['recognitionMatch'][];
   onArtistChange: (artist: string) => void;
   onConfirmMusicBrainzMatch: () => void;
   onDeclineMusicBrainzMatch: () => void;
+  onPickFingerprintMatch: (match: FingerprintSearchMatch) => void;
   onSelectMusicBrainzMatch: (match: Song['recognitionMatch']) => void;
   onSubmit: (event: React.FormEvent) => void;
   onTitleChange: (title: string) => void;
+  selectedFingerprintTrackId: string | null;
   submitting: boolean;
   title: string;
 }
@@ -24,15 +40,19 @@ interface AttendeeSongSuggestViewProps {
 export function AttendeeSongSuggestView({
   artist,
   checkingMusicBrainz,
+  fingerprintMatches,
+  fingerprintSearchActive,
   isDarkMode,
   musicBrainzMatch,
   musicBrainzMatches,
   onArtistChange,
   onConfirmMusicBrainzMatch,
   onDeclineMusicBrainzMatch,
+  onPickFingerprintMatch,
   onSelectMusicBrainzMatch,
   onSubmit,
   onTitleChange,
+  selectedFingerprintTrackId,
   submitting,
   title,
 }: AttendeeSongSuggestViewProps) {
@@ -154,6 +174,104 @@ export function AttendeeSongSuggestView({
             className={inputClassName}
           />
         </label>
+
+        {fingerprintMatches.length ? (
+          <div
+            data-testid="fingerprint-typeahead"
+            className={clsx(
+              'rounded-xl border p-3',
+              isDarkMode
+                ? 'border-sky-400/25 bg-sky-500/10'
+                : 'border-sky-200 bg-sky-50/70',
+            )}
+          >
+            <p
+              className={clsx(
+                'mb-2 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-normal',
+                isDarkMode ? 'text-sky-200' : 'text-sky-700',
+              )}
+            >
+              <Library size={12} aria-hidden="true" />
+              {t('Already in the DJ\'s library')}
+            </p>
+            <div className="flex flex-col gap-2">
+              {fingerprintMatches.map((match) => {
+                const selected = match.trackId === selectedFingerprintTrackId;
+                return (
+                  <button
+                    key={match.trackId}
+                    type="button"
+                    data-testid="fingerprint-typeahead-item"
+                    onClick={() => onPickFingerprintMatch(match)}
+                    className={clsx(
+                      'flex min-w-0 items-center gap-3 rounded-lg border p-2 text-left transition',
+                      selected
+                        ? isDarkMode
+                          ? 'border-sky-300/70 bg-sky-400/15'
+                          : 'border-sky-400 bg-white'
+                        : isDarkMode
+                          ? 'border-white/10 bg-slate-950/20 hover:border-sky-300/30'
+                          : 'border-sky-100 bg-white/60 hover:border-sky-300',
+                    )}
+                  >
+                    <span
+                      className={clsx(
+                        'grid h-11 w-11 flex-shrink-0 place-items-center overflow-hidden rounded-md',
+                        isDarkMode ? 'bg-slate-900/45 text-sky-200' : 'bg-white text-sky-700',
+                      )}
+                    >
+                      {match.coverUrl ? (
+                        <img src={match.coverUrl} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <Disc3 size={20} aria-hidden="true" />
+                      )}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-black">{match.title}</span>
+                      <span
+                        className={clsx(
+                          'block truncate text-xs font-semibold',
+                          isDarkMode ? 'text-slate-300' : 'text-slate-600',
+                        )}
+                      >
+                        {match.artist}
+                      </span>
+                    </span>
+                    <span
+                      className={clsx(
+                        'flex-shrink-0 text-xs font-black',
+                        isDarkMode ? 'text-sky-200' : 'text-sky-700',
+                      )}
+                    >
+                      {Math.round((match.matchScore || 0) * 100)}%
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {selectedFingerprintTrackId ? (
+              <p
+                className={clsx(
+                  'mt-2 text-xs font-semibold',
+                  isDarkMode ? 'text-slate-300' : 'text-slate-600',
+                )}
+              >
+                {t('DJ has this track. It will be auto-paired when you submit.')}
+              </p>
+            ) : null}
+          </div>
+        ) : fingerprintSearchActive ? (
+          <p
+            className={clsx(
+              'rounded-xl border px-3 py-2 text-xs font-semibold',
+              isDarkMode
+                ? 'border-white/10 bg-white/5 text-slate-300'
+                : 'border-slate-200 bg-slate-50 text-slate-600',
+            )}
+          >
+            {t('Searching DJ library…')}
+          </p>
+        ) : null}
 
         <m.button
           type="submit"

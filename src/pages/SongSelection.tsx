@@ -144,10 +144,14 @@ export function SongSelection({ mode, onNavigate }: Props) {
     checkingMusicBrainz,
     confirmMusicBrainzMatch,
     declineMusicBrainzMatch,
+    fingerprintMatches,
+    fingerprintSearchActive,
     handleSubmit,
     pendingMatch,
     pendingMatches,
+    pickFingerprintMatch,
     selectMusicBrainzMatch,
+    selectedFingerprintTrackId,
     setArtist,
     setTitle,
     submitting,
@@ -434,15 +438,19 @@ export function SongSelection({ mode, onNavigate }: Props) {
           <AttendeeSongSuggestView
             artist={artist}
             checkingMusicBrainz={checkingMusicBrainz}
+            fingerprintMatches={fingerprintMatches}
+            fingerprintSearchActive={fingerprintSearchActive}
             isDarkMode={isDarkMode}
             musicBrainzMatch={pendingMatch}
             musicBrainzMatches={pendingMatches}
             onArtistChange={setArtist}
             onConfirmMusicBrainzMatch={confirmMusicBrainzMatch}
             onDeclineMusicBrainzMatch={declineMusicBrainzMatch}
+            onPickFingerprintMatch={pickFingerprintMatch}
             onSelectMusicBrainzMatch={selectMusicBrainzMatch}
             onSubmit={handleSubmit}
             onTitleChange={setTitle}
+            selectedFingerprintTrackId={selectedFingerprintTrackId}
             submitting={submitting}
             title={title}
           />
