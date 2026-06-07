@@ -3,7 +3,8 @@ import { m, AnimatePresence } from 'motion/react';
 import { clsx } from 'clsx';
 import { Play, X, Clock, UserX, SkipForward, Check } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { COOLDOWN_OPTIONS, DEFAULT_COOLDOWN_MS, formatCooldownDuration } from '@/constants/cooldowns';
+import { DEFAULT_COOLDOWN_MS, formatCooldownDuration } from '@/constants/cooldowns';
+import { CooldownDurationSelect } from './CooldownDurationSelect';
 import { ANIMATION_DURATION } from '@/constants/animations';
 import { songsAPI } from '@/services/api';
 import { useSound } from '@/hooks/useSound';
@@ -186,10 +187,10 @@ export function QueueItem({
             transition={{ duration: 0.2 }}
             className="flex-1 flex items-center gap-2"
           >
-            <select
+            <CooldownDurationSelect
               value={cooldownMs}
               onClick={(e) => e.stopPropagation()}
-              onChange={(e) => setCooldownMs(Number(e.target.value))}
+              onChange={setCooldownMs}
               disabled={!canModerateRequester}
               className={clsx(
                 'h-9 rounded-lg border px-2 text-xs font-bold outline-none disabled:cursor-not-allowed disabled:opacity-40',
@@ -197,14 +198,7 @@ export function QueueItem({
                   ? 'border-yellow-800/40 bg-slate-900 text-yellow-300'
                   : 'border-yellow-200 bg-white text-yellow-800',
               )}
-              aria-label={t('Cooldown duration')}
-            >
-              {COOLDOWN_OPTIONS.map((option) => (
-                <option key={option.valueMs} value={option.valueMs}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            />
             <Tooltip>
               <TooltipTrigger asChild>
                 <m.button

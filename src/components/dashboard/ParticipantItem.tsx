@@ -3,11 +3,12 @@ import { m, AnimatePresence } from 'motion/react';
 import { Zap, UserX, Play } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { SettingsDialog, SettingsDialogActions, SettingsDialogButton } from '@/components/settings/SettingsUI';
-import { COOLDOWN_OPTIONS, DEFAULT_COOLDOWN_MS, formatCooldownDuration } from '@/constants/cooldowns';
+import { DEFAULT_COOLDOWN_MS, formatCooldownDuration } from '@/constants/cooldowns';
 import { useSound } from '@/hooks/useSound';
 import { setCooldownAck, clearCooldownAck, kickParticipantAck } from '@/services/socket/emitters';
 import { useToast } from '@/hooks/useToast';
 import { UserAvatar } from '@/components/common';
+import { CooldownDurationSelect } from './CooldownDurationSelect';
 import { t } from '@/i18n';
 
 export interface ConnectedUser {
@@ -183,19 +184,12 @@ export function ParticipantItem({
               transition={{ duration: 0.2 }}
               className="flex items-center gap-2"
             >
-              <select
+              <CooldownDurationSelect
                 value={cooldownMs}
                 onClick={(e) => e.stopPropagation()}
-                onChange={(e) => setCooldownMs(Number(e.target.value))}
+                onChange={setCooldownMs}
                 className="h-8 rounded-lg border border-yellow-200 bg-white px-2 text-xs font-bold text-yellow-800 outline-none"
-                aria-label={t('Cooldown duration')}
-              >
-                {COOLDOWN_OPTIONS.map((option) => (
-                  <option key={option.valueMs} value={option.valueMs}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              />
               {isOnCooldown ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
