@@ -72,6 +72,7 @@ type ConnectedUsersAction =
   | { type: 'remove_user'; participantId?: string }
   | { type: 'update_user'; update: ParticipantUpdatedPayload }
   | { type: 'set_cooldown'; participantId?: string; cooldownUntil?: string | Date }
+  | { type: 'clear_cooldown'; participantId?: string }
   | { type: 'set_premium'; participantId?: string; isPremium?: boolean }
   | { type: 'select_participant'; participantId: string | null };
 
@@ -142,6 +143,22 @@ function connectedUsersReducer(
             ? {
                 ...user,
                 cooldownUntil,
+              }
+            : user,
+        ),
+      };
+    }
+    case 'clear_cooldown': {
+      if (!action.participantId) {
+        return state;
+      }
+      return {
+        ...state,
+        users: state.users.map((user) =>
+          participantId(user) === action.participantId
+            ? {
+                ...user,
+                cooldownUntil: undefined,
               }
             : user,
         ),
@@ -308,6 +325,14 @@ export function ConnectedUsers({
         });
       };
 
+      const handleParticipantCooldownCleared = (data: ParticipantEventPayload) => {
+        if (!isDj) return;
+        dispatch({
+          type: 'clear_cooldown',
+          participantId: data.participantId,
+        });
+      };
+
       const handleParticipantPremiumUpdated = (data: ParticipantPremiumPayload) => {
         if (!isDj) return;
         dispatch({
@@ -327,6 +352,7 @@ export function ConnectedUsers({
       socket.on('participant_updated', handleParticipantUpdated);
       if (isDj) {
         socket.on('participant_cooldown', handleParticipantCooldown);
+        socket.on('participant_cooldown_cleared', handleParticipantCooldownCleared);
         socket.on('participant_premium_updated', handleParticipantPremiumUpdated);
       }
 
@@ -340,6 +366,7 @@ export function ConnectedUsers({
         socket.off('participant_updated', handleParticipantUpdated);
         if (isDj) {
           socket.off('participant_cooldown', handleParticipantCooldown);
+          socket.off('participant_cooldown_cleared', handleParticipantCooldownCleared);
           socket.off(
             'participant_premium_updated',
             handleParticipantPremiumUpdated,

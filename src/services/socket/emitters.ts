@@ -171,6 +171,13 @@ export function setCooldownAck(
   return emitWithAck('set_cooldown', { eventId, participantId, durationMs, reason });
 }
 
+export function clearCooldownAck(
+  eventId: string,
+  participantId: string,
+): Promise<unknown> {
+  return emitWithAck('clear_cooldown', { eventId, participantId });
+}
+
 export function kickParticipantAck(
   eventId: string,
   participantId: string,
