@@ -10,9 +10,11 @@ interface AttendeeSongSuggestViewProps {
   checkingMusicBrainz: boolean;
   isDarkMode: boolean;
   musicBrainzMatch: Song['recognitionMatch'];
+  musicBrainzMatches: Song['recognitionMatch'][];
   onArtistChange: (artist: string) => void;
   onConfirmMusicBrainzMatch: () => void;
   onDeclineMusicBrainzMatch: () => void;
+  onSelectMusicBrainzMatch: (match: Song['recognitionMatch']) => void;
   onSubmit: (event: React.FormEvent) => void;
   onTitleChange: (title: string) => void;
   submitting: boolean;
@@ -24,9 +26,11 @@ export function AttendeeSongSuggestView({
   checkingMusicBrainz,
   isDarkMode,
   musicBrainzMatch,
+  musicBrainzMatches,
   onArtistChange,
   onConfirmMusicBrainzMatch,
   onDeclineMusicBrainzMatch,
+  onSelectMusicBrainzMatch,
   onSubmit,
   onTitleChange,
   submitting,
@@ -161,41 +165,85 @@ export function AttendeeSongSuggestView({
           {checkingMusicBrainz ? t('Checking MusicBrainz…') : submitting ? t('Submitting…') : t('Suggest Song')}
         </m.button>
 
-        {musicBrainzMatch ? (
+        {musicBrainzMatches.length ? (
           <div
             className={clsx(
               'mt-2 rounded-xl border p-3',
               isDarkMode ? 'border-white/10 bg-white/10' : 'border-emerald-200 bg-emerald-50',
             )}
           >
-            <div className="flex items-center gap-3">
-              <div
+            <p
+              className={clsx(
+                'mb-2 text-[11px] font-black uppercase tracking-normal',
+                isDarkMode ? 'text-emerald-200' : 'text-emerald-700',
+              )}
+            >
+              {t('Which track did you mean?')}
+            </p>
+            <div className="flex flex-col gap-2">
+              {musicBrainzMatches.map((match) => {
+                const selected = match?.recordingId === musicBrainzMatch?.recordingId;
+                return (
+                  <button
+                    key={match?.recordingId || `${match?.title}-${match?.artist}`}
+                    type="button"
+                    onClick={() => onSelectMusicBrainzMatch(match)}
+                    className={clsx(
+                      'flex min-w-0 items-center gap-3 rounded-lg border p-2 text-left transition',
+                      selected
+                        ? isDarkMode
+                          ? 'border-emerald-300/70 bg-emerald-400/15'
+                          : 'border-emerald-400 bg-white'
+                        : isDarkMode
+                          ? 'border-white/10 bg-slate-950/20'
+                          : 'border-emerald-100 bg-white/60',
+                    )}
+                  >
+                    <span
+                      className={clsx(
+                        'grid h-11 w-11 flex-shrink-0 place-items-center overflow-hidden rounded-md',
+                        isDarkMode ? 'bg-slate-900/45 text-emerald-200' : 'bg-white text-emerald-700',
+                      )}
+                    >
+                      {match?.coverUrl ? (
+                        <img src={match.coverUrl} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <Disc3 size={20} aria-hidden="true" />
+                      )}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-black">{match?.title}</span>
+                      <span
+                        className={clsx(
+                          'block truncate text-xs font-semibold',
+                          isDarkMode ? 'text-slate-300' : 'text-slate-600',
+                        )}
+                      >
+                        {match?.artist}
+                      </span>
+                    </span>
+                    <span
+                      className={clsx(
+                        'flex-shrink-0 text-xs font-black',
+                        isDarkMode ? 'text-emerald-200' : 'text-emerald-700',
+                      )}
+                    >
+                      {Math.round((match?.score || 0) * 100)}%
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {musicBrainzMatch ? (
+              <p
                 className={clsx(
-                  'grid h-14 w-14 flex-shrink-0 place-items-center overflow-hidden rounded-lg',
-                  isDarkMode ? 'bg-slate-900/45 text-emerald-200' : 'bg-white text-emerald-700',
+                  'mt-2 text-xs font-semibold',
+                  isDarkMode ? 'text-slate-300' : 'text-slate-600',
                 )}
               >
-                {musicBrainzMatch.coverUrl ? (
-                  <img src={musicBrainzMatch.coverUrl} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <Disc3 size={24} aria-hidden="true" />
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p
-                  className={clsx(
-                    'text-[11px] font-black uppercase tracking-normal',
-                    isDarkMode ? 'text-emerald-200' : 'text-emerald-700',
-                  )}
-                >
-                  {t('Is this the track?')} {Math.round(musicBrainzMatch.score * 100)}%
-                </p>
-                <p className="truncate text-sm font-black">{musicBrainzMatch.title}</p>
-                <p className={clsx('truncate text-xs font-semibold', isDarkMode ? 'text-slate-300' : 'text-slate-600')}>
-                  {musicBrainzMatch.artist}
-                </p>
-              </div>
-            </div>
+                {t('Selected:')} {musicBrainzMatch.title} - {musicBrainzMatch.artist}
+              </p>
+            ) : null}
             <div className="mt-3 grid grid-cols-2 gap-2">
               <button
                 type="button"

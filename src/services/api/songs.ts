@@ -18,13 +18,13 @@ export const songsAPI = {
     title: string,
     artist: string,
     totalDuration?: number,
-  ): Promise<Song['recognitionMatch']> => {
+  ): Promise<Song['recognitionMatch'][]> => {
     validateObjectId(eventId, 'eventId');
     const data = await apiCall(`/songs/${eventId}/lookup-musicbrainz`, {
       method: 'POST',
       body: JSON.stringify({ participantId, title, artist, totalDuration }),
     });
-    return data.data.match;
+    return data.data.matches ?? (data.data.match ? [data.data.match] : []);
   },
 
   getMusicBrainzMatchCandidates: async (

@@ -434,9 +434,11 @@ export function SongSelection({ mode, onNavigate }: Props) {
             checkingMusicBrainz={checkingMusicBrainz}
             isDarkMode={isDarkMode}
             musicBrainzMatch={pendingMatch}
+            musicBrainzMatches={pendingMatches}
             onArtistChange={setArtist}
             onConfirmMusicBrainzMatch={confirmMusicBrainzMatch}
             onDeclineMusicBrainzMatch={declineMusicBrainzMatch}
+            onSelectMusicBrainzMatch={selectMusicBrainzMatch}
             onSubmit={handleSubmit}
             onTitleChange={setTitle}
             submitting={submitting}
