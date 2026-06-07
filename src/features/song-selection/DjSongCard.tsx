@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AnimatePresence, animate, m, useMotionValue } from 'motion/react';
 import { clsx } from 'clsx';
-import { Disc3, Sparkles, ArrowLeft, ArrowRight, Link2 } from 'lucide-react';
+import { Disc3, Sparkles, ArrowLeft, ArrowRight, Library, Link2 } from 'lucide-react';
 import { UserAvatar } from '@/components/common';
 import type { Song } from '@/types/songs';
 
@@ -21,6 +21,7 @@ interface DjSongCardProps {
   onApprove: () => Promise<void>;
   onClick?: () => void;
   onMatchMetadata?: () => void;
+  onPickFingerprint?: () => void;
   onReject: () => Promise<void>;
   song: SongSelectionSong;
 }
@@ -104,14 +105,17 @@ function SwipeBorderGlow() {
 
 function DjSongCardContent({
   onMatchMetadata,
+  onPickFingerprint,
   song,
 }: {
   onMatchMetadata?: () => void;
+  onPickFingerprint?: () => void;
   song: SongSelectionSong;
 }) {
   const match = song.recognitionMatch;
   const matchLabel = match?.source === 'musicbrainz' ? 'MusicBrainz match' : 'Fingerprint match';
   const canMatchMetadata = match?.source === 'musicbrainz' && onMatchMetadata;
+  const canPickFingerprint = onPickFingerprint && match?.source !== 'musicbrainz';
 
   return (
     <div className="relative z-10 space-y-3">
@@ -150,6 +154,20 @@ function DjSongCardContent({
               aria-label={`Match MusicBrainz metadata for ${song.title}`}
             >
               <Link2 size={17} aria-hidden="true" />
+            </button>
+          ) : null}
+          {canPickFingerprint ? (
+            <button
+              type="button"
+              data-no-swipe="true"
+              onClick={(event) => {
+                event.stopPropagation();
+                onPickFingerprint();
+              }}
+              className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 shadow-sm transition-colors hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-slate-100"
+              aria-label={`Assign fingerprint from library for ${song.title}`}
+            >
+              <Library size={17} aria-hidden="true" />
             </button>
           ) : null}
         </div>
@@ -191,7 +209,7 @@ function DjSongCardContent({
   );
 }
 
-export function DjSongCard({ isProcessing, onApprove, onClick, onMatchMetadata, onReject, song }: DjSongCardProps) {
+export function DjSongCard({ isProcessing, onApprove, onClick, onMatchMetadata, onPickFingerprint, onReject, song }: DjSongCardProps) {
   const x = useMotionValue(0);
   const pointerStartRef = React.useRef<{ x: number; y: number } | null>(null);
   const pointerLockRef = React.useRef<'x' | 'y' | null>(null);
@@ -299,7 +317,7 @@ export function DjSongCard({ isProcessing, onApprove, onClick, onMatchMetadata, 
     <m.div variants={{ hidden: { y: 20, opacity: 0 }, show: { y: 0, opacity: 1 } }} className="relative overflow-hidden rounded-2xl">
       <AnimatePresence>{showOverlay ? <SwipeBorderGlow /> : null}</AnimatePresence>
       <div aria-hidden="true" className="pointer-events-none invisible rounded-2xl border border-slate-200/80 bg-white p-4 md:p-5">
-        <DjSongCardContent onMatchMetadata={onMatchMetadata} song={song} />
+        <DjSongCardContent onMatchMetadata={onMatchMetadata} onPickFingerprint={onPickFingerprint} song={song} />
       </div>
       <m.div
         style={{ x, touchAction: 'pan-y' }}
@@ -316,7 +334,7 @@ export function DjSongCard({ isProcessing, onApprove, onClick, onMatchMetadata, 
           isProcessing ? 'cursor-wait opacity-80' : 'cursor-grab active:cursor-grabbing',
         )}
       >
-        <DjSongCardContent onMatchMetadata={onMatchMetadata} song={song} />
+        <DjSongCardContent onMatchMetadata={onMatchMetadata} onPickFingerprint={onPickFingerprint} song={song} />
       </m.div>
     </m.div>
   );

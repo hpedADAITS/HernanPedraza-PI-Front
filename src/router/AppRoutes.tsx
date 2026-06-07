@@ -62,6 +62,11 @@ const PhoneMicrophone = lazy(() =>
     default: module.PhoneMicrophone,
   })),
 );
+const FingerprintLibrary = lazy(() =>
+  import('@/pages/FingerprintLibrary').then((module) => ({
+    default: module.FingerprintLibrary,
+  })),
+);
 
 interface AppRoutesProps {
   direction: number;
@@ -72,9 +77,19 @@ interface AppRoutesProps {
 
 const APP_MODES = ['attendee', 'dj'] as const;
 
-const WORKSPACE_ROUTES = APP_MODES.flatMap((mode) => [
-  { path: `/${mode}/dashboard`, mode, showSongs: false },
-  { path: `/${mode}/songs`, mode, showSongs: true },
+type WorkspaceKind = 'dashboard' | 'songs' | 'songs-fingerprints';
+
+interface WorkspaceRoute {
+  path: string;
+  mode: AppMode;
+  kind: WorkspaceKind;
+  isBase: boolean;
+}
+
+const WORKSPACE_ROUTES: WorkspaceRoute[] = APP_MODES.flatMap((mode) => [
+  { path: `/${mode}/dashboard`, mode, kind: 'dashboard', isBase: true },
+  { path: `/${mode}/songs`, mode, kind: 'songs', isBase: true },
+  { path: `/${mode}/songs/fingerprints`, mode, kind: 'songs-fingerprints', isBase: false },
 ]);
 
 const SETTINGS_ROUTES = [
@@ -91,8 +106,17 @@ function RouteFallback() {
   );
 }
 
-function getWorkspaceRoute(pathname: string) {
-  return WORKSPACE_ROUTES.find((route) => route.path === pathname) ?? null;
+function getWorkspaceRoute(pathname: string): WorkspaceRoute | null {
+  const match = WORKSPACE_ROUTES.find((route) => {
+    if (route.isBase) return route.path === pathname;
+    return pathname.startsWith(route.path);
+  });
+  if (!match) return null;
+  if (!match.isBase) return match;
+  const moreSpecific = WORKSPACE_ROUTES.find(
+    (r) => !r.isBase && pathname.startsWith(r.path),
+  );
+  return moreSpecific || match;
 }
 
 export function AppRoutes({
@@ -105,23 +129,30 @@ export function AppRoutes({
   const workspaceRoute = getWorkspaceRoute(location.pathname);
 
   if (workspaceRoute) {
+    const showOverlay = workspaceRoute.kind !== 'dashboard';
     return (
       <Suspense fallback={<RouteFallback />}>
         <div className="relative h-full w-full">
           <div
             className="absolute inset-0"
-            aria-hidden={workspaceRoute.showSongs}
-            inert={workspaceRoute.showSongs ? true : undefined}
+            aria-hidden={showOverlay}
+            inert={showOverlay ? true : undefined}
           >
             <Dashboard mode={workspaceRoute.mode} onNavigate={onNavigate} />
           </div>
 
-          {workspaceRoute.showSongs && (
+          {workspaceRoute.kind === 'songs' && (
             <div className="absolute inset-0 z-50">
               <SongSelection
                 mode={workspaceRoute.mode}
                 onNavigate={onNavigate}
               />
+            </div>
+          )}
+
+          {workspaceRoute.kind === 'songs-fingerprints' && (
+            <div className="absolute inset-0 z-50">
+              <FingerprintLibrary onNavigate={onNavigate} />
             </div>
           )}
         </div>

@@ -19,6 +19,7 @@ export const viewPaths: Record<View, string> = {
   'dj-account-settings': rolePath('dj', '/settings/account'),
   'dj-app-settings': rolePath('dj', '/settings/app'),
   'dj-phone-microphone': '/dj/microphone',
+  'dj-fingerprints': rolePath('dj', '/songs/fingerprints'),
   banned: '/banned',
   'verify-email': '/verify-email',
 };

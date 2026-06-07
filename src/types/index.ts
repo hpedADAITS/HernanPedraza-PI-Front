@@ -19,6 +19,7 @@ export type View =
   | 'dj-account-settings'
   | 'dj-app-settings'
   | 'dj-phone-microphone'
+  | 'dj-fingerprints'
   | 'banned'
   | 'verify-email';
 

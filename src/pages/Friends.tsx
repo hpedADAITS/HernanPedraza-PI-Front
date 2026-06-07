@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-    ArrowLeft,
     Check,
     Mail,
     Music,
@@ -191,18 +190,17 @@ export function Friends({ mode, onNavigate }: Props) {
                         panelClass(isDarkMode),
                         'flex items-center justify-between gap-4 px-5 py-4 sm:px-6',
                     )}>
-                    <button
-                        type="button"
-                        onClick={() => onNavigate(backView)}
-                        className={clsx(
-                            'inline-flex h-10 items-center gap-2 rounded-xl border px-3 text-sm font-extrabold shadow-[0_8px_18px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.95)] transition-colors focus-visible:outline-none focus-visible:ring-4',
-                            isDarkMode
-                                ? 'border-white/10 bg-white/[0.06] text-slate-100 hover:bg-white/[0.1] focus-visible:ring-white/10'
-                                : 'border-slate-900/10 bg-white text-[#17213a] hover:bg-slate-50 focus-visible:ring-blue-100',
-                        )}>
-                        <ArrowLeft size={16} aria-hidden="true" />
-                        {t('Back')}
-                    </button>
+                    <div className="absolute left-0 top-0 z-20">
+                        <button
+                            type="button"
+                            onClick={() => onNavigate(backView)}
+                            className="flex h-11 items-center gap-2 rounded-full border border-white/55 bg-white/16 px-4 text-sm font-semibold text-white shadow-lg shadow-slate-950/10 backdrop-blur-md transition-colors hover:bg-white/24"
+                            tabIndex={0}
+                            style={{ opacity: 1, transform: 'none' }}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-left" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg>
+                            Back
+                        </button>
+                    </div>
 
                     <div className="min-w-0 text-center">
                         <h1

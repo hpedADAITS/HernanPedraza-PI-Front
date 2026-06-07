@@ -1,13 +1,15 @@
-import { Disc3, Sparkles, X } from 'lucide-react';
+import { Disc3, Library, Sparkles, X } from 'lucide-react';
 import { AnimatePresence, m } from 'motion/react';
 import { UserAvatar } from '@/components/common';
 import { t } from '@/i18n';
+import type { NavigateToView } from '@/types';
 import type { SongSelectionSong } from '@/features/song-selection/DjSongCard';
 
 interface DjRequestReviewDialogProps {
   isProcessing: boolean;
   onApprove: () => Promise<unknown>;
   onClose: () => void;
+  onNavigate?: NavigateToView;
   onReject: () => Promise<unknown>;
   song: SongSelectionSong | null;
 }
@@ -16,6 +18,7 @@ export function DjRequestReviewDialog({
   isProcessing,
   onApprove,
   onClose,
+  onNavigate,
   onReject,
   song,
 }: DjRequestReviewDialogProps) {
@@ -115,6 +118,16 @@ export function DjRequestReviewDialog({
                     <p className="truncate text-xs font-semibold text-slate-500">
                       {match.artist}
                     </p>
+                    {onNavigate && match.source !== 'musicbrainz' ? (
+                      <button
+                        type="button"
+                        onClick={() => onNavigate('dj-fingerprints')}
+                        className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-sky-600 underline underline-offset-2"
+                      >
+                        <Library size={12} aria-hidden="true" />
+                        {t('View in library')}
+                      </button>
+                    ) : null}
                   </div>
                 </div>
               ) : (

@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { m } from 'motion/react';
-import { ArrowLeft, ChevronDown, ListPlus, Music, Search, Star, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Library, ListPlus, Music, Search, Star, CheckCircle2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useDarkMode } from '@/hooks/useDarkMode';
 import { getStoredEventId, getStoredParticipantId } from '@/services/session';
@@ -10,6 +10,7 @@ import { AttendeeCooldownOverlay } from '@/components/dashboard/AttendeeCooldown
 import { DjRequestReviewDialog } from '@/features/song-selection/DjRequestReviewDialog';
 import { AttendeeSongSuggestView } from '@/features/song-selection/AttendeeSongSuggestView';
 import { DjSongCard, type SongSelectionSong } from '@/features/song-selection/DjSongCard';
+import { FingerprintPickerDialog } from '@/features/song-selection/FingerprintPickerDialog';
 import { MusicBrainzMatchDialog } from '@/features/song-selection/MusicBrainzMatchDialog';
 import { RecognitionTrackUploadDialog } from '@/features/song-selection/RecognitionTrackUploadDialog';
 import { usePendingSongs } from '@/features/song-selection/usePendingSongs';
@@ -114,6 +115,7 @@ export function SongSelection({ mode, onNavigate }: Props) {
   const participantId = getStoredParticipantId();
   const { isCoolingDown, remainingMs } = useParticipantCooldown(participantId, !isDj);
   const [recognitionUploadOpen, setRecognitionUploadOpen] = useState(false);
+  const [pickingFingerprintSong, setPickingFingerprintSong] = useState<SongSelectionSong | null>(null);
   const [metadataMatchSong, setMetadataMatchSong] = useState<SongSelectionSong | null>(null);
   const [metadataCandidates, setMetadataCandidates] = useState<AudioTrack[]>([]);
   const [metadataLoading, setMetadataLoading] = useState(false);
@@ -318,6 +320,22 @@ export function SongSelection({ mode, onNavigate }: Props) {
                     <m.button
                       type="button"
                       whileTap={{ scale: 0.98 }}
+                      onClick={() => { onNavigate('dj-fingerprints'); }}
+                      className="grid h-[52px] w-[52px] flex-shrink-0 place-items-center rounded-xl border border-slate-900/10 bg-white text-slate-600 shadow-[0_10px_20px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.95)] transition-colors hover:bg-slate-50"
+                      aria-label={t('Browse fingerprinted tracks')}
+                    >
+                      <Library size={22} />
+                    </m.button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t('Browse fingerprinted tracks')}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <m.button
+                      type="button"
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => setRecognitionUploadOpen(true)}
                       className="grid h-[52px] w-[52px] flex-shrink-0 place-items-center rounded-xl border border-slate-900/10 bg-white text-[#2878ff] shadow-[0_10px_20px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.95)] transition-colors hover:bg-blue-50"
                       aria-label={t('Upload recognition track')}
@@ -341,6 +359,7 @@ export function SongSelection({ mode, onNavigate }: Props) {
                 if (reviewSong) await handleApproveWithTracking(reviewSong._id);
               }}
               onClose={closeReviewSong}
+              onNavigate={onNavigate}
               onReject={async () => {
                 if (reviewSong) await handleReject(reviewSong._id);
               }}
@@ -355,6 +374,12 @@ export function SongSelection({ mode, onNavigate }: Props) {
                 if (!metadataProcessing) setMetadataMatchSong(null);
               }}
               song={metadataMatchSong}
+            />
+            <FingerprintPickerDialog
+              song={pickingFingerprintSong}
+              eventId={eventId}
+              onClose={() => setPickingFingerprintSong(null)}
+              onAssigned={() => {}}
             />
 
             {loading ? (
@@ -387,6 +412,11 @@ export function SongSelection({ mode, onNavigate }: Props) {
                     onMatchMetadata={
                       song.recognitionMatch?.source === 'musicbrainz'
                         ? () => void openMetadataMatch(song)
+                        : undefined
+                    }
+                    onPickFingerprint={
+                      song.recognitionMatch?.source !== 'musicbrainz'
+                        ? () => setPickingFingerprintSong(song)
                         : undefined
                     }
                     onReject={async () => {

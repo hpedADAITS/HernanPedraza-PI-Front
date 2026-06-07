@@ -52,6 +52,21 @@ export const songsAPI = {
     return data.data;
   },
 
+  assignFingerprint: async (
+    eventId: string,
+    songId: string,
+    trackId: string,
+  ): Promise<{ song: Song }> => {
+    validateObjectId(eventId, 'eventId');
+    validateObjectId(songId, 'songId');
+    validateObjectId(trackId, 'trackId');
+    const data = await apiCall(`/songs/${eventId}/${songId}/assign-fingerprint`, {
+      method: 'POST',
+      body: JSON.stringify({ trackId }),
+    });
+    return data.data;
+  },
+
   suggestSong: async (
     eventId: string,
     participantId: string,
