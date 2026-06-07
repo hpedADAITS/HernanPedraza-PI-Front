@@ -20,6 +20,9 @@ export function DjRequestReviewDialog({
   song,
 }: DjRequestReviewDialogProps) {
   const match = song?.recognitionMatch;
+  const matchLabel = match?.source === 'musicbrainz'
+    ? t('MusicBrainz match {score}%', { score: Math.round(match.score * 100) })
+    : t('DB fingerprint match {score}%', { score: Math.round((match?.score || 0) * 100) });
 
   return (
     <AnimatePresence>
@@ -104,7 +107,7 @@ export function DjRequestReviewDialog({
                   <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wide text-sky-700">
                       <Sparkles size={13} aria-hidden="true" />
-                      {t('DB fingerprint match {score}%', { score: Math.round(match.score * 100) })}
+                      {matchLabel}
                     </p>
                     <p className="mt-1 truncate text-sm font-black text-slate-950">
                       {match.title}

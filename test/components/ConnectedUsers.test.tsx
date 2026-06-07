@@ -1,12 +1,13 @@
+import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ConnectedUsers } from '@/components/dashboard/ConnectedUsers';
 import { writeStoredJson } from '@/utils/storage';
 
-const { kickParticipantMock, listEventParticipantsMock, setCooldownMock } = vi.hoisted(() => ({
-  kickParticipantMock: vi.fn(),
+const { kickParticipantAckMock, listEventParticipantsMock, setCooldownAckMock } = vi.hoisted(() => ({
+  kickParticipantAckMock: vi.fn(),
   listEventParticipantsMock: vi.fn(),
-  setCooldownMock: vi.fn(),
+  setCooldownAckMock: vi.fn(),
 }));
 
 vi.mock('@/services/api', async (importOriginal) => {
@@ -16,12 +17,15 @@ vi.mock('@/services/api', async (importOriginal) => {
     ...actual,
     participantsAPI: {
       ...actual.participantsAPI,
-      kickParticipant: kickParticipantMock,
       listEventParticipants: listEventParticipantsMock,
-      setCooldown: setCooldownMock,
     },
   };
 });
+
+vi.mock('@/services/socket/emitters', () => ({
+  kickParticipantAck: kickParticipantAckMock,
+  setCooldownAck: setCooldownAckMock,
+}));
 
 vi.mock('@/services/socket', () => ({
   getSocket: () => ({
@@ -61,8 +65,8 @@ describe('ConnectedUsers DJ moderation', () => {
         joinedAt: new Date().toISOString(),
       },
     ]);
-    setCooldownMock.mockResolvedValue({});
-    kickParticipantMock.mockResolvedValue({});
+    setCooldownAckMock.mockResolvedValue({});
+    kickParticipantAckMock.mockResolvedValue({});
 
     render(<ConnectedUsers mode="dj" />);
 
@@ -74,7 +78,8 @@ describe('ConnectedUsers DJ moderation', () => {
     fireEvent.click(screen.getAllByRole('button')[0]);
 
     await waitFor(() => {
-      expect(setCooldownMock).toHaveBeenCalledWith(
+      expect(setCooldownAckMock).toHaveBeenCalledWith(
+        'event-1',
         'attendee-1',
         expect.any(Number),
         'DJ cooldown',
@@ -86,7 +91,11 @@ describe('ConnectedUsers DJ moderation', () => {
     fireEvent.click(screen.getAllByRole('button')[1]);
 
     await waitFor(() => {
-      expect(kickParticipantMock).toHaveBeenCalledWith('attendee-1', 'Kicked by DJ');
+      expect(kickParticipantAckMock).toHaveBeenCalledWith(
+        'event-1',
+        'attendee-1',
+        'Kicked by DJ',
+      );
     });
   });
 });

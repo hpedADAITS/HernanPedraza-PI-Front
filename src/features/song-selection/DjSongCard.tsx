@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AnimatePresence, animate, m, useMotionValue } from 'motion/react';
 import { clsx } from 'clsx';
-import { Disc3, Sparkles, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Disc3, Sparkles, ArrowLeft, ArrowRight, Link2 } from 'lucide-react';
 import { UserAvatar } from '@/components/common';
 import type { Song } from '@/types/songs';
 
@@ -20,6 +20,7 @@ interface DjSongCardProps {
   isProcessing: boolean;
   onApprove: () => Promise<void>;
   onClick?: () => void;
+  onMatchMetadata?: () => void;
   onReject: () => Promise<void>;
   song: SongSelectionSong;
 }
@@ -101,8 +102,16 @@ function SwipeBorderGlow() {
   );
 }
 
-function DjSongCardContent({ song }: { song: SongSelectionSong }) {
+function DjSongCardContent({
+  onMatchMetadata,
+  song,
+}: {
+  onMatchMetadata?: () => void;
+  song: SongSelectionSong;
+}) {
   const match = song.recognitionMatch;
+  const matchLabel = match?.source === 'musicbrainz' ? 'MusicBrainz match' : 'Fingerprint match';
+  const canMatchMetadata = match?.source === 'musicbrainz' && onMatchMetadata;
 
   return (
     <div className="relative z-10 space-y-3">
@@ -114,19 +123,35 @@ function DjSongCardContent({ song }: { song: SongSelectionSong }) {
           fallbackClassName="flex items-center justify-center text-base font-semibold text-white"
         />
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <h3 className="truncate text-base font-semibold text-slate-900 md:text-lg">{song.title}</h3>
-          <p className="truncate text-sm font-medium text-slate-500">{song.artist}</p>
-          <div className="mt-1 flex items-center gap-1.5 truncate text-xs font-medium text-slate-400">
-            <UserAvatar
-              name={song.requestedBy?.nickname || 'Unknown'}
-              profilePicture={song.requestedBy?.profilePicture || null}
-              imageAlt={`${song.requestedBy?.nickname || 'Unknown'} profile`}
-              className="h-4 w-4 flex-shrink-0 overflow-hidden rounded-full border border-slate-300 bg-slate-200 shadow-sm"
-              fallbackClassName="flex h-full w-full items-center justify-center bg-slate-700 text-[9px] font-semibold text-white"
-            />
-            {song.requestedBy?.nickname || 'Unknown'}
+        <div className="flex min-w-0 flex-1 items-start gap-2">
+          <div className="flex min-w-0 flex-1 flex-col">
+            <h3 className="truncate text-base font-semibold text-slate-900 md:text-lg">{song.title}</h3>
+            <p className="truncate text-sm font-medium text-slate-500">{song.artist}</p>
+            <div className="mt-1 flex items-center gap-1.5 truncate text-xs font-medium text-slate-400">
+              <UserAvatar
+                name={song.requestedBy?.nickname || 'Unknown'}
+                profilePicture={song.requestedBy?.profilePicture || null}
+                imageAlt={`${song.requestedBy?.nickname || 'Unknown'} profile`}
+                className="h-4 w-4 flex-shrink-0 overflow-hidden rounded-full border border-slate-300 bg-slate-200 shadow-sm"
+                fallbackClassName="flex h-full w-full items-center justify-center bg-slate-700 text-[9px] font-semibold text-white"
+              />
+              {song.requestedBy?.nickname || 'Unknown'}
+            </div>
           </div>
+          {canMatchMetadata ? (
+            <button
+              type="button"
+              data-no-swipe="true"
+              onClick={(event) => {
+                event.stopPropagation();
+                onMatchMetadata();
+              }}
+              className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-lg border border-sky-200 bg-sky-50 text-sky-700 shadow-sm transition-colors hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100"
+              aria-label={`Match MusicBrainz metadata for ${song.title}`}
+            >
+              <Link2 size={17} aria-hidden="true" />
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -142,7 +167,7 @@ function DjSongCardContent({ song }: { song: SongSelectionSong }) {
           <div className="min-w-0 flex-1">
             <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-sky-700">
               <Sparkles size={12} />
-              Fingerprint match {Math.round(match.score * 100)}%
+              {matchLabel} {Math.round(match.score * 100)}%
             </p>
             <p className="truncate text-sm font-semibold text-slate-900">{match.title}</p>
             <p className="truncate text-xs font-medium text-slate-500">{match.artist}</p>
@@ -166,7 +191,7 @@ function DjSongCardContent({ song }: { song: SongSelectionSong }) {
   );
 }
 
-export function DjSongCard({ isProcessing, onApprove, onClick, onReject, song }: DjSongCardProps) {
+export function DjSongCard({ isProcessing, onApprove, onClick, onMatchMetadata, onReject, song }: DjSongCardProps) {
   const x = useMotionValue(0);
   const pointerStartRef = React.useRef<{ x: number; y: number } | null>(null);
   const pointerLockRef = React.useRef<'x' | 'y' | null>(null);
@@ -190,6 +215,7 @@ export function DjSongCard({ isProcessing, onApprove, onClick, onReject, song }:
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (isProcessing) return;
+    if ((e.target as HTMLElement).closest('[data-no-swipe="true"]')) return;
     pointerStartRef.current = { x: e.clientX, y: e.clientY };
     pointerLockRef.current = null;
     pointerMovedRef.current = false;
@@ -273,7 +299,7 @@ export function DjSongCard({ isProcessing, onApprove, onClick, onReject, song }:
     <m.div variants={{ hidden: { y: 20, opacity: 0 }, show: { y: 0, opacity: 1 } }} className="relative overflow-hidden rounded-2xl">
       <AnimatePresence>{showOverlay ? <SwipeBorderGlow /> : null}</AnimatePresence>
       <div aria-hidden="true" className="pointer-events-none invisible rounded-2xl border border-slate-200/80 bg-white p-4 md:p-5">
-        <DjSongCardContent song={song} />
+        <DjSongCardContent onMatchMetadata={onMatchMetadata} song={song} />
       </div>
       <m.div
         style={{ x, touchAction: 'pan-y' }}
@@ -290,7 +316,7 @@ export function DjSongCard({ isProcessing, onApprove, onClick, onReject, song }:
           isProcessing ? 'cursor-wait opacity-80' : 'cursor-grab active:cursor-grabbing',
         )}
       >
-        <DjSongCardContent song={song} />
+        <DjSongCardContent onMatchMetadata={onMatchMetadata} song={song} />
       </m.div>
     </m.div>
   );

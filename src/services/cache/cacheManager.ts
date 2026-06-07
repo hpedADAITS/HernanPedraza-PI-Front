@@ -15,7 +15,7 @@ interface RequestCooldown {
 }
 
 class CacheManager {
-  private cache: Map<string, CacheEntry<any>> = new Map();
+  private cache: Map<string, CacheEntry<unknown>> = new Map();
   private requestCooldowns: Map<string, RequestCooldown> = new Map();
   private localStorage: Storage | null = null;
   private readonly DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes
@@ -114,7 +114,7 @@ class CacheManager {
    * Check if a request is allowed (cooldown check)
    * Returns true if enough time has passed since the last request for this URL
    */
-  isRequestAllowed(url: string, cooldownMs: number = this.DEFAULT_COOLDOWN): boolean {
+  isRequestAllowed(url: string, _cooldownMs: number = this.DEFAULT_COOLDOWN): boolean {
     const cooldown = this.requestCooldowns.get(url);
 
     if (!cooldown) {
@@ -164,7 +164,7 @@ class CacheManager {
   /**
    * Persist cache entry to localStorage
    */
-  private persistToLocalStorage(key: string, entry: CacheEntry<any>): void {
+  private persistToLocalStorage(key: string, entry: CacheEntry<unknown>): void {
     if (!this.localStorage) return;
 
     try {

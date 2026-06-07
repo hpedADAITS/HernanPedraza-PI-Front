@@ -9,6 +9,11 @@ export interface AudioTrack {
   sampleRate: number;
   pointsCount: number;
   hashesCount: number;
+  matchScore?: number;
+  musicBrainzMetadataSha512?: string | null;
+  musicBrainzRecordingId?: string | null;
+  musicBrainzReleaseId?: string | null;
+  metadataSourceSongId?: string | null;
 }
 
 export const audioTracksAPI = {

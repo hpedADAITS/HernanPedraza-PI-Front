@@ -18,7 +18,6 @@ export type View =
   | 'dj-settings'
   | 'dj-account-settings'
   | 'dj-app-settings'
-  | 'dj-friends'
   | 'dj-phone-microphone'
   | 'banned'
   | 'verify-email';

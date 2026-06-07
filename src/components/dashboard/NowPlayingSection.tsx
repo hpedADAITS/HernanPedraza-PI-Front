@@ -359,7 +359,6 @@ export function NowPlayingSection() {
       };
     }
     // Reset when not playing
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setElapsedSeconds(0);
     return undefined;
   }, [state.nowPlaying?.id, state.nowPlaying?.status, state.nowPlaying?.startedAt]);

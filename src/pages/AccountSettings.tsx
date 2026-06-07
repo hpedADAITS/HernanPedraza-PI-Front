@@ -25,7 +25,6 @@ const SETTINGS_ITEMS = [
   { id: 'displayName', label: 'Display Name Visibility' },
   { id: 'mediaQuality', label: 'Media Quality' },
   { id: 'socialSettings', label: 'Social Settings' },
-  { id: 'friends', label: 'Friends' },
   { id: 'debug', label: 'Debug / Diagnostics' },
   { id: 'signOut', label: 'Sign Out' },
 ] as const;
@@ -49,7 +48,9 @@ export function AccountSettings({ mode, onNavigate }: Props) {
     if (eventId && participantId) {
       try {
         leaveEvent(eventId, participantId);
-      } catch {}
+      } catch {
+        /* Socket leave can fail after disconnect; REST cleanup still runs. */
+      }
       await participantsAPI.leaveEvent(participantId);
     }
 
@@ -100,9 +101,6 @@ export function AccountSettings({ mode, onNavigate }: Props) {
       case 'socialSettings':
         setShowSocialModal(true);
         break;
-      case 'friends':
-        onNavigate(mode === 'dj' ? 'dj-friends' : 'attendee-friends');
-        break;
       case 'debug':
         setShowDebugModal(true);
         break;
@@ -114,9 +112,12 @@ export function AccountSettings({ mode, onNavigate }: Props) {
 
   const isDebug = isDebugModeEnabled();
   const settingsView = mode === 'dj' ? 'dj-settings' : 'attendee-settings';
+  const roleItems = mode === 'dj'
+    ? SETTINGS_ITEMS.filter((item) => item.id !== 'socialSettings')
+    : SETTINGS_ITEMS;
   const settingsItems = isDebug
-    ? SETTINGS_ITEMS
-    : SETTINGS_ITEMS.filter((item) => item.id !== 'debug');
+    ? roleItems
+    : roleItems.filter((item) => item.id !== 'debug');
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
   const filteredSettingsItems = normalizedSearchQuery
     ? settingsItems.filter((item) => t(item.label).toLowerCase().includes(normalizedSearchQuery))

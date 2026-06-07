@@ -1,40 +1,89 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { loadToken, saveToken, clearToken, API_BASE, eventsAPI } from '@/services/api';
+import { getToken } from '@/services/api/client';
+
+function tokenWithRole(role: 'ATTENDEE' | 'DJ') {
+  const encode = (value: unknown) =>
+    btoa(JSON.stringify(value))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+  const payload = encode({ userId: `${role}-1`, role });
+  return `${encode({ alg: 'none' })}.${payload}.sig`;
+}
 
 describe('API Service', () => {
   beforeEach(() => {
     vi.unstubAllGlobals();
-    /* Clear localStorage before each test */
     if (typeof window !== 'undefined') {
       localStorage.clear();
+      sessionStorage.clear();
+      window.history.replaceState({}, '', '/');
     }
   });
 
   describe('Token Management', () => {
-    it('should save token to localStorage and memory', () => {
-      const testToken = 'test-jwt-token-12345';
+    it('saves attendee tokens to attendee session storage', () => {
+      window.history.replaceState({}, '', '/attendee/login');
+      const testToken = tokenWithRole('ATTENDEE');
       saveToken(testToken);
 
-      expect(localStorage.getItem('authToken')).toBe(testToken);
+      expect(sessionStorage.getItem('attendee:authToken:v1')).toBe(testToken);
+      expect(localStorage.getItem('authToken')).toBeNull();
     });
 
-    it('should load token from localStorage', () => {
-      const testToken = 'test-jwt-token-12345';
-      localStorage.setItem('authToken', testToken);
+    it('keeps DJ and attendee tokens independent by route', () => {
+      const attendeeToken = tokenWithRole('ATTENDEE');
+      const djToken = tokenWithRole('DJ');
 
+      window.history.replaceState({}, '', '/attendee/dashboard');
+      saveToken(attendeeToken);
+
+      window.history.replaceState({}, '', '/dj/dashboard');
+      saveToken(djToken);
+
+      expect(getToken()).toBe(djToken);
+
+      window.history.replaceState({}, '', '/attendee/dashboard');
+      expect(getToken()).toBe(attendeeToken);
+    });
+
+    it('migrates legacy localStorage tokens without leaking roles across routes', () => {
+      const djToken = tokenWithRole('DJ');
+      localStorage.setItem('authToken', djToken);
+
+      window.history.replaceState({}, '', '/attendee/dashboard');
       loadToken();
-      /* We can't directly check the private authToken variable, */
-      /* but we can verify it was loaded by checking localStorage */
-      expect(localStorage.getItem('authToken')).toBe(testToken);
+      expect(getToken()).toBeNull();
+
+      window.history.replaceState({}, '', '/dj/dashboard');
+      expect(getToken()).toBe(djToken);
+      expect(localStorage.getItem('authToken')).toBeNull();
     });
 
-    it('should clear token from localStorage and memory', () => {
+    it('loads unscoped session tokens outside role routes', () => {
       const testToken = 'test-jwt-token-12345';
-      saveToken(testToken);
-      expect(localStorage.getItem('authToken')).toBe(testToken);
+      sessionStorage.setItem('authToken:v1', testToken);
+      loadToken();
+
+      expect(getToken()).toBe(testToken);
+    });
+
+    it('clears only the current route token', () => {
+      const attendeeToken = tokenWithRole('ATTENDEE');
+      const djToken = tokenWithRole('DJ');
+
+      window.history.replaceState({}, '', '/attendee/dashboard');
+      saveToken(attendeeToken);
+
+      window.history.replaceState({}, '', '/dj/dashboard');
+      saveToken(djToken);
 
       clearToken();
-      expect(localStorage.getItem('authToken')).toBeNull();
+      expect(sessionStorage.getItem('dj:authToken:v1')).toBeNull();
+
+      window.history.replaceState({}, '', '/attendee/dashboard');
+      expect(getToken()).toBe(attendeeToken);
     });
 
     it('should handle clearing token when none exists', () => {
@@ -80,15 +129,15 @@ describe('API Service', () => {
 
       /* Save first token */
       saveToken(token1);
-      expect(localStorage.getItem('authToken')).toBe(token1);
+      expect(sessionStorage.getItem('authToken:v1')).toBe(token1);
 
       /* Update with new token */
       saveToken(token2);
-      expect(localStorage.getItem('authToken')).toBe(token2);
+      expect(sessionStorage.getItem('authToken:v1')).toBe(token2);
 
       /* Clear token */
       clearToken();
-      expect(localStorage.getItem('authToken')).toBeNull();
+      expect(sessionStorage.getItem('authToken:v1')).toBeNull();
     });
 
     it('should persist token across loadToken calls', () => {
@@ -97,11 +146,11 @@ describe('API Service', () => {
 
       /* Simulate page reload */
       loadToken();
-      expect(localStorage.getItem('authToken')).toBe(testToken);
+      expect(getToken()).toBe(testToken);
 
       /* Load again */
       loadToken();
-      expect(localStorage.getItem('authToken')).toBe(testToken);
+      expect(getToken()).toBe(testToken);
     });
   });
 });

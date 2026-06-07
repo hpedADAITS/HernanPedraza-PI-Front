@@ -1,13 +1,18 @@
 import type React from 'react';
 import { m } from 'motion/react';
-import { Mic2, Music2 } from 'lucide-react';
+import { Check, Disc3, Mic2, Music2, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { t } from '@/i18n';
+import type { Song } from '@/types/songs';
 
 interface AttendeeSongSuggestViewProps {
   artist: string;
+  checkingMusicBrainz: boolean;
   isDarkMode: boolean;
+  musicBrainzMatch: Song['recognitionMatch'];
   onArtistChange: (artist: string) => void;
+  onConfirmMusicBrainzMatch: () => void;
+  onDeclineMusicBrainzMatch: () => void;
   onSubmit: (event: React.FormEvent) => void;
   onTitleChange: (title: string) => void;
   submitting: boolean;
@@ -16,14 +21,19 @@ interface AttendeeSongSuggestViewProps {
 
 export function AttendeeSongSuggestView({
   artist,
+  checkingMusicBrainz,
   isDarkMode,
+  musicBrainzMatch,
   onArtistChange,
+  onConfirmMusicBrainzMatch,
+  onDeclineMusicBrainzMatch,
   onSubmit,
   onTitleChange,
   submitting,
   title,
 }: AttendeeSongSuggestViewProps) {
-  const isDisabled = submitting || !title.trim() || !artist.trim();
+  const busy = submitting || checkingMusicBrainz;
+  const isDisabled = busy || !title.trim() || !artist.trim();
   const cardClassName = clsx(
     'relative mx-auto w-full max-w-2xl overflow-hidden rounded-2xl border p-5 md:p-7',
     isDarkMode
@@ -148,8 +158,71 @@ export function AttendeeSongSuggestView({
           whileTap={isDisabled ? undefined : { scale: 0.98 }}
           className={buttonClassName}
         >
-          {submitting ? t('Submitting…') : t('Suggest Song')}
+          {checkingMusicBrainz ? t('Checking MusicBrainz…') : submitting ? t('Submitting…') : t('Suggest Song')}
         </m.button>
+
+        {musicBrainzMatch ? (
+          <div
+            className={clsx(
+              'mt-2 rounded-xl border p-3',
+              isDarkMode ? 'border-white/10 bg-white/10' : 'border-emerald-200 bg-emerald-50',
+            )}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className={clsx(
+                  'grid h-14 w-14 flex-shrink-0 place-items-center overflow-hidden rounded-lg',
+                  isDarkMode ? 'bg-slate-900/45 text-emerald-200' : 'bg-white text-emerald-700',
+                )}
+              >
+                {musicBrainzMatch.coverUrl ? (
+                  <img src={musicBrainzMatch.coverUrl} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <Disc3 size={24} aria-hidden="true" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p
+                  className={clsx(
+                    'text-[11px] font-black uppercase tracking-normal',
+                    isDarkMode ? 'text-emerald-200' : 'text-emerald-700',
+                  )}
+                >
+                  {t('Is this the track?')} {Math.round(musicBrainzMatch.score * 100)}%
+                </p>
+                <p className="truncate text-sm font-black">{musicBrainzMatch.title}</p>
+                <p className={clsx('truncate text-xs font-semibold', isDarkMode ? 'text-slate-300' : 'text-slate-600')}>
+                  {musicBrainzMatch.artist}
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={onDeclineMusicBrainzMatch}
+                disabled={submitting}
+                className={clsx(
+                  'flex h-10 items-center justify-center gap-2 rounded-lg border text-sm font-black disabled:cursor-not-allowed disabled:opacity-60',
+                  isDarkMode
+                    ? 'border-white/10 bg-slate-950/30 text-white'
+                    : 'border-slate-200 bg-white text-slate-700',
+                )}
+              >
+                <X size={16} aria-hidden="true" />
+                {t('No')}
+              </button>
+              <button
+                type="button"
+                onClick={onConfirmMusicBrainzMatch}
+                disabled={submitting}
+                className="flex h-10 items-center justify-center gap-2 rounded-lg bg-emerald-500 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Check size={16} aria-hidden="true" />
+                {t('Yes')}
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
     </m.form>
   );

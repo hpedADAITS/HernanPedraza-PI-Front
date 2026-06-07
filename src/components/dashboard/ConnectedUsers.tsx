@@ -1,10 +1,11 @@
-import React, { useEffect, useReducer } from 'react';
+import React, { useEffect, useReducer, useState } from 'react';
 import { LazyMotion, domAnimation, m, AnimatePresence } from 'motion/react';
-import { Crown, Users, Music, Zap, UserX } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { participantsAPI } from '@/services/api';
-import { getStoredDjUserId } from '@/services/session';
+import { Crown, Users, Music, Zap, UserPlus } from 'lucide-react';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { friendsAPI, participantsAPI } from '@/services/api';
+import { getStoredDjUserId, getStoredUser } from '@/services/session';
 import { getSocket } from '@/services/socket';
+import { useToast } from '@/hooks/useToast';
 import type {
   ParticipantCooldownPayload,
   ParticipantEventPayload,
@@ -195,6 +196,7 @@ export function ConnectedUsers({
     ownerProfilePicture?: string | null;
   }>('currentEvent');
   const participantData = readStoredJson<{ _id?: string; id?: string }>('currentParticipant');
+  const storedUser = getStoredUser();
   const eventId = eventData?.eventId || null;
   const usesPreviewUsers = isAttendee && !!previewUsers;
   const usesPreviewParticipants = isDj && !!previewParticipants;
@@ -206,6 +208,9 @@ export function ConnectedUsers({
     : null;
   const currentUserId = isAttendee
     ? previewCurrentUserId ?? participantData?._id ?? null
+    : null;
+  const currentAccountId = isAttendee
+    ? storedUser?._id ?? storedUser?.id ?? null
     : null;
   const users = usesPreviewUsers
     ? previewUsers
@@ -397,6 +402,7 @@ export function ConnectedUsers({
             djName={djName}
             djProfilePicture={djProfilePicture}
             currentUserId={currentUserId}
+            currentAccountId={currentAccountId}
             currentProfilePicture={currentProfilePicture}
             connectedCount={connectedCount}
             totalCount={totalCount}
@@ -435,6 +441,7 @@ interface AttendeeConnectedUsersProps {
   djName: string | null;
   djProfilePicture: string | null;
   currentUserId: string | null;
+  currentAccountId: string | null;
   currentProfilePicture?: string | null;
   connectedCount: number;
   totalCount: number;
@@ -451,6 +458,7 @@ function AttendeeConnectedUsers({
   djName,
   djProfilePicture,
   currentUserId,
+  currentAccountId,
   currentProfilePicture,
   connectedCount,
   totalCount,
@@ -460,6 +468,21 @@ function AttendeeConnectedUsers({
   borderColor,
   hoverBgColor,
 }: AttendeeConnectedUsersProps) {
+  const [sendingToUserId, setSendingToUserId] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const sendFriendRequest = async (userId: string, name: string) => {
+    setSendingToUserId(userId);
+    try {
+      await friendsAPI.sendRequest(userId);
+      toast.success(t('Friend request sent to {name}', { name }));
+    } catch (error) {
+      toast.error(formatErrorMessage(error, t('Failed to send friend request')));
+    } finally {
+      setSendingToUserId(null);
+    }
+  };
+
   return (
     <>
       <div
@@ -567,6 +590,10 @@ function AttendeeConnectedUsers({
                   })
                   .map((user) => {
                     const isCurrentUser = user._id === currentUserId;
+                    const userAccountId = participantUserId(user);
+                    const canAddFriend = !!userAccountId
+                      && userAccountId !== currentAccountId
+                      && !isCurrentUser;
                     /* The server stores the masked nickname ("Participant N")
                        directly on the participant row when "Show display name"
                        is off, so we just use what we got. The status row at
@@ -647,6 +674,18 @@ function AttendeeConnectedUsers({
                               {isCurrentUser ? t('You') : t('Online')}
                             </span>
                           </div>
+
+                          {canAddFriend && (
+                            <button
+                              type="button"
+                              onClick={() => sendFriendRequest(userAccountId, displayName)}
+                              disabled={sendingToUserId === userAccountId}
+                              className="mt-1 inline-flex h-7 items-center justify-center gap-1 rounded-lg bg-blue-600 px-2 text-xs font-bold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+                            >
+                              <UserPlus size={13} />
+                              {t('Add')}
+                            </button>
+                          )}
                         </div>
                       </m.div>
                     );

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { useCallback, useRef, type RefObject } from 'react';
+import { useCallback } from 'react';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -55,7 +55,6 @@ export const useToastStore = create<ToastState>((set) => ({
 
 export function useToast() {
   const { addToast, removeToast, clearAll } = useToastStore();
-  const toastRefs = useRef<Map<string, RefObject<{ close: () => void }>>>(new Map());
 
   const success = useCallback(
     (message: string) => {

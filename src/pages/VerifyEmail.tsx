@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { LazyMotion, domAnimation, m } from 'motion/react';
 import { CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import { authAPI } from '@/services/api';

@@ -27,10 +27,15 @@ export interface Song {
     approvalCount?: number;
   } | null;
   recognitionMatch?: {
-    trackId: string;
+    trackId?: string;
+    source?: 'local' | 'musicbrainz';
+    recordingId?: string | null;
+    releaseId?: string | null;
+    metadataSha512?: string | null;
     title: string;
     artist: string;
     coverUrl?: string | null;
+    duration?: number | null;
     score: number;
     matchedOn: 'title' | 'artist' | 'title_artist';
   } | null;

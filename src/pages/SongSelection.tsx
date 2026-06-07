@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type KeyboardEvent, useEffect } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { m } from 'motion/react';
 import { ArrowLeft, ChevronDown, ListPlus, Music, Search, Star, CheckCircle2 } from 'lucide-react';
@@ -9,13 +9,17 @@ import type { NavigateToView } from '@/types';
 import { AttendeeCooldownOverlay } from '@/components/dashboard/AttendeeCooldownOverlay';
 import { DjRequestReviewDialog } from '@/features/song-selection/DjRequestReviewDialog';
 import { AttendeeSongSuggestView } from '@/features/song-selection/AttendeeSongSuggestView';
-import { DjSongCard } from '@/features/song-selection/DjSongCard';
+import { DjSongCard, type SongSelectionSong } from '@/features/song-selection/DjSongCard';
+import { MusicBrainzMatchDialog } from '@/features/song-selection/MusicBrainzMatchDialog';
 import { RecognitionTrackUploadDialog } from '@/features/song-selection/RecognitionTrackUploadDialog';
 import { usePendingSongs } from '@/features/song-selection/usePendingSongs';
 import { useParticipantCooldown } from '@/hooks/useParticipantCooldown';
 import { useSongSuggestionForm } from '@/features/song-selection/useSongSuggestionForm';
 import { t } from '@/i18n';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
+import { songsAPI } from '@/services/api';
+import { useToast } from '@/hooks/useToast';
+import type { AudioTrack } from '@/services/api/audioTracks';
 
 type SortFilter = 'all' | 'priority' | 'newest';
 
@@ -105,10 +109,15 @@ export function SongSelection({ mode, onNavigate }: Props) {
   const isDj = mode === 'dj';
   const theme = isDj ? 'blue' : 'green';
   const [isDarkMode] = useDarkMode();
+  const toast = useToast();
   const eventId = getStoredEventId();
   const participantId = getStoredParticipantId();
   const { isCoolingDown, remainingMs } = useParticipantCooldown(participantId, !isDj);
   const [recognitionUploadOpen, setRecognitionUploadOpen] = useState(false);
+  const [metadataMatchSong, setMetadataMatchSong] = useState<SongSelectionSong | null>(null);
+  const [metadataCandidates, setMetadataCandidates] = useState<AudioTrack[]>([]);
+  const [metadataLoading, setMetadataLoading] = useState(false);
+  const [metadataProcessing, setMetadataProcessing] = useState(false);
   const [sortFilter, setSortFilter] = useState<SortFilter>('all');
 
   const navigateBack = useCallback(() => {
@@ -130,7 +139,11 @@ export function SongSelection({ mode, onNavigate }: Props) {
 
   const {
     artist,
+    checkingMusicBrainz,
+    confirmMusicBrainzMatch,
+    declineMusicBrainzMatch,
     handleSubmit,
+    pendingMatch,
     setArtist,
     setTitle,
     submitting,
@@ -176,6 +189,37 @@ export function SongSelection({ mode, onNavigate }: Props) {
   );
 
   const activeFilter = sortFilter;
+
+  const openMetadataMatch = useCallback(async (song: SongSelectionSong) => {
+    if (!eventId) return;
+    setMetadataMatchSong(song);
+    setMetadataCandidates([]);
+    setMetadataLoading(true);
+    try {
+      const data = await songsAPI.getMusicBrainzMatchCandidates(eventId, song._id);
+      setMetadataCandidates(data.tracks);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('Failed to load metadata matches'));
+      setMetadataMatchSong(null);
+    } finally {
+      setMetadataLoading(false);
+    }
+  }, [eventId, toast]);
+
+  const assignMetadataTrack = useCallback(async (trackId: string) => {
+    if (!eventId || !metadataMatchSong) return;
+    setMetadataProcessing(true);
+    try {
+      await songsAPI.assignMusicBrainzTrack(eventId, metadataMatchSong._id, trackId);
+      toast.success(t('Metadata assigned'));
+      setMetadataMatchSong(null);
+      setMetadataCandidates([]);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('Failed to assign metadata'));
+    } finally {
+      setMetadataProcessing(false);
+    }
+  }, [eventId, metadataMatchSong, toast]);
 
   return (
     <Layout theme={theme} className="px-5 py-6 md:px-10 md:py-8" showNav={true}>
@@ -302,6 +346,16 @@ export function SongSelection({ mode, onNavigate }: Props) {
               }}
               song={reviewSong}
             />
+            <MusicBrainzMatchDialog
+              candidates={metadataCandidates}
+              isLoading={metadataLoading}
+              isProcessing={metadataProcessing}
+              onAssign={assignMetadataTrack}
+              onClose={() => {
+                if (!metadataProcessing) setMetadataMatchSong(null);
+              }}
+              song={metadataMatchSong}
+            />
 
             {loading ? (
               <p className="self-center rounded-full bg-white/14 px-4 py-2 text-sm font-medium text-white/80 backdrop-blur-md">
@@ -330,6 +384,11 @@ export function SongSelection({ mode, onNavigate }: Props) {
                       await handleApproveWithTracking(song._id);
                     }}
                     onClick={() => selectForReview(song._id)}
+                    onMatchMetadata={
+                      song.recognitionMatch?.source === 'musicbrainz'
+                        ? () => void openMetadataMatch(song)
+                        : undefined
+                    }
                     onReject={async () => {
                       await handleReject(song._id);
                     }}
@@ -342,8 +401,12 @@ export function SongSelection({ mode, onNavigate }: Props) {
         ) : (
           <AttendeeSongSuggestView
             artist={artist}
+            checkingMusicBrainz={checkingMusicBrainz}
             isDarkMode={isDarkMode}
+            musicBrainzMatch={pendingMatch}
             onArtistChange={setArtist}
+            onConfirmMusicBrainzMatch={confirmMusicBrainzMatch}
+            onDeclineMusicBrainzMatch={declineMusicBrainzMatch}
             onSubmit={handleSubmit}
             onTitleChange={setTitle}
             submitting={submitting}

@@ -54,7 +54,7 @@ export const eventsAPI = {
     return data.data.event;
   },
 
-  updateEvent: async (eventId: string, updates: Record<string, any>) => {
+  updateEvent: async (eventId: string, updates: Record<string, unknown>) => {
     const data = await apiCall(`/events/${eventId}`, {
       method: 'PUT',
       body: JSON.stringify(updates),

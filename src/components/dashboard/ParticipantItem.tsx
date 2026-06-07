@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { LazyMotion, domAnimation, m, AnimatePresence } from 'motion/react';
-import { clsx } from 'clsx';
+import { m, AnimatePresence } from 'motion/react';
 import { Zap, UserX } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { COOLDOWN_OPTIONS, DEFAULT_COOLDOWN_MS, formatCooldownDuration } from '@/constants/cooldowns';
 import { useSound } from '@/hooks/useSound';
 import { setCooldownAck, kickParticipantAck } from '@/services/socket/emitters';

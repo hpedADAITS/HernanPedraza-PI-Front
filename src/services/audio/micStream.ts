@@ -94,7 +94,7 @@ export async function startAudioMatchStream({
 
         const chunk = event.data;
 
-        // Resample to 32kHz for efficient fingerprinting
+        // Resample before transport so the server can skip per-chunk resampling.
         const resampled = resampleLinear(chunk, sampleRate, TARGET_SAMPLE_RATE);
 
         socket.emit('audio_match_chunk', {
@@ -121,7 +121,7 @@ export async function startAudioMatchStream({
 
     socket.emit('audio_match_start', {
       eventId,
-      sampleRate,
+      sampleRate: TARGET_SAMPLE_RATE,
     });
 
     return () => {

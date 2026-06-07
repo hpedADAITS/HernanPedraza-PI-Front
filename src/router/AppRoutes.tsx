@@ -81,7 +81,6 @@ const SETTINGS_ROUTES = [
   { path: 'settings', Component: SettingsHome },
   { path: 'settings/account', Component: AccountSettings },
   { path: 'settings/app', Component: AppPreferences },
-  { path: 'friends', Component: Friends },
 ] as const;
 
 function RouteFallback() {
@@ -186,6 +185,14 @@ export function AppRoutes({
               />
             )),
           )}
+          <Route
+            path="/attendee/friends"
+            element={<Friends mode="attendee" onNavigate={onNavigate} />}
+          />
+          <Route
+            path="/dj/friends"
+            element={<Navigate to="/dj/dashboard" replace />}
+          />
           <Route
             path="/verify-email"
             element={<VerifyEmail onNavigate={onNavigate} />}

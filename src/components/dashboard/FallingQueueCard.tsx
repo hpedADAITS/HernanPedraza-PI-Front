@@ -1,5 +1,5 @@
 import React from 'react';
-import { LazyMotion, m } from 'motion/react';
+import { m } from 'motion/react';
 import { clsx } from 'clsx';
 import { X, SkipForward } from 'lucide-react';
 import type { Song } from '@/types/songs';

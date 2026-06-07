@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { m } from 'motion/react';
-import { ThumbsUp, ThumbsDown, LogOut, Settings, Plus } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, LogOut, Settings, Plus, Users } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ANIMATION_DURATION } from '@/constants/animations';
@@ -206,6 +206,17 @@ export function ActionButtons({
               soundKey="settingsOpen"
             />
 
+            {!isDj && (
+              <ActionButton
+                icon={Users}
+                label={t('Friends')}
+                subtitle={t('Manage friends')}
+                onClick={() => navigate('attendee-friends')}
+                variant="friends"
+                soundKey="settingsOpen"
+              />
+            )}
+
             <ActionButton
               icon={LogOut}
               label={t('Leave party')}
@@ -390,7 +401,7 @@ interface ActionButtonProps {
   label: string;
   subtitle: string;
   onClick: () => void;
-  variant: 'queue' | 'settings' | 'leave';
+  variant: 'queue' | 'settings' | 'friends' | 'leave';
   queueTone?: 'attendee' | 'dj';
   collapsed?: boolean;
   iconOnly?: boolean;
@@ -434,12 +445,15 @@ function ActionButton({
         : 'border-transparent bg-[radial-gradient(circle_at_82%_20%,rgba(67,210,170,0.92),transparent_34%),linear-gradient(135deg,#129a73_0%,#1abd88_52%,#31c99b_100%)] text-white shadow-[0_12px_24px_rgba(26,189,136,0.28),inset_0_1px_0_rgba(255,255,255,0.24)] focus-visible:ring-emerald-100',
     settings:
       'border-slate-900/10 bg-[linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)] text-[#17213a] shadow-[0_10px_22px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] hover:border-slate-900/15 focus-visible:ring-blue-100',
+    friends:
+      'border-transparent bg-[linear-gradient(135deg,#2563eb_0%,#0f9f8f_100%)] text-white shadow-[0_12px_24px_rgba(20,184,166,0.24),inset_0_1px_0_rgba(255,255,255,0.24)] focus-visible:ring-cyan-100',
     leave:
       'border-slate-900/10 bg-[linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)] text-[#ff4f66] shadow-[0_10px_22px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] hover:border-rose-200 focus-visible:ring-rose-100',
   };
   const expandedWidth = {
     queue: 'sm:hover:w-[360px] sm:focus-visible:w-[360px]',
     settings: 'sm:hover:w-[300px] sm:focus-visible:w-[300px]',
+    friends: 'sm:hover:w-[300px] sm:focus-visible:w-[300px]',
     leave: 'sm:hover:w-[288px] sm:focus-visible:w-[288px]',
   }[variant];
 
@@ -485,7 +499,11 @@ function ActionButton({
           </span>
           <span
             className={`mt-2 truncate text-[11px] font-semibold ${
-              variant === 'leave' ? 'text-rose-400/80' : 'text-white/75'
+              variant === 'leave'
+                ? 'text-rose-400/80'
+                : variant === 'settings'
+                  ? 'text-slate-500'
+                  : 'text-white/75'
             }`}
           >
             {subtitle}

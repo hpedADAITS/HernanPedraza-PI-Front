@@ -3,7 +3,7 @@ import type { NavigateToView } from '@/types';
 import { disconnectSocket, initSocket, joinEvent, off, on, onAccessCodeUpdated, onEventEnded, onEventUpdated, onParticipantBanned, onSongSuggested } from '@/services/socket';
 import type { AccessCodeUpdatedPayload, EventEndedPayload, EventUpdatedPayload, ParticipantCooldownPayload, ParticipantEventPayload, ParticipantUpdatedPayload, SongEventPayload } from '@/services/socket/contracts';
 import { authAPI, eventsAPI } from '@/services/api';
-import { clearStoredEvent, clearStoredParticipant, clearStoredUser, getAuthToken, getStoredEvent, getStoredParticipant, getStoredUser, setStoredEvent, setStoredParticipant, setStoredUser, isDjRole, getStoredDjUserId, type StoredEvent, type StoredParticipant, type StoredUser } from '@/services/session';
+import { clearStoredEvent, clearStoredParticipant, getAuthToken, getStoredEvent, getStoredParticipant, getStoredUser, setStoredEvent, setStoredParticipant, setStoredUser, isDjRole, type StoredEvent, type StoredParticipant, type StoredUser } from '@/services/session';
 import { clearToken, decodeJwtPayload, type JwtSessionPayload } from '@/services/api/client';
 import {
   activateSingleUserSession,
@@ -245,9 +245,9 @@ export function useDashboardSession({
   useEffect(() => {
     const eventData = getStoredEvent();
     let participantData = getStoredParticipant();
-    let user = getStoredUser();
+    const user = getStoredUser();
     const token = getAuthToken();
-    let userId = storedUserId(user);
+    const userId = storedUserId(user);
     const eventId = storedEventId(eventData);
 
     if (isDj && eventData && userId && !participantData) {
@@ -422,7 +422,9 @@ export function useDashboardSession({
           if (eventData.accessCode) {
             persistAccessCode(eventData.accessCode);
           }
-        } catch {}
+        } catch {
+          // Keep initialization error as the user-visible failure.
+        }
       }
     };
 

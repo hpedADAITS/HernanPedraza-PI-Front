@@ -207,14 +207,14 @@ export function isValidUrl(url: string): boolean {
 /**
  * Non-empty string validation
  */
-export function isNonEmptyString(value: any): boolean {
+export function isNonEmptyString(value: unknown): boolean {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
 /**
  * Positive number validation
  */
-export function isPositiveNumber(value: any): boolean {
+export function isPositiveNumber(value: unknown): boolean {
   const num = Number(value);
   return !isNaN(num) && num > 0;
 }
@@ -222,7 +222,7 @@ export function isPositiveNumber(value: any): boolean {
 /**
  * Required field validation
  */
-export function isRequired(value: any): { valid: boolean; message?: string } {
+export function isRequired(value: unknown): { valid: boolean; message?: string } {
   if (value === null || value === undefined || value === '') {
     return { valid: false, message: 'This field is required' };
   }
@@ -286,10 +286,10 @@ export function inRange(
  * Batch validation helper
  */
 export function validateForm(
-  data: Record<string, any>,
+  data: Record<string, unknown>,
   validators: Record<
     string,
-    (value: any) => { valid: boolean; message?: string }
+    (value: unknown) => { valid: boolean; message?: string }
   >,
 ): { valid: boolean; errors: Record<string, string> } {
   const errors: Record<string, string> = {};

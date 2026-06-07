@@ -97,7 +97,7 @@ export function skipSong(eventId: string, songId: string, reason: string) {
   socket.emit('skip_song', { eventId, songId, reason });
 }
 
-export function updateQueue(_eventId: string, _queue: any[]) {
+export function updateQueue(_eventId: string, _queue: unknown[]) {
   throw new Error('Queue updates must come from backend state changes');
 }
 

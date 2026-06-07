@@ -1,8 +1,8 @@
 import React, { useState, type MouseEvent } from 'react';
-import { LazyMotion, domAnimation, m, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import { clsx } from 'clsx';
 import { Play, X, Clock, UserX, SkipForward, Check } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { COOLDOWN_OPTIONS, DEFAULT_COOLDOWN_MS, formatCooldownDuration } from '@/constants/cooldowns';
 import { ANIMATION_DURATION } from '@/constants/animations';
 import { songsAPI } from '@/services/api';

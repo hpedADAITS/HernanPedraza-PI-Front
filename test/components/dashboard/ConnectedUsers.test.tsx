@@ -1,8 +1,9 @@
+import React from 'react';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import { Socket } from 'socket.io-client';
 import { ConnectedUsers } from '@/components/dashboard/ConnectedUsers';
-import { participantsAPI } from '@/services/api';
+import { friendsAPI, participantsAPI } from '@/services/api';
 import { getSocket } from '@/services/socket';
 import { writeStoredJson } from '@/utils/storage';
 
@@ -12,6 +13,9 @@ vi.mock('@/services/api', () => ({
     setCooldown: vi.fn(),
     kickParticipant: vi.fn(),
   },
+  friendsAPI: {
+    sendRequest: vi.fn(),
+  },
 }));
 
 vi.mock('@/services/socket', () => ({
@@ -19,6 +23,7 @@ vi.mock('@/services/socket', () => ({
 }));
 
 const mockParticipantsAPI = vi.mocked(participantsAPI);
+const mockFriendsAPI = vi.mocked(friendsAPI);
 const mockGetSocket = vi.mocked(getSocket);
 
 type Handler = (data: unknown) => void;
@@ -74,9 +79,11 @@ describe('Connected Users dashboard UI', () => {
   });
 
   it('renders attendee view with the DJ, the current user, and other attendees', async () => {
+    writeStoredJson('user', { id: 'user-2', role: 'ATTENDEE' });
     mockParticipantsAPI.listEventParticipants.mockResolvedValue([
       {
         _id: 'attendee-1',
+        userId: 'user-1',
         nickname: 'Alex',
         profilePicture: 'data:image/png;base64,alex-picture',
         joinedAt: '2026-05-21T10:00:00.000Z',
@@ -85,12 +92,14 @@ describe('Connected Users dashboard UI', () => {
       },
       {
         _id: 'attendee-2',
+        userId: 'user-2',
         nickname: 'Bailey',
         joinedAt: '2026-05-21T10:01:00.000Z',
         socketId: 'socket-2',
       },
       {
         _id: 'attendee-3',
+        userId: 'user-3',
         nickname: 'Casey',
         joinedAt: '2026-05-21T10:02:00.000Z',
       },
@@ -116,6 +125,37 @@ describe('Connected Users dashboard UI', () => {
     expect(screen.getByText('Alex')).toBeInTheDocument();
     expect(screen.getByText('Casey')).toBeInTheDocument();
     expect(screen.getByLabelText('Priority attendee')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Add' })).toHaveLength(2);
+  });
+
+  it('sends friend requests from attendee connected users', async () => {
+    writeStoredJson('user', { id: 'user-2', role: 'ATTENDEE' });
+    mockFriendsAPI.sendRequest.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof friendsAPI.sendRequest>>,
+    );
+    mockParticipantsAPI.listEventParticipants.mockResolvedValue([
+      {
+        _id: 'attendee-1',
+        userId: 'user-1',
+        nickname: 'Alex',
+        joinedAt: '2026-05-21T10:00:00.000Z',
+      },
+      {
+        _id: 'attendee-2',
+        userId: 'user-2',
+        nickname: 'Bailey',
+        joinedAt: '2026-05-21T10:01:00.000Z',
+      },
+    ]);
+
+    render(<ConnectedUsers mode="attendee" />);
+
+    const addButton = await screen.findByRole('button', { name: 'Add' });
+    await act(async () => {
+      addButton.click();
+    });
+
+    expect(mockFriendsAPI.sendRequest).toHaveBeenCalledWith('user-1');
   });
 
   it('uses the updated profile picture for the current user', async () => {

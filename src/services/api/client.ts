@@ -1,7 +1,7 @@
 import { cacheManager } from '../cache/cacheManager';
 import { removeStoredItem } from '../../utils/storage';
 
-// @ts-ignore
+// @ts-expect-error import.meta.env is provided by Vite.
 const VITE_API_URL = import.meta.env?.VITE_API_URL as string | undefined;
 
 function buildApiBase(apiUrl?: string) {
@@ -91,32 +91,83 @@ function shouldClearSessionOnTokenChange(
 }
 
 
+type AuthMode = 'attendee' | 'dj';
+
 const AUTH_TOKEN_KEY = 'authToken';
+const AUTH_TOKEN_KEY_V1 = `${AUTH_TOKEN_KEY}:v1`;
+
+function getCurrentAuthMode(): AuthMode | null {
+  if (typeof window === 'undefined') return null;
+
+  const { pathname } = window.location;
+  if (pathname.startsWith('/attendee')) return 'attendee';
+  if (pathname.startsWith('/dj')) return 'dj';
+  return null;
+}
+
+function getTokenMode(token: string | null): AuthMode | null {
+  const payload = decodeJwtPayload(token) as (JwtSessionPayload & { role?: unknown }) | null;
+  const role = typeof payload?.role === 'string' ? payload.role.toLowerCase() : null;
+
+  if (role === 'attendee') return 'attendee';
+  if (role === 'dj') return 'dj';
+  return null;
+}
+
+function scopedAuthTokenKey(mode = getCurrentAuthMode()) {
+  return mode ? `${mode}:${AUTH_TOKEN_KEY_V1}` : AUTH_TOKEN_KEY_V1;
+}
+
+function scopedLegacyAuthTokenKey(mode = getCurrentAuthMode()) {
+  return mode ? `${mode}:${AUTH_TOKEN_KEY}` : AUTH_TOKEN_KEY;
+}
+
+function migrateLegacyAuthToken(token: string) {
+  const tokenMode = getTokenMode(token);
+  const currentMode = getCurrentAuthMode();
+  const targetMode = tokenMode ?? currentMode;
+
+  if (targetMode) {
+    window.sessionStorage.setItem(scopedAuthTokenKey(targetMode), token);
+  } else {
+    window.sessionStorage.setItem(AUTH_TOKEN_KEY_V1, token);
+  }
+
+  window.sessionStorage.removeItem(AUTH_TOKEN_KEY);
+  window.localStorage.removeItem(AUTH_TOKEN_KEY);
+  window.localStorage.removeItem(AUTH_TOKEN_KEY_V1);
+
+  return !currentMode || !tokenMode || currentMode === tokenMode ? token : null;
+}
 
 /*
- * The auth token is stored in sessionStorage so each browser tab keeps an
- * independent session. This prevents a DJ session and an ATTENDEE session
- * open in the same browser from clobbering each other's token (which caused
- * admin actions to fail with "no authorization token provided").
- *
- * A one-time migration reads any legacy localStorage token left by older
- * builds and moves it into this tab's sessionStorage.
+ * Auth tokens are stored in sessionStorage under route-scoped keys so DJ and
+ * ATTENDEE routes can be open in separate windows without clobbering auth.
  */
 function readStoredAuthToken(): string | null {
   if (typeof window === 'undefined') {
     return null;
   }
 
-  const sessionToken = window.sessionStorage.getItem(AUTH_TOKEN_KEY);
+  const sessionToken =
+    window.sessionStorage.getItem(scopedAuthTokenKey()) ??
+    window.sessionStorage.getItem(scopedLegacyAuthTokenKey());
   if (sessionToken) {
     return sessionToken;
   }
 
-  const legacyToken = window.localStorage.getItem(AUTH_TOKEN_KEY);
+  const unscopedSessionToken =
+    window.sessionStorage.getItem(AUTH_TOKEN_KEY_V1) ??
+    window.sessionStorage.getItem(AUTH_TOKEN_KEY);
+  if (unscopedSessionToken) {
+    return migrateLegacyAuthToken(unscopedSessionToken);
+  }
+
+  const legacyToken =
+    window.localStorage.getItem(AUTH_TOKEN_KEY_V1) ??
+    window.localStorage.getItem(AUTH_TOKEN_KEY);
   if (legacyToken) {
-    window.sessionStorage.setItem(AUTH_TOKEN_KEY, legacyToken);
-    window.localStorage.removeItem(AUTH_TOKEN_KEY);
-    return legacyToken;
+    return migrateLegacyAuthToken(legacyToken);
   }
 
   return null;
@@ -152,9 +203,13 @@ export function saveToken(token: string) {
       clearAllCaches();
     }
 
-    window.sessionStorage.setItem(AUTH_TOKEN_KEY, token);
+    window.sessionStorage.setItem(
+      scopedAuthTokenKey(getTokenMode(token) ?? getCurrentAuthMode()),
+      token,
+    );
     /* Drop any legacy browser-wide token so other tabs don't inherit it. */
     window.localStorage.removeItem(AUTH_TOKEN_KEY);
+    window.localStorage.removeItem(AUTH_TOKEN_KEY_V1);
   }
 }
 
@@ -162,8 +217,12 @@ export function saveToken(token: string) {
 export function clearToken() {
   authToken = null;
   if (typeof window !== 'undefined') {
+    window.sessionStorage.removeItem(scopedAuthTokenKey());
+    window.sessionStorage.removeItem(scopedLegacyAuthTokenKey());
     window.sessionStorage.removeItem(AUTH_TOKEN_KEY);
+    window.sessionStorage.removeItem(AUTH_TOKEN_KEY_V1);
     window.localStorage.removeItem(AUTH_TOKEN_KEY);
+    window.localStorage.removeItem(AUTH_TOKEN_KEY_V1);
     clearStoredSession();
   }
   clearAllCaches();

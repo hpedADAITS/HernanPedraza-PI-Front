@@ -6,7 +6,7 @@ const DEBUG_STORAGE_KEY = 'Syncrequest:debug-song-event:last';
 
 type DebugSongEventDetail = {
   type: string;
-  payload: Record<string, any>;
+  payload: Record<string, unknown>;
   eventKey?: string;
 };
 
@@ -20,7 +20,7 @@ function getChannel() {
 
 export function dispatchDebugSongEvent(
   type: string,
-  payload: Record<string, any>,
+  payload: Record<string, unknown>,
 ) {
   if (!isDebugModeEnabled()) return;
 

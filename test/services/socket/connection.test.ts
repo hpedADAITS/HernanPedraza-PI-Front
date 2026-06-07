@@ -118,10 +118,10 @@ describe('Socket Connection', () => {
       vi.clearAllMocks();
       disconnectSocket();
       
-      const socket1 = initSocket('token-1');
+      initSocket('token-1');
       expect(mockSocket.disconnect).not.toHaveBeenCalled();
 
-      const socket2 = initSocket('token-2');
+      initSocket('token-2');
 
       // Should have disconnected old socket
       expect(mockSocket.disconnect).toHaveBeenCalled();

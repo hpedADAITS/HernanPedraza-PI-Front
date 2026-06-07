@@ -200,7 +200,8 @@ class SoundEffectsManager {
     if (typeof window === 'undefined') return null;
     if (this.audioContext) return this.audioContext;
 
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    const AudioContextClass = window.AudioContext
+      || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AudioContextClass) return null;
 
     this.audioContext = new AudioContextClass();

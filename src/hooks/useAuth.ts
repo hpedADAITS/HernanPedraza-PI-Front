@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { authAPI, saveToken, clearToken } from '@/services/api';
+import { authAPI, clearToken } from '@/services/api';
 
 interface User {
   id: string;

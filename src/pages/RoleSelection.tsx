@@ -30,7 +30,7 @@ const ROLE_BACKGROUNDS = {
 
 export function RoleSelection({
   onNavigate,
-  logoWhite: isLogoWhite,
+  logoWhite: _isLogoWhite,
   onLogoChange,
   onPrepareLogin,
 }: Props) {
