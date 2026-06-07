@@ -9,7 +9,7 @@ describe('AccountSettings debug diagnostics', () => {
     localStorage.clear();
     sessionStorage.clear();
 
-    localStorage.setItem('authToken', 'token-123');
+    sessionStorage.setItem('authToken:v1', 'token-123');
     writeStoredJson('currentEvent', { eventId: 'event-1' });
     writeStoredJson('currentParticipant', { _id: 'participant-1' });
     window.__DEBUG_MODE__ = true;

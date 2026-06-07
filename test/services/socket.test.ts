@@ -33,6 +33,8 @@ describe('socket service', () => {
     disconnectSocket();
     getEventListeners().clear();
     localStorage.clear();
+    sessionStorage.clear();
+    window.history.replaceState({}, '', '/');
     socketIoMock.mockReset();
   });
 
@@ -71,7 +73,7 @@ describe('socket service', () => {
   });
 
   it('falls back to the stored auth token when initializing', () => {
-    localStorage.setItem('authToken', 'stored-token');
+    sessionStorage.setItem('authToken:v1', 'stored-token');
     socketIoMock.mockReturnValue(createSocketDouble());
 
     initSocket();

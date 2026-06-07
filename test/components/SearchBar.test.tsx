@@ -42,9 +42,10 @@ describe('SearchBar phone microphone fallback', () => {
   });
 
   it('loads a phone link when no microphone is detected', async () => {
-    getPhoneMicrophoneLinkMock.mockResolvedValue(
-      'https://192.168.1.50:5173/dj/microphone/event-1?token=abc',
-    );
+    getPhoneMicrophoneLinkMock.mockResolvedValue({
+      link: 'https://192.168.1.50:5173/dj/microphone/event-1?token=abc',
+      token: 'abc',
+    });
 
     render(<SearchBar onNavigate={vi.fn()} isDj eventId="event-1" />);
 

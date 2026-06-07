@@ -102,6 +102,7 @@ describe('DJLogin page', () => {
         id: '123',
         email: 'dj@example.com',
         displayName: 'DJ Test',
+        role: 'DJ',
         profilePicture: null,
       },
       token: 'token',

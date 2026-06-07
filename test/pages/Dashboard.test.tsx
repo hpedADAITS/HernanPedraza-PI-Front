@@ -4,6 +4,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { Dashboard } from '@/pages/Dashboard';
 import { writeStoredJson, readStoredJson } from '@/utils/storage';
 import { suspendNextSingleUserSessionCheck } from '@/services/singleUserSession';
+import { seedAuthToken, testJwt } from '../helpers/auth';
 
 const {
   callbackRegistry,
@@ -134,6 +135,7 @@ function emit(event: string, payload: unknown) {
 }
 
 function seedStorage() {
+  window.history.replaceState({}, '', '/attendee/dashboard');
   writeStoredJson('currentEvent', {
     eventId: 'event-1',
     ownerName: 'DJ Nova',
@@ -143,12 +145,18 @@ function seedStorage() {
     _id: 'attendee-1',
     nickname: 'Bailey',
   });
-  localStorage.setItem('authToken', 'token-123');
+  seedAuthToken('attendee-1', 'ATTENDEE');
+}
+
+function seedDjAuth() {
+  window.history.replaceState({}, '', '/dj/dashboard');
+  seedAuthToken('dj-1', 'DJ');
 }
 
 describe('Dashboard attendee admin effects', () => {
   beforeEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
     callbackRegistry.clear();
     vi.clearAllMocks();
     seedStorage();
@@ -190,7 +198,7 @@ describe('Dashboard attendee admin effects', () => {
     });
     expect(readStoredJson('currentEvent')).toBeNull();
     expect(readStoredJson('currentParticipant')).toBeNull();
-    expect(localStorage.getItem('authToken')).toBe('token-123');
+    expect(sessionStorage.getItem('attendee:authToken:v1')).toBe(testJwt('attendee-1', 'ATTENDEE'));
   });
 
   it('ignores kick events for other attendees', async () => {
@@ -222,6 +230,7 @@ describe('Dashboard attendee admin effects', () => {
   it('does not render DJ dashboard from attendee session cache', async () => {
     const onNavigate = vi.fn();
 
+    window.history.replaceState({}, '', '/dj/dashboard');
     writeStoredJson('user', {
       id: 'attendee-1',
       displayName: 'Bailey',
@@ -242,6 +251,7 @@ describe('Dashboard attendee admin effects', () => {
   });
 
   it('renders DJ dashboard from stored event without blocking on active-event lookup', async () => {
+    seedDjAuth();
     writeStoredJson('user', {
       id: 'dj-1',
       displayName: 'DJ Nova',
@@ -275,6 +285,7 @@ describe('Dashboard attendee admin effects', () => {
   });
 
   it('replaces stale attendee participant cache before joining as DJ', async () => {
+    seedDjAuth();
     writeStoredJson('user', {
       id: 'dj-1',
       displayName: 'DJ Nova',
@@ -313,6 +324,7 @@ describe('Dashboard attendee admin effects', () => {
   });
 
   it('boots DJ dashboard from id-only session cache', async () => {
+    seedDjAuth();
     writeStoredJson('user', {
       id: 'dj-1',
       displayName: 'DJ Nova',
@@ -349,6 +361,7 @@ describe('Dashboard attendee admin effects', () => {
   });
 
   it('synthesizes missing DJ participant cache from the authenticated user', async () => {
+    seedDjAuth();
     writeStoredJson('user', {
       id: 'dj-1',
       displayName: 'DJ Nova',
@@ -359,7 +372,6 @@ describe('Dashboard attendee admin effects', () => {
       ownerName: 'DJ Nova',
       accessCode: 'OWNED',
     });
-    localStorage.setItem('authToken', 'token-123');
     suspendNextSingleUserSessionCheck();
     eventsApiGetEventMock.mockRejectedValue(new Error('Not found'));
     eventsApiGetMyActiveEventMock.mockRejectedValue(new Error('Not found'));

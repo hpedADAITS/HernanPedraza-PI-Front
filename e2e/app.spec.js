@@ -1,10 +1,11 @@
-const { expect, test } = require('@playwright/test');
-const { spawn, spawnSync } = require('node:child_process');
-const { createRequire } = require('node:module');
-const net = require('node:net');
-const path = require('node:path');
+import { expect, test } from '@playwright/test';
+import { spawn, spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
+import net from 'node:net';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const frontDir = path.resolve(__dirname, '..');
+const frontDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const backDir = path.resolve(frontDir, '..', 'Back');
 const requireFromBack = createRequire(path.join(backDir, 'package.json'));
 const { MongoMemoryServer } = requireFromBack('mongodb-memory-server');
@@ -144,37 +145,38 @@ function tinyWav() {
   return buffer;
 }
 
-async function setDjSession(page, { event, token, user }) {
-  await page.evaluate(
-    ({ event, token, user }) => {
-      const eventId = event.id || event._id;
-      const userId = user.id || user._id;
-      const windowSessionId =
-        sessionStorage.getItem('singleUserSession:windowId') || crypto.randomUUID();
-      sessionStorage.setItem('singleUserSession:windowId', windowSessionId);
-      localStorage.setItem(`activeUserSession:${userId}`, windowSessionId);
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('user:v1', JSON.stringify(user));
-      localStorage.setItem(
-        'currentEvent:v1',
-        JSON.stringify({
-          accessCode: event.accessCode,
-          eventId,
-          ownerName: user.displayName || 'DJ',
-        }),
-      );
-      localStorage.setItem(
-        'currentParticipant:v1',
-        JSON.stringify({
-          _id: userId,
-          nickname: user.displayName || 'DJ',
-          eventId,
-          profilePicture: user.profilePicture || null,
-        }),
-      );
-    },
-    { event, token, user },
+function seedDjSessionStorage({ event, token, user }) {
+  const eventId = event.id || event._id;
+  const userId = user.id || user._id;
+  const windowSessionId =
+    sessionStorage.getItem('singleUserSession:windowId') || crypto.randomUUID();
+  sessionStorage.setItem('singleUserSession:windowId', windowSessionId);
+  localStorage.setItem(`activeUserSession:${userId}`, windowSessionId);
+  sessionStorage.setItem('dj:authToken:v1', token);
+  localStorage.removeItem('authToken');
+  localStorage.setItem('firstTimeTutorialSeen:dj', 'true');
+  sessionStorage.setItem('dj:user:v1', JSON.stringify({ ...user, hasSeenTutorial: true }));
+  sessionStorage.setItem(
+    'dj:currentEvent:v1',
+    JSON.stringify({
+      accessCode: event.accessCode,
+      eventId,
+      ownerName: user.displayName || 'DJ',
+    }),
   );
+  sessionStorage.setItem(
+    'dj:currentParticipant:v1',
+    JSON.stringify({
+      _id: userId,
+      nickname: user.displayName || 'DJ',
+      eventId,
+      profilePicture: user.profilePicture || null,
+    }),
+  );
+}
+
+async function setDjSession(page, { event, token, user }) {
+  await page.evaluate(seedDjSessionStorage, { event, token, user });
 }
 
 test.beforeAll(async () => {
@@ -258,40 +260,15 @@ test('attendee joins a real live event and suggests a song through the UI', asyn
   }).toBe(true);
 });
 
-test('DJ uploads a recognition track after localStorage token changes', async ({ page }) => {
+test('DJ uploads a recognition track after scoped session token changes', async ({ page }) => {
   const owner = await createLiveEvent();
   const other = await createLiveEvent();
 
-  await page.addInitScript(
-    ({ event, token, user }) => {
-      const eventId = event.id || event._id;
-      const userId = user.id || user._id;
-      const windowSessionId =
-        sessionStorage.getItem('singleUserSession:windowId') || crypto.randomUUID();
-      sessionStorage.setItem('singleUserSession:windowId', windowSessionId);
-      localStorage.setItem(`activeUserSession:${userId}`, windowSessionId);
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('user:v1', JSON.stringify(user));
-      localStorage.setItem(
-        'currentEvent:v1',
-        JSON.stringify({
-          accessCode: event.accessCode,
-          eventId,
-          ownerName: user.displayName || 'DJ',
-        }),
-      );
-      localStorage.setItem(
-        'currentParticipant:v1',
-        JSON.stringify({
-          _id: userId,
-          nickname: user.displayName || 'DJ',
-          eventId,
-          profilePicture: user.profilePicture || null,
-        }),
-      );
-    },
-    { event: owner.event, token: other.djToken, user: owner.user },
-  );
+  await page.addInitScript(seedDjSessionStorage, {
+    event: owner.event,
+    token: other.djToken,
+    user: owner.user,
+  });
 
   const uploadResponse = page.waitForResponse((response) =>
     response.url().includes(`/api/v1/events/${owner.event.id}/audio-tracks`) &&
@@ -308,7 +285,7 @@ test('DJ uploads a recognition track after localStorage token changes', async ({
   await page.getByRole('button', { name: 'Upload recognition track' }).click();
   await page.getByLabel('Title').fill('Browser Fingerprint');
   await page.getByLabel('Artist').fill('Browser Artist');
-  await page.locator('input[type="file"]').setInputFiles({
+  await page.getByLabel('Choose MP3 or WAV').setInputFiles({
     name: 'tiny.wav',
     mimeType: 'audio/wav',
     buffer: tinyWav(),

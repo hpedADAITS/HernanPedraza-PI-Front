@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useAuth } from '@/hooks/useAuth';
 import { API_BASE, clearToken } from '@/services/api';
+import { testJwt } from '../helpers/auth';
 
 const fetchMock = vi.fn();
 
@@ -15,6 +16,8 @@ function mockApiResponse(body: unknown, ok = true) {
 describe('useAuth Hook', () => {
   beforeEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
+    window.history.replaceState({}, '', '/attendee/login');
     clearToken();
     fetchMock.mockReset();
     vi.stubGlobal('fetch', fetchMock);
@@ -45,7 +48,7 @@ describe('useAuth Hook', () => {
       await mockApiResponse({
         data: {
           user: mockUser,
-          token: 'test-token',
+          token: testJwt('123', 'ATTENDEE'),
         },
       }),
     );
@@ -70,7 +73,8 @@ describe('useAuth Hook', () => {
         'Content-Type': 'application/json',
       },
     });
-    expect(localStorage.getItem('authToken')).toBe('test-token');
+    expect(sessionStorage.getItem('attendee:authToken:v1')).toBe(testJwt('123', 'ATTENDEE'));
+    expect(localStorage.getItem('authToken')).toBeNull();
     expect(result.current.user).toEqual(mockUser);
     expect(result.current.error).toBeNull();
     expect(result.current.isAuthenticated).toBe(true);
@@ -113,7 +117,7 @@ describe('useAuth Hook', () => {
       await mockApiResponse({
         data: {
           user: mockUser,
-          token: 'new-token',
+          token: testJwt('124', 'ATTENDEE'),
         },
       }),
     );
@@ -141,7 +145,8 @@ describe('useAuth Hook', () => {
         'Content-Type': 'application/json',
       },
     });
-    expect(localStorage.getItem('authToken')).toBe('new-token');
+    expect(sessionStorage.getItem('attendee:authToken:v1')).toBe(testJwt('124', 'ATTENDEE'));
+    expect(localStorage.getItem('authToken')).toBeNull();
     expect(result.current.user).toEqual(mockUser);
     expect(result.current.error).toBeNull();
   });
@@ -157,7 +162,7 @@ describe('useAuth Hook', () => {
               displayName: 'Test User',
               role: 'ATTENDEE',
             },
-            token: 'test-token',
+            token: testJwt('123', 'ATTENDEE'),
           },
         }),
       )
@@ -170,7 +175,7 @@ describe('useAuth Hook', () => {
     });
 
     expect(result.current.user).not.toBeNull();
-    expect(localStorage.getItem('authToken')).toBe('test-token');
+    expect(sessionStorage.getItem('attendee:authToken:v1')).toBe(testJwt('123', 'ATTENDEE'));
 
     act(() => {
       result.current.logout();
@@ -184,7 +189,7 @@ describe('useAuth Hook', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: 'Bearer test-token',
+        Authorization: `Bearer ${testJwt('123', 'ATTENDEE')}`,
       },
     });
   });
