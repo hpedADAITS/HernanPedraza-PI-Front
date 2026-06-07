@@ -15,6 +15,7 @@ vi.mock('@/services/api', () => ({
   },
   friendsAPI: {
     sendRequest: vi.fn(),
+    listFriends: vi.fn(),
   },
 }));
 
@@ -76,6 +77,7 @@ describe('Connected Users dashboard UI', () => {
     vi.clearAllMocks();
     setDashboardStorage();
     mockGetSocket.mockReturnValue(null);
+    mockFriendsAPI.listFriends.mockResolvedValue([]);
   });
 
   it('renders attendee view with the DJ, the current user, and other attendees', async () => {
