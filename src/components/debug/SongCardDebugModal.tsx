@@ -270,8 +270,35 @@ function renderAccountsWindow(result: DebugAccountsResult) {
 
         const setStoredJson = (key, value) => {
           const serialized = JSON.stringify(value);
-          localStorage.setItem(storageKeys[key], serialized);
+          /*
+           * sessionStorage is per-tab; the dashboard reads it first via
+           * readStorageItem. localStorage is cleared so a stale browser-wide
+           * copy from older builds cannot leak into another tab.
+           */
+          sessionStorage.setItem(storageKeys[key], serialized);
+          sessionStorage.removeItem(key);
+          localStorage.removeItem(storageKeys[key]);
           localStorage.removeItem(key);
+        };
+
+        const mirrorSessionToPopup = (popup) => {
+          /* The popup window has its own sessionStorage. Copy the auth token
+           * and session entities there so the dashboard picks them up after
+           * navigation. */
+          const token = sessionStorage.getItem('authToken');
+          if (token) {
+            popup.sessionStorage.setItem('authToken', token);
+            popup.localStorage.removeItem('authToken');
+          }
+          for (const key of Object.keys(storageKeys)) {
+            const versionedKey = storageKeys[key];
+            const value = sessionStorage.getItem(versionedKey);
+            if (!value) continue;
+            popup.sessionStorage.setItem(versionedKey, value);
+            popup.sessionStorage.removeItem(key);
+            popup.localStorage.removeItem(versionedKey);
+            popup.localStorage.removeItem(key);
+          }
         };
 
         const setWindowSession = (targetWindow, userId) => {
@@ -282,7 +309,16 @@ function renderAccountsWindow(result: DebugAccountsResult) {
 
         const request = async (endpoint, options = {}) => {
           const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
-          const token = localStorage.getItem('authToken');
+          /* Auth token lives in this tab's sessionStorage. Fall back to legacy
+           * localStorage for one-time migration of older builds. */
+          let token = sessionStorage.getItem('authToken');
+          if (!token) {
+            token = localStorage.getItem('authToken');
+            if (token) {
+              sessionStorage.setItem('authToken', token);
+              localStorage.removeItem('authToken');
+            }
+          }
           if (token) headers.Authorization = 'Bearer ' + token;
 
           const response = await fetch(apiBase + endpoint, {
@@ -308,7 +344,9 @@ function renderAccountsWindow(result: DebugAccountsResult) {
           const user = login?.data?.user;
           if (!token || !user) throw new Error('Failed to sign in');
 
-          localStorage.setItem('authToken', token);
+          /* Token goes to this tab's sessionStorage (per-tab isolation). */
+          sessionStorage.setItem('authToken', token);
+          localStorage.removeItem('authToken');
 
           const activeEvent = await request('/events/mine/active');
           const event =
@@ -341,6 +379,7 @@ function renderAccountsWindow(result: DebugAccountsResult) {
             profilePicture: user.profilePicture || null,
           });
           if (popup) {
+            mirrorSessionToPopup(popup);
             setWindowSession(popup, userId || account.email);
             popup.location.replace('/dj/dashboard');
           }
@@ -372,7 +411,9 @@ function renderAccountsWindow(result: DebugAccountsResult) {
           if (!participant || !token || !user) throw new Error('Failed to join attendee dashboard');
 
           const userId = user.id || user._id || participant._id || participant.id;
-          localStorage.setItem('authToken', token);
+          /* Token goes to this tab's sessionStorage (per-tab isolation). */
+          sessionStorage.setItem('authToken', token);
+          localStorage.removeItem('authToken');
           setStoredJson('user', {
             ...user,
             id: userId,
@@ -398,6 +439,7 @@ function renderAccountsWindow(result: DebugAccountsResult) {
             passwordProtected: Boolean(participant.passwordProtected),
           });
           if (popup) {
+            mirrorSessionToPopup(popup);
             setWindowSession(popup, userId || account.email);
             popup.location.replace('/attendee/dashboard');
           }

@@ -1,4 +1,5 @@
 import { readStoredJson, removeStoredItem, writeStoredJson } from '@/utils/storage';
+import { getToken } from '@/services/api/client';
 
 export interface StoredEvent {
   _id?: string;
@@ -33,7 +34,7 @@ export interface StoredUser {
 }
 
 export function getAuthToken() {
-  return localStorage.getItem('authToken');
+  return getToken();
 }
 
 export function getStoredEvent() {

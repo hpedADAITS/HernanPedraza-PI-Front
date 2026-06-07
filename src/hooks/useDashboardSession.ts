@@ -4,7 +4,7 @@ import { disconnectSocket, initSocket, joinEvent, off, on, onAccessCodeUpdated, 
 import type { AccessCodeUpdatedPayload, EventEndedPayload, EventUpdatedPayload, ParticipantCooldownPayload, ParticipantEventPayload, ParticipantUpdatedPayload, SongEventPayload } from '@/services/socket/contracts';
 import { authAPI, eventsAPI } from '@/services/api';
 import { clearStoredEvent, clearStoredParticipant, clearStoredUser, getAuthToken, getStoredEvent, getStoredParticipant, getStoredUser, setStoredEvent, setStoredParticipant, setStoredUser, isDjRole, getStoredDjUserId, type StoredEvent, type StoredParticipant, type StoredUser } from '@/services/session';
-import { decodeJwtPayload, type JwtSessionPayload } from '@/services/api/client';
+import { clearToken, decodeJwtPayload, type JwtSessionPayload } from '@/services/api/client';
 import {
   activateSingleUserSession,
   consumeSingleUserSessionCheckSuspension,
@@ -166,10 +166,8 @@ function clearAttendeeEventSession() {
 
 function clearCurrentSession() {
   disconnectSocket();
-  localStorage.removeItem('authToken');
-  clearStoredUser();
-  clearStoredEvent();
-  clearStoredParticipant();
+  /* clearToken() removes the auth token and stored user/event/participant. */
+  clearToken();
 }
 
 export function getInitialDashboardState(mode: DashboardMode = 'attendee'): DashboardState {

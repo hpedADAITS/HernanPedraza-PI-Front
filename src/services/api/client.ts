@@ -91,17 +91,44 @@ function shouldClearSessionOnTokenChange(
 }
 
 
-/* Retrieve token from localStorage */
-export function loadToken() {
-  if (typeof window !== 'undefined') {
-    authToken = localStorage.getItem('authToken');
+const AUTH_TOKEN_KEY = 'authToken';
+
+/*
+ * The auth token is stored in sessionStorage so each browser tab keeps an
+ * independent session. This prevents a DJ session and an ATTENDEE session
+ * open in the same browser from clobbering each other's token (which caused
+ * admin actions to fail with "no authorization token provided").
+ *
+ * A one-time migration reads any legacy localStorage token left by older
+ * builds and moves it into this tab's sessionStorage.
+ */
+function readStoredAuthToken(): string | null {
+  if (typeof window === 'undefined') {
+    return null;
   }
+
+  const sessionToken = window.sessionStorage.getItem(AUTH_TOKEN_KEY);
+  if (sessionToken) {
+    return sessionToken;
+  }
+
+  const legacyToken = window.localStorage.getItem(AUTH_TOKEN_KEY);
+  if (legacyToken) {
+    window.sessionStorage.setItem(AUTH_TOKEN_KEY, legacyToken);
+    window.localStorage.removeItem(AUTH_TOKEN_KEY);
+    return legacyToken;
+  }
+
+  return null;
+}
+
+/* Retrieve token from sessionStorage */
+export function loadToken() {
+  authToken = readStoredAuthToken();
 }
 
 function getToken() {
-  if (typeof window !== 'undefined') {
-    authToken = localStorage.getItem('authToken');
-  }
+  authToken = readStoredAuthToken();
   return authToken;
 }
 
@@ -110,7 +137,7 @@ export { getToken };
 export { decodeJwtPayload };
 export type { JwtSessionPayload };
 
-/* Store token in localStorage */
+/* Store token in sessionStorage */
 export function saveToken(token: string) {
   const previousToken = getToken();
   const shouldClearStoredSession =
@@ -125,7 +152,9 @@ export function saveToken(token: string) {
       clearAllCaches();
     }
 
-    localStorage.setItem('authToken', token);
+    window.sessionStorage.setItem(AUTH_TOKEN_KEY, token);
+    /* Drop any legacy browser-wide token so other tabs don't inherit it. */
+    window.localStorage.removeItem(AUTH_TOKEN_KEY);
   }
 }
 
@@ -133,7 +162,8 @@ export function saveToken(token: string) {
 export function clearToken() {
   authToken = null;
   if (typeof window !== 'undefined') {
-    localStorage.removeItem('authToken');
+    window.sessionStorage.removeItem(AUTH_TOKEN_KEY);
+    window.localStorage.removeItem(AUTH_TOKEN_KEY);
     clearStoredSession();
   }
   clearAllCaches();

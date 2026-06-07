@@ -1,6 +1,7 @@
 import React from 'react';
 import { SettingsDialog, SettingsDialogActions, SettingsDialogButton } from '@/components/settings/SettingsUI';
 import { getSocket } from '@/services/socket';
+import { getToken } from '@/services/api/client';
 import { readStoredJson } from '@/utils/storage';
 import { t } from '@/i18n';
 
@@ -10,7 +11,7 @@ interface DebugInfoModalProps {
 }
 
 export function DebugInfoModal({ open, onClose }: DebugInfoModalProps) {
-  const hasToken = !!localStorage.getItem('authToken');
+  const hasToken = !!getToken();
   const eventData = readStoredJson<{ eventId?: string }>('currentEvent');
   const participantData = readStoredJson<{ _id?: string }>('currentParticipant');
   const eventId = eventData?.eventId || t('None');

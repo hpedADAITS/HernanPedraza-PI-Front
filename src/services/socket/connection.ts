@@ -1,5 +1,6 @@
 import { io, type Socket } from 'socket.io-client';
 import { SocketEventName, SocketListener } from './contracts';
+import { getToken } from '@/services/api/client';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -30,7 +31,7 @@ export function buildSocketUrl(apiUrl?: string) {
 const SOCKET_URL = buildSocketUrl(VITE_API_URL);
 
 function getAuthToken(token?: string) {
-  return token || localStorage.getItem('authToken') || undefined;
+  return token || getToken() || undefined;
 }
 
 function bindLifecycleHandlers(nextSocket: Socket) {
