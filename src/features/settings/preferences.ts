@@ -27,6 +27,10 @@ export const DEFAULT_PROFILE_SOCIAL_PREFS: ProfileSocialPrefs = {
   allowFriendRequests: true,
 };
 
+export function readProfileSocialPrefs(): ProfileSocialPrefs {
+  return getInitialProfileSocialPrefs();
+}
+
 const DEFAULT_APP_SOCIAL_PREFS: AppSocialPrefs = {
   allowNotifications: true,
   allowSharing: true,

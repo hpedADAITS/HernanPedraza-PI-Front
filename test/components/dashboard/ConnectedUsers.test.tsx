@@ -109,11 +109,13 @@ describe('Connected Users dashboard UI', () => {
     );
     expect(screen.getByText('4 members')).toBeInTheDocument();
     expect(screen.getByText('3/3')).toBeInTheDocument();
-    expect(screen.getAllByText('You')).toHaveLength(2);
+    /* The current user's row shows the server-stored nickname (Bailey) plus
+       a single "You" status indicator. The old "You as name" override was
+       removed so the masking feature can show "Participant N" instead. */
+    expect(screen.getByText('Bailey')).toBeInTheDocument();
     expect(screen.getByText('Alex')).toBeInTheDocument();
     expect(screen.getByText('Casey')).toBeInTheDocument();
     expect(screen.getByLabelText('Priority attendee')).toBeInTheDocument();
-    expect(screen.queryByText('Bailey')).not.toBeInTheDocument();
   });
 
   it('uses the updated profile picture for the current user', async () => {
@@ -133,7 +135,7 @@ describe('Connected Users dashboard UI', () => {
       />,
     );
 
-    expect(await screen.findByAltText('You profile')).toHaveAttribute(
+    expect(await screen.findByAltText('Bailey profile')).toHaveAttribute(
       'src',
       'data:image/png;base64,new-picture',
     );

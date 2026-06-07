@@ -25,6 +25,7 @@ const SETTINGS_ITEMS = [
   { id: 'displayName', label: 'Display Name Visibility' },
   { id: 'mediaQuality', label: 'Media Quality' },
   { id: 'socialSettings', label: 'Social Settings' },
+  { id: 'friends', label: 'Friends' },
   { id: 'debug', label: 'Debug / Diagnostics' },
   { id: 'signOut', label: 'Sign Out' },
 ] as const;
@@ -98,6 +99,9 @@ export function AccountSettings({ mode, onNavigate }: Props) {
         break;
       case 'socialSettings':
         setShowSocialModal(true);
+        break;
+      case 'friends':
+        onNavigate(mode === 'dj' ? 'dj-friends' : 'attendee-friends');
         break;
       case 'debug':
         setShowDebugModal(true);

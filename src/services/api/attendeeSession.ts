@@ -1,4 +1,5 @@
 import { apiCall, saveToken } from './client';
+import type { ParticipantSocialPrefs } from './participants';
 
 export const attendeeSessionAPI = {
   joinEvent: async (
@@ -6,6 +7,7 @@ export const attendeeSessionAPI = {
     nickname: string,
     profilePicture?: string | null,
     password?: string,
+    socialPrefs?: ParticipantSocialPrefs,
   ) => {
     const data = await apiCall(`/attendee-session/events/${eventId}/join`, {
       method: 'POST',
@@ -13,6 +15,7 @@ export const attendeeSessionAPI = {
         nickname,
         profilePicture: profilePicture || null,
         ...(password ? { password } : {}),
+        ...(socialPrefs ? { socialPrefs } : {}),
       }),
     });
     if (data.data.token) saveToken(data.data.token);

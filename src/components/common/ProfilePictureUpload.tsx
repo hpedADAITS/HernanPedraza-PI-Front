@@ -12,6 +12,49 @@ const PROFILE_PICTURE_SIZE_CLASSES = {
   lg: 'w-32 h-32',
 };
 
+/* Resize any image file to fit within `maxDim` on the long edge, encoded as
+   JPEG quality 0.92. Returns a base64 data URL. PNG is kept when the source
+   has transparency; otherwise we transcode to JPEG which is ~6× smaller at
+   equivalent quality. Bounded output keeps the participant list payload and
+   MongoDB document well under the 16 MB document limit. */
+const PROFILE_PICTURE_MAX_DIM = 1024;
+
+async function resizeImageToDataUrl(file: File, maxDim: number): Promise<string> {
+  const sourceUrl = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const element = new Image();
+      element.onload = () => resolve(element);
+      element.onerror = () => reject(new Error('Failed to decode image'));
+      element.src = sourceUrl;
+    });
+
+    const longEdge = Math.max(img.width, img.height);
+    const scale = longEdge > maxDim ? maxDim / longEdge : 1;
+    const targetWidth = Math.max(1, Math.round(img.width * scale));
+    const targetHeight = Math.max(1, Math.round(img.height * scale));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Canvas 2D context is unavailable');
+    }
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+    const isPng = file.type === 'image/png';
+    const mimeType = isPng ? 'image/png' : 'image/jpeg';
+    const quality = isPng ? undefined : 0.92;
+    return canvas.toDataURL(mimeType, quality);
+  } finally {
+    URL.revokeObjectURL(sourceUrl);
+  }
+}
+
 interface ProfilePictureUploadProps {
   currentPicture?: string | null;
   onPictureUpdated?: (newPicture: string) => void;
@@ -52,59 +95,61 @@ export function ProfilePictureUpload({
 
     setIsLoading(true);
     try {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64String = e.target?.result as string;
-        startTransition(() => {
-          setPreviewPicture(base64String);
+      const base64String = await resizeImageToDataUrl(file, PROFILE_PICTURE_MAX_DIM);
+      startTransition(() => {
+        setPreviewPicture(base64String);
+      });
+
+      /* Send to backend */
+      try {
+        await authAPI.updateProfilePicture({
+          profilePicture: base64String,
         });
 
-        /* Send to backend */
-        try {
-          await authAPI.updateProfilePicture({
+        /* Update localStorage */
+        const user = readStoredJson<{ profilePicture?: string | null }>('user');
+        if (user) {
+          writeStoredJson('user', {
+            ...user,
             profilePicture: base64String,
           });
-
-          /* Update localStorage */
-          const user = readStoredJson<{ profilePicture?: string | null }>('user');
-          if (user) {
-            writeStoredJson('user', {
-              ...user,
-              profilePicture: base64String,
-            });
-          }
-
-          const participant = readStoredJson<
-            { _id?: string; id?: string; profilePicture?: string | null } & Record<string, unknown>
-          >('currentParticipant');
-          const participantId = participant?._id || participant?.id;
-          const updatedParticipant = participantId
-            ? await participantsAPI.updateProfile(participantId, {
-                profilePicture: base64String,
-              })
-            : null;
-          if (participant) {
-            writeStoredJson('currentParticipant', {
-              ...participant,
-              ...(updatedParticipant || {}),
-              profilePicture: base64String,
-            });
-          }
-
-          toast.success(t('Profile picture updated'));
-          onPictureUpdated?.(base64String);
-        } catch (error) {
-          startTransition(() => {
-            setPreviewPicture(currentPicture || null);
-          });
-          toast.error(
-            error instanceof Error
-              ? error.message
-              : t('Failed to update profile picture'),
-          );
         }
-      };
-      reader.readAsDataURL(file);
+
+        const participant = readStoredJson<
+          { _id?: string; id?: string; profilePicture?: string | null } & Record<string, unknown>
+        >('currentParticipant');
+        const participantId = participant?._id || participant?.id;
+        const updatedParticipant = participantId
+          ? await participantsAPI.updateProfile(participantId, {
+              profilePicture: base64String,
+            })
+          : null;
+        if (participant) {
+          writeStoredJson('currentParticipant', {
+            ...participant,
+            ...(updatedParticipant || {}),
+            profilePicture: base64String,
+          });
+        }
+
+        toast.success(t('Profile picture updated'));
+        onPictureUpdated?.(base64String);
+      } catch (error) {
+        startTransition(() => {
+          setPreviewPicture(currentPicture || null);
+        });
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : t('Failed to update profile picture'),
+        );
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t('Failed to update profile picture'),
+      );
     } finally {
       setIsLoading(false);
       if (fileInputRef.current) {

@@ -1,6 +1,9 @@
 import React from 'react';
 import { SettingsDialog, SettingsDialogActions, SettingsDialogButton, SettingsToggleRow } from '@/components/settings/SettingsUI';
 import { useProfileSocialPrefs } from '@/features/settings/preferences';
+import { useToast } from '@/hooks/useToast';
+import { readStoredJson } from '@/utils/storage';
+import { participantsAPI } from '@/services/api';
 import { t } from '@/i18n';
 
 interface SocialSettingsModalProps {
@@ -10,10 +13,35 @@ interface SocialSettingsModalProps {
 
 export function SocialSettingsModal({ open, onClose }: SocialSettingsModalProps) {
   const { saveSocialPrefs, socialPrefs } = useProfileSocialPrefs();
+  const { toast } = useToast();
 
-  const handleToggle = (key: keyof typeof socialPrefs) => {
+  const handleToggle = async (key: keyof typeof socialPrefs) => {
     const next = { ...socialPrefs, [key]: !socialPrefs[key] };
     saveSocialPrefs(next);
+
+    /* Push the same state to the server-side participant row so other
+       clients in the event see the masked nickname/profile picture (and the
+       back end remembers across socket reconnects within this session). The
+       current user is the only one we sync — toggles are a personal choice
+       that should not touch anyone else's row. */
+    try {
+      const participant = readStoredJson<{ _id?: string; id?: string }>('currentParticipant');
+      const participantId = participant?._id || participant?.id;
+      if (!participantId) return;
+      await participantsAPI.updateProfile(participantId, {
+        socialPrefs: {
+          showDisplayName: next.showDisplayName,
+          showProfilePicture: next.showProfilePicture,
+          allowFriendRequests: next.allowFriendRequests,
+        },
+      });
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t('Failed to sync social preferences'),
+      );
+    }
   };
 
   return (

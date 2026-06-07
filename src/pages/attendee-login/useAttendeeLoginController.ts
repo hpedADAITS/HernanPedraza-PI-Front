@@ -6,6 +6,7 @@ import { writeStoredJson } from '@/utils/storage';
 import { activateSingleUserSession } from '@/services/singleUserSession';
 import { queueFirstTimeTutorial } from '@/components/modals/firstTimeTutorialQueue';
 import { validateNickname } from '@/utils/validation';
+import { readProfileSocialPrefs } from '@/features/settings/preferences';
 import { t } from '@/i18n';
 import type { NavigateToView } from '@/types';
 
@@ -139,6 +140,7 @@ export function useAttendeeLoginController(onNavigate: NavigateToView) {
         state.nickname,
         null,
         state.nicknamePassword || undefined,
+        readProfileSocialPrefs(),
       );
       if (!participant || !token || !user) throw new Error(t('Failed to join event'));
 
@@ -167,6 +169,8 @@ export function useAttendeeLoginController(onNavigate: NavigateToView) {
         eventId,
         profilePicture: participant.profilePicture || null,
         passwordProtected: Boolean(participant.passwordProtected),
+        anonymousNumber: participant.anonymousNumber ?? null,
+        socialPrefs: participant.socialPrefs ?? null,
       });
 
       toast.success(t('Joined event successfully!'));

@@ -567,7 +567,11 @@ function AttendeeConnectedUsers({
                   })
                   .map((user) => {
                     const isCurrentUser = user._id === currentUserId;
-                    const displayName = isCurrentUser ? 'You' : user.nickname;
+                    /* The server stores the masked nickname ("Participant N")
+                       directly on the participant row when "Show display name"
+                       is off, so we just use what we got. The status row at
+                       the bottom keeps the "You" indicator. */
+                    const displayName = user.nickname;
 
                     return (
                       <m.div

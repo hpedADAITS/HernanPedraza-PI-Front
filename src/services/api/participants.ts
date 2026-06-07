@@ -1,5 +1,11 @@
 import { apiCall } from './client';
 
+export type ParticipantSocialPrefs = {
+  showDisplayName?: boolean;
+  showProfilePicture?: boolean;
+  allowFriendRequests?: boolean;
+};
+
 export const participantsAPI = {
   validateNickname: async (nickname: string) => {
     const data = await apiCall('/participants/nickname/validate', {
@@ -14,6 +20,7 @@ export const participantsAPI = {
     nickname: string,
     profilePicture?: string | null,
     password?: string,
+    socialPrefs?: ParticipantSocialPrefs,
   ) => {
     const data = await apiCall(`/participants/${eventId}/join`, {
       method: 'POST',
@@ -21,6 +28,7 @@ export const participantsAPI = {
         nickname,
         profilePicture: profilePicture || null,
         ...(password ? { password } : {}),
+        ...(socialPrefs ? { socialPrefs } : {}),
       }),
     });
     return data.data.participant;
@@ -43,7 +51,11 @@ export const participantsAPI = {
 
   updateProfile: async (
     participantId: string,
-    updates: { nickname?: string; profilePicture?: string | null },
+    updates: {
+      nickname?: string;
+      profilePicture?: string | null;
+      socialPrefs?: ParticipantSocialPrefs;
+    },
   ) => {
     const data = await apiCall(`/participants/${participantId}/profile`, {
       method: 'PATCH',

@@ -6,3 +6,5 @@ export { audioTracksAPI } from './audioTracks';
 export { participantsAPI } from './participants';
 export { songsAPI } from './songs';
 export { votesAPI } from './votes';
+export { friendsAPI } from './friends';
+export type { Friend, FriendRequest, EventInvite } from './friends';
