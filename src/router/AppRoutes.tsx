@@ -44,6 +44,9 @@ const AppPreferences = lazy(() =>
     default: module.AppPreferences,
   })),
 );
+const Friends = lazy(() =>
+  import('@/pages/Friends').then((module) => ({ default: module.Friends })),
+);
 const VerifyEmail = lazy(() =>
   import('@/pages/VerifyEmail').then((module) => ({
     default: module.VerifyEmail,
@@ -78,6 +81,7 @@ const SETTINGS_ROUTES = [
   { path: 'settings', Component: SettingsHome },
   { path: 'settings/account', Component: AccountSettings },
   { path: 'settings/app', Component: AppPreferences },
+  { path: 'friends', Component: Friends },
 ] as const;
 
 function RouteFallback() {

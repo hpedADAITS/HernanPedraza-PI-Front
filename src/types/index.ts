@@ -14,9 +14,11 @@ export type View =
   | 'attendee-settings'
   | 'attendee-account-settings'
   | 'attendee-app-settings'
+  | 'attendee-friends'
   | 'dj-settings'
   | 'dj-account-settings'
   | 'dj-app-settings'
+  | 'dj-friends'
   | 'dj-phone-microphone'
   | 'banned'
   | 'verify-email';
