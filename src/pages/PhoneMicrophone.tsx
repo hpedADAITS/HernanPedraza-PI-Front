@@ -197,7 +197,7 @@ export function PhoneMicrophone() {
           ...current,
           event,
           state: payload.state || payload.reason || current.state,
-          track: candidateLabel(candidate) || payload.trackId || '-',
+          track: candidate ? candidateLabel(candidate) : (payload.trackId || '-'),
           score: scoreLabel(candidate),
           offset: candidate ? String(candidate.offset ?? '-') : '-',
           queue: queueLabel(candidate),
