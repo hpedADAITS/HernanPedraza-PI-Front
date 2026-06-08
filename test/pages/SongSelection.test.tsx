@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { SongSelection } from '@/pages/SongSelection';
 import { NowPlaying } from '@/components/common/NowPlaying';
@@ -14,6 +14,7 @@ const {
   onSongSuggestedMock,
   onSongApprovedMock,
   onSongRejectedMock,
+  socketOnMock,
 } = vi.hoisted(() => ({
   getPendingSongsMock: vi.fn(),
   approveSongMock: vi.fn(),
@@ -25,6 +26,7 @@ const {
   onSongSuggestedMock: vi.fn(),
   onSongApprovedMock: vi.fn(),
   onSongRejectedMock: vi.fn(),
+  socketOnMock: vi.fn(),
 }));
 
 vi.mock('@/services/api', async (importOriginal) => {
@@ -46,6 +48,7 @@ vi.mock('@/services/api', async (importOriginal) => {
 
 vi.mock('@/services/socket', () => ({
   off: socketOffMock,
+  on: socketOnMock,
   onSongSuggested: onSongSuggestedMock,
   onSongApproved: onSongApprovedMock,
   onSongRejected: onSongRejectedMock,
@@ -62,6 +65,10 @@ describe('SongSelection attendee request form', () => {
       title: 'Suggested Song',
       artist: 'Suggested Artist',
     });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('keeps the light request card styling by default', () => {
