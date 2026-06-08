@@ -190,7 +190,7 @@ export function ActionButtons({
         {showVoting && !isDj && <VotingButtons />}
 
         {showActions && (
-          <div className="flex w-full max-w-[744px] flex-wrap items-center justify-center gap-4">
+          <div className="grid w-full max-w-[744px] grid-cols-[repeat(auto-fit,minmax(64px,1fr))] justify-items-center gap-4">
             <ActionButton
               icon={Plus}
               label={t('Queue a song')}
@@ -492,65 +492,71 @@ function ActionButton({
       'border-slate-900/10 bg-[linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)] text-[#ff4f66] shadow-[0_10px_22px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] hover:border-rose-200 focus-visible:ring-rose-100',
   };
   const expandedWidth = {
-    queue: 'sm:hover:w-[360px] sm:focus-visible:w-[360px]',
-    settings: 'sm:hover:w-[300px] sm:focus-visible:w-[300px]',
-    friends: 'sm:hover:w-[300px] sm:focus-visible:w-[300px]',
-    leave: 'sm:hover:w-[288px] sm:focus-visible:w-[288px]',
+    queue: 'sm:group-hover/action:w-[360px] sm:group-focus-within/action:w-[360px]',
+    settings: 'sm:group-hover/action:w-[300px] sm:group-focus-within/action:w-[300px]',
+    friends: 'sm:group-hover/action:w-[300px] sm:group-focus-within/action:w-[300px]',
+    leave: 'sm:group-hover/action:w-[288px] sm:group-focus-within/action:w-[288px]',
+  }[variant];
+  const expandedSide = {
+    queue: 'left-0',
+    settings: 'left-1/2 -translate-x-1/2',
+    friends: 'right-0',
+    leave: 'right-0',
   }[variant];
 
-  if (collapsed) return null;
-
   return (
-    <m.button
-      type="button"
-      whileHover={{ y: -1 }}
-      whileTap={{ scale: 0.99 }}
-      onClick={activateActionButton}
-      onHoverStart={handleHoverStart}
-      onHoverEnd={handleHoverEnd}
-      onFocus={() => onHoverChange?.(true)}
-      onBlur={() => onHoverChange?.(false)}
-      transition={{ duration: ANIMATION_DURATION.fast }}
-      className={`group relative flex h-[62px] w-16 will-change-[width,transform] items-center justify-center gap-0 overflow-hidden rounded-xl border px-0 font-sans outline-none transition-[width,transform,border-color] duration-100 ease-out focus-visible:ring-4 ${iconOnly ? '' : expandedWidth} ${styles[variant]}`}
-    >
-      {iconOnly ? (
-        <m.span
-          className="flex-shrink-0"
-          whileHover={{ rotate: 45 }}
-          transition={{ duration: ANIMATION_DURATION.fast }}
-        >
+    <div className="group/action relative h-[62px] w-full min-w-16 max-w-[180px]">
+      <m.button
+        type="button"
+        whileHover={{ y: -1 }}
+        whileTap={{ scale: 0.99 }}
+        onClick={activateActionButton}
+        onHoverStart={handleHoverStart}
+        onHoverEnd={handleHoverEnd}
+        onFocus={() => onHoverChange?.(true)}
+        onBlur={() => onHoverChange?.(false)}
+        transition={{ duration: ANIMATION_DURATION.fast }}
+        className={`group absolute top-0 z-10 flex h-[62px] w-16 items-center justify-center gap-0 overflow-hidden rounded-xl border px-0 font-sans outline-none transition-[width,transform,border-color,opacity] duration-100 ease-out focus-visible:ring-4 ${expandedSide} ${iconOnly ? '' : expandedWidth} ${collapsed ? 'pointer-events-none opacity-0' : 'will-change-[width,transform]'} ${styles[variant]}`}
+      >
+        {iconOnly ? (
+          <m.span
+            className="flex-shrink-0"
+            whileHover={{ rotate: 45 }}
+            transition={{ duration: ANIMATION_DURATION.fast }}
+          >
+            <Icon
+              size={variant === 'queue' ? 27 : 24}
+              strokeWidth={2}
+              aria-hidden="true"
+            />
+          </m.span>
+        ) : (
           <Icon
+            className="flex-shrink-0"
             size={variant === 'queue' ? 27 : 24}
             strokeWidth={2}
             aria-hidden="true"
           />
-        </m.span>
-      ) : (
-        <Icon
-          className="flex-shrink-0"
-          size={variant === 'queue' ? 27 : 24}
-          strokeWidth={2}
-          aria-hidden="true"
-        />
-      )}
-      {!iconOnly && (
-        <span className="ml-0 flex max-w-0 min-w-0 flex-col items-start overflow-hidden whitespace-nowrap leading-none opacity-0 transition-[max-width,margin-left,opacity] duration-100 ease-out group-hover:ml-5 group-hover:max-w-[220px] group-hover:opacity-100 group-focus-visible:ml-5 group-focus-visible:max-w-[220px] group-focus-visible:opacity-100">
-          <span className="text-[13px] font-extrabold tracking-normal">
-            {label}
+        )}
+        {!iconOnly && (
+          <span className="ml-0 flex max-w-0 min-w-0 flex-col items-start overflow-hidden whitespace-nowrap leading-none opacity-0 transition-[max-width,margin-left,opacity] duration-100 ease-out group-hover:ml-5 group-hover:max-w-[220px] group-hover:opacity-100 group-focus-visible:ml-5 group-focus-visible:max-w-[220px] group-focus-visible:opacity-100">
+            <span className="text-[13px] font-extrabold tracking-normal">
+              {label}
+            </span>
+            <span
+              className={`mt-2 truncate text-[11px] font-semibold ${
+                variant === 'leave'
+                  ? 'text-rose-400/80'
+                  : variant === 'settings'
+                    ? 'text-slate-500'
+                    : 'text-white/75'
+              }`}
+            >
+              {subtitle}
+            </span>
           </span>
-          <span
-            className={`mt-2 truncate text-[11px] font-semibold ${
-              variant === 'leave'
-                ? 'text-rose-400/80'
-                : variant === 'settings'
-                  ? 'text-slate-500'
-                  : 'text-white/75'
-            }`}
-          >
-            {subtitle}
-          </span>
-        </span>
-      )}
-    </m.button>
+        )}
+      </m.button>
+    </div>
   );
 }
