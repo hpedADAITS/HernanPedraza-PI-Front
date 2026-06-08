@@ -29,7 +29,7 @@ export interface Song {
   } | null;
   recognitionMatch?: {
     trackId?: string;
-    source?: 'local' | 'musicbrainz';
+    source?: 'local' | 'musicbrainz' | 'fingerprint';
     recordingId?: string | null;
     releaseId?: string | null;
     metadataSha512?: string | null;
@@ -38,7 +38,7 @@ export interface Song {
     coverUrl?: string | null;
     duration?: number | null;
     score: number;
-    matchedOn: 'title' | 'artist' | 'title_artist' | 'lenient';
+    matchedOn: 'title' | 'artist' | 'title_artist' | 'lenient' | 'fingerprint';
     /** True when the match was supplied by the local fingerprint fallback
      *  (MusicBrainz returned no match / failed). */
     fallbackUsed?: boolean;
@@ -50,7 +50,7 @@ export interface Song {
       coverUrl?: string | null;
       duration?: number | null;
       score: number;
-      matchedOn: 'title' | 'artist' | 'title_artist' | 'lenient';
+      matchedOn: 'title' | 'artist' | 'title_artist' | 'lenient' | 'fingerprint';
     }>;
   } | null;
   eventId?: string;

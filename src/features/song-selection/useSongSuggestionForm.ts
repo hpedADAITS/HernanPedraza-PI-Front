@@ -28,11 +28,13 @@ export function useSongSuggestionForm(
   const [fingerprintMatches, setFingerprintMatches] = useState<FingerprintSearchMatch[]>([]);
   const [fingerprintSearchActive, setFingerprintSearchActive] = useState(false);
   const [selectedFingerprintTrackId, setSelectedFingerprintTrackId] = useState<string | null>(null);
+  const [selectedFingerprintMatch, setSelectedFingerprintMatch] = useState<FingerprintSearchMatch | null>(null);
   const lookupInFlight = useRef(false);
   const fingerprintSeq = useRef(0);
 
   const submitSong = useCallback(
     async (options?: {
+      fingerprintTrackId?: string | null;
       musicBrainzConfirmed?: boolean;
       musicBrainzMatch?: Song['recognitionMatch'];
       skipMusicBrainzLookup?: boolean;
@@ -46,12 +48,18 @@ export function useSongSuggestionForm(
           title.trim(),
           artist.trim(),
           undefined,
-          options,
+          selectedFingerprintMatch
+            ? {
+                fingerprintTrackId: selectedFingerprintMatch.trackId,
+                skipMusicBrainzLookup: true,
+              }
+            : options,
         );
         toast.success(t('"{title}" suggested', { title: song.title }));
         setPendingMatch(null);
         setPendingMatches([]);
         setFingerprintMatches([]);
+        setSelectedFingerprintMatch(null);
         setSelectedFingerprintTrackId(null);
         onSuccess();
       } catch (error) {
@@ -60,7 +68,7 @@ export function useSongSuggestionForm(
         setSubmitting(false);
       }
     },
-    [artist, eventId, onSuccess, participantId, title, toast],
+    [artist, eventId, onSuccess, participantId, selectedFingerprintMatch, title, toast],
   );
 
   // Debounced typeahead against the DJ fingerprinted library.
@@ -107,6 +115,10 @@ export function useSongSuggestionForm(
       event.preventDefault();
       if (!eventId || !participantId || !title.trim() || !artist.trim()) return;
       if (lookupInFlight.current || checkingMusicBrainz || submitting) return;
+      if (selectedFingerprintMatch) {
+        await submitSong({ skipMusicBrainzLookup: true });
+        return;
+      }
 
       lookupInFlight.current = true;
       setCheckingMusicBrainz(true);
@@ -130,7 +142,7 @@ export function useSongSuggestionForm(
         setCheckingMusicBrainz(false);
       }
     },
-    [artist, checkingMusicBrainz, eventId, participantId, submitSong, submitting, title, toast],
+    [artist, checkingMusicBrainz, eventId, participantId, selectedFingerprintMatch, submitSong, submitting, title, toast],
   );
 
   const confirmMusicBrainzMatch = useCallback(
@@ -149,6 +161,11 @@ export function useSongSuggestionForm(
 
   const pickFingerprintMatch = useCallback(
     (match: FingerprintSearchMatch) => {
+      setPendingMatch(null);
+      setPendingMatches([]);
+      setSelectedFingerprintMatch((current) =>
+        current?.trackId === match.trackId ? null : match,
+      );
       setSelectedFingerprintTrackId((current) =>
         current === match.trackId ? null : match.trackId,
       );
@@ -159,6 +176,7 @@ export function useSongSuggestionForm(
   const updateTitle = useCallback((value: string) => {
     setPendingMatch(null);
     setPendingMatches([]);
+    setSelectedFingerprintMatch(null);
     setSelectedFingerprintTrackId(null);
     setTitle(value);
   }, []);
@@ -166,6 +184,7 @@ export function useSongSuggestionForm(
   const updateArtist = useCallback((value: string) => {
     setPendingMatch(null);
     setPendingMatches([]);
+    setSelectedFingerprintMatch(null);
     setSelectedFingerprintTrackId(null);
     setArtist(value);
   }, []);
@@ -182,6 +201,7 @@ export function useSongSuggestionForm(
     pendingMatches,
     pickFingerprintMatch,
     selectMusicBrainzMatch: setPendingMatch,
+    selectedFingerprintMatch,
     selectedFingerprintTrackId,
     setArtist: updateArtist,
     setTitle: updateTitle,

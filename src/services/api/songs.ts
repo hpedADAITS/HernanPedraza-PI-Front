@@ -121,6 +121,7 @@ export const songsAPI = {
     artist: string,
     totalDuration?: number,
     options?: {
+      fingerprintTrackId?: string | null;
       musicBrainzConfirmed?: boolean;
       musicBrainzMatch?: Song['recognitionMatch'];
       skipMusicBrainzLookup?: boolean;

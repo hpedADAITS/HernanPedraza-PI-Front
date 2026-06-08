@@ -256,7 +256,7 @@ export function AttendeeSongSuggestView({
                   isDarkMode ? 'text-slate-300' : 'text-slate-600',
                 )}
               >
-                {t('DJ has this track. It will be auto-paired when you submit.')}
+                {t('DJ library metadata will be used when you submit.')}
               </p>
             ) : null}
           </div>

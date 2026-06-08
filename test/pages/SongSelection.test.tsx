@@ -6,7 +6,10 @@ import { NowPlaying } from '@/components/common/NowPlaying';
 const {
   getPendingSongsMock,
   approveSongMock,
+  lookupMusicBrainzMock,
   rejectSongMock,
+  searchFingerprintsMock,
+  suggestSongMock,
   socketOffMock,
   onSongSuggestedMock,
   onSongApprovedMock,
@@ -14,7 +17,10 @@ const {
 } = vi.hoisted(() => ({
   getPendingSongsMock: vi.fn(),
   approveSongMock: vi.fn(),
+  lookupMusicBrainzMock: vi.fn(),
   rejectSongMock: vi.fn(),
+  searchFingerprintsMock: vi.fn(),
+  suggestSongMock: vi.fn(),
   socketOffMock: vi.fn(),
   onSongSuggestedMock: vi.fn(),
   onSongApprovedMock: vi.fn(),
@@ -30,7 +36,10 @@ vi.mock('@/services/api', async (importOriginal) => {
       ...actual.songsAPI,
       getPendingSongs: getPendingSongsMock,
       approveSong: approveSongMock,
+      lookupMusicBrainz: lookupMusicBrainzMock,
       rejectSong: rejectSongMock,
+      searchFingerprints: searchFingerprintsMock,
+      suggestSong: suggestSongMock,
     },
   };
 });
@@ -46,6 +55,13 @@ describe('SongSelection attendee request form', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
+    lookupMusicBrainzMock.mockResolvedValue([]);
+    searchFingerprintsMock.mockResolvedValue({ matches: [] });
+    suggestSongMock.mockResolvedValue({
+      _id: 'song-1',
+      title: 'Suggested Song',
+      artist: 'Suggested Artist',
+    });
   });
 
   it('keeps the light request card styling by default', () => {
@@ -106,6 +122,66 @@ describe('SongSelection attendee request form', () => {
     fireEvent.keyDown(screen.getByRole('button', { name: /back/i }), { key: 'Escape' });
 
     expect(onNavigate).toHaveBeenCalledWith('attendee-dashboard');
+  });
+
+  it('submits the selected DJ library fingerprint without rewriting attendee input fields', async () => {
+    vi.useFakeTimers();
+    localStorage.setItem('currentEvent', JSON.stringify({ _id: '64b000000000000000000001' }));
+    localStorage.setItem('currentParticipant', JSON.stringify({ _id: '64b000000000000000000002' }));
+    searchFingerprintsMock.mockResolvedValue({
+      matches: [
+        {
+          trackId: '64b000000000000000000003',
+          title: 'Canonical Library Title',
+          artist: 'Canonical Library Artist',
+          coverUrl: null,
+          duration: 222,
+          matchScore: 0.94,
+          titleScore: 0.9,
+          artistScore: 0.98,
+          matchedOn: 'title_artist',
+        },
+      ],
+    });
+
+    render(<SongSelection mode="attendee" onNavigate={vi.fn()} />);
+
+    const titleInput = screen.getByPlaceholderText('Song title') as HTMLInputElement;
+    const artistInput = screen.getByPlaceholderText('Artist') as HTMLInputElement;
+
+    fireEvent.change(titleInput, { target: { value: 'Attendee Typo Title' } });
+    fireEvent.change(artistInput, { target: { value: 'Attendee Typo Artist' } });
+
+    await act(async () => {
+      vi.advanceTimersByTime(250);
+      await Promise.resolve();
+    });
+
+    const matchButton = await screen.findByRole('button', {
+      name: /canonical library title/i,
+    });
+    fireEvent.click(matchButton);
+
+    expect(titleInput.value).toBe('Attendee Typo Title');
+    expect(artistInput.value).toBe('Attendee Typo Artist');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Suggest Song' }));
+
+    await waitFor(() => {
+      expect(suggestSongMock).toHaveBeenCalledWith(
+        '64b000000000000000000001',
+        '64b000000000000000000002',
+        'Attendee Typo Title',
+        'Attendee Typo Artist',
+        undefined,
+        expect.objectContaining({
+          fingerprintTrackId: '64b000000000000000000003',
+          skipMusicBrainzLookup: true,
+        }),
+      );
+    });
+    expect(lookupMusicBrainzMock).not.toHaveBeenCalled();
+    vi.useRealTimers();
   });
 
   it('lets DJs approve a pending song with the keyboard swipe fallback', async () => {
