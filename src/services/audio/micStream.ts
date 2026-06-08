@@ -25,15 +25,34 @@ interface MicStreamOptions {
   socket: Socket;
   onError?: (error: Error) => void;
   onDebug?: (data: {
+    eventId?: string;
     sampleRate: number;
-    inputSamples: number;
-    byteLength: number;
+    inputSamples?: number;
+    byteLength?: number;
+    state?: string;
   }) => void;
 }
 
 type WebkitAudioWindow = typeof window & {
   webkitAudioContext?: typeof AudioContext;
 };
+
+function startMatcher(socket: Socket, eventId: string, sampleRate: number) {
+  return new Promise<void>((resolve, reject) => {
+    const timeout = window.setTimeout(() => {
+      reject(new Error('Audio matcher start timed out'));
+    }, 5000);
+
+    socket.emit('audio_match_start', { eventId, sampleRate }, (ack?: { success?: boolean; error?: string }) => {
+      window.clearTimeout(timeout);
+      if (ack?.success === false) {
+        reject(new Error(ack.error || 'Audio matcher failed to start'));
+        return;
+      }
+      resolve();
+    });
+  });
+}
 
 export async function startAudioMatchStream({
   eventId,
@@ -137,9 +156,11 @@ export async function startAudioMatchStream({
     worklet.connect(muteGain);
     muteGain.connect(context.destination);
 
-    socket.emit('audio_match_start', {
+    await startMatcher(socket, eventId, TARGET_SAMPLE_RATE);
+    onDebug?.({
       eventId,
       sampleRate: TARGET_SAMPLE_RATE,
+      state: 'started',
     });
 
     return () => {

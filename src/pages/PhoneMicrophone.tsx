@@ -182,9 +182,15 @@ export function PhoneMicrophone() {
       const microphone = await eventsAPI.connectPhoneMicrophone(eventId, getPhoneDeviceName(), token);
       const audioEventId = microphone.eventId || eventId;
       const socket = initSocket(token);
+      setDebug((current) => ({
+        ...current,
+        event: audioEventId,
+        state: 'connecting',
+        ts: new Date().toLocaleTimeString(),
+      }));
       const updateDebug = (
-        event: string,
         payload: {
+          eventId?: string;
           state?: string;
           candidate?: MatchCandidate | null;
           matches?: MatchCandidate[];
@@ -195,7 +201,7 @@ export function PhoneMicrophone() {
         const candidate = payload.candidate || payload.matches?.[0] || null;
         setDebug((current) => ({
           ...current,
-          event,
+          event: payload.eventId || audioEventId,
           state: payload.state || payload.reason || current.state,
           track: candidate ? candidateLabel(candidate) : (payload.trackId || '-'),
           score: scoreLabel(candidate),
@@ -207,19 +213,19 @@ export function PhoneMicrophone() {
       socket.on('audio_match_update', (payload) => {
         const match = payload?.matches?.[0];
         setBestMatch(match ? `${match.title} - ${match.artist}` : '');
-        updateDebug('update', payload);
+        updateDebug(payload);
       });
-      socket.on('audio_match_candidate', (payload) => updateDebug('candidate', payload));
-      socket.on('audio_match_hold', (payload) => updateDebug('hold', payload));
-      socket.on('audio_match_hold_updated', (payload) => updateDebug('hold+', payload));
+      socket.on('audio_match_candidate', (payload) => updateDebug(payload));
+      socket.on('audio_match_hold', (payload) => updateDebug(payload));
+      socket.on('audio_match_hold_updated', (payload) => updateDebug(payload));
       socket.on('audio_match_locked', (payload) => {
         const match = payload?.candidate;
         setBestMatch(match ? `${match.title} - ${match.artist}` : '');
-        updateDebug('locked', payload);
+        updateDebug(payload);
       });
-      socket.on('audio_match_released', (payload) => updateDebug('released', payload));
-      socket.on('audio_match_idle', (payload) => updateDebug('idle', payload));
-      socket.on('audio_match_queue_updated', (payload) => updateDebug('queue', payload));
+      socket.on('audio_match_released', (payload) => updateDebug(payload));
+      socket.on('audio_match_idle', (payload) => updateDebug(payload));
+      socket.on('audio_match_queue_updated', (payload) => updateDebug(payload));
       stopAudioMatchRef.current = await startAudioMatchStream({
         eventId: audioEventId,
         stream,
@@ -228,7 +234,11 @@ export function PhoneMicrophone() {
         onDebug: (streamDebug) => {
           setDebug((current) => ({
             ...current,
-            pcm: `${streamDebug.inputSamples}@${streamDebug.sampleRate} ${streamDebug.byteLength}b`,
+            event: streamDebug.eventId || current.event,
+            state: streamDebug.state || current.state,
+            pcm: streamDebug.inputSamples == null || streamDebug.byteLength == null
+              ? current.pcm
+              : `${streamDebug.inputSamples}@${streamDebug.sampleRate} ${streamDebug.byteLength}b`,
             ts: new Date().toLocaleTimeString(),
           }));
         },

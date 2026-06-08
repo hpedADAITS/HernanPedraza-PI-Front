@@ -54,9 +54,12 @@ vi.mock('@/services/socket', () => ({
   onSongRejected: onSongRejectedMock,
 }));
 
+const DJ_EVENT_ID = '64b000000000000000000010';
+
 describe('SongSelection attendee request form', () => {
   beforeEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
     vi.clearAllMocks();
     lookupMusicBrainzMock.mockResolvedValue([]);
     searchFingerprintsMock.mockResolvedValue({ matches: [] });
@@ -132,7 +135,6 @@ describe('SongSelection attendee request form', () => {
   });
 
   it('submits the selected DJ library fingerprint without rewriting attendee input fields', async () => {
-    vi.useFakeTimers();
     localStorage.setItem('currentEvent', JSON.stringify({ _id: '64b000000000000000000001' }));
     localStorage.setItem('currentParticipant', JSON.stringify({ _id: '64b000000000000000000002' }));
     searchFingerprintsMock.mockResolvedValue({
@@ -159,11 +161,6 @@ describe('SongSelection attendee request form', () => {
     fireEvent.change(titleInput, { target: { value: 'Attendee Typo Title' } });
     fireEvent.change(artistInput, { target: { value: 'Attendee Typo Artist' } });
 
-    await act(async () => {
-      vi.advanceTimersByTime(250);
-      await Promise.resolve();
-    });
-
     const matchButton = await screen.findByRole('button', {
       name: /canonical library title/i,
     });
@@ -188,11 +185,10 @@ describe('SongSelection attendee request form', () => {
       );
     });
     expect(lookupMusicBrainzMock).not.toHaveBeenCalled();
-    vi.useRealTimers();
   });
 
   it('lets DJs approve a pending song with the keyboard swipe fallback', async () => {
-    localStorage.setItem('currentEvent', JSON.stringify({ eventId: 'event-1' }));
+    localStorage.setItem('currentEvent', JSON.stringify({ eventId: DJ_EVENT_ID }));
     getPendingSongsMock.mockResolvedValue([
       {
         _id: 'song-1',
@@ -201,7 +197,7 @@ describe('SongSelection attendee request form', () => {
         voteScore: 0,
         status: 'pending',
         requestedBy: { _id: 'user-1', nickname: 'Taylor' },
-        eventId: 'event-1',
+        eventId: DJ_EVENT_ID,
       },
     ]);
     approveSongMock.mockResolvedValue(undefined);
@@ -215,12 +211,12 @@ describe('SongSelection attendee request form', () => {
     fireEvent.keyDown(songCard, { key: 'ArrowRight' });
 
     await waitFor(() => {
-      expect(approveSongMock).toHaveBeenCalledWith('event-1', 'song-1');
+      expect(approveSongMock).toHaveBeenCalledWith(DJ_EVENT_ID, 'song-1');
     });
   });
 
   it('shows fingerprint matches on DJ pending song cards', async () => {
-    localStorage.setItem('currentEvent', JSON.stringify({ eventId: 'event-1' }));
+    localStorage.setItem('currentEvent', JSON.stringify({ eventId: DJ_EVENT_ID }));
     getPendingSongsMock.mockResolvedValue([
       {
         _id: 'song-1',
@@ -237,7 +233,7 @@ describe('SongSelection attendee request form', () => {
           score: 0.93,
           matchedOn: 'title_artist',
         },
-        eventId: 'event-1',
+        eventId: DJ_EVENT_ID,
       },
     ]);
 
@@ -248,7 +244,7 @@ describe('SongSelection attendee request form', () => {
   });
 
   it('opens a review modal for a new realtime attendee request with no DB match', async () => {
-    localStorage.setItem('currentEvent', JSON.stringify({ eventId: 'event-1' }));
+    localStorage.setItem('currentEvent', JSON.stringify({ eventId: DJ_EVENT_ID }));
     getPendingSongsMock.mockResolvedValue([]);
 
     render(<SongSelection mode="dj" onNavigate={vi.fn()} />);
@@ -260,7 +256,7 @@ describe('SongSelection attendee request form', () => {
         title: 'Unknown request',
         artist: 'Local artist',
         requestedBy: { _id: 'user-1', nickname: 'Taylor' },
-        eventId: 'event-1',
+        eventId: DJ_EVENT_ID,
       });
     });
 
@@ -275,7 +271,7 @@ describe('SongSelection attendee request form', () => {
   });
 
   it('shows DB fingerprint match details in the realtime request modal', async () => {
-    localStorage.setItem('currentEvent', JSON.stringify({ eventId: 'event-1' }));
+    localStorage.setItem('currentEvent', JSON.stringify({ eventId: DJ_EVENT_ID }));
     getPendingSongsMock.mockResolvedValue([]);
 
     render(<SongSelection mode="dj" onNavigate={vi.fn()} />);
@@ -294,7 +290,7 @@ describe('SongSelection attendee request form', () => {
           score: 0.93,
           matchedOn: 'title_artist',
         },
-        eventId: 'event-1',
+        eventId: DJ_EVENT_ID,
       });
     });
 
@@ -308,7 +304,7 @@ describe('SongSelection attendee request form', () => {
   });
 
   it('closes the realtime request modal without removing the pending song', async () => {
-    localStorage.setItem('currentEvent', JSON.stringify({ eventId: 'event-1' }));
+    localStorage.setItem('currentEvent', JSON.stringify({ eventId: DJ_EVENT_ID }));
     getPendingSongsMock.mockResolvedValue([]);
 
     render(<SongSelection mode="dj" onNavigate={vi.fn()} />);
@@ -320,7 +316,7 @@ describe('SongSelection attendee request form', () => {
         title: 'Keep pending',
         artist: 'Modal test',
         requestedBy: { _id: 'user-1', nickname: 'Taylor' },
-        eventId: 'event-1',
+        eventId: DJ_EVENT_ID,
       });
     });
 
@@ -337,7 +333,7 @@ describe('SongSelection attendee request form', () => {
   });
 
   it('approves a realtime request from the modal and removes it', async () => {
-    localStorage.setItem('currentEvent', JSON.stringify({ eventId: 'event-1' }));
+    localStorage.setItem('currentEvent', JSON.stringify({ eventId: DJ_EVENT_ID }));
     getPendingSongsMock.mockResolvedValue([]);
     approveSongMock.mockResolvedValue(undefined);
 
@@ -350,14 +346,14 @@ describe('SongSelection attendee request form', () => {
         title: 'Approve me',
         artist: 'Modal test',
         requestedBy: { _id: 'user-1', nickname: 'Taylor' },
-        eventId: 'event-1',
+        eventId: DJ_EVENT_ID,
       });
     });
 
     fireEvent.click(await screen.findByRole('button', { name: 'Approve to queue' }));
 
     await waitFor(() => {
-      expect(approveSongMock).toHaveBeenCalledWith('event-1', 'song-1');
+      expect(approveSongMock).toHaveBeenCalledWith(DJ_EVENT_ID, 'song-1');
     });
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { name: /review request approve me/i })).not.toBeInTheDocument();
@@ -366,7 +362,7 @@ describe('SongSelection attendee request form', () => {
   });
 
   it('denies a realtime request from the modal and removes it', async () => {
-    localStorage.setItem('currentEvent', JSON.stringify({ eventId: 'event-1' }));
+    localStorage.setItem('currentEvent', JSON.stringify({ eventId: DJ_EVENT_ID }));
     getPendingSongsMock.mockResolvedValue([]);
     rejectSongMock.mockResolvedValue(undefined);
 
@@ -379,14 +375,14 @@ describe('SongSelection attendee request form', () => {
         title: 'Deny me',
         artist: 'Modal test',
         requestedBy: { _id: 'user-1', nickname: 'Taylor' },
-        eventId: 'event-1',
+        eventId: DJ_EVENT_ID,
       });
     });
 
     fireEvent.click(await screen.findByRole('button', { name: 'Deny' }));
 
     await waitFor(() => {
-      expect(rejectSongMock).toHaveBeenCalledWith('event-1', 'song-1', 'Rejected by DJ');
+      expect(rejectSongMock).toHaveBeenCalledWith(DJ_EVENT_ID, 'song-1', 'Rejected by DJ');
     });
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { name: /review request deny me/i })).not.toBeInTheDocument();
@@ -408,7 +404,7 @@ describe('SongSelection attendee request form', () => {
       configurable: true,
       value: 900,
     });
-    localStorage.setItem('currentEvent', JSON.stringify({ eventId: 'event-1' }));
+    localStorage.setItem('currentEvent', JSON.stringify({ eventId: DJ_EVENT_ID }));
     getPendingSongsMock.mockResolvedValue([
       {
         _id: 'song-1',
@@ -417,7 +413,7 @@ describe('SongSelection attendee request form', () => {
         voteScore: 0,
         status: 'pending',
         requestedBy: { _id: 'user-1', nickname: 'Taylor' },
-        eventId: 'event-1',
+        eventId: DJ_EVENT_ID,
       },
     ]);
     rejectSongMock.mockResolvedValue(undefined);
@@ -434,7 +430,7 @@ describe('SongSelection attendee request form', () => {
 
     await waitFor(() => {
       expect(rejectSongMock).toHaveBeenCalledWith(
-        'event-1',
+        DJ_EVENT_ID,
         'song-1',
         'Rejected by DJ',
       );
@@ -446,7 +442,7 @@ describe('SongSelection attendee request form', () => {
       configurable: true,
       value: 900,
     });
-    localStorage.setItem('currentEvent', JSON.stringify({ eventId: 'event-1' }));
+    localStorage.setItem('currentEvent', JSON.stringify({ eventId: DJ_EVENT_ID }));
     getPendingSongsMock.mockResolvedValue([
       {
         _id: 'song-1',
@@ -455,7 +451,7 @@ describe('SongSelection attendee request form', () => {
         voteScore: 0,
         status: 'pending',
         requestedBy: { _id: 'user-1', nickname: 'Taylor' },
-        eventId: 'event-1',
+        eventId: DJ_EVENT_ID,
       },
     ]);
 
