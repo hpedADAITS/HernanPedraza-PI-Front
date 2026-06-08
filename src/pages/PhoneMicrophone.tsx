@@ -122,7 +122,8 @@ export function PhoneMicrophone() {
       });
 
       streamRef.current = stream;
-      await eventsAPI.connectPhoneMicrophone(eventId, getPhoneDeviceName(), token);
+      const microphone = await eventsAPI.connectPhoneMicrophone(eventId, getPhoneDeviceName(), token);
+      const audioEventId = microphone.eventId || eventId;
       const socket = initSocket(token);
       socket.on('audio_match_update', (payload) => {
         const match = payload?.matches?.[0];
@@ -133,7 +134,7 @@ export function PhoneMicrophone() {
         setBestMatch(match ? `${match.title} - ${match.artist}` : '');
       });
       stopAudioMatchRef.current = await startAudioMatchStream({
-        eventId,
+        eventId: audioEventId,
         stream,
         socket,
         onError: (streamError) => setError(streamError.message),

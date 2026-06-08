@@ -38,6 +38,12 @@ export interface StoredUser {
   emailRegistered?: boolean;
 }
 
+const OBJECT_ID_REGEX = /^[0-9a-fA-F]{24}$/;
+
+function objectIdOrNull(value?: string | null) {
+  return value && OBJECT_ID_REGEX.test(value) ? value : null;
+}
+
 export function getAuthToken() {
   return getToken();
 }
@@ -48,7 +54,12 @@ export function getStoredEvent() {
 
 export function getStoredEventId() {
   const event = getStoredEvent();
-  return event?.eventId ?? event?._id ?? event?.id ?? null;
+  return (
+    objectIdOrNull(event?._id) ??
+    objectIdOrNull(event?.id) ??
+    objectIdOrNull(event?.eventId) ??
+    null
+  );
 }
 
 export function setStoredEvent(event: StoredEvent) {

@@ -86,8 +86,19 @@ function storedUserId(user: StoredUser | null | undefined) {
   return user?._id ?? user?.id ?? null;
 }
 
+const OBJECT_ID_REGEX = /^[0-9a-fA-F]{24}$/;
+
+function objectIdOrNull(value?: string | null) {
+  return value && OBJECT_ID_REGEX.test(value) ? value : null;
+}
+
 function storedEventId(event: StoredEvent | null | undefined) {
-  return event?.eventId ?? event?._id ?? event?.id ?? null;
+  return (
+    objectIdOrNull(event?._id) ??
+    objectIdOrNull(event?.id) ??
+    objectIdOrNull(event?.eventId) ??
+    null
+  );
 }
 
 function storedParticipantEventId(participant: StoredParticipant | null | undefined) {
