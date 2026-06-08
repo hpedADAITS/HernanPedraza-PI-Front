@@ -6,7 +6,6 @@ import { eventsAPI } from '@/services/api';
 import { startAudioMatchStream } from '@/services/audio/micStream';
 import { disconnectSocket, initSocket } from '@/services/socket/connection';
 import { t } from '@/i18n';
-import { useToast } from '@/components/ui/toast';
 
 type ConnectionState = 'idle' | 'connecting' | 'connected' | 'failed';
 
@@ -71,12 +70,10 @@ export function PhoneMicrophone() {
   const { hash } = useLocation();
   const streamRef = useRef<MediaStream | null>(null);
   const stopAudioMatchRef = useRef<null | (() => void)>(null);
-  const sentTrackRef = useRef('');
   const [connectionState, setConnectionState] =
     useState<ConnectionState>('idle');
   const [error, setError] = useState('');
   const [bestMatch, setBestMatch] = useState('');
-  const { toast } = useToast();
 
   const stopActiveStream = useCallback(() => {
     stopAudioMatchRef.current?.();
@@ -127,19 +124,13 @@ export function PhoneMicrophone() {
       streamRef.current = stream;
       await eventsAPI.connectPhoneMicrophone(eventId, getPhoneDeviceName(), token);
       const socket = initSocket(token);
-      socket.on('audio_match_update', async (payload) => {
+      socket.on('audio_match_update', (payload) => {
         const match = payload?.matches?.[0];
         setBestMatch(match ? `${match.title} - ${match.artist}` : '');
-        if (!match?.trackId || sentTrackRef.current === match.trackId) return;
-
-        try {
-          sentTrackRef.current = match.trackId;
-          await eventsAPI.sendMatchedAudioTrackNow(eventId, match.trackId, token);
-        } catch (sendError) {
-          sentTrackRef.current = '';
-          toast.error(t('Failed to queue matched track. Please try again.'));
-          console.warn('Unable to send matched audio track now:', sendError);
-        }
+      });
+      socket.on('audio_match_locked', (payload) => {
+        const match = payload?.candidate;
+        setBestMatch(match ? `${match.title} - ${match.artist}` : '');
       });
       stopAudioMatchRef.current = await startAudioMatchStream({
         eventId,
