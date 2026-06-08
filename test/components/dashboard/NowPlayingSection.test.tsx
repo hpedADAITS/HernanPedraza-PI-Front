@@ -5,11 +5,22 @@ import { NowPlayingSection } from '@/components/dashboard/NowPlayingSection';
 
 const {
   audioMatchUpdateCallbacks,
+  phoneMicrophoneConnectedCallbacks,
+  phoneMicrophoneDisconnectedCallbacks,
+  lastNowPlayingProps,
   songsApiGetQueueMock,
 } = vi.hoisted(() => {
   const audioMatchUpdateCallbacks: Array<(data: unknown) => void> = [];
+  const phoneMicrophoneConnectedCallbacks: Array<(data: unknown) => void> = [];
+  const phoneMicrophoneDisconnectedCallbacks: Array<(data: unknown) => void> = [];
+  const lastNowPlayingProps: { current: Record<string, unknown> | null } = {
+    current: null,
+  };
   return {
     audioMatchUpdateCallbacks,
+    phoneMicrophoneConnectedCallbacks,
+    phoneMicrophoneDisconnectedCallbacks,
+    lastNowPlayingProps,
     songsApiGetQueueMock: vi.fn(),
   };
 });
@@ -23,7 +34,12 @@ vi.mock('@/services/socket', () => ({
   }),
   onAudioMatchUpdateCallback: vi.fn(),
   onPhoneAudioStream: vi.fn(),
-  onPhoneMicrophoneConnected: vi.fn(),
+  onPhoneMicrophoneConnected: vi.fn((callback: (data: unknown) => void) => {
+    phoneMicrophoneConnectedCallbacks.push(callback);
+  }),
+  onPhoneMicrophoneDisconnected: vi.fn((callback: (data: unknown) => void) => {
+    phoneMicrophoneDisconnectedCallbacks.push(callback);
+  }),
   onQueueUpdated: vi.fn(),
   onSongNowPlaying: vi.fn(),
   onSongQueued: vi.fn(),
@@ -54,19 +70,35 @@ vi.mock('@/hooks/useTrackedTimeout', () => ({
 }));
 
 vi.mock('@/components/common', () => ({
-  NowPlaying: (props: Record<string, unknown>) => (
-    <div data-testid="now-playing">
-      <span data-testid="np-status">{String(props.status ?? '')}</span>
-      <span data-testid="np-title">{String(props.songTitle ?? '')}</span>
-      <span data-testid="np-artist">{String(props.artist ?? '')}</span>
-      <span data-testid="np-album-art">{String(props.albumArt ?? '')}</span>
-    </div>
-  ),
+  NowPlaying: (props: Record<string, unknown>) => {
+    lastNowPlayingProps.current = props;
+    const disconnected = Boolean(props.microphoneDisconnected);
+    const label = props.microphoneLabel
+      ? disconnected
+        ? `${props.microphoneLabel} disconnected`
+        : String(props.microphoneLabel)
+      : '';
+    return (
+      <div data-testid="now-playing">
+        <span data-testid="np-status">{String(props.status ?? '')}</span>
+        <span data-testid="np-title">{String(props.songTitle ?? '')}</span>
+        <span data-testid="np-artist">{String(props.artist ?? '')}</span>
+        <span data-testid="np-album-art">{String(props.albumArt ?? '')}</span>
+        <span data-testid="np-microphone-label">{label}</span>
+        <span data-testid="np-microphone-disconnected">
+          {disconnected ? 'true' : 'false'}
+        </span>
+      </div>
+    );
+  },
 }));
 
 describe('NowPlayingSection - audio_match_update', () => {
   beforeEach(() => {
     audioMatchUpdateCallbacks.length = 0;
+    phoneMicrophoneConnectedCallbacks.length = 0;
+    phoneMicrophoneDisconnectedCallbacks.length = 0;
+    lastNowPlayingProps.current = null;
     songsApiGetQueueMock.mockReset();
     songsApiGetQueueMock.mockResolvedValue([]);
   });
@@ -176,5 +208,101 @@ describe('NowPlayingSection - audio_match_update', () => {
       expect(screen.getByTestId('np-status').textContent).toBe('playing');
     });
     expect(screen.getByTestId('np-title').textContent).toBe('Sandstorm');
+  });
+});
+
+describe('NowPlayingSection - phone microphone lifecycle', () => {
+  beforeEach(() => {
+    audioMatchUpdateCallbacks.length = 0;
+    phoneMicrophoneConnectedCallbacks.length = 0;
+    phoneMicrophoneDisconnectedCallbacks.length = 0;
+    lastNowPlayingProps.current = null;
+    songsApiGetQueueMock.mockReset();
+    songsApiGetQueueMock.mockResolvedValue([]);
+  });
+
+  it('switches the pill to disconnected when the phone microphone socket drops', async () => {
+    render(<NowPlayingSection />);
+
+    await waitFor(() => {
+      expect(phoneMicrophoneConnectedCallbacks.length).toBeGreaterThan(0);
+      expect(phoneMicrophoneDisconnectedCallbacks.length).toBeGreaterThan(0);
+    });
+
+    act(() => {
+      phoneMicrophoneConnectedCallbacks[0]({
+        eventId: 'event-123',
+        deviceName: 'iPhone microphone',
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('np-microphone-disconnected').textContent).toBe(
+        'false',
+      );
+      expect(screen.getByTestId('np-microphone-label').textContent).toBe(
+        'iPhone microphone',
+      );
+    });
+
+    act(() => {
+      phoneMicrophoneDisconnectedCallbacks[0]({
+        eventId: 'event-123',
+        timestamp: new Date().toISOString(),
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('np-microphone-disconnected').textContent).toBe(
+        'true',
+      );
+      expect(screen.getByTestId('np-microphone-label').textContent).toBe(
+        'iPhone microphone disconnected',
+      );
+    });
+  });
+
+  it('clears the disconnected flag when a new connection arrives', async () => {
+    render(<NowPlayingSection />);
+
+    await waitFor(() => {
+      expect(phoneMicrophoneConnectedCallbacks.length).toBeGreaterThan(0);
+      expect(phoneMicrophoneDisconnectedCallbacks.length).toBeGreaterThan(0);
+    });
+
+    act(() => {
+      phoneMicrophoneConnectedCallbacks[0]({
+        eventId: 'event-123',
+        deviceName: 'iPhone microphone',
+      });
+    });
+    act(() => {
+      phoneMicrophoneDisconnectedCallbacks[0]({
+        eventId: 'event-123',
+        timestamp: new Date().toISOString(),
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('np-microphone-disconnected').textContent).toBe(
+        'true',
+      );
+    });
+
+    act(() => {
+      phoneMicrophoneConnectedCallbacks[0]({
+        eventId: 'event-123',
+        deviceName: 'iPhone microphone',
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('np-microphone-disconnected').textContent).toBe(
+        'false',
+      );
+      expect(screen.getByTestId('np-microphone-label').textContent).toBe(
+        'iPhone microphone',
+      );
+    });
   });
 });

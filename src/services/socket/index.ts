@@ -32,6 +32,7 @@ export {
   onParticipantPremiumUpdated,
   onAttendeePasswordPromptRequested,
   onPhoneMicrophoneConnected,
+  onPhoneMicrophoneDisconnected,
   onAudioMatchChunk,
   onAudioMatchUpdate,
   onPhoneAudioStream,

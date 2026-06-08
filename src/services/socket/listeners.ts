@@ -135,6 +135,10 @@ export function onPhoneMicrophoneConnected(callback: Listener<'phone_microphone_
   on('phone_microphone_connected', callback);
 }
 
+export function onPhoneMicrophoneDisconnected(callback: Listener<'phone_microphone_disconnected'>) {
+  on('phone_microphone_disconnected', callback);
+}
+
 export function onAudioMatchChunk(callback: Listener<'audio_match_chunk'>) {
   on('audio_match_chunk', callback);
 }

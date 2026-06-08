@@ -1,6 +1,6 @@
 import React from 'react';
 import { m } from 'motion/react';
-import { Mic } from 'lucide-react';
+import { Mic, MicOff } from 'lucide-react';
 import { CoverCube } from './CoverCube';
 
 type PlayerState =
@@ -24,6 +24,7 @@ interface NowPlayingProps {
   attentionKey?: number;
   celebrateKey?: number;
   microphoneLabel?: string;
+  microphoneDisconnected?: boolean;
   audioLevel?: number;
   pcmData?: Float32Array;
 }
@@ -247,6 +248,7 @@ export function NowPlaying({
   attentionKey = 0,
   celebrateKey = 0,
   microphoneLabel,
+  microphoneDisconnected = false,
   audioLevel,
   pcmData,
 }: NowPlayingProps) {
@@ -361,16 +363,31 @@ export function NowPlaying({
             <span className="truncate">{config.badge}</span>
           </div>
           {microphoneLabel && (
-            <div className="inline-flex h-6 max-w-full items-center gap-1.5 rounded-md bg-blue-600/80 px-2 text-xs font-semibold text-white backdrop-blur-sm">
-              <Mic className="h-3 w-3 shrink-0" />
-              <span className="truncate">{microphoneLabel}</span>
-            </div>
+            microphoneDisconnected ? (
+              <div
+                data-testid="phone-microphone-disconnected-pill"
+                aria-label="Phone microphone disconnected"
+                className="inline-flex h-6 max-w-full items-center gap-1.5 rounded-md bg-zinc-500/80 px-2 text-xs font-semibold text-white backdrop-blur-sm"
+              >
+                <MicOff className="h-3 w-3 shrink-0" />
+                <span className="truncate">{`${microphoneLabel} disconnected`}</span>
+              </div>
+            ) : (
+              <div
+                data-testid="phone-microphone-connected-pill"
+                aria-label="Phone microphone connected"
+                className="inline-flex h-6 max-w-full items-center gap-1.5 rounded-md bg-blue-600/80 px-2 text-xs font-semibold text-white backdrop-blur-sm"
+              >
+                <Mic className="h-3 w-3 shrink-0" />
+                <span className="truncate">{microphoneLabel}</span>
+              </div>
+            )
           )}
         </div>
 
-        {pcmData ? (
+        {pcmData && !microphoneDisconnected ? (
           <PcmWaveform pcmData={pcmData} />
-        ) : microphoneLabel ? (
+        ) : microphoneLabel && !microphoneDisconnected ? (
           <AnimatedWaveform audioLevel={audioLevel} />
         ) : (
           <Waveform />

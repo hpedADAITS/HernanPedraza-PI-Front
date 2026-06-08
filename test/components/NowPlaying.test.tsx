@@ -63,4 +63,44 @@ describe('NowPlaying', () => {
 
     expect(screen.getByText('0:12')).toBeInTheDocument();
   });
+
+  it('renders the connected phone microphone pill when a microphone is connected', () => {
+    render(
+      <NowPlaying
+        status="playing"
+        songTitle="Track"
+        artist="Artist"
+        microphoneLabel="iPhone microphone"
+      />,
+    );
+
+    expect(
+      screen.getByTestId('phone-microphone-connected-pill'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('iPhone microphone')).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('phone-microphone-disconnected-pill'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('swaps to a disconnected phone microphone pill when the socket drops', () => {
+    render(
+      <NowPlaying
+        status="playing"
+        songTitle="Track"
+        artist="Artist"
+        microphoneLabel="iPhone microphone"
+        microphoneDisconnected
+      />,
+    );
+
+    const pill = screen.getByTestId('phone-microphone-disconnected-pill');
+    expect(pill).toBeInTheDocument();
+    expect(pill).toHaveTextContent(/disconnected/i);
+    expect(pill).toHaveTextContent('iPhone microphone');
+    expect(pill).toHaveAttribute('aria-label', 'Phone microphone disconnected');
+    expect(
+      screen.queryByTestId('phone-microphone-connected-pill'),
+    ).not.toBeInTheDocument();
+  });
 });

@@ -111,6 +111,11 @@ export interface PhoneMicrophoneConnectedPayload {
   deviceName?: string;
 }
 
+export interface PhoneMicrophoneDisconnectedPayload {
+  eventId?: string;
+  timestamp?: string;
+}
+
 export interface AudioMatchUpdatePayload {
   eventId?: string;
   matches?: Array<{
@@ -160,6 +165,7 @@ export interface SocketEventPayloads {
   event_ended: EventEndedPayload;
   attendee_password_prompt_requested: AttendeePasswordPromptPayload;
   phone_microphone_connected: PhoneMicrophoneConnectedPayload;
+  phone_microphone_disconnected: PhoneMicrophoneDisconnectedPayload;
   audio_match_update: AudioMatchUpdatePayload;
   audio_match_chunk: AudioMatchChunkPayload;
   phone_audio_stream: PhoneAudioStreamPayload;

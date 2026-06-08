@@ -3,14 +3,14 @@ import { m } from 'motion/react';
 import { NowPlaying } from '@/components/common';
 import { NOW_PLAYING } from '@/constants/dashboard';
 import { SCALE_IN } from '@/constants/animations';
-import { initSocket, onSongQueued, onSongNowPlaying, onSongRejected, onSongSkipped, onQueueUpdated, onSongSuggested, onPhoneMicrophoneConnected, onAudioMatchChunk, onAudioMatchUpdate, onPhoneAudioStream, off } from '@/services/socket';
+import { initSocket, onSongQueued, onSongNowPlaying, onSongRejected, onSongSkipped, onQueueUpdated, onSongSuggested, onPhoneMicrophoneConnected, onPhoneMicrophoneDisconnected, onAudioMatchChunk, onAudioMatchUpdate, onPhoneAudioStream, off } from '@/services/socket';
 import { normalizeNowPlaying, normalizeQueueUpdated, normalizeSocketSong } from '@/services/socket/normalize';
 import { songsAPI } from '@/services/api';
 import { listenDebugSongEvents } from '@/utils/debugSongEvents';
 import { getStoredEventId } from '@/services/session';
 import { useTrackedTimeout } from '@/hooks/useTrackedTimeout';
 import type { Song } from '@/types/songs';
-import type { NowPlayingEventPayload, QueueUpdatedPayload, SongEventPayload, PhoneMicrophoneConnectedPayload, AudioMatchChunkPayload, AudioMatchUpdatePayload, PhoneAudioStreamPayload } from '@/services/socket/contracts';
+import type { NowPlayingEventPayload, QueueUpdatedPayload, SongEventPayload, PhoneMicrophoneConnectedPayload, PhoneMicrophoneDisconnectedPayload, AudioMatchChunkPayload, AudioMatchUpdatePayload, PhoneAudioStreamPayload } from '@/services/socket/contracts';
 
 interface NowPlayingSong {
   id: string;
@@ -119,6 +119,7 @@ interface NowPlayingSectionState {
   attentionKey: number;
   celebrateKey: number;
   microphone: string | null;
+  microphoneDisconnected: boolean;
   audioLevel: number;
   pcmData: Float32Array | null;
 }
@@ -136,6 +137,7 @@ type NowPlayingSectionAction =
   | { type: 'queue_updated'; payload: QueueUpdatedPayload }
   | { type: 'clear_temp_status' }
   | { type: 'microphone_connected'; deviceName: string }
+  | { type: 'microphone_disconnected' }
   | { type: 'audio_level'; level: number }
   | { type: 'audio_pcm'; pcm: Float32Array }
   | { type: 'audio_match_update'; payload: AudioMatchUpdatePayload };
@@ -257,6 +259,13 @@ function nowPlayingSectionReducer(
       return {
         ...state,
         microphone: action.deviceName,
+        microphoneDisconnected: false,
+      };
+    case 'microphone_disconnected':
+      if (!state.microphone || state.microphoneDisconnected) return state;
+      return {
+        ...state,
+        microphoneDisconnected: true,
       };
     case 'audio_level':
       return {
@@ -318,6 +327,7 @@ export function NowPlayingSection() {
     attentionKey: 0,
     celebrateKey: 0,
     microphone: null,
+    microphoneDisconnected: false,
     audioLevel: 0,
     pcmData: null,
   });
@@ -438,6 +448,10 @@ export function NowPlayingSection() {
       dispatch({ type: 'microphone_connected', deviceName: data.deviceName || 'Phone microphone' });
     };
 
+    const handlePhoneMicrophoneDisconnected = (_data: PhoneMicrophoneDisconnectedPayload) => {
+      dispatch({ type: 'microphone_disconnected' });
+    };
+
     const handleAudioMatchChunk = (data: AudioMatchChunkPayload) => {
       if (!data.pcm || data.pcm.length === 0) return;
       dispatch({ type: 'audio_pcm', pcm: data.pcm });
@@ -459,6 +473,7 @@ export function NowPlayingSection() {
     onSongSkipped(handleSongSkipped);
     onQueueUpdated(handleQueueUpdated);
     onPhoneMicrophoneConnected(handlePhoneMicrophoneConnected);
+    onPhoneMicrophoneDisconnected(handlePhoneMicrophoneDisconnected);
     onAudioMatchChunk(handleAudioMatchChunk);
     onAudioMatchUpdate(handleAudioMatchUpdate);
     onPhoneAudioStream(handlePhoneAudioStream);
@@ -480,6 +495,7 @@ export function NowPlayingSection() {
       off('song_skipped', handleSongSkipped);
       off('queue_updated', handleQueueUpdated);
       off('phone_microphone_connected', handlePhoneMicrophoneConnected);
+      off('phone_microphone_disconnected', handlePhoneMicrophoneDisconnected);
       off('audio_match_chunk', handleAudioMatchChunk);
       off('audio_match_update', handleAudioMatchUpdate);
       off('phone_audio_stream', handlePhoneAudioStream);
@@ -574,8 +590,11 @@ export function NowPlayingSection() {
           attentionKey={state.attentionKey}
           celebrateKey={state.celebrateKey}
           microphoneLabel={state.microphone || undefined}
-          audioLevel={state.microphone ? state.audioLevel : undefined}
-          pcmData={state.microphone && state.pcmData ? state.pcmData : undefined}
+          microphoneDisconnected={
+            state.microphoneDisconnected && Boolean(state.microphone)
+          }
+          audioLevel={state.microphone && !state.microphoneDisconnected ? state.audioLevel : undefined}
+          pcmData={state.microphone && !state.microphoneDisconnected && state.pcmData ? state.pcmData : undefined}
         />
       </m.div>
     </m.div>
