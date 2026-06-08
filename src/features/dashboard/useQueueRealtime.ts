@@ -88,6 +88,7 @@ export function useQueueRealtime(mode: 'attendee' | 'dj', eventId?: string) {
   const removeSong = useCallback((songId: string, reason: RemovalReason = 'played') => {
     setState((current) => {
       const removed = current.songs.find((song) => song._id === songId);
+      const nowPlayingRemoved = current.nowPlaying?.songId === songId;
       if (removed && (reason === 'rejected' || reason === 'skipped')) {
         const id = `${songId}-${reason}-${Date.now()}`;
         setFallingCards((cards) => [...cards, { id, song: removed, reason }]);
@@ -98,6 +99,7 @@ export function useQueueRealtime(mode: 'attendee' | 'dj', eventId?: string) {
 
       return {
         ...current,
+        nowPlaying: nowPlayingRemoved ? null : current.nowPlaying,
         songs: current.songs.filter((song) => song._id !== songId),
         selectedSongId: current.selectedSongId === songId ? null : current.selectedSongId,
       };
@@ -223,7 +225,17 @@ export function useQueueRealtime(mode: 'attendee' | 'dj', eventId?: string) {
         let nextSongs = current.songs;
 
         if (data?.songId && data?.voteScore != null) {
-          nextSongs = nextSongs.map((song) => (song._id === data.songId ? { ...song, voteScore: data.voteScore ?? song.voteScore } : song));
+          const direction = data.value === 1 ? 'up' : data.value === -1 ? 'down' : undefined;
+          nextSongs = nextSongs.map((song) =>
+            song._id === data.songId
+              ? {
+                  ...song,
+                  voteScore: data.voteScore ?? song.voteScore,
+                  voteCount: data.voteCount ?? song.voteCount,
+                  voteFlash: direction,
+                }
+              : song,
+          );
         }
 
         const affectedSongs = data?.affectedSongs;

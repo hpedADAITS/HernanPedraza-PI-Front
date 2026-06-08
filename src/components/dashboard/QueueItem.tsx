@@ -1,7 +1,7 @@
 import React, { useState, type MouseEvent } from 'react';
 import { m, AnimatePresence } from 'motion/react';
 import { clsx } from 'clsx';
-import { Play, X, Clock, UserX, SkipForward, Check, Mic } from 'lucide-react';
+import { Play, X, Clock, UserX, SkipForward, Check, Mic, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { DEFAULT_COOLDOWN_MS, formatCooldownDuration } from '@/constants/cooldowns';
 import { CooldownDurationSelect } from './CooldownDurationSelect';
@@ -11,6 +11,8 @@ import { useSound } from '@/hooks/useSound';
 import { setCooldownAck, kickParticipantAck } from '@/services/socket/emitters';
 import { useToast } from '@/hooks/useToast';
 import { t } from '@/i18n';
+import * as socket from '@/services/socket';
+import { getStoredParticipantId } from '@/services/session';
 import type { Song } from '@/types/songs';
 import type { RemovalReason } from '@/features/dashboard/useQueueRealtime';
 
@@ -73,6 +75,7 @@ export function QueueItem({
 }: QueueItemProps) {
   const isDj = context.mode === 'dj';
   const [cooldownMs, setCooldownMs] = useState(DEFAULT_COOLDOWN_MS);
+  const [voting, setVoting] = useState(false);
   const { playSound } = useSound();
   const { toast } = useToast();
   const canModerateRequester = !!song.requestedBy?._id && !isRequestedByDj(song, djUserId, djParticipantId);
@@ -81,6 +84,27 @@ export function QueueItem({
   // assigns a trackId, the server will reject the push.
   const hasMatchedTrack = Boolean(song.recognitionMatch?.trackId);
   const canSendNow = hasMatchedTrack && song.status !== 'PLAYING';
+
+  const handleAttendeeVote = async (value: 1 | -1, e: MouseEvent) => {
+    e.stopPropagation();
+    if (!eventId || voting) return;
+
+    const participantId = getStoredParticipantId();
+    if (!participantId) {
+      toast.error(t('Session data missing'));
+      return;
+    }
+
+    playSound(value === 1 ? 'voteUp' : 'voteDown');
+    setVoting(true);
+    try {
+      await socket.castVote(eventId, song._id, participantId, value);
+    } catch (error) {
+      toast.error(error instanceof Error && error.message ? error.message : t('Vote failed'));
+    } finally {
+      setVoting(false);
+    }
+  };
 
   const handleAdminAction = async (action: string, e: MouseEvent) => {
     e.stopPropagation();
@@ -424,14 +448,41 @@ export function QueueItem({
             </div>
 
             <div className="flex flex-col items-end gap-1">
-              <span
-                className={clsx(
-                  'text-sm font-semibold',
-                  isDarkMode ? 'text-slate-100' : 'text-slate-700',
-                )}
+              {!isDj && (song.status === 'PLAYING' || song.status === 'APPROVED') && (
+                <div className="mb-1 flex items-center gap-1">
+                  <VoteMiniButton
+                    label={t('Vote Up')}
+                    disabled={voting}
+                    tone="up"
+                    onClick={(e) => handleAttendeeVote(1, e)}
+                  />
+                  <VoteMiniButton
+                    label={t('Vote Down')}
+                    disabled={voting}
+                    tone="down"
+                    onClick={(e) => handleAttendeeVote(-1, e)}
+                  />
+                </div>
+              )}
+              <m.span
+                key={`${song._id}-${song.voteScore}-${song.voteFlash || 'none'}`}
+                initial={
+                  song.voteFlash
+                    ? {
+                        scale: 1.22,
+                        color: song.voteFlash === 'up' ? '#16a34a' : '#dc2626',
+                      }
+                    : false
+                }
+                animate={{
+                  scale: 1,
+                  color: isDarkMode ? '#f1f5f9' : '#334155',
+                }}
+                transition={{ duration: 0.42 }}
+                className="text-sm font-semibold"
               >
                 {song.voteScore}
-              </span>
+              </m.span>
               <span
                 className={clsx(
                   'text-xs',
@@ -445,5 +496,41 @@ export function QueueItem({
         )}
       </AnimatePresence>
     </m.div>
+  );
+}
+
+function VoteMiniButton({
+  label,
+  tone,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  tone: 'up' | 'down';
+  disabled: boolean;
+  onClick: (event: MouseEvent) => void;
+}) {
+  const Icon = tone === 'up' ? ThumbsUp : ThumbsDown;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <m.button
+          type="button"
+          aria-label={label}
+          disabled={disabled}
+          whileTap={disabled ? undefined : { scale: 0.94 }}
+          onClick={onClick}
+          className={clsx(
+            'grid h-8 w-8 place-items-center rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-45',
+            tone === 'up'
+              ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+              : 'bg-red-100 text-red-700 hover:bg-red-200',
+          )}
+        >
+          <Icon size={15} />
+        </m.button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   );
 }

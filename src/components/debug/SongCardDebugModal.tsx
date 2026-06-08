@@ -639,6 +639,7 @@ function renderQueueTestWindow(eventId: string) {
         const requester = { _id: 'debug-attendee', nickname: 'Debug Attendee' };
         const state = {
           nextId: 1,
+          attendees: [requester],
           pending: [],
           queue: [],
           nowPlaying: null,
@@ -649,6 +650,7 @@ function renderQueueTestWindow(eventId: string) {
           state.pending.find((song) => song._id === id) ||
           state.queue.find((song) => song._id === id);
 
+        const autoRejectThreshold = () => -Math.max(1, Math.ceil(state.attendees.length / 2));
         const durationOf = (song) => song?.totalDuration ?? 0;
         const escapeHtml = (value) =>
           String(value)
@@ -736,7 +738,7 @@ function renderQueueTestWindow(eventId: string) {
             voteCount: song.voteCount,
             status: song.status,
           });
-          if (song.voteScore <= -8 && (song.status === 'PENDING' || song.status === 'APPROVED')) {
+          if (song.voteScore <= autoRejectThreshold() && (song.status === 'PENDING' || song.status === 'APPROVED' || song.status === 'PLAYING')) {
             rejectSong(id, 'Rejected by downvotes');
             return;
           }

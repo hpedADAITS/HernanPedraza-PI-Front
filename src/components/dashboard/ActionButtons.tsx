@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { m } from 'motion/react';
-import { ThumbsUp, ThumbsDown, LogOut, Settings, Plus, Users } from 'lucide-react';
+import { ArrowDown, ArrowUp, LogOut, Music2, Plus, Settings, Users } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ANIMATION_DURATION } from '@/constants/animations';
@@ -47,13 +47,15 @@ const getCurrentParticipantId = () => {
 const VOTE_BUTTON_COLORS = {
   emerald: {
     button:
-      'border-emerald-500 bg-emerald-600 text-white hover:border-emerald-600 hover:bg-emerald-700 focus-visible:ring-emerald-200',
-    icon: 'bg-white/15 group-hover:bg-white/20',
+      'border-emerald-300/80 bg-[radial-gradient(circle_at_70%_18%,rgba(255,255,255,0.42),transparent_30%),linear-gradient(135deg,#059669_0%,#10b981_52%,#22c55e_100%)] text-white shadow-[0_14px_32px_rgba(16,185,129,0.32),inset_0_1px_0_rgba(255,255,255,0.36)] hover:border-emerald-200 focus-visible:ring-emerald-200',
+    icon: 'bg-black/10 ring-1 ring-white/35 group-hover:bg-white/16',
+    accent: 'text-emerald-100',
   },
   red: {
     button:
-      'border-red-500 bg-red-600 text-white hover:border-red-600 hover:bg-red-700 focus-visible:ring-red-200',
-    icon: 'bg-white/15 group-hover:bg-white/20',
+      'border-rose-300/80 bg-[radial-gradient(circle_at_70%_18%,rgba(255,255,255,0.38),transparent_30%),linear-gradient(135deg,#be123c_0%,#f43f5e_54%,#fb7185_100%)] text-white shadow-[0_14px_32px_rgba(244,63,94,0.28),inset_0_1px_0_rgba(255,255,255,0.34)] hover:border-rose-200 focus-visible:ring-rose-200',
+    icon: 'bg-black/10 ring-1 ring-white/35 group-hover:bg-white/16',
+    accent: 'text-rose-100',
   },
 };
 
@@ -190,7 +192,7 @@ export function ActionButtons({
         {showVoting && !isDj && <VotingButtons />}
 
         {showActions && (
-          <div className="grid w-full max-w-[744px] grid-cols-[repeat(auto-fit,minmax(64px,1fr))] justify-items-center gap-4">
+          <div className="flex w-full max-w-[744px] flex-wrap items-center justify-center gap-4">
             <ActionButton
               icon={Plus}
               label={t('Queue a song')}
@@ -362,8 +364,7 @@ function VotingButtons() {
     setVoting(true);
     try {
       await socket.castVote(eventId, currentSong._id, participantId, value);
-      const direction = value === 1 ? '👍' : '👎';
-      success(`${direction} ${currentSong.title}`);
+      success(value === 1 ? t('Track boosted') : t('Track lowered'));
     } catch (err: unknown) {
       error(getErrorMessage(err, t('Vote failed')));
     } finally {
@@ -377,14 +378,14 @@ function VotingButtons() {
   return (
     <div className="flex w-full justify-center gap-4 lg:gap-3">
       <VoteButton
-        icon={ThumbsUp}
+        icon={ArrowUp}
         color="emerald"
         label={t('Vote Up')}
         onClick={() => handleVote(1)}
         disabled={!currentSong || votingDisabled}
       />
       <VoteButton
-        icon={ThumbsDown}
+        icon={ArrowDown}
         color="red"
         label={t('Vote Down')}
         onClick={() => handleVote(-1)}
@@ -423,12 +424,18 @@ function VoteButton({
           onHoverStart={() => !disabled && playSound('buttonHover')}
           disabled={disabled}
           transition={{ duration: ANIMATION_DURATION.fast }}
-          className={`group flex h-16 w-16 items-center justify-center rounded-full border shadow-[0_12px_28px_rgba(15,23,42,0.16)] outline-none transition-all focus-visible:ring-4 md:h-[72px] md:w-[72px] lg:h-14 lg:w-14 ${VOTE_BUTTON_COLORS[color].button} ${disabled ? 'cursor-not-allowed opacity-45 grayscale' : ''}`}
+          className={`group relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border outline-none transition-all focus-visible:ring-4 md:h-[72px] md:w-[72px] lg:h-14 lg:w-14 ${VOTE_BUTTON_COLORS[color].button} ${disabled ? 'cursor-not-allowed opacity-45 grayscale' : ''}`}
         >
+          <span className="absolute inset-1 rounded-full border border-white/20" />
           <span
-            className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors md:h-12 md:w-12 lg:h-10 lg:w-10 ${VOTE_BUTTON_COLORS[color].icon}`}
+            className={`relative flex h-11 w-11 items-center justify-center rounded-full transition-colors md:h-12 md:w-12 lg:h-10 lg:w-10 ${VOTE_BUTTON_COLORS[color].icon}`}
           >
-            <Icon size={28} strokeWidth={2.4} />
+            <Music2
+              className={`absolute h-4 w-4 -translate-y-2.5 translate-x-2.5 opacity-85 ${VOTE_BUTTON_COLORS[color].accent}`}
+              strokeWidth={2.2}
+              aria-hidden="true"
+            />
+            <Icon size={28} strokeWidth={2.8} aria-hidden="true" />
           </span>
         </m.button>
       </TooltipTrigger>
@@ -492,71 +499,67 @@ function ActionButton({
       'border-slate-900/10 bg-[linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)] text-[#ff4f66] shadow-[0_10px_22px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] hover:border-rose-200 focus-visible:ring-rose-100',
   };
   const expandedWidth = {
-    queue: 'sm:group-hover/action:w-[360px] sm:group-focus-within/action:w-[360px]',
-    settings: 'sm:group-hover/action:w-[300px] sm:group-focus-within/action:w-[300px]',
-    friends: 'sm:group-hover/action:w-[300px] sm:group-focus-within/action:w-[300px]',
-    leave: 'sm:group-hover/action:w-[288px] sm:group-focus-within/action:w-[288px]',
-  }[variant];
-  const expandedSide = {
-    queue: 'left-0',
-    settings: 'left-1/2 -translate-x-1/2',
-    friends: 'right-0',
-    leave: 'right-0',
+    queue: 'sm:hover:w-[360px] sm:focus-visible:w-[360px]',
+    settings: 'sm:hover:w-[300px] sm:focus-visible:w-[300px]',
+    friends: 'sm:hover:w-[300px] sm:focus-visible:w-[300px]',
+    leave: 'sm:hover:w-[288px] sm:focus-visible:w-[288px]',
   }[variant];
 
+  if (collapsed) {
+    return <span className="h-[62px] w-16 flex-shrink-0" aria-hidden="true" />;
+  }
+
   return (
-    <div className="group/action relative h-[62px] w-full min-w-16 max-w-[180px]">
-      <m.button
-        type="button"
-        whileHover={{ y: -1 }}
-        whileTap={{ scale: 0.99 }}
-        onClick={activateActionButton}
-        onHoverStart={handleHoverStart}
-        onHoverEnd={handleHoverEnd}
-        onFocus={() => onHoverChange?.(true)}
-        onBlur={() => onHoverChange?.(false)}
-        transition={{ duration: ANIMATION_DURATION.fast }}
-        className={`group absolute top-0 z-10 flex h-[62px] w-16 items-center justify-center gap-0 overflow-hidden rounded-xl border px-0 font-sans outline-none transition-[width,transform,border-color,opacity] duration-100 ease-out focus-visible:ring-4 ${expandedSide} ${iconOnly ? '' : expandedWidth} ${collapsed ? 'pointer-events-none opacity-0' : 'will-change-[width,transform]'} ${styles[variant]}`}
-      >
-        {iconOnly ? (
-          <m.span
-            className="flex-shrink-0"
-            whileHover={{ rotate: 45 }}
-            transition={{ duration: ANIMATION_DURATION.fast }}
-          >
-            <Icon
-              size={variant === 'queue' ? 27 : 24}
-              strokeWidth={2}
-              aria-hidden="true"
-            />
-          </m.span>
-        ) : (
+    <m.button
+      type="button"
+      whileHover={{ y: -1 }}
+      whileTap={{ scale: 0.99 }}
+      onClick={activateActionButton}
+      onHoverStart={handleHoverStart}
+      onHoverEnd={handleHoverEnd}
+      onFocus={() => onHoverChange?.(true)}
+      onBlur={() => onHoverChange?.(false)}
+      transition={{ duration: ANIMATION_DURATION.fast }}
+      className={`group relative flex h-[62px] w-16 will-change-[width,transform] items-center justify-center gap-0 overflow-hidden rounded-xl border px-0 font-sans outline-none transition-[width,transform,border-color] duration-100 ease-out sm:hover:delay-75 sm:focus-visible:delay-0 focus-visible:ring-4 ${iconOnly ? '' : expandedWidth} ${styles[variant]}`}
+    >
+      {iconOnly ? (
+        <m.span
+          className="flex-shrink-0"
+          whileHover={{ rotate: 45 }}
+          transition={{ duration: ANIMATION_DURATION.fast }}
+        >
           <Icon
-            className="flex-shrink-0"
             size={variant === 'queue' ? 27 : 24}
             strokeWidth={2}
             aria-hidden="true"
           />
-        )}
-        {!iconOnly && (
-          <span className="ml-0 flex max-w-0 min-w-0 flex-col items-start overflow-hidden whitespace-nowrap leading-none opacity-0 transition-[max-width,margin-left,opacity] duration-100 ease-out group-hover:ml-5 group-hover:max-w-[220px] group-hover:opacity-100 group-focus-visible:ml-5 group-focus-visible:max-w-[220px] group-focus-visible:opacity-100">
-            <span className="text-[13px] font-extrabold tracking-normal">
-              {label}
-            </span>
-            <span
-              className={`mt-2 truncate text-[11px] font-semibold ${
-                variant === 'leave'
-                  ? 'text-rose-400/80'
-                  : variant === 'settings'
-                    ? 'text-slate-500'
-                    : 'text-white/75'
-              }`}
-            >
-              {subtitle}
-            </span>
+        </m.span>
+      ) : (
+        <Icon
+          className="flex-shrink-0"
+          size={variant === 'queue' ? 27 : 24}
+          strokeWidth={2}
+          aria-hidden="true"
+        />
+      )}
+      {!iconOnly && (
+        <span className="ml-0 flex max-w-0 min-w-0 flex-col items-start overflow-hidden whitespace-nowrap leading-none opacity-0 transition-[max-width,margin-left,opacity] duration-100 ease-out group-hover:ml-5 group-hover:max-w-[220px] group-hover:opacity-100 group-focus-visible:ml-5 group-focus-visible:max-w-[220px] group-focus-visible:opacity-100">
+          <span className="text-[13px] font-extrabold tracking-normal">
+            {label}
           </span>
-        )}
-      </m.button>
-    </div>
+          <span
+            className={`mt-2 truncate text-[11px] font-semibold ${
+              variant === 'leave'
+                ? 'text-rose-400/80'
+                : variant === 'settings'
+                  ? 'text-slate-500'
+                  : 'text-white/75'
+            }`}
+          >
+            {subtitle}
+          </span>
+        </span>
+      )}
+    </m.button>
   );
 }

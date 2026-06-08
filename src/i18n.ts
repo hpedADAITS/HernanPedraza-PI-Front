@@ -335,6 +335,8 @@ const es: Record<string, string> = {
   'This microphone link is missing its security token.': 'A este enlace de microfono le falta el token de seguridad.',
   'This is a dangerous action. The current access code will stop working immediately. All connected attendees will be notified of the new code, and anyone trying to join with the old code will fail. This cannot be undone.': 'Esta accion es peligrosa. El codigo de acceso actual dejara de funcionar inmediatamente. Todos los asistentes conectados recibiran el nuevo codigo y quien intente unirse con el codigo antiguo fallara. No se puede deshacer.',
   'Title': 'Titulo',
+  'Track boosted': 'Pista impulsada',
+  'Track lowered': 'Pista bajada',
   'The microphone is already in use by another app or browser tab.': 'El microfono ya esta en uso por otra app o pestana del navegador.',
   'The DJ paused your song requests.': 'El DJ pauso tus solicitudes de canciones.',
   'Total': 'Total',

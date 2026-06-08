@@ -54,6 +54,7 @@ export interface Song {
   } | null;
   eventId?: string;
   createdAt?: string;
+  voteFlash?: 'up' | 'down';
 }
 
 export interface NowPlayingMeta {
