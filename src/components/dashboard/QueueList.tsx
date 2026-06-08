@@ -189,10 +189,10 @@ export function QueueList({
 
 function QueueHeader({ isDarkMode }: { isDarkMode: boolean }) {
   return (
-    <>
+    <div className="flex items-center gap-3">
       <svg
         className={clsx(
-          'mt-0.5 h-[18px] w-[18px] flex-shrink-0',
+          'h-[18px] w-[18px] flex-shrink-0',
           isDarkMode ? 'text-slate-400' : 'text-slate-500',
         )}
         viewBox="0 0 24 24"
@@ -213,7 +213,7 @@ function QueueHeader({ isDarkMode }: { isDarkMode: boolean }) {
         />
       </svg>
 
-      <div>
+      <div className="flex flex-col justify-center">
         <h3
           className={clsx(
             'text-[13px] font-extrabold leading-tight tracking-[-0.02em]',
@@ -231,7 +231,7 @@ function QueueHeader({ isDarkMode }: { isDarkMode: boolean }) {
           Songs in the queue
         </p>
       </div>
-    </>
+    </div>
   );
 }
 

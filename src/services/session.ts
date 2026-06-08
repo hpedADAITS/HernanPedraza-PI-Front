@@ -12,6 +12,7 @@ export interface StoredEvent {
   settings?: {
     votingEnabled?: boolean;
     allowDownvotes?: boolean;
+    premiumVotesEnabled?: boolean;
   };
 }
 

@@ -12,6 +12,7 @@ export interface Song {
   title: string;
   artist: string;
   voteScore: number;
+  downvoteCount?: number;
   voteCount?: number;
   status: SongStatus | string;
   totalDuration?: number;

@@ -34,6 +34,7 @@ interface QueueUpdatedPayload {
 interface EventSettings {
   votingEnabled?: boolean;
   allowDownvotes?: boolean;
+  premiumVotesEnabled?: boolean;
 }
 
 const getErrorMessage = (err: unknown, fallback: string) =>

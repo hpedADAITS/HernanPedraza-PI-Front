@@ -23,6 +23,7 @@ export function normalizeSocketSong(
     title: payload.title || 'Untitled song',
     artist: payload.artist || 'Unknown artist',
     voteScore: payload.voteScore || 0,
+    downvoteCount: payload.downvoteCount || 0,
     voteCount: payload.voteCount,
     status: payload.status || fallbackStatus,
     totalDuration: duration,

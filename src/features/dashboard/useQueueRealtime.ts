@@ -226,8 +226,10 @@ export function useQueueRealtime(mode: 'attendee' | 'dj', eventId?: string) {
     };
 
     const handleVotesUpdated = (data: VotesUpdatedPayload) => {
-      const direction = data.value === 1 ? 'up' : data.value === -1 ? 'down' : undefined;
       const song = data.songId ? songsRef.current.find((item) => item._id === data.songId) : null;
+      const nextScore = data.voteScore ?? song?.voteScore ?? 0;
+      const scoreDiff = nextScore - (song?.voteScore || 0);
+      const direction = scoreDiff > 0 ? 'up' : scoreDiff < 0 ? 'down' : undefined;
       if (direction && song?.requestedBy?._id === getStoredParticipantId()) {
         toast.success(direction === 'up' ? t('Track boosted') : t('Track lowered'));
       }
@@ -240,7 +242,8 @@ export function useQueueRealtime(mode: 'attendee' | 'dj', eventId?: string) {
             song._id === data.songId
               ? {
                   ...song,
-                  voteScore: data.voteScore ?? song.voteScore,
+                  voteScore: nextScore,
+                  downvoteCount: data.downvoteCount ?? song.downvoteCount,
                   voteCount: data.voteCount ?? song.voteCount,
                   voteFlash: direction,
                 }

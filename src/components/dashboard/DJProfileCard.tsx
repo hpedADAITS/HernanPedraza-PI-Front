@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { m } from 'motion/react';
 import { clsx } from 'clsx';
-import { QrCode } from 'lucide-react';
+import { QrCode, SlidersHorizontal } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ProfilePictureUpload, UserAvatar } from '@/components/common';
-import { SettingsDialog, SettingsDialogActions, SettingsDialogButton } from '@/components/settings/SettingsUI';
+import { SettingsDialog, SettingsDialogActions, SettingsDialogButton, SettingsToggleRow } from '@/components/settings/SettingsUI';
 import { PROFILE_IMAGE, THEME_CONFIG } from '@/constants/dashboard';
 import { SLIDE_IN_LEFT } from '@/constants/animations';
 import { QRCodeModal } from './QRCodeModal';
 import { t } from '@/i18n';
+import { eventsAPI } from '@/services/api';
+import { getStoredEvent, setStoredEvent } from '@/services/session';
+import { useToast } from '@/hooks/useToast';
 
 interface DJProfileCardProps {
   userName: string;
@@ -31,6 +34,39 @@ export function DJProfileCard({
   const [showQRModal, setShowQRModal] = useState(false);
   const [showProfilePictureModal, setShowProfilePictureModal] =
     useState(false);
+  const [showVotingSettings, setShowVotingSettings] = useState(false);
+  const [premiumVotesEnabled, setPremiumVotesEnabled] = useState(
+    getStoredEvent()?.settings?.premiumVotesEnabled !== false,
+  );
+  const [savingVotingSettings, setSavingVotingSettings] = useState(false);
+  const { toast } = useToast();
+
+  const openVotingSettings = async () => {
+    setShowVotingSettings(true);
+    try {
+      const event = await eventsAPI.getEvent(eventId);
+      setPremiumVotesEnabled(event?.settings?.premiumVotesEnabled !== false);
+      setStoredEvent({ ...(getStoredEvent() || {}), ...event });
+    } catch {
+      /* use cached setting */
+    }
+  };
+
+  const saveVotingSettings = async () => {
+    setSavingVotingSettings(true);
+    try {
+      const event = await eventsAPI.updateEvent(eventId, {
+        settings: { premiumVotesEnabled },
+      });
+      setStoredEvent({ ...(getStoredEvent() || {}), ...event });
+      toast.success(t('Voting settings updated'));
+      setShowVotingSettings(false);
+    } catch (error) {
+      toast.error(error instanceof Error && error.message ? error.message : t('Failed to update voting settings'));
+    } finally {
+      setSavingVotingSettings(false);
+    }
+  };
 
   return (
     <TooltipProvider>
@@ -45,6 +81,20 @@ export function DJProfileCard({
         >
           {/* Glossy overlay */}
           <div className="absolute inset-0 bg-white/10" />
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <m.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={openVotingSettings}
+                className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-xl border border-white/25 bg-white/15 text-white shadow-lg backdrop-blur-md transition-colors hover:bg-white/25"
+              >
+                <SlidersHorizontal size={18} />
+              </m.button>
+            </TooltipTrigger>
+            <TooltipContent>{t('Voting Settings')}</TooltipContent>
+          </Tooltip>
 
           <div className="relative z-10 flex flex-col lg:flex-row items-center gap-4 lg:gap-3">
             {/* Avatar */}
@@ -126,6 +176,35 @@ export function DJProfileCard({
               className="w-full flex-none"
             >
               {t('Done')}
+            </SettingsDialogButton>
+          </SettingsDialogActions>
+        </SettingsDialog>
+
+        <SettingsDialog
+          open={showVotingSettings}
+          title={t('Voting Settings')}
+          onClose={() => setShowVotingSettings(false)}
+        >
+          <div className="mb-6 flex flex-col gap-3">
+            <SettingsToggleRow
+              label={t('Premium vote weighting')}
+              checked={premiumVotesEnabled}
+              onChange={() => setPremiumVotesEnabled((value) => !value)}
+            />
+          </div>
+          <SettingsDialogActions>
+            <SettingsDialogButton
+              onClick={() => setShowVotingSettings(false)}
+              disabled={savingVotingSettings}
+            >
+              {t('Cancel')}
+            </SettingsDialogButton>
+            <SettingsDialogButton
+              onClick={saveVotingSettings}
+              disabled={savingVotingSettings}
+              variant="primary"
+            >
+              {t('Save')}
             </SettingsDialogButton>
           </SettingsDialogActions>
         </SettingsDialog>

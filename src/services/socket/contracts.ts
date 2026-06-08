@@ -7,6 +7,7 @@ export interface SongEventPayload {
   title?: string;
   artist?: string;
   voteScore?: number;
+  downvoteCount?: number;
   voteCount?: number;
   status?: SongStatus | string;
   totalDuration?: number;
@@ -35,6 +36,7 @@ export interface VotesUpdatedPayload {
   participantId?: string;
   value?: number;
   voteScore?: number;
+  downvoteCount?: number;
   voteCount?: number;
   status?: SongStatus | string;
   timestamp?: string;
