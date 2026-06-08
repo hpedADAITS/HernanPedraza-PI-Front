@@ -137,7 +137,7 @@ const DashboardRightColumn = memo(function DashboardRightColumn({
           isDarkMode={isDarkMode}
           eventId={eventId}
         />
-        <DashboardNowPlayingSection />
+        <DashboardNowPlayingSection isDj={isDj} />
         <DashboardConnectedUsers
           mode={mode}
           isDarkMode={isDarkMode}

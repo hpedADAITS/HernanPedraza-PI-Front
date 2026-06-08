@@ -124,6 +124,10 @@ interface NowPlayingSectionState {
   pcmData: Float32Array | null;
 }
 
+interface NowPlayingSectionProps {
+  isDj?: boolean;
+}
+
 type NowPlayingSectionAction =
   | { type: 'initialize'; queue: Song[]; nowPlaying: NowPlayingSong | null }
   | { type: 'song_queued'; song: Song }
@@ -318,7 +322,7 @@ function nowPlayingSectionReducer(
   }
 }
 
-export function NowPlayingSection() {
+export function NowPlayingSection({ isDj = false }: NowPlayingSectionProps) {
   const [state, dispatch] = useReducer(nowPlayingSectionReducer, {
     queue: [],
     nowPlaying: null,
@@ -463,6 +467,7 @@ export function NowPlayingSection() {
     };
 
     const handleAudioMatchUpdate = (data: AudioMatchUpdatePayload) => {
+      if (!isDj) return;
       dispatch({ type: 'audio_match_update', payload: data });
     };
 
@@ -501,7 +506,7 @@ export function NowPlayingSection() {
       off('phone_audio_stream', handlePhoneAudioStream);
       stopDebugEvents();
     };
-  }, [eventId, showTemporaryStatus]);
+  }, [eventId, isDj, showTemporaryStatus]);
 
   /* Compute live elapsed/progress when playing */
   const queuedPreview = sortQueueSongs(state.queue).find(

@@ -112,7 +112,7 @@ describe('NowPlayingSection - audio_match_update', () => {
   });
 
   it('renders the matched track info when a fingerprint match is found', async () => {
-    render(<NowPlayingSection />);
+    render(<NowPlayingSection isDj />);
 
     await waitFor(() => {
       expect(audioMatchUpdateCallbacks.length).toBeGreaterThan(0);
@@ -155,7 +155,7 @@ describe('NowPlayingSection - audio_match_update', () => {
       },
     );
 
-    render(<NowPlayingSection />);
+    render(<NowPlayingSection isDj />);
 
     await waitFor(() => {
       expect(audioMatchUpdateCallbacks.length).toBeGreaterThan(0);
@@ -208,6 +208,56 @@ describe('NowPlayingSection - audio_match_update', () => {
       expect(screen.getByTestId('np-status').textContent).toBe('playing');
     });
     expect(screen.getByTestId('np-title').textContent).toBe('Sandstorm');
+
+    act(() => {
+      audioMatchUpdateCallbacks[0]({
+        eventId: 'event-123',
+        matches: [
+          {
+            trackId: 'track-2',
+            title: 'Other matched track',
+            artist: 'Other artist',
+            coverUrl: null,
+            duration: null,
+            offset: 0,
+            score: 0.9,
+          },
+        ],
+        timestamp: new Date().toISOString(),
+      });
+    });
+
+    expect(screen.getByTestId('np-status').textContent).toBe('playing');
+    expect(screen.getByTestId('np-title').textContent).toBe('Sandstorm');
+  });
+
+  it('ignores fingerprint match previews for attendees', async () => {
+    render(<NowPlayingSection />);
+
+    await waitFor(() => {
+      expect(audioMatchUpdateCallbacks.length).toBeGreaterThan(0);
+    });
+
+    act(() => {
+      audioMatchUpdateCallbacks[0]({
+        eventId: 'event-123',
+        matches: [
+          {
+            trackId: 'track-1',
+            title: 'Sandstorm',
+            artist: 'Darude',
+            coverUrl: null,
+            duration: 240,
+            offset: 0,
+            score: 0.95,
+          },
+        ],
+        timestamp: new Date().toISOString(),
+      });
+    });
+
+    expect(screen.getByTestId('np-status').textContent).toBe('idle');
+    expect(screen.getByTestId('np-title').textContent).not.toBe('Sandstorm');
   });
 });
 
