@@ -228,8 +228,11 @@ export function clearToken() {
 }
 
 /* Helper to make API calls */
-export async function apiCall(endpoint: string, options: RequestInit & { contentType?: string | null } = {}) {
-  const { contentType, ...rest } = options;
+export async function apiCall(
+  endpoint: string,
+  options: RequestInit & { auth?: boolean; contentType?: string | null } = {},
+) {
+  const { auth = true, contentType, ...rest } = options;
   const headers: Record<string, string> = {};
 
   if (contentType) {
@@ -239,7 +242,7 @@ export async function apiCall(endpoint: string, options: RequestInit & { content
   }
 
   /* Add auth token if available */
-  const token = getToken();
+  const token = auth ? getToken() : null;
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }

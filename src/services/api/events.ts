@@ -103,9 +103,9 @@ export const eventsAPI = {
     const data = await apiCall(
       `/events/${eventId}/phone-microphone/connect`,
       {
+        auth: false,
         method: 'POST',
-        body: JSON.stringify({ deviceName }),
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: JSON.stringify({ deviceName, token }),
       },
     );
     return data.data.microphone;
@@ -115,8 +115,9 @@ export const eventsAPI = {
     const data = await apiCall(
       `/events/${eventId}/audio-tracks/${trackId}/send-now`,
       {
+        auth: false,
         method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: JSON.stringify({ token }),
       },
     );
     return data.data.song;

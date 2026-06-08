@@ -120,6 +120,44 @@ describe('API Service', () => {
         expect.any(Object),
       );
     });
+
+    it('sends phone microphone tokens in the body without auth headers', async () => {
+      saveToken(tokenWithRole('DJ'));
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: { microphone: { eventId: 'event-1' } } }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      await eventsAPI.connectPhoneMicrophone('event-1', 'Android microphone', 'phone-token');
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining('/events/event-1/phone-microphone/connect'),
+        expect.objectContaining({
+          body: JSON.stringify({ deviceName: 'Android microphone', token: 'phone-token' }),
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+    });
+
+    it('sends matched track phone tokens in the body without auth headers', async () => {
+      saveToken(tokenWithRole('DJ'));
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: { song: { id: 'song-1' } } }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      await eventsAPI.sendMatchedAudioTrackNow('event-1', 'track-1', 'phone-token');
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining('/events/event-1/audio-tracks/track-1/send-now'),
+        expect.objectContaining({
+          body: JSON.stringify({ token: 'phone-token' }),
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+    });
   });
 
   describe('Token Lifecycle', () => {
