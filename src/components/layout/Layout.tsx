@@ -33,6 +33,7 @@ export function Layout({
     if (isWhite) return 'text-slate-900';
     return 'text-white';
   };
+  const year = new Date().getFullYear();
 
   return (
     <m.div
@@ -80,7 +81,7 @@ export function Layout({
       {/* Main Content */}
       <div
         className={clsx(
-          'relative z-10 flex-1 flex flex-col pb-10',
+          'relative z-10 flex-1 flex flex-col pb-16',
           className,
         )}
       >
@@ -89,14 +90,14 @@ export function Layout({
 
       {/* Footer */}
       {showNav && (
-        <footer className="relative px-6 pb-3 pt-1 flex justify-center items-end z-50">
+        <footer className="relative z-50 mt-auto flex items-end justify-center px-6 pb-6 pt-4">
           <div
             className={clsx(
-              'text-center text-[11.5px] font-medium pointer-events-none',
+              'pointer-events-none text-center text-[11.5px] font-medium leading-none',
               isDarkMode || !isWhite ? 'text-white/50' : 'text-slate-400',
             )}
           >
-            © 2025 SyncRequest (Non commercial rights reserved lol)
+            © {year} SyncRequest Non commercial rights 
           </div>
         </footer>
       )}
