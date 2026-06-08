@@ -148,6 +148,7 @@ export interface SocketEventPayloads {
   participant_banned: ParticipantEventPayload;
   participant_cooldown: ParticipantCooldownPayload;
   participant_cooldown_set: ParticipantCooldownPayload;
+  participant_cooldown_cleared: ParticipantEventPayload;
   participant_premium_updated: ParticipantPremiumPayload;
   participant_updated: ParticipantUpdatedPayload;
   participant_renamed: ParticipantUpdatedPayload;

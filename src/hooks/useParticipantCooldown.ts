@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { participantsAPI } from '@/services/api';
-import { getSocket } from '@/services/socket';
-import type { ParticipantCooldownPayload } from '@/services/socket/contracts';
+import { off, on } from '@/services/socket';
+import type { ParticipantCooldownPayload, ParticipantEventPayload } from '@/services/socket/contracts';
 
 function parseCooldown(value: unknown) {
   if (!value) return null;
@@ -41,17 +41,23 @@ export function useParticipantCooldown(participantId: string | null, enabled = t
       })
       .catch(() => {});
 
-    const socket = getSocket();
     const handleCooldown = (payload: ParticipantCooldownPayload) => {
       if (payload.participantId === participantId) {
         setCooldownState({ participantId, until: parseCooldown(payload.cooldownUntil) });
       }
     };
+    const handleCooldownCleared = (payload: ParticipantEventPayload) => {
+      if (payload.participantId === participantId) {
+        setCooldownState({ participantId, until: null });
+      }
+    };
 
-    socket?.on('participant_cooldown', handleCooldown);
+    on('participant_cooldown', handleCooldown);
+    on('participant_cooldown_cleared', handleCooldownCleared);
     return () => {
       active = false;
-      socket?.off('participant_cooldown', handleCooldown);
+      off('participant_cooldown', handleCooldown);
+      off('participant_cooldown_cleared', handleCooldownCleared);
     };
   }, [enabled, participantId]);
 

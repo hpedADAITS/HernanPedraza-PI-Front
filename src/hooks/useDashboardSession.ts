@@ -542,6 +542,15 @@ export function useDashboardSession({
       );
     };
 
+    const handleParticipantCooldownCleared = (data: ParticipantEventPayload) => {
+      if (isDj || data?.participantId !== participantId) return;
+
+      syncStoredParticipantProfile({
+        cooldownUntil: null,
+        cooldownReason: null,
+      });
+    };
+
     const handleParticipantBanned = (data: ParticipantEventPayload & { reason?: string }) => {
       if (isDj || data?.participantId !== participantId) return;
 
@@ -558,6 +567,7 @@ export function useDashboardSession({
     onEventEnded(handleEventEnded);
     on('participant_kicked', handleParticipantKicked);
     on('participant_cooldown', handleParticipantCooldown);
+    on('participant_cooldown_cleared', handleParticipantCooldownCleared);
     onParticipantBanned(handleParticipantBanned);
 
     if (socket?.connected) {
@@ -575,6 +585,7 @@ export function useDashboardSession({
       off('event_ended', handleEventEnded);
       off('participant_kicked', handleParticipantKicked);
       off('participant_cooldown', handleParticipantCooldown);
+      off('participant_cooldown_cleared', handleParticipantCooldownCleared);
       off('participant_banned', handleParticipantBanned);
     };
   }, [isDj, persistAccessCode]);
