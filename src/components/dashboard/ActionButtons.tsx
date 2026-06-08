@@ -287,7 +287,7 @@ const getVoteSettings = (event: unknown): EventSettings => {
 
 function VotingButtons() {
   const { playSound } = useSound();
-  const { error, info, success } = useToast();
+  const { error, info } = useToast();
   const [currentSong, setCurrentSong] = useState<CurrentSong | null>(null);
   const [voteSettings, setVoteSettings] = useState<EventSettings>({});
   const [voting, setVoting] = useState(false);
@@ -378,7 +378,6 @@ function VotingButtons() {
     setVoting(true);
     try {
       await socket.castVote(eventId, currentSong._id, participantId, value);
-      success(value === 1 ? t('Track boosted') : t('Track lowered'));
     } catch (err: unknown) {
       error(getErrorMessage(err, t('Vote failed')));
     } finally {
@@ -486,6 +485,7 @@ function ActionButton({
   const { playSound } = useSound();
 
   const activateActionButton = () => {
+    if (collapsed) return;
     if (soundKey) {
       playSound(soundKey);
     }
@@ -519,13 +519,11 @@ function ActionButton({
     leave: 'sm:hover:w-[288px] sm:focus-visible:w-[288px]',
   }[variant];
 
-  if (collapsed) {
-    return <span className="h-[62px] w-16 flex-shrink-0" aria-hidden="true" />;
-  }
-
   return (
     <m.button
       type="button"
+      tabIndex={collapsed ? -1 : undefined}
+      aria-hidden={collapsed || undefined}
       whileHover={{ y: -1 }}
       whileTap={{ scale: 0.99 }}
       onClick={activateActionButton}
@@ -534,7 +532,7 @@ function ActionButton({
       onFocus={() => onHoverChange?.(true)}
       onBlur={() => onHoverChange?.(false)}
       transition={{ duration: ANIMATION_DURATION.fast }}
-      className={`group relative flex h-[62px] w-16 will-change-[width,transform] items-center justify-center gap-0 overflow-hidden rounded-xl border px-0 font-sans outline-none transition-[width,transform,border-color] duration-100 ease-out sm:hover:delay-75 sm:focus-visible:delay-0 focus-visible:ring-4 ${iconOnly ? '' : expandedWidth} ${styles[variant]}`}
+      className={`group relative flex h-[62px] w-16 items-center justify-center gap-0 overflow-hidden rounded-xl border px-0 font-sans outline-none transition-[width,transform,border-color,opacity] duration-100 ease-out sm:hover:delay-75 sm:focus-visible:delay-0 focus-visible:ring-4 ${collapsed ? 'pointer-events-none opacity-0' : `will-change-[width,transform] ${iconOnly ? '' : expandedWidth}`} ${styles[variant]}`}
     >
       {iconOnly ? (
         <m.span

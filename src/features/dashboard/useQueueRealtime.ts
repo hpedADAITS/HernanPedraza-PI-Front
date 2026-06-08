@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useToast } from '@/hooks/useToast';
 import { eventsAPI, songsAPI } from '@/services/api';
 import * as socket from '@/services/socket';
 import { normalizeNowPlaying, normalizeQueueUpdated, normalizeSocketSong } from '@/services/socket/normalize';
-import { getStoredEvent } from '@/services/session';
+import { getStoredEvent, getStoredParticipantId } from '@/services/session';
 import { listenDebugSongEvents } from '@/utils/debugSongEvents';
 import { t } from '@/i18n';
 import type { Song } from '@/types/songs';
@@ -84,6 +84,11 @@ export function useQueueRealtime(mode: 'attendee' | 'dj', eventId?: string) {
   const [state, setState] = useState<QueueState>(() => getInitialState(eventId));
   const [fallingCards, setFallingCards] = useState<QueueCard[]>([]);
   const [tick, setTick] = useState(0);
+  const songsRef = useRef<Song[]>([]);
+
+  useEffect(() => {
+    songsRef.current = state.songs;
+  }, [state.songs]);
 
   const removeSong = useCallback((songId: string, reason: RemovalReason = 'played') => {
     setState((current) => {
@@ -221,11 +226,16 @@ export function useQueueRealtime(mode: 'attendee' | 'dj', eventId?: string) {
     };
 
     const handleVotesUpdated = (data: VotesUpdatedPayload) => {
+      const direction = data.value === 1 ? 'up' : data.value === -1 ? 'down' : undefined;
+      const song = data.songId ? songsRef.current.find((item) => item._id === data.songId) : null;
+      if (direction && song?.requestedBy?._id === getStoredParticipantId()) {
+        toast.success(direction === 'up' ? t('Track boosted') : t('Track lowered'));
+      }
+
       setState((current) => {
         let nextSongs = current.songs;
 
         if (data?.songId && data?.voteScore != null) {
-          const direction = data.value === 1 ? 'up' : data.value === -1 ? 'down' : undefined;
           nextSongs = nextSongs.map((song) =>
             song._id === data.songId
               ? {
