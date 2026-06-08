@@ -70,7 +70,9 @@ export function ActionButtons({
   const { playSound } = useSound();
   const isDj = mode === 'dj';
   const [isQueueHovered, setIsQueueHovered] = useState(false);
+  const [isLeaveHovered, setIsLeaveHovered] = useState(false);
   const queueHoverTimeoutRef = useRef<number | null>(null);
+  const leaveHoverTimeoutRef = useRef<number | null>(null);
   const { clearTrackedTimeout, setTrackedTimeout } = useTrackedTimeout();
   const [passwordPrompt, setPasswordPrompt] = useState<{
     reason: 'leave' | 'duplicate-login';
@@ -78,22 +80,32 @@ export function ActionButtons({
     afterSkip?: () => void;
   } | null>(null);
 
-  const handleQueueHoverChange = (nextHovered: boolean) => {
-    if (queueHoverTimeoutRef.current) {
-      clearTrackedTimeout(queueHoverTimeoutRef.current);
-      queueHoverTimeoutRef.current = null;
+  const updateDelayedHover = (
+    ref: React.MutableRefObject<number | null>,
+    setHovered: (isHovered: boolean) => void,
+    nextHovered: boolean,
+  ) => {
+    if (ref.current) {
+      clearTrackedTimeout(ref.current);
+      ref.current = null;
     }
 
     if (!nextHovered) {
-      setIsQueueHovered(false);
+      setHovered(false);
       return;
     }
 
-    queueHoverTimeoutRef.current = setTrackedTimeout(() => {
-      queueHoverTimeoutRef.current = null;
-      setIsQueueHovered(true);
+    ref.current = setTrackedTimeout(() => {
+      ref.current = null;
+      setHovered(true);
     }, 70);
   };
+
+  const handleQueueHoverChange = (nextHovered: boolean) =>
+    updateDelayedHover(queueHoverTimeoutRef, setIsQueueHovered, nextHovered);
+
+  const handleLeaveHoverChange = (nextHovered: boolean) =>
+    updateDelayedHover(leaveHoverTimeoutRef, setIsLeaveHovered, nextHovered);
 
   useEffect(() => {
     if (isDj) return undefined;
@@ -225,6 +237,7 @@ export function ActionButtons({
                 subtitle={t('Manage friends')}
                 onClick={() => navigate('attendee-friends')}
                 variant="friends"
+                collapsed={isLeaveHovered}
                 soundKey="settingsOpen"
               />
             )}
@@ -236,6 +249,7 @@ export function ActionButtons({
               onClick={handleLeaveParty}
               variant="leave"
               collapsed={isQueueHovered}
+              onHoverChange={handleLeaveHoverChange}
             />
           </div>
         )}

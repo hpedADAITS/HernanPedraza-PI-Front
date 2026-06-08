@@ -84,6 +84,7 @@ export function QueueItem({
   // assigns a trackId, the server will reject the push.
   const hasMatchedTrack = Boolean(song.recognitionMatch?.trackId);
   const canSendNow = hasMatchedTrack && song.status !== 'PLAYING';
+  const canAttendeeVote = !isDj && (song.status === 'PLAYING' || song.status === 'APPROVED');
 
   const handleAttendeeVote = async (value: 1 | -1, e: MouseEvent) => {
     e.stopPropagation();
@@ -213,10 +214,10 @@ export function QueueItem({
       }}
       whileHover={{ backgroundColor: 'rgba(248, 250, 252, 0.7)' }}
       transition={{ duration: ANIMATION_DURATION.fast }}
-      onClick={() => isDj && onSelect(song._id)}
+      onClick={() => (isDj || canAttendeeVote) && onSelect(song._id)}
       className={clsx(
         'flex items-center gap-4 lg:gap-3 group cursor-pointer p-3 lg:p-2 rounded-xl transition-all',
-        isDj ? 'cursor-pointer hover:bg-slate-50' : '',
+        isDj || canAttendeeVote ? 'cursor-pointer hover:bg-slate-50' : '',
       )}
     >
       {/* Position Badge */}
@@ -372,6 +373,47 @@ export function QueueItem({
               <TooltipContent>{t('Kick User')}</TooltipContent>
             </Tooltip>
           </m.div>
+        ) : context.selected && canAttendeeVote ? (
+          <m.div
+            key="attendee-vote-controls"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="flex flex-1 items-center justify-center gap-2"
+          >
+            <VoteMiniButton
+              label={t('Vote Up')}
+              disabled={voting}
+              tone="up"
+              onClick={(e) => handleAttendeeVote(1, e)}
+            />
+            <m.span
+              key={`${song._id}-${song.voteScore}-${song.voteFlash || 'none'}-selected`}
+              initial={
+                song.voteFlash
+                  ? {
+                      scale: 1.22,
+                      color: song.voteFlash === 'up' ? '#16a34a' : '#dc2626',
+                    }
+                  : false
+              }
+              animate={{
+                scale: 1,
+                color: isDarkMode ? '#f1f5f9' : '#334155',
+              }}
+              transition={{ duration: 0.42 }}
+              className="min-w-8 text-center text-sm font-semibold"
+            >
+              {song.voteScore}
+            </m.span>
+            <VoteMiniButton
+              label={t('Vote Down')}
+              disabled={voting}
+              tone="down"
+              onClick={(e) => handleAttendeeVote(-1, e)}
+            />
+          </m.div>
         ) : (
           <m.div
             key="song-info"
@@ -448,22 +490,6 @@ export function QueueItem({
             </div>
 
             <div className="flex flex-col items-end gap-1">
-              {!isDj && (song.status === 'PLAYING' || song.status === 'APPROVED') && (
-                <div className="mb-1 flex items-center gap-1">
-                  <VoteMiniButton
-                    label={t('Vote Up')}
-                    disabled={voting}
-                    tone="up"
-                    onClick={(e) => handleAttendeeVote(1, e)}
-                  />
-                  <VoteMiniButton
-                    label={t('Vote Down')}
-                    disabled={voting}
-                    tone="down"
-                    onClick={(e) => handleAttendeeVote(-1, e)}
-                  />
-                </div>
-              )}
               <m.span
                 key={`${song._id}-${song.voteScore}-${song.voteFlash || 'none'}`}
                 initial={
