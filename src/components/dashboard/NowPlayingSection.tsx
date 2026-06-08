@@ -271,10 +271,21 @@ function nowPlayingSectionReducer(
     case 'audio_match_update': {
       const topMatch = action.payload?.matches?.[0];
       if (!topMatch?.trackId) {
+        // Nothing to show. Only produce a new state (and a re-render) if a
+        // match was actually being displayed; otherwise keep the same
+        // reference so repeated empty updates don't churn the component.
+        if (!state.currentMatch) return state;
         return {
           ...state,
           currentMatch: null,
         };
+      }
+
+      // Same candidate as before: the matcher re-confirming its hold should
+      // not re-render NowPlaying. Return the identical state reference so
+      // React bails out of the update.
+      if (state.currentMatch?.trackId === topMatch.trackId) {
+        return state;
       }
 
       const nextMatch: CurrentMatch = {
@@ -287,11 +298,10 @@ function nowPlayingSectionReducer(
         matchedAt: Date.now(),
       };
 
-      const isSameTrack = state.currentMatch?.trackId === nextMatch.trackId;
       return {
         ...state,
-        currentMatch: isSameTrack ? state.currentMatch : nextMatch,
-        attentionKey: isSameTrack ? state.attentionKey : state.attentionKey + 1,
+        currentMatch: nextMatch,
+        attentionKey: state.attentionKey + 1,
       };
     }
     default:

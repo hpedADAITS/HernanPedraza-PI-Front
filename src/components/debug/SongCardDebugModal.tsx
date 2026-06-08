@@ -650,7 +650,7 @@ function renderQueueTestWindow(eventId: string) {
           state.pending.find((song) => song._id === id) ||
           state.queue.find((song) => song._id === id);
 
-        const autoRejectThreshold = () => Math.max(1, Math.ceil(state.attendees.length / 2));
+w        const autoRejectThreshold = () => Math.max(1, Math.ceil(state.attendees.length / 2));
         const durationOf = (song) => song?.totalDuration ?? 0;
         const escapeHtml = (value) =>
           String(value)
