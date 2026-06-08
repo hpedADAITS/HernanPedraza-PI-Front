@@ -30,8 +30,14 @@ export interface QueueUpdatedPayload {
 }
 
 export interface VotesUpdatedPayload {
+  eventId?: string;
   songId?: string;
+  participantId?: string;
+  value?: number;
   voteScore?: number;
+  voteCount?: number;
+  status?: SongStatus | string;
+  timestamp?: string;
   affectedSongs?: Array<{
     songId?: string;
     _id?: string;

@@ -114,13 +114,17 @@ describe('socket service', () => {
     );
   });
 
-  it('emits participation, vote, and song events through the real emitter functions', () => {
-    const socket = createSocketDouble();
+  it('emits participation, vote, and song events through the real emitter functions', async () => {
+    const socket = createSocketDouble(true);
+    socket.emit.mockImplementation((_event, _data, callback) => {
+      if (typeof callback === 'function') callback({ success: true, data: { id: 'vote-1' } });
+      return socket;
+    });
     socketIoMock.mockReturnValue(socket);
     initSocket();
 
     joinEvent('event-1', 'participant-1', 'Nora');
-    castVote('event-1', 'song-1', 'participant-1', 1);
+    await castVote('event-1', 'song-1', 'participant-1', 1);
     approveSong('event-1', 'song-1');
     sendNowSong('event-1', 'song-1', 'Track', 'Artist');
 
@@ -130,12 +134,16 @@ describe('socket service', () => {
       nickname: 'Nora',
       profilePicture: undefined,
     });
-    expect(socket.emit).toHaveBeenCalledWith('cast_vote', {
-      eventId: 'event-1',
-      songId: 'song-1',
-      participantId: 'participant-1',
-      value: 1,
-    });
+    expect(socket.emit).toHaveBeenCalledWith(
+      'cast_vote',
+      {
+        eventId: 'event-1',
+        songId: 'song-1',
+        participantId: 'participant-1',
+        value: 1,
+      },
+      expect.any(Function),
+    );
     expect(socket.emit).toHaveBeenCalledWith('approve_song', {
       eventId: 'event-1',
       songId: 'song-1',

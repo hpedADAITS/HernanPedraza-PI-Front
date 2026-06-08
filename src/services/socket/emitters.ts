@@ -27,9 +27,7 @@ export function castVote(
   participantId: string,
   value: number,
 ) {
-  const socket = getSocketInstance();
-  if (!socket) throw new Error('Socket not initialized');
-  socket.emit('cast_vote', { eventId, songId, participantId, value });
+  return emitWithAck('cast_vote', { eventId, songId, participantId, value });
 }
 
 export function removeVote(
@@ -37,9 +35,7 @@ export function removeVote(
   songId: string,
   participantId: string,
 ) {
-  const socket = getSocketInstance();
-  if (!socket) throw new Error('Socket not initialized');
-  socket.emit('remove_vote', { eventId, songId, participantId });
+  return emitWithAck('remove_vote', { eventId, songId, participantId });
 }
 
 /* ============ SONGS ============ */
@@ -151,10 +147,11 @@ interface AckResponse<T = unknown> {
 function emitWithAck<T>(event: string, data: unknown): Promise<T> {
   const socket = getSocketInstance();
   if (!socket) return Promise.reject(new Error('Socket not initialized'));
+  if (!socket.connected) return Promise.reject(new Error('Socket is not connected'));
   return new Promise((resolve, reject) => {
     socket.emit(event, data, (response: AckResponse<T>) => {
-      if (response.success && response.data) {
-        resolve(response.data);
+      if (response.success) {
+        resolve(response.data as T);
       } else {
         reject(new Error(response.error || 'Action failed'));
       }

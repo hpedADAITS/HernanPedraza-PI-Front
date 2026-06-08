@@ -9,6 +9,10 @@ export interface StoredEvent {
   ownerName?: string;
   accessCode?: string;
   ownerProfilePicture?: string | null;
+  settings?: {
+    votingEnabled?: boolean;
+    allowDownvotes?: boolean;
+  };
 }
 
 export interface StoredParticipant {

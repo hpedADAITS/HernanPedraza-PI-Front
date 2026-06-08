@@ -4,7 +4,7 @@ import { ThumbsUp, ThumbsDown, LogOut, Settings, Plus, Users } from 'lucide-reac
 import { useToast } from '@/hooks/useToast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ANIMATION_DURATION } from '@/constants/animations';
-import { songsAPI, votesAPI, eventsAPI, participantsAPI, authAPI, clearToken } from '@/services/api';
+import { songsAPI, eventsAPI, participantsAPI, authAPI, clearToken } from '@/services/api';
 import * as socket from '@/services/socket';
 import { disconnectSocket } from '@/services/socket';
 import { readStoredJson, removeStoredItem } from '@/utils/storage';
@@ -29,6 +29,11 @@ interface AttendeePasswordPromptRequestedPayload {
 
 interface QueueUpdatedPayload {
   queue?: CurrentSong[];
+}
+
+interface EventSettings {
+  votingEnabled?: boolean;
+  allowDownvotes?: boolean;
 }
 
 const getErrorMessage = (err: unknown, fallback: string) =>
@@ -259,16 +264,24 @@ interface CurrentSong {
   artist: string;
 }
 
+const getVoteSettings = (event: unknown): EventSettings => {
+  const settings = (event as { settings?: EventSettings } | null)?.settings;
+  return settings && typeof settings === 'object' ? settings : {};
+};
+
 function VotingButtons() {
   const { playSound } = useSound();
   const { error, info, success } = useToast();
   const [currentSong, setCurrentSong] = useState<CurrentSong | null>(null);
+  const [voteSettings, setVoteSettings] = useState<EventSettings>({});
   const [voting, setVoting] = useState(false);
 
   useEffect(() => {
-    const event = readStoredJson<{ eventId?: string; _id?: string; id?: string }>('currentEvent');
+    const event = readStoredJson<{ eventId?: string; _id?: string; id?: string; settings?: EventSettings }>('currentEvent');
     const eventId = event?.eventId || event?._id || event?.id;
     if (!eventId) return;
+
+    setVoteSettings(getVoteSettings(event));
 
     songsAPI
       .getQueue(eventId)
@@ -281,6 +294,13 @@ function VotingButtons() {
         /* queue fetch failed silently */
       });
 
+    eventsAPI
+      .getEvent(eventId)
+      .then((freshEvent) => setVoteSettings(getVoteSettings(freshEvent)))
+      .catch(() => {
+        /* event settings refresh failed silently */
+      });
+
     const handleQueueUpdate = (data: QueueUpdatedPayload) => {
       if (data.queue && data.queue.length > 0) {
         setCurrentSong(data.queue[0]);
@@ -288,9 +308,13 @@ function VotingButtons() {
         setCurrentSong(null);
       }
     };
+    const handleEventUpdate = (data: { event?: unknown }) => {
+      setVoteSettings(getVoteSettings(data.event));
+    };
 
     try {
       socket.onQueueUpdated(handleQueueUpdate);
+      socket.onEventUpdated(handleEventUpdate);
     } catch {
       /* socket not initialized */
     }
@@ -298,6 +322,7 @@ function VotingButtons() {
     return () => {
       try {
         socket.off('queue_updated', handleQueueUpdate);
+        socket.off('event_updated', handleEventUpdate);
       } catch {
         /* socket already gone */
       }
@@ -305,6 +330,14 @@ function VotingButtons() {
   }, []);
 
   const handleVote = async (value: 1 | -1) => {
+    if (voteSettings.votingEnabled === false) {
+      info(t('Voting is disabled for this event'));
+      return;
+    }
+    if (value === -1 && voteSettings.allowDownvotes === false) {
+      info(t('Downvotes are disabled for this event'));
+      return;
+    }
     if (!currentSong) {
       info(t('No song playing'));
       return;
@@ -328,7 +361,7 @@ function VotingButtons() {
     playSound(value === 1 ? 'voteUp' : 'voteDown');
     setVoting(true);
     try {
-      await votesAPI.castVote(currentSong._id, participantId, value);
+      await socket.castVote(eventId, currentSong._id, participantId, value);
       const direction = value === 1 ? '👍' : '👎';
       success(`${direction} ${currentSong.title}`);
     } catch (err: unknown) {
@@ -338,6 +371,9 @@ function VotingButtons() {
     }
   };
 
+  const votingDisabled = voting || voteSettings.votingEnabled === false;
+  const downvoteDisabled = votingDisabled || voteSettings.allowDownvotes === false;
+
   return (
     <div className="flex w-full justify-center gap-4 lg:gap-3">
       <VoteButton
@@ -345,14 +381,14 @@ function VotingButtons() {
         color="emerald"
         label={t('Vote Up')}
         onClick={() => handleVote(1)}
-        disabled={!currentSong || voting}
+        disabled={!currentSong || votingDisabled}
       />
       <VoteButton
         icon={ThumbsDown}
         color="red"
         label={t('Vote Down')}
         onClick={() => handleVote(-1)}
-        disabled={!currentSong || voting}
+        disabled={!currentSong || downvoteDisabled}
       />
     </div>
   );
