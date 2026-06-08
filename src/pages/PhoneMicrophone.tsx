@@ -8,6 +8,41 @@ import { disconnectSocket, initSocket } from '@/services/socket/connection';
 import { t } from '@/i18n';
 
 type ConnectionState = 'idle' | 'connecting' | 'connected' | 'failed';
+type MatchCandidate = {
+  trackId?: string;
+  title?: string;
+  artist?: string;
+  score?: number;
+  totalAligned?: number;
+  offset?: number;
+  offsetConcentration?: number;
+  queueContext?: {
+    hasPlaying?: boolean;
+    hasApproved?: boolean;
+    suggestedAction?: string;
+  };
+};
+type MatchDebug = {
+  event: string;
+  state: string;
+  track: string;
+  score: string;
+  offset: string;
+  queue: string;
+  pcm: string;
+  ts: string;
+};
+
+const EMPTY_DEBUG: MatchDebug = {
+  event: 'idle',
+  state: 'idle',
+  track: '-',
+  score: '-',
+  offset: '-',
+  queue: '-',
+  pcm: '-',
+  ts: '-',
+};
 
 function canRequestMicrophone() {
   return Boolean(navigator.mediaDevices?.getUserMedia);
@@ -65,6 +100,25 @@ function readPhoneMicrophoneTokenFromHash(hash: string) {
   return params.get('token') || '';
 }
 
+function candidateLabel(candidate?: MatchCandidate | null) {
+  if (!candidate) return '-';
+  return `${candidate.title || '?'} / ${candidate.artist || '?'} [${candidate.trackId || '?'}]`;
+}
+
+function scoreLabel(candidate?: MatchCandidate | null) {
+  if (!candidate) return '-';
+  const concentration = Number.isFinite(candidate.offsetConcentration)
+    ? ` c=${candidate.offsetConcentration?.toFixed(2)}`
+    : '';
+  return `s=${candidate.score ?? '-'} a=${candidate.totalAligned ?? '-'}${concentration}`;
+}
+
+function queueLabel(candidate?: MatchCandidate | null) {
+  const context = candidate?.queueContext;
+  if (!context) return '-';
+  return `${context.suggestedAction || '-'} p=${Number(Boolean(context.hasPlaying))} a=${Number(Boolean(context.hasApproved))}`;
+}
+
 export function PhoneMicrophone() {
   const { eventId = '' } = useParams();
   const { hash } = useLocation();
@@ -74,6 +128,8 @@ export function PhoneMicrophone() {
     useState<ConnectionState>('idle');
   const [error, setError] = useState('');
   const [bestMatch, setBestMatch] = useState('');
+  const [showDebug, setShowDebug] = useState(false);
+  const [debug, setDebug] = useState<MatchDebug>(EMPTY_DEBUG);
 
   const stopActiveStream = useCallback(() => {
     stopAudioMatchRef.current?.();
@@ -81,6 +137,7 @@ export function PhoneMicrophone() {
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
     disconnectSocket();
+    setDebug(EMPTY_DEBUG);
   }, []);
 
   const stopMicrophone = () => {
@@ -125,19 +182,56 @@ export function PhoneMicrophone() {
       const microphone = await eventsAPI.connectPhoneMicrophone(eventId, getPhoneDeviceName(), token);
       const audioEventId = microphone.eventId || eventId;
       const socket = initSocket(token);
+      const updateDebug = (
+        event: string,
+        payload: {
+          state?: string;
+          candidate?: MatchCandidate | null;
+          matches?: MatchCandidate[];
+          reason?: string;
+          trackId?: string;
+        } = {},
+      ) => {
+        const candidate = payload.candidate || payload.matches?.[0] || null;
+        setDebug((current) => ({
+          ...current,
+          event,
+          state: payload.state || payload.reason || current.state,
+          track: candidateLabel(candidate) || payload.trackId || '-',
+          score: scoreLabel(candidate),
+          offset: candidate ? String(candidate.offset ?? '-') : '-',
+          queue: queueLabel(candidate),
+          ts: new Date().toLocaleTimeString(),
+        }));
+      };
       socket.on('audio_match_update', (payload) => {
         const match = payload?.matches?.[0];
         setBestMatch(match ? `${match.title} - ${match.artist}` : '');
+        updateDebug('update', payload);
       });
+      socket.on('audio_match_candidate', (payload) => updateDebug('candidate', payload));
+      socket.on('audio_match_hold', (payload) => updateDebug('hold', payload));
+      socket.on('audio_match_hold_updated', (payload) => updateDebug('hold+', payload));
       socket.on('audio_match_locked', (payload) => {
         const match = payload?.candidate;
         setBestMatch(match ? `${match.title} - ${match.artist}` : '');
+        updateDebug('locked', payload);
       });
+      socket.on('audio_match_released', (payload) => updateDebug('released', payload));
+      socket.on('audio_match_idle', (payload) => updateDebug('idle', payload));
+      socket.on('audio_match_queue_updated', (payload) => updateDebug('queue', payload));
       stopAudioMatchRef.current = await startAudioMatchStream({
         eventId: audioEventId,
         stream,
         socket,
         onError: (streamError) => setError(streamError.message),
+        onDebug: (streamDebug) => {
+          setDebug((current) => ({
+            ...current,
+            pcm: `${streamDebug.inputSamples}@${streamDebug.sampleRate} ${streamDebug.byteLength}b`,
+            ts: new Date().toLocaleTimeString(),
+          }));
+        },
       });
       setConnectionState('connected');
     } catch (err) {
@@ -198,6 +292,27 @@ export function PhoneMicrophone() {
           <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
             {error}
           </p>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setShowDebug((value) => !value)}
+          className="mt-4 h-8 rounded border border-slate-300 bg-slate-950 px-3 font-mono text-xs text-lime-300"
+        >
+          dbg
+        </button>
+
+        {showDebug && (
+          <pre className="mt-2 w-full overflow-x-auto rounded border border-slate-800 bg-black p-3 text-left font-mono text-[11px] leading-5 text-lime-300">
+{`event ${debug.event}
+state ${debug.state}
+track ${debug.track}
+score ${debug.score}
+off   ${debug.offset}
+queue ${debug.queue}
+pcm   ${debug.pcm}
+time  ${debug.ts}`}
+          </pre>
         )}
       </main>
     </Layout>
