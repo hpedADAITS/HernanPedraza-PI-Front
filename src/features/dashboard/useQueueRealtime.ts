@@ -125,6 +125,23 @@ export function useQueueRealtime(mode: 'attendee' | 'dj', eventId?: string) {
   }, [mode, state.nowPlaying]);
 
   useEffect(() => {
+    if (!state.nowPlaying?.totalDuration) return undefined;
+    const remainingMs = Math.max(
+      0,
+      state.nowPlaying.startedAt + state.nowPlaying.totalDuration * 1000 - Date.now(),
+    );
+    const id = window.setTimeout(() => {
+      setState((current) => (
+        current.nowPlaying?.songId === state.nowPlaying?.songId
+          ? { ...current, nowPlaying: null }
+          : current
+      ));
+    }, remainingMs + 250);
+
+    return () => window.clearTimeout(id);
+  }, [state.nowPlaying?.songId, state.nowPlaying?.startedAt, state.nowPlaying?.totalDuration]);
+
+  useEffect(() => {
     const fetchQueue = async () => {
       try {
         const eventData = getStoredEvent();

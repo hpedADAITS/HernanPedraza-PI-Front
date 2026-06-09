@@ -149,7 +149,8 @@ type NowPlayingSectionAction =
   | { type: 'microphone_disconnected' }
   | { type: 'audio_level'; level: number }
   | { type: 'audio_pcm'; pcm: Float32Array }
-  | { type: 'audio_match_update'; payload: AudioMatchUpdatePayload };
+  | { type: 'audio_match_update'; payload: AudioMatchUpdatePayload }
+  | { type: 'song_finished' };
 
 function nowPlayingSectionReducer(
   state: NowPlayingSectionState,
@@ -322,6 +323,13 @@ function nowPlayingSectionReducer(
         attentionKey: state.attentionKey + 1,
       };
     }
+    case 'song_finished':
+      if (!state.nowPlaying) return state;
+      return {
+        ...state,
+        nowPlaying: null,
+        currentMatch: null,
+      };
     default:
       return state;
   }
@@ -512,6 +520,27 @@ export function NowPlayingSection({ isDj = false }: NowPlayingSectionProps) {
       stopDebugEvents();
     };
   }, [eventId, isDj, showTemporaryStatus]);
+
+  useEffect(() => {
+    if (
+      !state.nowPlaying ||
+      state.nowPlaying.status !== 'playing' ||
+      !state.nowPlaying.startedAt ||
+      !state.nowPlaying.durationSec
+    ) {
+      return undefined;
+    }
+
+    const remainingMs = Math.max(
+      0,
+      state.nowPlaying.startedAt + state.nowPlaying.durationSec * 1000 - Date.now(),
+    );
+    const id = setTrackedTimeout(() => {
+      dispatch({ type: 'song_finished' });
+    }, remainingMs + 250);
+
+    return () => clearTrackedTimeout(id);
+  }, [clearTrackedTimeout, setTrackedTimeout, state.nowPlaying?.id, state.nowPlaying?.status, state.nowPlaying?.startedAt, state.nowPlaying?.durationSec]);
 
   /* Compute live elapsed/progress when playing */
   const queuedPreview = sortQueueSongs(state.queue).find(
