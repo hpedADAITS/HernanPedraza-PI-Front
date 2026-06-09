@@ -9,6 +9,15 @@ function getDuration(payload: SongEventPayload) {
   return Number.isFinite(payload.totalDuration) ? payload.totalDuration : undefined;
 }
 
+function getStartedAt(payload: SongEventPayload) {
+  const startedAt =
+    payload.startedAt ||
+    payload.playingStartedAt ||
+    payload.startedPlayingAt ||
+    null;
+  return startedAt ? new Date(startedAt).getTime() : null;
+}
+
 export function normalizeSocketSong(
   payload: SongEventPayload,
   fallbackStatus: SongStatus | string,
@@ -45,16 +54,23 @@ export function normalizeNowPlaying(
   if (!songId) return null;
 
   const totalDuration = getDuration(payload);
-  const startedAtTs = payload.startedAt
-    ? new Date(payload.startedAt).getTime()
-    : Date.now() - (payload.elapsedTime || 0) * 1000;
+  const startedAtTs = getStartedAt(payload);
+  const elapsedTime = Number.isFinite(payload.elapsedTime)
+    ? Math.max(0, Math.floor(Number(payload.elapsedTime)))
+    : startedAtTs
+      ? Math.max(0, Math.floor((Date.now() - startedAtTs) / 1000))
+      : undefined;
   return {
     songId,
     title: payload.title || 'Now Playing...',
     artist: payload.artist || '',
     totalDuration,
-    startedAt: startedAtTs,
-    elapsedTime: payload.elapsedTime,
+    startedAt: startedAtTs || Date.now(),
+    elapsedTime,
+    remainingTime:
+      totalDuration != null && elapsedTime != null
+        ? Math.max(0, totalDuration - elapsedTime)
+        : payload.remainingTime,
     albumArt: payload.recognitionMatch?.coverUrl || payload.albumArt || null,
   };
 }

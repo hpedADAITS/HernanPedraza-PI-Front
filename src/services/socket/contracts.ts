@@ -18,12 +18,15 @@ export interface SongEventPayload {
   eventId?: string;
   reason?: string;
   startedAt?: string | null;
-}
-
-export interface NowPlayingEventPayload extends SongEventPayload {
+  playingStartedAt?: string | null;
+  startedPlayingAt?: string | null;
   elapsedTime?: number;
   remainingTime?: number;
   albumArt?: string | null;
+}
+
+export interface NowPlayingEventPayload extends SongEventPayload {
+  timestamp?: string;
 }
 
 export interface QueueUpdatedPayload {
@@ -56,6 +59,7 @@ export interface NormalizedNowPlaying {
   totalDuration?: number;
   startedAt: number;
   elapsedTime?: number;
+  remainingTime?: number;
   albumArt?: string | null;
 }
 
@@ -119,6 +123,7 @@ export interface PhoneMicrophoneDisconnectedPayload {
 
 export interface AudioMatchUpdatePayload {
   eventId?: string;
+  timestamp?: string;
   matches?: Array<{
     trackId: string;
     title: string;

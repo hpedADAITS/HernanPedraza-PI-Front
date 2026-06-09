@@ -176,6 +176,7 @@ function nowPlayingSectionReducer(
     case 'song_now_playing': {
       const nowPlaying = normalizeNowPlaying(action.payload);
       if (!nowPlaying) return state;
+      const elapsed = nowPlaying.elapsedTime || 0;
 
       return {
         ...state,
@@ -184,8 +185,10 @@ function nowPlayingSectionReducer(
           title: nowPlaying.title,
           artist: nowPlaying.artist,
           status: 'playing',
-          progress: 0,
-          currentTime: '0:00',
+          progress: nowPlaying.totalDuration
+            ? Math.min(100, (elapsed / nowPlaying.totalDuration) * 100)
+            : 0,
+          currentTime: formatTime(elapsed),
           duration: nowPlaying.totalDuration
             ? formatTime(nowPlaying.totalDuration)
             : undefined,
@@ -314,7 +317,9 @@ function nowPlayingSectionReducer(
         coverUrl: topMatch.coverUrl ?? null,
         duration: topMatch.duration ?? null,
         score: topMatch.score,
-        matchedAt: Date.now(),
+        matchedAt: action.payload?.timestamp
+          ? new Date(action.payload.timestamp).getTime()
+          : Date.now(),
       };
 
       return {
