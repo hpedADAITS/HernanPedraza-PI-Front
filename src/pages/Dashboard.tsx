@@ -80,7 +80,7 @@ const DashboardLeftColumn = memo(function DashboardLeftColumn({
   userName,
 }: DashboardLeftColumnProps) {
   return (
-    <div className="w-full lg:w-[36%] min-h-0 flex flex-col gap-8 lg:gap-6">
+    <div className="relative z-10 w-full lg:w-[36%] min-h-0 flex flex-col gap-8 lg:gap-6">
       {isDj ? (
         <DJProfileCard
           userName={userName}
@@ -130,7 +130,7 @@ const DashboardRightColumn = memo(function DashboardRightColumn({
   mode,
 }: DashboardRightColumnProps) {
   return (
-    <div className="w-full lg:w-[64%] min-h-0 relative">
+    <div className="relative z-0 w-full lg:w-[64%] min-h-0">
       <div className="mx-auto flex w-full max-w-[896px] flex-col gap-8 lg:gap-6">
         <DashboardSearchBar
           isDj={isDj}

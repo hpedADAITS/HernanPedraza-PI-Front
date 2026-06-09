@@ -191,6 +191,8 @@ const es: Record<string, string> = {
   'New attendee request': 'Nueva solicitud de asistente',
   'New to SyncRequest?': 'Nuevo en SyncRequest?',
   'Nickname': 'Apodo',
+  'Nickname already taken in this event': 'Apodo ya en uso en este evento',
+  '{name} is already in the event — leave from another device first': '{name} ya esta en el evento: sal primero desde el otro dispositivo',
   'Next': 'Siguiente',
   'No attendee session found': 'No se encontro sesion de asistente',
   'No': 'No',

@@ -183,7 +183,13 @@ export function useAttendeeLoginController(onNavigate: NavigateToView) {
         onNavigate('banned');
         return;
       }
-      toast.error(message);
+      toast.error(
+        message === t('Nickname already taken in this event')
+          ? t('{name} is already in the event — leave from another device first', {
+              name: state.nickname.trim(),
+            })
+          : message,
+      );
     } finally {
       setLoading(false);
     }

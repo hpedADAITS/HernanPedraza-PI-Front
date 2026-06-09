@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { useToast } from '@/hooks/useToast';
-import { authAPI, clearToken, participantsAPI } from '@/services/api';
+import { authAPI, clearToken, eventsAPI, participantsAPI } from '@/services/api';
 import { disconnectSocket, leaveEvent } from '@/services/socket';
 import { AttendeePasswordPrompt } from '@/components/dashboard/AttendeeSavePrompt';
 import { SettingsList, SettingsListItem, SettingsPageShell, SettingsSearch } from '@/components/settings/SettingsUI';
@@ -80,12 +80,20 @@ export function AccountSettings({ mode, onNavigate }: Props) {
     }
 
     const event = readStoredJson<{ eventId?: string; _id?: string; id?: string }>('currentEvent');
+    const eventId = event?.eventId || event?._id || event?.id;
+    if (eventId) {
+      try {
+        await eventsAPI.endEvent(eventId);
+      } catch {
+        /* End-event can fail (network, auth); sign-out still proceeds. */
+      }
+    }
     try {
       await authAPI.logout();
     } catch {
       clearToken();
     }
-    clearEventCoverCache(event?.eventId || event?._id || event?.id);
+    clearEventCoverCache(eventId);
     disconnectSocket();
     toast.success(t('Signed out'));
     onNavigate('role-selection');
