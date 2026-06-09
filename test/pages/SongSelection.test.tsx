@@ -134,7 +134,7 @@ describe('SongSelection attendee request form', () => {
     expect(onNavigate).toHaveBeenCalledWith('attendee-dashboard');
   });
 
-  it('submits the selected DJ library fingerprint without rewriting attendee input fields', async () => {
+  it('submits the selected DJ library fingerprint with DJ metadata', async () => {
     localStorage.setItem('currentEvent', JSON.stringify({ _id: '64b000000000000000000001' }));
     localStorage.setItem('currentParticipant', JSON.stringify({ _id: '64b000000000000000000002' }));
     searchFingerprintsMock.mockResolvedValue({
@@ -175,9 +175,9 @@ describe('SongSelection attendee request form', () => {
       expect(suggestSongMock).toHaveBeenCalledWith(
         '64b000000000000000000001',
         '64b000000000000000000002',
-        'Attendee Typo Title',
-        'Attendee Typo Artist',
-        undefined,
+        'Canonical Library Title',
+        'Canonical Library Artist',
+        222,
         expect.objectContaining({
           fingerprintTrackId: '64b000000000000000000003',
           skipMusicBrainzLookup: true,
