@@ -57,7 +57,8 @@ export function AttendeeSongSuggestView({
   title,
 }: AttendeeSongSuggestViewProps) {
   const busy = submitting || checkingMusicBrainz;
-  const isDisabled = busy || !title.trim() || !artist.trim();
+  const isDisabled =
+    busy || (!selectedFingerprintTrackId && (!title.trim() || !artist.trim()));
   const cardClassName = clsx(
     'relative mx-auto w-full max-w-2xl overflow-hidden rounded-2xl border p-5 md:p-7',
     isDarkMode

@@ -39,15 +39,20 @@ export function useSongSuggestionForm(
       musicBrainzMatch?: Song['recognitionMatch'];
       skipMusicBrainzLookup?: boolean;
     }) => {
-      if (!eventId || !participantId || !title.trim() || !artist.trim()) return;
+      if (!eventId || !participantId) return;
+      if (!selectedFingerprintMatch && (!title.trim() || !artist.trim())) return;
       setSubmitting(true);
       try {
+        const submittedTitle = selectedFingerprintMatch?.title ?? title.trim();
+        const submittedArtist = selectedFingerprintMatch?.artist ?? artist.trim();
+        const submittedDuration =
+          selectedFingerprintMatch?.duration ?? undefined;
         const song = await songsAPI.suggestSong(
           eventId,
           participantId,
-          title.trim(),
-          artist.trim(),
-          undefined,
+          submittedTitle,
+          submittedArtist,
+          submittedDuration,
           selectedFingerprintMatch
             ? {
                 fingerprintTrackId: selectedFingerprintMatch.trackId,
@@ -113,7 +118,8 @@ export function useSongSuggestionForm(
   const handleSubmit = useCallback(
     async (event: FormEvent) => {
       event.preventDefault();
-      if (!eventId || !participantId || !title.trim() || !artist.trim()) return;
+      if (!eventId || !participantId) return;
+      if (!selectedFingerprintMatch && (!title.trim() || !artist.trim())) return;
       if (lookupInFlight.current || checkingMusicBrainz || submitting) return;
       if (selectedFingerprintMatch) {
         await submitSong({ skipMusicBrainzLookup: true });
