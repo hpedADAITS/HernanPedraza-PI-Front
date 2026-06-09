@@ -367,7 +367,7 @@ export function NowPlaying({
               <div
                 data-testid="phone-microphone-disconnected-pill"
                 aria-label="Phone microphone disconnected"
-                className="inline-flex h-6 max-w-full items-center gap-1.5 rounded-md bg-zinc-500/80 px-2 text-xs font-semibold text-white backdrop-blur-sm"
+                className="inline-flex h-7 max-w-full items-center gap-2 rounded-lg bg-zinc-500/80 px-2.5 text-xs font-semibold text-white backdrop-blur-sm"
               >
                 <MicOff className="h-3 w-3 shrink-0" />
                 <span className="truncate">{`${microphoneLabel} disconnected`}</span>
