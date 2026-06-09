@@ -86,14 +86,4 @@ export default tseslint.config(
       },
     },
   },
-
-  {
-    files: ['src/services/audio/audio-match-processor.js'],
-    languageOptions: {
-      globals: {
-        AudioWorkletProcessor: 'readonly',
-        registerProcessor: 'readonly',
-      },
-    },
-  },
 );
