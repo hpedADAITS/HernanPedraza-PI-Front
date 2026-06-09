@@ -9,7 +9,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./test/setup.ts'],
     css: true,
-    include: ['test/**/*.{test,spec}.{ts,tsx,js}'],
+    include: ['test/**/*.{test,spec}.{ts,tsx,js}', 'src/**/*.{test,spec}.{ts,tsx,js}'],
     exclude: ['node_modules/**', 'dist/**', 'coverage/**', 'e2e/**', '**/*.spec.js'],
     pool: 'forks',
     maxWorkers: 11,

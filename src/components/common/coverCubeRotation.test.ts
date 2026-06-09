@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { getPreviousFrontFacingRotation, getTextureTransitionRotation } from './coverCubeRotation';
+import { getNextFrontFacingRotation, getTextureTransitionRotation } from './coverCubeRotation';
 
 describe('cover cube texture transition rotation', () => {
-  it('returns backward to the previous front-facing Y rotation', () => {
+  it('returns forward to the next front-facing Y rotation', () => {
     const startRotationY = Math.PI * 8 + Math.PI / 3;
-    const endRotationY = getPreviousFrontFacingRotation(startRotationY);
+    const endRotationY = getNextFrontFacingRotation(startRotationY);
 
-    expect(endRotationY).toBeCloseTo(Math.PI * 8);
-    expect(endRotationY).toBeLessThan(startRotationY);
-    expect(startRotationY - endRotationY).toBeCloseTo(Math.PI / 3);
+    expect(endRotationY).toBeCloseTo(Math.PI * 10);
+    expect(endRotationY).toBeGreaterThan(startRotationY);
+    expect(endRotationY - startRotationY).toBeCloseTo((Math.PI * 5) / 3);
   });
 
-  it('eases texture changes back to the front face before spin state restarts', () => {
+  it('eases texture changes forward to the front face while spin continues', () => {
     const startRotationX = 0.7;
     const startRotationY = Math.PI * 6 + Math.PI / 2;
     const midpoint = getTextureTransitionRotation(
@@ -27,8 +27,8 @@ describe('cover cube texture transition rotation', () => {
 
     expect(midpoint.x).toBeGreaterThan(0);
     expect(midpoint.x).toBeLessThan(startRotationX);
-    expect(midpoint.y).toBeLessThan(startRotationY);
+    expect(midpoint.y).toBeGreaterThan(startRotationY);
     expect(finished.x).toBe(0);
-    expect(finished.y).toBeCloseTo(Math.PI * 6);
+    expect(finished.y).toBeCloseTo(Math.PI * 8);
   });
 });

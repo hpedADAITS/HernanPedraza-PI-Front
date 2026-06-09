@@ -12,6 +12,7 @@ interface TextureTransitionState {
   startedAt: number;
   startRotationX: number;
   startRotationY: number;
+  startSpinAngle: number;
 }
 
 interface WorkerState {
@@ -270,7 +271,7 @@ function createRuggedGlassMap() {
 }
 
 function orientFrontTexture(texture: THREE.Texture) {
-  texture.flipY = true;
+  texture.flipY = false;
   texture.center.set(0.5, 0.5);
   texture.rotation = 0;
   texture.repeat.set(0.9, 0.9);
@@ -453,6 +454,7 @@ function startFrontTextureTransition(
     startedAt: performance.now(),
     startRotationX: state.displayRotationX,
     startRotationY: state.displayRotationY,
+    startSpinAngle: state.spinAngle,
   };
 }
 
@@ -487,6 +489,11 @@ function updateScene(deltaSeconds: number) {
 
     state.displayRotationX = rotation.x;
     state.displayRotationY = rotation.y;
+
+    const spinDelta = state.spinAngle - state.textureTransition.startSpinAngle;
+    state.currentRotationY = state.textureTransition.startRotationY + spinDelta;
+    state.currentRotationX = rotation.x;
+
     fadeMaterial.opacity = eased;
 
     if (progress >= 1) {
@@ -499,14 +506,14 @@ function updateScene(deltaSeconds: number) {
       fadeMaterial.opacity = 0;
       fadeMaterial.needsUpdate = true;
       fadeFront.visible = false;
+
       state.textureTransition = null;
       state.currentRotationX = 0;
       state.currentRotationY = 0;
       state.displayRotationX = 0;
-      state.displayRotationY = 0;
+      state.displayRotationY = state.spinAngle;
       state.targetRotationX = 0;
       state.targetRotationY = 0;
-      state.spinAngle = 0;
     }
   } else {
     state.currentRotationX = THREE.MathUtils.lerp(
