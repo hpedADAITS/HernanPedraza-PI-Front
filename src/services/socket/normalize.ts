@@ -55,7 +55,7 @@ export function normalizeNowPlaying(
     totalDuration,
     startedAt: startedAtTs,
     elapsedTime: payload.elapsedTime,
-    albumArt: payload.recognitionMatch?.coverUrl || null,
+    albumArt: payload.recognitionMatch?.coverUrl || payload.albumArt || null,
   };
 }
 

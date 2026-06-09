@@ -92,6 +92,11 @@ function toPlayerSong(song: Song): NowPlayingSong {
   };
 }
 
+function albumArtForNowPlaying(songId: string, albumArt: string | null | undefined, queue: Song[]) {
+  if (albumArt) return albumArt;
+  return queue.find((song) => song._id === songId)?.recognitionMatch?.coverUrl || null;
+}
+
 function sortQueueSongs(songs: Song[]): Song[] {
   const order: Record<string, number> = {
     PLAYING: 0,
@@ -185,7 +190,7 @@ function nowPlayingSectionReducer(
             : undefined,
           durationSec: nowPlaying.totalDuration,
           startedAt: nowPlaying.startedAt,
-          albumArt: nowPlaying.albumArt,
+          albumArt: albumArtForNowPlaying(nowPlaying.songId, nowPlaying.albumArt, state.queue),
         },
         currentMatch: null,
         queue: state.queue.filter((song) => song._id !== nowPlaying.songId),
@@ -239,7 +244,7 @@ function nowPlayingSectionReducer(
                 : undefined,
               durationSec: data.nowPlaying.totalDuration,
               startedAt: data.nowPlaying.startedAt,
-              albumArt: data.nowPlaying.albumArt,
+              albumArt: albumArtForNowPlaying(data.nowPlaying.songId, data.nowPlaying.albumArt, nextQueue),
             }
           : state.nowPlaying;
 

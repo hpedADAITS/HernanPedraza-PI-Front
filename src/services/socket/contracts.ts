@@ -23,6 +23,7 @@ export interface SongEventPayload {
 export interface NowPlayingEventPayload extends SongEventPayload {
   elapsedTime?: number;
   remainingTime?: number;
+  albumArt?: string | null;
 }
 
 export interface QueueUpdatedPayload {
