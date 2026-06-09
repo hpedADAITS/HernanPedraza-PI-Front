@@ -2,7 +2,7 @@ class AudioMatchProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
 
-    this.bufferSize = 4096;
+    this.bufferSize = Math.max(4096, Math.round(sampleRate * 0.5));
     this.buffer = new Float32Array(this.bufferSize);
     this.offset = 0;
   }
