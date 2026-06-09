@@ -31,6 +31,7 @@ type MatchDebug = {
   queue: string;
   pcm: string;
   ts: string;
+  phones: string;
 };
 
 const EMPTY_DEBUG: MatchDebug = {
@@ -42,6 +43,7 @@ const EMPTY_DEBUG: MatchDebug = {
   queue: '-',
   pcm: '-',
   ts: '-',
+  phones: '0',
 };
 
 function canRequestMicrophone() {
@@ -124,6 +126,7 @@ export function PhoneMicrophone() {
   const { hash } = useLocation();
   const streamRef = useRef<MediaStream | null>(null);
   const stopAudioMatchRef = useRef<null | (() => void)>(null);
+  const stopPhoneListenerRef = useRef<null | (() => void)>(null);
   const [connectionState, setConnectionState] =
     useState<ConnectionState>('idle');
   const [error, setError] = useState('');
@@ -134,6 +137,8 @@ export function PhoneMicrophone() {
   const stopActiveStream = useCallback(() => {
     stopAudioMatchRef.current?.();
     stopAudioMatchRef.current = null;
+    stopPhoneListenerRef.current?.();
+    stopPhoneListenerRef.current = null;
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
     disconnectSocket();
@@ -243,6 +248,22 @@ export function PhoneMicrophone() {
           }));
         },
       });
+
+      const phonesToDebugLine = (phoneList: Array<{ phoneId: string; deviceName: string; connectedAt: string }>) =>
+        phoneList.length === 0 ? '0' : phoneList.map((p) => p.deviceName).join(', ');
+
+      const handlePhoneRoster = (payload: { eventId?: string; phones?: Array<{ phoneId: string; deviceName: string; connectedAt: string }>; timestamp?: string }) => {
+        if (payload.eventId && payload.eventId !== audioEventId) return;
+        setDebug((current) => ({
+          ...current,
+          phones: phonesToDebugLine(payload.phones || []),
+          ts: new Date().toLocaleTimeString(),
+        }));
+      };
+
+      socket.on('phone_microphone_roster', handlePhoneRoster);
+      stopPhoneListenerRef.current = () => socket.off('phone_microphone_roster', handlePhoneRoster);
+
       setConnectionState('connected');
     } catch (err) {
       stopMicrophone();
@@ -321,6 +342,7 @@ score ${debug.score}
 off   ${debug.offset}
 queue ${debug.queue}
 pcm   ${debug.pcm}
+phones ${debug.phones}
 time  ${debug.ts}`}
           </pre>
         )}
