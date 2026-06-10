@@ -35,5 +35,7 @@ export {
   onPhoneMicrophoneDisconnected,
   onAudioMatchChunk,
   onAudioMatchUpdate,
+  onAudioMatchLocked,
+  onAudioMatchReleased,
   onPhoneAudioStream,
 } from './listeners';

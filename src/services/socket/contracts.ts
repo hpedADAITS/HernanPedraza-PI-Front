@@ -135,6 +135,33 @@ export interface AudioMatchUpdatePayload {
   }>;
 }
 
+export interface AudioMatchLockedPayload {
+  eventId?: string;
+  timestamp?: string;
+  state?: string;
+  candidate?: {
+    trackId?: string;
+    title?: string;
+    artist?: string;
+    coverUrl?: string | null;
+    duration?: number | null;
+    score?: number;
+    totalAligned?: number;
+    offsetConcentration?: number;
+    lockedAt?: number | null;
+    queueContext?: {
+      hasMatch?: boolean;
+      isInQueue?: boolean;
+      hasPending?: boolean;
+      hasApproved?: boolean;
+      hasPlaying?: boolean;
+      nextApproved?: NowPlayingEventPayload | null;
+      playing?: NowPlayingEventPayload | null;
+      approvedCount?: number;
+    };
+  };
+}
+
 export interface AudioMatchChunkPayload {
   sampleRate: number;
   pcm: Float32Array;
@@ -174,6 +201,8 @@ export interface SocketEventPayloads {
   phone_microphone_connected: PhoneMicrophoneConnectedPayload;
   phone_microphone_disconnected: PhoneMicrophoneDisconnectedPayload;
   audio_match_update: AudioMatchUpdatePayload;
+  audio_match_locked: AudioMatchLockedPayload;
+  audio_match_released: AudioMatchLockedPayload;
   audio_match_chunk: AudioMatchChunkPayload;
   phone_audio_stream: PhoneAudioStreamPayload;
 }

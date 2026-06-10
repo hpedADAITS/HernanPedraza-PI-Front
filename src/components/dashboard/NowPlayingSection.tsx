@@ -3,14 +3,14 @@ import { m } from 'motion/react';
 import { NowPlaying } from '@/components/common';
 import { NOW_PLAYING } from '@/constants/dashboard';
 import { SCALE_IN } from '@/constants/animations';
-import { initSocket, onSongQueued, onSongNowPlaying, onSongRejected, onSongSkipped, onQueueUpdated, onSongSuggested, onPhoneMicrophoneConnected, onPhoneMicrophoneDisconnected, onAudioMatchChunk, onAudioMatchUpdate, onPhoneAudioStream, off } from '@/services/socket';
+import { initSocket, onSongQueued, onSongNowPlaying, onSongRejected, onSongSkipped, onQueueUpdated, onSongSuggested, onPhoneMicrophoneConnected, onPhoneMicrophoneDisconnected, onAudioMatchChunk, onAudioMatchUpdate, onAudioMatchLocked, onAudioMatchReleased, onPhoneAudioStream, off } from '@/services/socket';
 import { normalizeNowPlaying, normalizeQueueUpdated, normalizeSocketSong } from '@/services/socket/normalize';
 import { songsAPI } from '@/services/api';
 import { listenDebugSongEvents } from '@/utils/debugSongEvents';
 import { getStoredEventId } from '@/services/session';
 import { useTrackedTimeout } from '@/hooks/useTrackedTimeout';
 import type { Song } from '@/types/songs';
-import type { NowPlayingEventPayload, QueueUpdatedPayload, SongEventPayload, PhoneMicrophoneConnectedPayload, PhoneMicrophoneDisconnectedPayload, AudioMatchChunkPayload, AudioMatchUpdatePayload, PhoneAudioStreamPayload } from '@/services/socket/contracts';
+import type { NowPlayingEventPayload, QueueUpdatedPayload, SongEventPayload, PhoneMicrophoneConnectedPayload, PhoneMicrophoneDisconnectedPayload, AudioMatchChunkPayload, AudioMatchUpdatePayload, AudioMatchLockedPayload, PhoneAudioStreamPayload } from '@/services/socket/contracts';
 
 interface NowPlayingSong {
   id: string;
@@ -150,6 +150,7 @@ type NowPlayingSectionAction =
   | { type: 'audio_level'; level: number }
   | { type: 'audio_pcm'; pcm: Float32Array }
   | { type: 'audio_match_update'; payload: AudioMatchUpdatePayload }
+  | { type: 'audio_match_locked'; payload: AudioMatchLockedPayload }
   | { type: 'song_finished' };
 
 function nowPlayingSectionReducer(
@@ -198,6 +199,46 @@ function nowPlayingSectionReducer(
         },
         currentMatch: null,
         queue: state.queue.filter((song) => song._id !== nowPlaying.songId),
+        celebrateKey: state.celebrateKey + 1,
+      };
+    }
+    case 'audio_match_locked': {
+      const candidate = action.payload?.candidate;
+      const queueContext = candidate?.queueContext;
+      const playing = queueContext?.playing;
+      if (!queueContext?.hasPlaying || !playing || !playing.songId) {
+        return state;
+      }
+      const startedAt = playing.startedPlayingAt
+        ? new Date(playing.startedPlayingAt).getTime()
+        : undefined;
+      const totalDuration = Number(
+        playing.totalDuration ?? playing.duration ?? candidate?.duration,
+      );
+      const elapsed = startedAt
+        ? Math.max(0, Math.floor((Date.now() - startedAt) / 1000))
+        : 0;
+      const songId = String(playing.songId);
+      return {
+        ...state,
+        nowPlaying: {
+          id: songId,
+          title: candidate?.title || playing.title || 'Now Playing',
+          artist: candidate?.artist || playing.artist || '',
+          status: 'playing',
+          progress: totalDuration > 0 ? Math.min(100, (elapsed / totalDuration) * 100) : 0,
+          currentTime: formatTime(elapsed),
+          duration: totalDuration > 0 ? formatTime(totalDuration) : undefined,
+          durationSec: totalDuration > 0 ? totalDuration : undefined,
+          startedAt,
+          albumArt: albumArtForNowPlaying(
+            songId,
+            candidate?.coverUrl || playing.albumArt || null,
+            state.queue,
+          ),
+        },
+        currentMatch: null,
+        queue: state.queue.filter((song) => song._id !== songId),
         celebrateKey: state.celebrateKey + 1,
       };
     }
@@ -489,6 +530,13 @@ export function NowPlayingSection({ isDj = false }: NowPlayingSectionProps) {
       dispatch({ type: 'audio_match_update', payload: data });
     };
 
+    const handleAudioMatchLocked = (data: AudioMatchLockedPayload) => {
+      // Available for both DJ and attendees: the queue context is the
+      // single source of truth for whether the locked candidate is the
+      // currently playing song.
+      dispatch({ type: 'audio_match_locked', payload: data });
+    };
+
     onSongQueued(handleSongQueued);
     onSongSuggested(handleSongSuggested);
     onSongNowPlaying(handleSongNowPlaying);
@@ -499,6 +547,7 @@ export function NowPlayingSection({ isDj = false }: NowPlayingSectionProps) {
     onPhoneMicrophoneDisconnected(handlePhoneMicrophoneDisconnected);
     onAudioMatchChunk(handleAudioMatchChunk);
     onAudioMatchUpdate(handleAudioMatchUpdate);
+    onAudioMatchLocked(handleAudioMatchLocked);
     onPhoneAudioStream(handlePhoneAudioStream);
 
     const stopDebugEvents = listenDebugSongEvents(({ type, payload }) => {
@@ -521,6 +570,7 @@ export function NowPlayingSection({ isDj = false }: NowPlayingSectionProps) {
       off('phone_microphone_disconnected', handlePhoneMicrophoneDisconnected);
       off('audio_match_chunk', handleAudioMatchChunk);
       off('audio_match_update', handleAudioMatchUpdate);
+      off('audio_match_locked', handleAudioMatchLocked);
       off('phone_audio_stream', handlePhoneAudioStream);
       stopDebugEvents();
     };

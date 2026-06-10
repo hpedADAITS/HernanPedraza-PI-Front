@@ -147,6 +147,14 @@ export function onAudioMatchUpdate(callback: Listener<'audio_match_update'>) {
   on('audio_match_update', callback);
 }
 
+export function onAudioMatchLocked(callback: Listener<'audio_match_locked'>) {
+  on('audio_match_locked', callback);
+}
+
+export function onAudioMatchReleased(callback: Listener<'audio_match_released'>) {
+  on('audio_match_released', callback);
+}
+
 export function onPhoneAudioStream(callback: Listener<'phone_audio_stream'>) {
   on('phone_audio_stream', callback);
 }

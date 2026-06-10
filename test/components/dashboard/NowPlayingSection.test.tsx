@@ -5,12 +5,16 @@ import { NowPlayingSection } from '@/components/dashboard/NowPlayingSection';
 
 const {
   audioMatchUpdateCallbacks,
+  audioMatchLockedCallbacks,
+  audioMatchReleasedCallbacks,
   phoneMicrophoneConnectedCallbacks,
   phoneMicrophoneDisconnectedCallbacks,
   lastNowPlayingProps,
   songsApiGetQueueMock,
 } = vi.hoisted(() => {
   const audioMatchUpdateCallbacks: Array<(data: unknown) => void> = [];
+  const audioMatchLockedCallbacks: Array<(data: unknown) => void> = [];
+  const audioMatchReleasedCallbacks: Array<(data: unknown) => void> = [];
   const phoneMicrophoneConnectedCallbacks: Array<(data: unknown) => void> = [];
   const phoneMicrophoneDisconnectedCallbacks: Array<(data: unknown) => void> = [];
   const lastNowPlayingProps: { current: Record<string, unknown> | null } = {
@@ -18,6 +22,8 @@ const {
   };
   return {
     audioMatchUpdateCallbacks,
+    audioMatchLockedCallbacks,
+    audioMatchReleasedCallbacks,
     phoneMicrophoneConnectedCallbacks,
     phoneMicrophoneDisconnectedCallbacks,
     lastNowPlayingProps,
@@ -31,6 +37,12 @@ vi.mock('@/services/socket', () => ({
   onAudioMatchChunk: vi.fn(),
   onAudioMatchUpdate: vi.fn((callback: (data: unknown) => void) => {
     audioMatchUpdateCallbacks.push(callback);
+  }),
+  onAudioMatchLocked: vi.fn((callback: (data: unknown) => void) => {
+    audioMatchLockedCallbacks.push(callback);
+  }),
+  onAudioMatchReleased: vi.fn((callback: (data: unknown) => void) => {
+    audioMatchReleasedCallbacks.push(callback);
   }),
   onAudioMatchUpdateCallback: vi.fn(),
   onPhoneAudioStream: vi.fn(),
@@ -96,6 +108,8 @@ vi.mock('@/components/common', () => ({
 describe('NowPlayingSection - audio_match_update', () => {
   beforeEach(() => {
     audioMatchUpdateCallbacks.length = 0;
+    audioMatchLockedCallbacks.length = 0;
+    audioMatchReleasedCallbacks.length = 0;
     phoneMicrophoneConnectedCallbacks.length = 0;
     phoneMicrophoneDisconnectedCallbacks.length = 0;
     lastNowPlayingProps.current = null;
@@ -240,11 +254,21 @@ describe('NowPlayingSection - audio_match_update', () => {
     expect(screen.getByTestId('np-status').textContent).toBe('idle');
     expect(screen.getByTestId('np-title').textContent).not.toBe('Sandstorm');
   });
+
+  it('subscribes to audio_match_update on mount', async () => {
+    render(<NowPlayingSection />);
+
+    await waitFor(() => {
+      expect(audioMatchUpdateCallbacks.length).toBeGreaterThan(0);
+    });
+  });
 });
 
 describe('NowPlayingSection - phone microphone lifecycle', () => {
   beforeEach(() => {
     audioMatchUpdateCallbacks.length = 0;
+    audioMatchLockedCallbacks.length = 0;
+    audioMatchReleasedCallbacks.length = 0;
     phoneMicrophoneConnectedCallbacks.length = 0;
     phoneMicrophoneDisconnectedCallbacks.length = 0;
     lastNowPlayingProps.current = null;
