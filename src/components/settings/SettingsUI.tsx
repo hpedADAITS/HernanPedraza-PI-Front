@@ -1,4 +1,5 @@
 import React, { ReactNode, useCallback, useEffect, useEffectEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { m, AnimatePresence } from 'motion/react';
 import type { LucideIcon } from 'lucide-react';
 import { ArrowLeft, Search, X } from 'lucide-react';
@@ -233,7 +234,7 @@ export function SettingsDialog({
 
   return (
     <AnimatePresence>
-      {open && (
+      {open && createPortal(
         <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -275,7 +276,8 @@ export function SettingsDialog({
               </div>
             </div>
           </m.div>
-        </m.div>
+        </m.div>,
+        document.body,
       )}
     </AnimatePresence>
   );
