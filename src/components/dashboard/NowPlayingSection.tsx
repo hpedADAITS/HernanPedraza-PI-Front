@@ -3,7 +3,7 @@ import { m } from 'motion/react';
 import { NowPlaying } from '@/components/common';
 import { NOW_PLAYING } from '@/constants/dashboard';
 import { SCALE_IN } from '@/constants/animations';
-import { initSocket, onSongQueued, onSongNowPlaying, onSongRejected, onSongSkipped, onQueueUpdated, onSongSuggested, onPhoneMicrophoneConnected, onPhoneMicrophoneDisconnected, onAudioMatchChunk, onAudioMatchUpdate, onAudioMatchLocked, onAudioMatchReleased, onPhoneAudioStream, off } from '@/services/socket';
+import { initSocket, onSongQueued, onSongNowPlaying, onSongRejected, onSongSkipped, onQueueUpdated, onSongSuggested, onPhoneMicrophoneConnected, onPhoneMicrophoneDisconnected, onAudioMatchChunk, onAudioMatchUpdate, onAudioMatchLocked, onPhoneAudioStream, off } from '@/services/socket';
 import { normalizeNowPlaying, normalizeQueueUpdated, normalizeSocketSong } from '@/services/socket/normalize';
 import { songsAPI } from '@/services/api';
 import { listenDebugSongEvents } from '@/utils/debugSongEvents';
