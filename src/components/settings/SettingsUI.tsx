@@ -232,10 +232,11 @@ export function SettingsDialog({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [open]);
 
-  return (
+  return createPortal(
     <AnimatePresence>
-      {open && createPortal(
+      {open && (
         <m.div
+          key="settings-dialog"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -243,6 +244,7 @@ export function SettingsDialog({
           className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm"
         >
           <m.div
+            key="settings-dialog-content"
             role="dialog"
             aria-modal="true"
             aria-label={title}
@@ -276,10 +278,10 @@ export function SettingsDialog({
               </div>
             </div>
           </m.div>
-        </m.div>,
-        document.body,
+        </m.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
 

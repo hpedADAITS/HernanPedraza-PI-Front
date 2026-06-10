@@ -3,6 +3,7 @@ import { m, AnimatePresence } from 'motion/react';
 import { clsx } from 'clsx';
 import { Play, X, Clock, UserX, SkipForward, Check, Mic, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { SettingsDialog, SettingsDialogActions, SettingsDialogButton } from '@/components/settings/SettingsUI';
 import { DEFAULT_COOLDOWN_MS, formatCooldownDuration } from '@/constants/cooldowns';
 import { CooldownDurationSelect } from './CooldownDurationSelect';
 import { ANIMATION_DURATION } from '@/constants/animations';
@@ -75,6 +76,8 @@ export function QueueItem({
 }: QueueItemProps) {
   const isDj = context.mode === 'dj';
   const [cooldownMs, setCooldownMs] = useState(DEFAULT_COOLDOWN_MS);
+  const [cooldownDialogOpen, setCooldownDialogOpen] = useState(false);
+  const [cooldownReason, setCooldownReason] = useState('DJ cooldown');
   const [voting, setVoting] = useState(false);
   const { playSound } = useSound();
   const { toast } = useToast();
@@ -104,6 +107,26 @@ export function QueueItem({
       toast.error(error instanceof Error && error.message ? error.message : t('Vote failed'));
     } finally {
       setVoting(false);
+    }
+  };
+
+  const applyCooldown = async () => {
+    if (!eventId || !song.requestedBy?._id) return;
+    const reason = cooldownReason.trim() || 'DJ cooldown';
+    try {
+      await toast.promise(
+        setCooldownAck(eventId, song.requestedBy._id, cooldownMs, reason),
+        {
+          success: t('Cooldown applied to "{name}" for {duration}', {
+            name: song.requestedBy.nickname,
+            duration: formatCooldownDuration(cooldownMs),
+          }),
+          error: t('Failed to apply cooldown'),
+        },
+      );
+      setCooldownDialogOpen(false);
+    } catch (error: unknown) {
+      console.error('Error applying cooldown from queue:', error);
     }
   };
 
@@ -162,8 +185,8 @@ export function QueueItem({
           toast.error(t('Only attendee requests can be moderated'));
           return;
         }
-        await setCooldownAck(eventId, song.requestedBy._id, cooldownMs, 'DJ applied cooldown');
-        toast.success(t('User on cooldown for {duration}', { duration: formatCooldownDuration(cooldownMs) }));
+        setCooldownDialogOpen(true);
+        return;
       } else if (action === 'Kick' && eventId) {
         if (!canModerateRequester || !song.requestedBy?._id) {
           toast.error(t('Only attendee requests can be moderated'));
@@ -521,6 +544,39 @@ export function QueueItem({
           </m.div>
         )}
       </AnimatePresence>
+      <SettingsDialog
+        open={cooldownDialogOpen}
+        title={t('Cooldown reason')}
+        onClose={() => setCooldownDialogOpen(false)}
+      >
+        <div className="space-y-3">
+          <label
+            htmlFor={`queue-cooldown-reason-${song._id}`}
+            className="block text-sm font-bold text-slate-700"
+          >
+            {t('Reason')}
+          </label>
+          <textarea
+            id={`queue-cooldown-reason-${song._id}`}
+            value={cooldownReason}
+            onChange={(e) => setCooldownReason(e.target.value)}
+            maxLength={140}
+            rows={4}
+            className="w-full resize-none rounded-lg border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none focus:ring-4 focus:ring-blue-100"
+          />
+          <p className="text-xs font-semibold text-slate-500">
+            {t('This reason is shown to the attendee.')}
+          </p>
+        </div>
+        <SettingsDialogActions>
+          <SettingsDialogButton onClick={() => setCooldownDialogOpen(false)}>
+            {t('Cancel')}
+          </SettingsDialogButton>
+          <SettingsDialogButton onClick={applyCooldown} variant="primary">
+            {t('Apply cooldown')}
+          </SettingsDialogButton>
+        </SettingsDialogActions>
+      </SettingsDialog>
     </m.div>
   );
 }
