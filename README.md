@@ -1,13 +1,13 @@
 <div align="center" style="max-width:320px; margin:0 auto;">
-  <a align="center" href="https://sr-backend.onrender.com/" target="_blank" rel="noopener noreferrer">
-    <img align="center"
-      alt="Syncrequest Logo"
-      src="docs/logo.png"
-      style="display:block; width:100%; height:auto;"
-    />
-  </a>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/logo.png">
+  <source media="(prefers-color-scheme: light)" srcset="src/assets/logo_normal.png">
+  <img alt="Logo" src="docs/logo.png">
+</picture>
 </div>
+
 &nbsp;
+
 <h1 align="center">Syncrequest Frontend</h1>
 
 Non commercial Student proyect combining React + TypeScript client for DJ events, attendee song requests, realtime queues, and mobile-friendly participation.
