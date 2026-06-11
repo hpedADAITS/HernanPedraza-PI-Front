@@ -5,6 +5,7 @@ import { Layout } from '@/components/layout/Layout';
 import { eventsAPI } from '@/services/api';
 import { startAudioMatchStream } from '@/services/audio/micStream';
 import { disconnectSocket, initSocket } from '@/services/socket/connection';
+import { DEBUG_AUDIO_HASHES_CHANNEL } from '@/utils/debugAudioHashes';
 import { t } from '@/i18n';
 
 type ConnectionState = 'idle' | 'connecting' | 'connected' | 'failed';
@@ -127,6 +128,7 @@ export function PhoneMicrophone() {
   const streamRef = useRef<MediaStream | null>(null);
   const stopAudioMatchRef = useRef<null | (() => void)>(null);
   const stopPhoneListenerRef = useRef<null | (() => void)>(null);
+  const hashChannelRef = useRef<BroadcastChannel | null>(null);
   const [connectionState, setConnectionState] =
     useState<ConnectionState>('idle');
   const [error, setError] = useState('');
@@ -139,6 +141,10 @@ export function PhoneMicrophone() {
     stopAudioMatchRef.current = null;
     stopPhoneListenerRef.current?.();
     stopPhoneListenerRef.current = null;
+    if (hashChannelRef.current) {
+      hashChannelRef.current.close();
+      hashChannelRef.current = null;
+    }
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
     disconnectSocket();
@@ -231,6 +237,12 @@ export function PhoneMicrophone() {
       socket.on('audio_match_released', (payload) => updateDebug(payload));
       socket.on('audio_match_idle', (payload) => updateDebug(payload));
       socket.on('audio_match_queue_updated', (payload) => updateDebug(payload));
+      if (typeof BroadcastChannel !== 'undefined' && !hashChannelRef.current) {
+        hashChannelRef.current = new BroadcastChannel(DEBUG_AUDIO_HASHES_CHANNEL);
+        socket.on('debug_audio_hashes', (payload) => {
+          hashChannelRef.current?.postMessage(payload);
+        });
+      }
       stopAudioMatchRef.current = await startAudioMatchStream({
         eventId: audioEventId,
         stream,

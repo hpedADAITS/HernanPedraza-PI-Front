@@ -271,7 +271,7 @@ function createRuggedGlassMap() {
 }
 
 function orientFrontTexture(texture: THREE.Texture) {
-  texture.flipY = false;
+  texture.flipY = true;
   texture.center.set(0.5, 0.5);
   texture.rotation = 0;
   texture.repeat.set(0.9, 0.9);

@@ -204,27 +204,29 @@ function nowPlayingSectionReducer(
     }
     case 'audio_match_locked': {
       const candidate = action.payload?.candidate;
-      const queueContext = candidate?.queueContext;
-      const playing = queueContext?.playing;
-      if (!queueContext?.hasPlaying || !playing || !playing.songId) {
+      if (!candidate?.trackId) {
         return state;
       }
-      const startedAt = playing.startedPlayingAt
+      const queueContext = candidate.queueContext;
+      const playing = queueContext?.hasPlaying ? queueContext.playing : null;
+      const queuedSongId = playing?.songId ? String(playing.songId) : null;
+
+      const startedAt = playing?.startedPlayingAt
         ? new Date(playing.startedPlayingAt).getTime()
-        : undefined;
+        : (candidate.lockedAt ?? Date.now());
       const totalDuration = Number(
-        playing.totalDuration ?? playing.duration ?? candidate?.duration,
+        playing?.totalDuration ?? candidate.duration,
       );
       const elapsed = startedAt
         ? Math.max(0, Math.floor((Date.now() - startedAt) / 1000))
         : 0;
-      const songId = String(playing.songId);
+      const songId = queuedSongId ?? `match-${candidate.trackId}`;
       return {
         ...state,
         nowPlaying: {
           id: songId,
-          title: candidate?.title || playing.title || 'Now Playing',
-          artist: candidate?.artist || playing.artist || '',
+          title: candidate.title || playing?.title || 'Now Playing',
+          artist: candidate.artist || playing?.artist || '',
           status: 'playing',
           progress: totalDuration > 0 ? Math.min(100, (elapsed / totalDuration) * 100) : 0,
           currentTime: formatTime(elapsed),
@@ -233,12 +235,14 @@ function nowPlayingSectionReducer(
           startedAt,
           albumArt: albumArtForNowPlaying(
             songId,
-            candidate?.coverUrl || playing.albumArt || null,
+            candidate.coverUrl || playing?.albumArt || null,
             state.queue,
           ),
         },
         currentMatch: null,
-        queue: state.queue.filter((song) => song._id !== songId),
+        queue: queuedSongId
+          ? state.queue.filter((song) => song._id !== queuedSongId)
+          : state.queue,
         celebrateKey: state.celebrateKey + 1,
       };
     }

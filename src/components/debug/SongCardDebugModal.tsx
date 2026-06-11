@@ -4,6 +4,7 @@ import {
   Bug,
   Database,
   ExternalLink,
+  Fingerprint,
   KeyRound,
   ListMusic,
   RotateCcw,
@@ -14,6 +15,7 @@ import { useToast } from '@/hooks/useToast';
 import { isDebugModeEnabled } from '@/utils/debugMode';
 import { readStoredJson } from '@/utils/storage';
 import { DEBUG_EVENT_NAME, dispatchDebugSongEvent } from '@/utils/debugSongEvents';
+import { DEBUG_AUDIO_HASHES_CHANNEL } from '@/utils/debugAudioHashes';
 import { API_BASE, apiCall } from '@/services/api/client';
 import debugCubeTextureUrl from '@/assets/debug-cube-texture.png';
 
@@ -905,6 +907,174 @@ function renderQueueTestWindow(eventId: string) {
   `;
 }
 
+function renderHashFeedbackWindow() {
+  return `
+    <h1>Audio Hash Feedback</h1>
+    <p class="meta">
+      Live feed of the fingerprints the backend is generating per audio chunk.
+      Open the phone microphone page in another tab to stream audio into this window.
+    </p>
+    <section class="card">
+      <span class="role">LATEST CHUNK</span>
+      <p class="meta">
+        Channel status: <strong id="channel-status">waiting for first chunk…</strong>
+      </p>
+      <dl>
+        <div><dt>Chunk index</dt><dd id="latest-index">-</dd></div>
+        <div><dt>Generated hashes</dt><dd id="latest-count">-</dd></div>
+        <div><dt>Input sample rate</dt><dd id="latest-input-rate">-</dd></div>
+        <div><dt>Target sample rate</dt><dd id="latest-target-rate">-</dd></div>
+        <div><dt>Raw samples</dt><dd id="latest-samples">-</dd></div>
+        <div><dt>Event id</dt><dd id="latest-event">-</dd></div>
+        <div><dt>Event id source</dt><dd id="latest-event-source">-</dd></div>
+        <div><dt>Received at</dt><dd id="latest-ts">-</dd></div>
+      </dl>
+    </section>
+    <section class="card">
+      <span class="role">HASHES (LATEST CHUNK)</span>
+      <pre id="latest-hashes">no chunks yet</pre>
+    </section>
+    <section class="card">
+      <span class="role">RECENT CHUNKS</span>
+      <div id="recent-chunks" class="recent">
+        <p class="meta">No chunks yet.</p>
+      </div>
+    </section>
+    <style>
+      .recent {
+        display: grid;
+        gap: 6px;
+        max-height: 260px;
+        overflow: auto;
+      }
+      .recent-row {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-size: 12px;
+        padding: 4px 6px;
+        border-radius: 4px;
+        background: #f1f5f9;
+        color: #0f172a;
+      }
+      .recent-row .n {
+        color: #475569;
+        min-width: 5em;
+      }
+      .recent-row .c {
+        font-weight: 700;
+      }
+      .recent-row .a {
+        color: #64748b;
+        margin-left: auto;
+      }
+      pre {
+        margin: 0;
+        max-height: 320px;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+        font-size: 12px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      }
+    </style>
+    <script>
+      (() => {
+        const CHANNEL_NAME = ${JSON.stringify(DEBUG_AUDIO_HASHES_CHANNEL)};
+        const RECENT_LIMIT = 30;
+        if (typeof BroadcastChannel === 'undefined') {
+          document.body.insertAdjacentHTML(
+            'afterbegin',
+            '<p class="meta" style="color:#b91c1c">BroadcastChannel is not supported in this browser.</p>'
+          );
+          return;
+        }
+        const channel = new BroadcastChannel(CHANNEL_NAME);
+        const recent = [];
+        const set = (id, value) => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = value;
+        };
+        const renderRecent = () => {
+          const root = document.getElementById('recent-chunks');
+          if (!root) return;
+          if (recent.length === 0) {
+            root.innerHTML = '<p class="meta">No chunks yet.</p>';
+            return;
+          }
+          root.innerHTML = recent
+            .map(
+              (row) => '<div class="recent-row">' +
+                '<span class="n">#' + row.chunkIndex + '</span>' +
+                '<span class="c">' + row.count + ' hash' + (row.count === 1 ? '' : 'es') + '</span>' +
+                '<span class="a">' + row.receivedAt + '</span>' +
+                '</div>'
+            )
+            .join('');
+        };
+        const formatHashes = (hashes) =>
+          hashes
+            .map((h) => h.hash.toString(16).padStart(8, '0') + '@' + h.sourceTime.toFixed(0))
+            .join('\\n');
+
+        /* Best-effort: prefill the event id and connection status from
+           the opener tab's sessionStorage so the popup is informative
+           even before the first audio chunk arrives. The phone-mic page
+           still drives the hash stream via the broadcast channel. */
+        const readEventFromOpener = () => {
+          try {
+            const opener = window.opener;
+            if (!opener || opener.closed) return null;
+            const stored = opener.sessionStorage.getItem('currentEvent:v1');
+            if (!stored) return null;
+            const parsed = JSON.parse(stored);
+            return parsed?.eventId || parsed?._id || null;
+          } catch {
+            return null;
+          }
+        };
+        const prefill = readEventFromOpener();
+        if (prefill) {
+          set('latest-event', prefill);
+          set('latest-event-source', 'from opener sessionStorage');
+        } else {
+          set('latest-event', '(none — open the hash window from a page with currentEvent)');
+          set('latest-event-source', 'no opener access');
+        }
+
+        let firstChunk = true;
+        channel.onmessage = (event) => {
+          const payload = event.data || {};
+          if (!payload || typeof payload.chunkIndex !== 'number') return;
+          set('latest-index', '#' + payload.chunkIndex);
+          set('latest-count', String(payload.hashesGenerated));
+          set('latest-input-rate', String(payload.inputSampleRate));
+          set('latest-target-rate', String(payload.targetSampleRate));
+          set('latest-samples', String(payload.rawSamplesLength));
+          set('latest-event', payload.eventId || '-');
+          set('latest-event-source', 'from debug_audio_hashes socket event');
+          set('latest-ts', new Date(payload.timestamp || Date.now()).toLocaleTimeString());
+          set('latest-hashes', formatHashes(payload.hashes || []));
+          if (firstChunk) {
+            firstChunk = false;
+            const status = document.getElementById('channel-status');
+            if (status) status.textContent = 'live';
+          }
+          recent.unshift({
+            chunkIndex: payload.chunkIndex,
+            count: payload.hashesGenerated,
+            receivedAt: new Date(payload.timestamp || Date.now()).toLocaleTimeString(),
+          });
+          if (recent.length > RECENT_LIMIT) recent.length = RECENT_LIMIT;
+          renderRecent();
+        };
+        window.addEventListener('beforeunload', () => channel.close());
+      })();
+    </script>
+  `;
+}
+
 export function SongCardDebugModal() {
   const toast = useToast();
   const [open, setOpen] = useState(false);
@@ -1098,6 +1268,18 @@ export function SongCardDebugModal() {
     toast.success('Queue test page opened');
   };
 
+  const openHashFeedbackWindow = () => {
+    setOpen(false);
+    const hashWindow = window.open('', '_blank');
+    if (!hashWindow) {
+      toast.error('Allow popups to open the hash feedback window');
+      return;
+    }
+
+    writeDebugWindow(hashWindow, renderHashFeedbackWindow());
+    toast.success('Hash feedback window opened — start the phone microphone to feed it');
+  };
+
   const triggerCubeTextureRequest = () => {
     setOpen(false);
     if (!window.setCoverCubeTexture) {
@@ -1212,6 +1394,15 @@ export function SongCardDebugModal() {
             </div>
 
             <div className="mt-4 border-t border-slate-200 pt-4">
+              <button
+                type="button"
+                onClick={openHashFeedbackWindow}
+                className="mb-2 flex w-full items-center justify-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50"
+              >
+                <Fingerprint size={16} />
+                Open hash feedback window
+                <ExternalLink size={15} />
+              </button>
               <button
                 type="button"
                 onClick={openQueueTestWindow}

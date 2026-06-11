@@ -174,6 +174,17 @@ export interface PhoneAudioStreamPayload {
   timestamp: number;
 }
 
+export interface DebugAudioHashesPayload {
+  eventId?: string;
+  chunkIndex: number;
+  hashes: Array<{ hash: number; sourceTime: number }>;
+  hashesGenerated: number;
+  rawSamplesLength: number;
+  inputSampleRate: number;
+  targetSampleRate: number;
+  timestamp: number;
+}
+
 export interface SocketEventPayloads {
   participant_joined: ParticipantEventPayload;
   participant_left: ParticipantEventPayload;
@@ -205,6 +216,7 @@ export interface SocketEventPayloads {
   audio_match_released: AudioMatchLockedPayload;
   audio_match_chunk: AudioMatchChunkPayload;
   phone_audio_stream: PhoneAudioStreamPayload;
+  debug_audio_hashes: DebugAudioHashesPayload;
 }
 
 export type SocketEventName = keyof SocketEventPayloads;
