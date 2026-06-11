@@ -274,28 +274,38 @@ function nowPlayingSectionReducer(
       const nextQueue = data.queue
         ? sortQueueSongs(data.queue)
         : state.queue;
-      const nowPlaying =
-        data.nowPlaying
-          ? {
-              id: data.nowPlaying.songId,
-              title: data.nowPlaying.title,
-              artist: data.nowPlaying.artist,
-              status: 'playing' as const,
-              progress: data.nowPlaying.totalDuration
-                ? Math.min(
-                    100,
-                    ((data.nowPlaying.elapsedTime || 0) / data.nowPlaying.totalDuration) * 100,
-                  )
-                : 0,
-              currentTime: formatTime(data.nowPlaying.elapsedTime || 0),
-              duration: data.nowPlaying.totalDuration
-                ? formatTime(data.nowPlaying.totalDuration)
-                : undefined,
-              durationSec: data.nowPlaying.totalDuration,
-              startedAt: data.nowPlaying.startedAt,
-              albumArt: albumArtForNowPlaying(data.nowPlaying.songId, data.nowPlaying.albumArt, nextQueue),
-            }
-          : state.nowPlaying;
+      let nowPlaying: NowPlayingSong | null = null;
+      if (data.nowPlaying) {
+        nowPlaying = {
+          id: data.nowPlaying.songId,
+          title: data.nowPlaying.title,
+          artist: data.nowPlaying.artist,
+          status: 'playing' as const,
+          progress: data.nowPlaying.totalDuration
+            ? Math.min(
+                100,
+                ((data.nowPlaying.elapsedTime || 0) / data.nowPlaying.totalDuration) * 100,
+              )
+            : 0,
+          currentTime: formatTime(data.nowPlaying.elapsedTime || 0),
+          duration: data.nowPlaying.totalDuration
+            ? formatTime(data.nowPlaying.totalDuration)
+            : undefined,
+          durationSec: data.nowPlaying.totalDuration,
+          startedAt: data.nowPlaying.startedAt,
+          albumArt: albumArtForNowPlaying(data.nowPlaying.songId, data.nowPlaying.albumArt, nextQueue),
+        };
+      } else if (
+        state.nowPlaying
+        && state.nowPlaying.status === 'playing'
+        && !state.nowPlaying.id.startsWith('match-')
+        && Array.isArray(data.queue)
+        && !nextQueue.some((song) => song._id === state.nowPlaying?.id)
+      ) {
+        nowPlaying = null;
+      } else {
+        nowPlaying = state.nowPlaying;
+      }
 
       return {
         ...state,

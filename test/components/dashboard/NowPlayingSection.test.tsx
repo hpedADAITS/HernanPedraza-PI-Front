@@ -9,6 +9,7 @@ const {
   audioMatchReleasedCallbacks,
   phoneMicrophoneConnectedCallbacks,
   phoneMicrophoneDisconnectedCallbacks,
+  queueUpdatedCallbacks,
   lastNowPlayingProps,
   songsApiGetQueueMock,
 } = vi.hoisted(() => {
@@ -17,6 +18,7 @@ const {
   const audioMatchReleasedCallbacks: Array<(data: unknown) => void> = [];
   const phoneMicrophoneConnectedCallbacks: Array<(data: unknown) => void> = [];
   const phoneMicrophoneDisconnectedCallbacks: Array<(data: unknown) => void> = [];
+  const queueUpdatedCallbacks: Array<(data: unknown) => void> = [];
   const lastNowPlayingProps: { current: Record<string, unknown> | null } = {
     current: null,
   };
@@ -26,6 +28,7 @@ const {
     audioMatchReleasedCallbacks,
     phoneMicrophoneConnectedCallbacks,
     phoneMicrophoneDisconnectedCallbacks,
+    queueUpdatedCallbacks,
     lastNowPlayingProps,
     songsApiGetQueueMock: vi.fn(),
   };
@@ -52,7 +55,9 @@ vi.mock('@/services/socket', () => ({
   onPhoneMicrophoneDisconnected: vi.fn((callback: (data: unknown) => void) => {
     phoneMicrophoneDisconnectedCallbacks.push(callback);
   }),
-  onQueueUpdated: vi.fn(),
+  onQueueUpdated: vi.fn((callback: (data: unknown) => void) => {
+    queueUpdatedCallbacks.push(callback);
+  }),
   onSongNowPlaying: vi.fn(),
   onSongQueued: vi.fn(),
   onSongRejected: vi.fn(),
@@ -112,6 +117,7 @@ describe('NowPlayingSection - audio_match_update', () => {
     audioMatchReleasedCallbacks.length = 0;
     phoneMicrophoneConnectedCallbacks.length = 0;
     phoneMicrophoneDisconnectedCallbacks.length = 0;
+    queueUpdatedCallbacks.length = 0;
     lastNowPlayingProps.current = null;
     songsApiGetQueueMock.mockReset();
     songsApiGetQueueMock.mockResolvedValue([]);
@@ -271,6 +277,7 @@ describe('NowPlayingSection - phone microphone lifecycle', () => {
     audioMatchReleasedCallbacks.length = 0;
     phoneMicrophoneConnectedCallbacks.length = 0;
     phoneMicrophoneDisconnectedCallbacks.length = 0;
+    queueUpdatedCallbacks.length = 0;
     lastNowPlayingProps.current = null;
     songsApiGetQueueMock.mockReset();
     songsApiGetQueueMock.mockResolvedValue([]);
@@ -358,6 +365,66 @@ describe('NowPlayingSection - phone microphone lifecycle', () => {
       expect(screen.getByTestId('np-microphone-label').textContent).toBe(
         'iPhone microphone',
       );
+    });
+  });
+});
+
+describe('NowPlayingSection - out of queue', () => {
+  beforeEach(() => {
+    audioMatchUpdateCallbacks.length = 0;
+    audioMatchLockedCallbacks.length = 0;
+    audioMatchReleasedCallbacks.length = 0;
+    phoneMicrophoneConnectedCallbacks.length = 0;
+    phoneMicrophoneDisconnectedCallbacks.length = 0;
+    queueUpdatedCallbacks.length = 0;
+    lastNowPlayingProps.current = null;
+    songsApiGetQueueMock.mockReset();
+    songsApiGetQueueMock.mockResolvedValue([]);
+  });
+
+  it('falls back to idle (grey) when queue_updated drops the playing track without a replacement', async () => {
+    const songNowPlayingCallbacks: Array<(data: unknown) => void> = [];
+    const socketModule = await import('@/services/socket');
+    (socketModule.onSongNowPlaying as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+      (callback: (data: unknown) => void) => {
+        songNowPlayingCallbacks.push(callback);
+      },
+    );
+
+    render(<NowPlayingSection />);
+
+    await waitFor(() => {
+      expect(songNowPlayingCallbacks.length).toBeGreaterThan(0);
+      expect(queueUpdatedCallbacks.length).toBeGreaterThan(0);
+    });
+
+    act(() => {
+      songNowPlayingCallbacks[0]({
+        songId: 'song-1',
+        title: 'Test Song',
+        artist: 'Test Artist',
+        status: 'PLAYING',
+        totalDuration: 240,
+        duration: 240,
+        playingStartedAt: new Date().toISOString(),
+        elapsedTime: 30,
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('np-status').textContent).toBe('playing');
+    });
+
+    act(() => {
+      queueUpdatedCallbacks[0]({
+        eventId: 'event-123',
+        nowPlaying: null,
+        queue: [],
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('np-status').textContent).toBe('idle');
     });
   });
 });
