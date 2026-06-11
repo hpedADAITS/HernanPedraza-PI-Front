@@ -75,24 +75,6 @@ export async function startAudioMatchStream({
   let muteGain: GainNode | null = null;
   let stopped = false;
 
-  // Once the server locks a match we stop pushing chunks: the matched
-  // track is already coordinated with the queue, so streaming more audio
-  // would only re-trigger "match found" churn. We resume when the server
-  // releases the match — which happens when the DJ advances the queue to a
-  // different track or any other event drops the candidate.
-  let paused = false;
-
-  const handleMatchLocked = () => {
-    paused = true;
-  };
-  const handleMatchReleased = () => {
-    paused = false;
-  };
-
-  socket.on('audio_match_locked', handleMatchLocked);
-  socket.on('audio_match_released', handleMatchReleased);
-
-
   try {
     await context.resume();
 
@@ -125,9 +107,14 @@ export async function startAudioMatchStream({
     muteGain = context.createGain();
     muteGain.gain.value = 0;
 
+    // Chunks flow continuously, even after a lock. The server is the
+    // single source of truth for match state and needs the audio stream
+    // to stay open so it can detect when the DJ plays a different
+    // track. Pausing on lock would freeze the lock forever if the DJ
+    // never raises a queue event.
     worklet.port.onmessage = (event: MessageEvent<Float32Array>) => {
       try {
-        if (stopped || paused) return;
+        if (stopped) return;
 
         const chunk = event.data;
 
@@ -166,9 +153,6 @@ export async function startAudioMatchStream({
     return () => {
       stopped = true;
 
-      socket.off('audio_match_locked', handleMatchLocked);
-      socket.off('audio_match_released', handleMatchReleased);
-
       worklet?.port.close();
       worklet?.disconnect();
       muteGain?.disconnect();
@@ -184,9 +168,6 @@ export async function startAudioMatchStream({
     };
   } catch (error) {
     stopped = true;
-
-    socket.off('audio_match_locked', handleMatchLocked);
-    socket.off('audio_match_released', handleMatchReleased);
 
     worklet?.port.close();
     worklet?.disconnect();
